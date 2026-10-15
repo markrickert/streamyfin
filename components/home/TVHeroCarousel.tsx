@@ -16,6 +16,7 @@ import {
   FlatList,
   Platform,
   Pressable,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,6 +38,7 @@ import {
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import { runtimeTicksToMinutes } from "@/utils/time";
 
@@ -246,16 +248,18 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
   const layer0Opacity = useRef(new Animated.Value(0)).current;
   const layer1Opacity = useRef(new Animated.Value(0)).current;
 
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   // Get backdrop URL for active item
   const backdropUrl = useMemo(() => {
     if (!activeItem) return null;
     return getBackdropUrl({
       api,
       item: activeItem,
-      quality: 90,
-      width: 1920,
+      width: toImagePixels(screenWidth),
+      height: toImagePixels(screenHeight),
     });
-  }, [api, activeItem]);
+  }, [api, activeItem, screenWidth, screenHeight]);
 
   // Get logo URL for active item
   const logoUrl = useMemo(() => {

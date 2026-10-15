@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Animated, Easing, View } from "react-native";
+import { Animated, Easing, useWindowDimensions, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import {
   TV_BACKDROP_CROSSFADE_MS,
@@ -18,6 +18,7 @@ import {
 } from "@/constants/TVSizes";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 export interface TVHomeBackdropRef {
   handleItemFocus: (item: BaseItemDto) => void;
@@ -63,16 +64,18 @@ export const TVHomeBackdrop = React.memo(
       };
     }, []);
 
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
     // Get backdrop URL from focused item
     const backdropUrl = useMemo(() => {
       if (!focusedItem) return null;
       return getBackdropUrl({
         api,
         item: focusedItem,
-        quality: 90,
-        width: 1920,
+        width: toImagePixels(screenWidth),
+        height: toImagePixels(screenHeight),
       });
-    }, [api, focusedItem]);
+    }, [api, focusedItem, screenWidth, screenHeight]);
 
     // Crossfade animation for backdrop transitions. The layer shown is flipped
     // when the fade starts, not when it ends: an image that arrives mid-fade
@@ -91,8 +94,8 @@ export const TVHomeBackdrop = React.memo(
       let isCancelled = false;
 
       const performCrossfade = async () => {
-        // Prefetch to disk only - the full-size 1920x1080 backdrop (~8MB
-        // decoded ARGB) is too large to pin in the memory cache on every
+        // Prefetch to disk only - a full-screen backdrop (~8 MB decoded on a
+        // 1080p screen) is too large to pin in the memory cache on every
         // focus change. Disk cache is fast enough for a 500ms crossfade.
         try {
           await prefetchServerImage(backdropUrl, api?.basePath, "disk");
