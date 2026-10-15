@@ -5,6 +5,10 @@ import { getDefaultStore } from "jotai";
 import { useState } from "react";
 import { prefetchServerImage } from "@/components/common/ServerImage";
 import {
+  CARD_IMAGE_WIDTH_STEP_PX,
+  MAX_CARD_IMAGE_WIDTH_PX,
+} from "@/constants/Images";
+import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
 } from "@/constants/TVSizes";
@@ -449,6 +453,31 @@ describe("Home.tv behaviours", () => {
       /\/Items\/NextUp-0\/Images\/Primary.*tag=tag-NextUp-0/,
     );
     expect(episodeImage).toBeTruthy();
+  });
+
+  test("posters request their artwork at the size they are drawn", async () => {
+    withSettings({ showHeroCarousel: false });
+
+    await render(<Home />, { wrapper: Wrapper });
+
+    await screen.findByText("Resume 0");
+
+    const posterUrls = screen
+      .getAllByTestId(/\/Items\/.*\/Images\/(?!Backdrop\/0)/)
+      .map((image) => new URL(image.props.testID.replace(/^image /, "")));
+    expect(posterUrls.length).toBeGreaterThan(0);
+
+    for (const url of posterUrls) {
+      const fillWidth = Number(url.searchParams.get("fillWidth"));
+      expect(fillWidth % CARD_IMAGE_WIDTH_STEP_PX).toBe(0);
+      expect(fillWidth).toBeGreaterThan(0);
+      expect(fillWidth).toBeLessThanOrEqual(MAX_CARD_IMAGE_WIDTH_PX);
+
+      const fillHeight = url.searchParams.get("fillHeight");
+      if (fillHeight !== null) {
+        expect(Number(fillHeight)).toBe(Math.round((fillWidth * 9) / 16));
+      }
+    }
   });
 
   test("a focus move re-renders only the card losing focus and the card gaining it", async () => {

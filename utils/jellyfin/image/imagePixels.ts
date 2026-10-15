@@ -1,5 +1,9 @@
 import { PixelRatio } from "react-native";
-import { MAX_IMAGE_SIDE_PX } from "@/constants/Images";
+import {
+  CARD_IMAGE_WIDTH_STEP_PX,
+  MAX_CARD_IMAGE_WIDTH_PX,
+  MAX_IMAGE_SIDE_PX,
+} from "@/constants/Images";
 
 /**
  * Physical pixels a layout length covers on this screen.
@@ -25,3 +29,15 @@ export const fillHeightParams = (height: number) => ({
   maxWidth: String(MAX_IMAGE_SIDE_PX),
   maxHeight: String(MAX_IMAGE_SIDE_PX),
 });
+
+/**
+ * Pixel width to request artwork at for a card this many layout points wide:
+ * what the screen draws, rounded up to the next step so cards of nearly the
+ * same width share one image.
+ */
+export const cardImageWidth = (cardWidth: number) =>
+  Math.min(
+    Math.ceil(toImagePixels(cardWidth) / CARD_IMAGE_WIDTH_STEP_PX) *
+      CARD_IMAGE_WIDTH_STEP_PX,
+    MAX_CARD_IMAGE_WIDTH_PX,
+  );

@@ -1,13 +1,9 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { getItemProgressPercentage } from "@/components/common/ProgressBar";
-import {
-  CARD_IMAGE_WIDTH_STEP_PX,
-  MAX_CARD_IMAGE_WIDTH_PX,
-} from "@/constants/Images";
 import { getPortraitImageUrl } from "@/utils/jellyfin/image/getPortraitImageUrl";
 import { getWideImageUrl } from "@/utils/jellyfin/image/getWideImageUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { cardImageWidth } from "@/utils/jellyfin/image/imagePixels";
 import { isLiveBroadcast } from "@/utils/jellyfin/media/isLiveBroadcast";
 
 /** One card. Everything is prebuilt here; the card view is presentational. */
@@ -119,18 +115,6 @@ export const cardRowHeight = (kind: CardKind) => {
   const { cardWidth, aspectRatio, verticalPadding } = CARD_LAYOUTS[kind];
   return cardWidth / aspectRatio + verticalPadding * 2;
 };
-
-/**
- * Pixel width to request artwork at for a card this many layout points wide:
- * what the screen draws, rounded up to the next step so cards of nearly the
- * same width share one image.
- */
-const cardImageWidth = (cardWidth: number) =>
-  Math.min(
-    Math.ceil(toImagePixels(cardWidth) / CARD_IMAGE_WIDTH_STEP_PX) *
-      CARD_IMAGE_WIDTH_STEP_PX,
-    MAX_CARD_IMAGE_WIDTH_PX,
-  );
 
 /**
  * The second line under a title: which episode this is, or when it came out.
