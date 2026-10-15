@@ -16,11 +16,12 @@ import * as BackgroundTask from "expo-background-task";
 import * as Device from "expo-device";
 import { Image } from "expo-image";
 import { DarkTheme, ThemeProvider } from "expo-router/react-navigation";
-import { Platform } from "react-native";
+import { Dimensions, Platform } from "react-native";
 import { GlobalModal } from "@/components/GlobalModal";
 import { PendingAccountSaveModal } from "@/components/PendingAccountSaveModal";
 import { SeerrAutoLogin } from "@/components/seerr/SeerrAutoLogin";
 import { SyncPlayPlaybackBridge } from "@/components/syncplay/SyncPlayPlaybackBridge";
+import { tvImageMemoryCacheBytes } from "@/constants/Images";
 import {
   NOTIFICATION_PERMISSIONS,
   PERMISSION_ASKED_KEY,
@@ -46,6 +47,7 @@ import {
   BACKGROUND_FETCH_TASK_SESSIONS,
   registerBackgroundFetchAsyncSessions,
 } from "@/utils/background-tasks";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import {
   LogProvider,
   writeErrorLog,
@@ -162,7 +164,7 @@ SplashScreen.setOptions({
 try {
   Image.configureCache({
     maxMemoryCost: Platform.isTV
-      ? 8 * 1024 * 1024 // ~8 MB on TV
+      ? tvImageMemoryCacheBytes(toImagePixels(Dimensions.get("screen").width))
       : 128 * 1024 * 1024, // ~128 MB on mobile
     maxDiskSize: 200 * 1024 * 1024, // 200 MB disk cache on all platforms
   });

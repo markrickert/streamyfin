@@ -36,3 +36,23 @@ export const CARD_IMAGE_WIDTH_STEP_PX = 100;
  * planned for: a poster this wide already decodes to almost 4 MB.
  */
 export const MAX_CARD_IMAGE_WIDTH_PX = 800;
+
+/**
+ * Decoded bytes the TV image memory cache holds on a 1920x1080 pixel screen.
+ * A default-scale TV card is requested at most 300 pixels wide there: a
+ * 200x300 poster decodes to 240 KB and a 300x169 landscape card to 200 KB.
+ * Home shows about three rows of up to ten cards, so one screen is near 7 MB
+ * at the default text scale, or near 16 MB at the largest (300x450 posters).
+ * 16 MB keeps a screen at any scale, or two at the default one, so posters
+ * scrolled back into view come from memory. Full-screen backdrops (8 MB each)
+ * are prefetched to disk only and do not count on this budget.
+ */
+export const TV_IMAGE_MEMORY_CACHE_BYTES_1080P = 16 * 1024 * 1024;
+
+/**
+ * The TV image memory cache budget for a screen this many physical pixels
+ * across. Card artwork follows the screen's pixel density, so a 4K screen
+ * decodes four times the bytes for the same cards.
+ */
+export const tvImageMemoryCacheBytes = (screenWidthPx: number) =>
+  Math.round(TV_IMAGE_MEMORY_CACHE_BYTES_1080P * (screenWidthPx / 1920) ** 2);
