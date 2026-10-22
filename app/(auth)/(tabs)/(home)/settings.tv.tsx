@@ -67,7 +67,7 @@ import {
   type SavedServerAccount,
 } from "@/utils/secureCredentials";
 import { coerceStillWatchingPreset } from "@/utils/stillWatching";
-import { clearTopShelfCacheSafely } from "@/utils/topshelf/cache";
+import { clearTVDiscoverySafely } from "@/utils/tvDiscovery/sync";
 
 const SEGMENT_SKIP_ROWS: {
   key:
@@ -246,8 +246,8 @@ export default function SettingsTV() {
               // 3. Clear AudioStorage (music) cache
               await clearAudioCache();
 
-              // 4. Clear TopShelf cache
-              clearTopShelfCacheSafely();
+              // 4. Clear launcher artwork and published TV discovery
+              clearTVDiscoverySafely();
 
               // 5. Clear Subtitle Cache
               storage.remove("downloadedSubtitles.json");

@@ -67,6 +67,7 @@ them.
 | Session WebSocket | third argument of RN's `WebSocket` in `WebSocketProvider` |
 | Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs), `getItemImage` (whose source wins when it already resolved them), and the native tvOS `GlassPosterView` (headers forwarded as JSON) |
 | Image prefetch | `prefetchServerImage` |
+| TV launcher artwork | `utils/tvDiscovery/sync.ts` downloads protected images with the Jellyfin token and proxy headers; native code publishes only local file/content URIs |
 | Video playback | `MpvVideoSource.headers` in `direct-player` |
 | Now Playing artwork (iOS) | `nowPlayingMetadata.artworkHeaders` |
 | Video downloads | `BackgroundDownloader.enqueueDownload(..., headers)` |
@@ -96,11 +97,10 @@ them.
 
 ## Known limitations
 
-- **TV launcher artwork is fetched by the system.** Apple Top Shelf and Android TV
-  recommendations receive Jellyfin image URLs, but the system image loaders cannot
-  attach custom proxy headers. Their artwork can be blank behind an access gateway
-  even when in-app posters work. Do not put proxy header values in those URLs; this
-  needs a separately designed, locally cached image path for the launcher.
+- **TV launcher artwork is fetched by the system.** The app caches protected
+  posters locally before publishing them. A failed download leaves that tile
+  without artwork until the next sync; the system must never receive proxy
+  header values in a URL or cached payload.
 - **MPV applies headers globally, not per URL.** They are only sent when the
   main stream is served by the Jellyfin server. If an item's stream is a remote
   URL while its external subtitles are on Jellyfin, those subtitles load

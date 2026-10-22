@@ -16,6 +16,7 @@ import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.security.MessageDigest
 
 internal object TvRecommendationsPublisher {
@@ -25,6 +26,8 @@ internal object TvRecommendationsPublisher {
   private const val KEY_CHANNEL_ID_PREFIX = "channelId_"
   private const val KEY_PROGRAM_IDS = "programIds"
   private const val DEFAULT_CHANNEL_NAME = "Continue and Next Up"
+  private const val ARTWORK_DIRECTORY = "tv-discovery-images"
+  private val artworkName = Regex("^[a-f0-9]{64}\\.jpg$")
 
   fun sync(context: Context, payloadJson: String): Boolean {
     val payload = try {
@@ -37,9 +40,10 @@ internal object TvRecommendationsPublisher {
     val sectionCount = payload.optJSONArray("sections")?.length() ?: 0
     Log.d(TAG, "sync(): received payload with $sectionCount section(s)")
 
+    prepareArtwork(context, payload)
     preferences(context)
       .edit()
-      .putString(KEY_PAYLOAD, payloadJson)
+      .putString(KEY_PAYLOAD, payload.toString())
       .apply()
 
     return synchronize(context, payload)
@@ -124,7 +128,60 @@ internal object TvRecommendationsPublisher {
       .remove(KEY_PROGRAM_IDS)
       .apply()
 
+    File(context.filesDir, ARTWORK_DIRECTORY).deleteRecursively()
     return true
+  }
+
+  private fun prepareArtwork(context: Context, payload: JSONObject) {
+    val sections = payload.optJSONArray("sections") ?: return
+    val destinationDirectory = File(context.filesDir, ARTWORK_DIRECTORY)
+    val sourceDirectory = File(context.cacheDir, ARTWORK_DIRECTORY)
+    for (sectionIndex in 0 until sections.length()) {
+      val items = sections.optJSONObject(sectionIndex)?.optJSONArray("items") ?: continue
+      for (itemIndex in 0 until items.length()) {
+        val item = items.optJSONObject(itemIndex) ?: continue
+        val imageUrl = item.optString("imageUrl")
+        if (!imageUrl.startsWith("file:")) continue
+
+        val sourceUri = Uri.parse(imageUrl)
+        val name = sourceUri.lastPathSegment
+        val source = sourceUri.path?.let(::File)
+        if (name == null || !artworkName.matches(name) || source == null) {
+          item.remove("imageUrl")
+          continue
+        }
+
+        try {
+          if (source.canonicalFile != File(sourceDirectory, name).canonicalFile) {
+            item.remove("imageUrl")
+            continue
+          }
+          destinationDirectory.mkdirs()
+          val destination = File(destinationDirectory, name)
+          if (!destination.exists()) {
+            val staging = File(destinationDirectory, "$name.tmp")
+            try {
+              source.copyTo(staging, overwrite = true)
+              if (!staging.renameTo(destination)) throw java.io.IOException("Artwork move failed")
+            } finally {
+              staging.delete()
+            }
+          }
+          item.put(
+            "imageUrl",
+            Uri.Builder()
+              .scheme("content")
+              .authority("${context.packageName}.tv-discovery-images")
+              .appendPath(name)
+              .build()
+              .toString()
+          )
+        } catch (error: Exception) {
+          Log.w(TAG, "Could not cache launcher artwork", error)
+          item.remove("imageUrl")
+        }
+      }
+    }
   }
 
   /**

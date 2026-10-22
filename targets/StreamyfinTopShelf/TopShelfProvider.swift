@@ -85,6 +85,9 @@ final class TopShelfProvider: TVTopShelfContentProvider {
     guard var components = URLComponents(string: imageUrl) else {
       return nil
     }
+    if components.url?.isFileURL == true {
+      return components.url
+    }
 
     if let apiKey, !apiKey.isEmpty {
       var queryItems = components.queryItems ?? []

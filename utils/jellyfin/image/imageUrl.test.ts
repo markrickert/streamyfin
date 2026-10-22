@@ -1,4 +1,7 @@
-import { ImageType } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  ImageFormat,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 
 import { IMAGE_QUALITY } from "@/constants/Images";
 import { makeApi } from "@/test-utils/jellyfinApi";
@@ -52,6 +55,14 @@ describe("imageUrl", () => {
       imageUrl(api, poster, { widthPx: 500, maxWidthPx: 1920, quality: 90 }),
     ).toBe(
       `${api.basePath}/Items/movie-1/Images/Primary?maxWidth=1920&width=500&quality=90&tag=t1`,
+    );
+  });
+
+  test("requests JPEG artwork for system-owned image loaders", () => {
+    expect(
+      imageUrl(api, poster, { fillWidthPx: 400, format: ImageFormat.Jpg }),
+    ).toBe(
+      `${api.basePath}/Items/movie-1/Images/Primary?fillWidth=400&quality=80&tag=t1&format=Jpg`,
     );
   });
 

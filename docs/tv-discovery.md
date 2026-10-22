@@ -18,9 +18,12 @@ The TV home screen data starts in [components/home/Home.tv.tsx](../components/ho
 The sync layer:
 
 - builds a normalized TV discovery payload
+- downloads artwork requiring proxy headers into app-private cache with Jellyfin
+  authorization; an unavailable protected image is omitted, never handed to
+  the launcher as an inaccessible server URL
 - sends it to the tvOS Top Shelf cache writer on Apple TV
 - sends it to the Android TV recommendations module on Android TV
-- clears published content when server or user state changes
+- clears published content and local artwork when server or user state changes
 
 ## Tile Actions
 
@@ -79,14 +82,18 @@ How it works:
 
 - the app builds a lightweight JSON payload
 - the app stores that payload in the shared app group container
+- protected artwork is copied into the App Group container; the payload points
+  to local files, not to credentials or protected URLs
 - the tvOS Top Shelf extension reads the cached payload
 - the extension renders sections and items for Top Shelf
 
-Why the API key is stored on tvOS:
+Why the API key is still stored on tvOS:
 
 - the Top Shelf extension runs outside the app process
-- it may need authenticated image access when loading poster artwork
-- the app stores the API key so the extension can build authenticated requests
+- unprotected-gateway artwork may still use Jellyfin's server URL, authenticated
+  with the API key stored in the shared Keychain
+- protected-gateway artwork uses local files and does not put the API key or
+  proxy credentials in its published URL
 
 ## Android TV Recommendations
 
@@ -112,7 +119,9 @@ Important differences from tvOS:
 
 - Android TV does not use a separate extension target
 - Android TV content is persisted through `TvContractCompat`
-- artwork is currently published as poster URLs, not app-proxied local content
+- protected artwork is copied to app-private files and served to the launcher
+  through `TvArtworkProvider`'s read-only, hashed `content://` URLs. The
+  provider serves only the TV discovery artwork directory, cleared on logout.
 
 ## Logging
 

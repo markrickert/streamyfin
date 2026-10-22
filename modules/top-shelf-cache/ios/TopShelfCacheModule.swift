@@ -9,6 +9,7 @@ public class TopShelfCacheModule: Module {
   private let appGroupInfoPlistKey = "StreamyfinAppGroupIdentifier"
   private let keychainAccessGroupInfoPlistKey = "StreamyfinKeychainAccessGroupIdentifier"
   private let cacheKey = "TopShelfCache"
+  private let artworkDirectoryName = "TVDiscoveryImages"
   private let apiKeyService = "StreamyfinTopShelf"
   private let apiKeyAccount = "JellyfinApiKey"
   private var appGroupIdentifier: String? {
@@ -34,12 +35,16 @@ public class TopShelfCacheModule: Module {
     Function("writeCache") { (json: String, apiKey: String?) -> Bool in
       guard
         let appGroupIdentifier = appGroupIdentifier,
-        let defaults = UserDefaults(suiteName: appGroupIdentifier)
+        let defaults = UserDefaults(suiteName: appGroupIdentifier),
+        let groupURL = FileManager.default.containerURL(
+          forSecurityApplicationGroupIdentifier: appGroupIdentifier
+        ),
+        let prepared = prepareArtwork(json, in: groupURL)
       else {
         return false
       }
 
-      defaults.set(json, forKey: cacheKey)
+      defaults.set(prepared, forKey: cacheKey)
       defaults.set(Date().timeIntervalSince1970, forKey: "\(cacheKey)UpdatedAt")
       defaults.synchronize()
       let didSaveAPIKey = saveAPIKey(apiKey)
@@ -62,6 +67,13 @@ public class TopShelfCacheModule: Module {
       defaults.removeObject(forKey: cacheKey)
       defaults.removeObject(forKey: "\(cacheKey)UpdatedAt")
       defaults.synchronize()
+      if let groupURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: appGroupIdentifier
+      ) {
+        try? FileManager.default.removeItem(
+          at: groupURL.appendingPathComponent(artworkDirectoryName)
+        )
+      }
       let didDeleteAPIKey = deleteAPIKey()
 
       #if canImport(TVServices)
@@ -70,6 +82,66 @@ public class TopShelfCacheModule: Module {
 
       return didDeleteAPIKey
     }
+  }
+
+  private func prepareArtwork(_ json: String, in groupURL: URL) -> String? {
+    guard
+      let data = json.data(using: .utf8),
+      var payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let sections = payload["sections"] as? [[String: Any]]
+    else {
+      return nil
+    }
+
+    let artworkDirectory = groupURL.appendingPathComponent(artworkDirectoryName)
+    let fileManager = FileManager.default
+    payload["sections"] = sections.map { section in
+      var section = section
+      section["items"] = (section["items"] as? [[String: Any]] ?? []).map { item in
+        var item = item
+        guard
+          let sourceString = item["imageUrl"] as? String,
+          let source = URL(string: sourceString),
+          source.isFileURL
+        else {
+          return item
+        }
+
+        let name = source.lastPathComponent
+        let validName = name.range(
+          of: #"^[a-f0-9]{64}\.jpg$"#,
+          options: .regularExpression
+        ) != nil
+        guard validName else {
+          item.removeValue(forKey: "imageUrl")
+          return item
+        }
+
+        let destination = artworkDirectory.appendingPathComponent(name)
+        do {
+          try fileManager.createDirectory(
+            at: artworkDirectory,
+            withIntermediateDirectories: true
+          )
+          if !fileManager.fileExists(atPath: destination.path) {
+            try fileManager.copyItem(at: source, to: destination)
+          }
+          item["imageUrl"] = destination.absoluteString
+        } catch {
+          item.removeValue(forKey: "imageUrl")
+        }
+        return item
+      }
+      return section
+    }
+
+    guard
+      let prepared = try? JSONSerialization.data(withJSONObject: payload),
+      let result = String(data: prepared, encoding: .utf8)
+    else {
+      return nil
+    }
+    return result
   }
 
   private func baseAPIKeyQuery() -> [String: Any] {

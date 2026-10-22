@@ -1,5 +1,8 @@
 import type { Api } from "@jellyfin/sdk";
-import type { ImageType } from "@jellyfin/sdk/lib/generated-client/models";
+import type {
+  ImageFormat,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { IMAGE_QUALITY, MAX_IMAGE_SIDE_PX } from "@/constants/Images";
 import { toImagePixels } from "./imagePixels";
 
@@ -28,6 +31,7 @@ export type ImageBox = {
   maxHeightPx?: number;
   widthPx?: number;
   quality?: number;
+  format?: ImageFormat;
 };
 
 /**
@@ -55,6 +59,7 @@ export const imageUrl = (
     maxHeightPx,
     widthPx,
     quality = IMAGE_QUALITY,
+    format,
   } = box;
 
   const params = new URLSearchParams();
@@ -70,6 +75,7 @@ export const imageUrl = (
   if (widthPx) params.set("width", String(Math.round(widthPx)));
   params.set("quality", String(quality));
   if (tag) params.set("tag", tag);
+  if (format) params.set("format", format);
 
   const path = `/Items/${itemId}/Images/${imageType}${index != null ? `/${index}` : ""}`;
   return `${api.basePath}${path}?${params.toString()}`;

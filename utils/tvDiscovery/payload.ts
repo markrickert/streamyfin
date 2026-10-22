@@ -1,5 +1,8 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageFormat,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { resolveArtwork } from "@/utils/jellyfin/image/resolveArtwork";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
@@ -60,7 +63,7 @@ function getTVDiscoveryImage(
       resolveArtwork(item, "discoveryLandscape", {
         preferEpisodeImage: useEpisodeImages,
       }),
-      { fillHeightPx: 1080, quality: 90 },
+      { fillHeightPx: 1080, quality: 90, format: ImageFormat.Jpg },
     );
     return url ? { url } : undefined;
   }
@@ -74,7 +77,12 @@ function getTVDiscoveryImage(
     resolveArtwork(item, "discoveryPoster", {
       preferEpisodeImage: useEpisodeImages,
     }),
-    { fillWidthPx: 400, fillHeightPx: 600, quality: 90 },
+    {
+      fillWidthPx: 400,
+      fillHeightPx: 600,
+      quality: 90,
+      format: ImageFormat.Jpg,
+    },
   );
   return url ? { url } : undefined;
 }
