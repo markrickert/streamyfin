@@ -5,6 +5,13 @@
 export const LOGO_HEIGHT = 130;
 
 /**
+ * Encoding quality asked of the server for card and backdrop artwork. Detail
+ * pages that show people or key art ask for more; everything in a row gets
+ * this.
+ */
+export const IMAGE_QUALITY = 80;
+
+/**
  * Longest side of an image sized to the box it covers, in physical pixels. A
  * backdrop covering a tall header on a 3x phone would otherwise come back
  * past 2600 pixels wide. 1920 keeps it close to sharp while the decoded
@@ -56,3 +63,12 @@ export const TV_IMAGE_MEMORY_CACHE_BYTES_1080P = 16 * 1024 * 1024;
  */
 export const tvImageMemoryCacheBytes = (screenWidthPx: number) =>
   Math.round(TV_IMAGE_MEMORY_CACHE_BYTES_1080P * (screenWidthPx / 1920) ** 2);
+
+/**
+ * Decoded bytes the image memory cache holds on phones, which have the RAM
+ * a TV box lacks.
+ */
+export const MOBILE_IMAGE_MEMORY_CACHE_BYTES = 128 * 1024 * 1024;
+
+/** Bytes the image disk cache holds on every platform. */
+export const IMAGE_DISK_CACHE_BYTES = 200 * 1024 * 1024;

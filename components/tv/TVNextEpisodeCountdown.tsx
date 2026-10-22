@@ -21,6 +21,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "@/components/common/Text";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
 import { scaleSize } from "@/utils/scaleSize";
@@ -79,7 +80,7 @@ export const TVNextEpisodeCountdown: FC<TVNextEpisodeCountdownProps> = ({
     api,
     item: nextItem,
     width: scaleSize(360),
-    quality: 80,
+    quality: IMAGE_QUALITY,
   });
 
   // Animated position based on controls visibility

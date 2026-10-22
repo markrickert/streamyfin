@@ -14,6 +14,7 @@ import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useWindowDimensions } from "react-native";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import useRouter from "@/hooks/useAppRouter";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useHeadersForUrl } from "@/hooks/useHeadersForUrl";
@@ -240,12 +241,12 @@ const buildBackdropUrl = (
     return getParentBackdropImageUrl({
       api,
       item,
-      quality: 80,
+      quality: IMAGE_QUALITY,
       width,
       height,
     });
   }
-  return getBackdropUrl({ api, item, quality: 80, width, height });
+  return getBackdropUrl({ api, item, quality: IMAGE_QUALITY, width, height });
 };
 
 const buildLogoUrl = (api: Api, item: BaseItemDto): string | null => {

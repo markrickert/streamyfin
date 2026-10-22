@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { Animated, Easing, useWindowDimensions, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
@@ -72,6 +73,7 @@ export const TVHomeBackdrop = React.memo(
       return getBackdropUrl({
         api,
         item: focusedItem,
+        quality: IMAGE_QUALITY,
         width: toImagePixels(screenWidth),
         height: toImagePixels(screenHeight),
       });

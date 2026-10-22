@@ -1,5 +1,6 @@
 import type { Api } from "@jellyfin/sdk";
 import { type BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { fillHeightParams } from "./imagePixels";
 
 /**
@@ -17,7 +18,7 @@ import { fillHeightParams } from "./imagePixels";
 export const getParentBackdropImageUrl = ({
   api,
   item,
-  quality = 80,
+  quality = IMAGE_QUALITY,
   width = 400,
   height,
 }: {
@@ -36,7 +37,7 @@ export const getParentBackdropImageUrl = ({
 
   const params = new URLSearchParams({
     fillWidth: width ? String(width) : "500",
-    quality: quality ? String(quality) : "80",
+    quality: quality ? String(quality) : String(IMAGE_QUALITY),
     tag: tag,
     ...(height ? fillHeightParams(height) : null),
   });

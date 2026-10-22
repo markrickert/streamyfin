@@ -1,5 +1,6 @@
 import type { Api } from "@jellyfin/sdk";
 import { type BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 
 /**
  * Retrieves the primary image URL for a given item.
@@ -11,7 +12,7 @@ import { type BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 export const getPrimaryParentImageUrl = ({
   api,
   item,
-  quality = 80,
+  quality = IMAGE_QUALITY,
   width = 400,
 }: {
   api?: Api | null;
@@ -28,7 +29,7 @@ export const getPrimaryParentImageUrl = ({
 
   const params = new URLSearchParams({
     fillWidth: width ? String(width) : "500",
-    quality: quality ? String(quality) : "80",
+    quality: quality ? String(quality) : String(IMAGE_QUALITY),
     tag: primaryTag || "",
   });
 

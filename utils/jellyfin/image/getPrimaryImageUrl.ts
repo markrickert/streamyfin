@@ -3,6 +3,7 @@ import type {
   BaseItemDto,
   BaseItemPerson,
 } from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { isBaseItemDto } from "../jellyfin";
 import { fillHeightParams } from "./imagePixels";
 
@@ -20,7 +21,7 @@ import { fillHeightParams } from "./imagePixels";
 export const getPrimaryImageUrl = ({
   api,
   item,
-  quality = 80,
+  quality = IMAGE_QUALITY,
   width = 400,
   height,
 }: {
@@ -44,7 +45,7 @@ export const getPrimaryImageUrl = ({
 
   const params = new URLSearchParams({
     fillWidth: width ? String(width) : "500",
-    quality: quality ? String(quality) : "80",
+    quality: quality ? String(quality) : String(IMAGE_QUALITY),
     ...(height ? fillHeightParams(height) : null),
   });
 

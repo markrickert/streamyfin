@@ -1,5 +1,6 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { getPrimaryImageUrl } from "./getPrimaryImageUrl";
 
 /**
@@ -26,7 +27,7 @@ export const getPortraitImageUrl = ({
     // The same request the series' own card makes, so the two share one image.
     const params = new URLSearchParams({
       fillWidth: String(width),
-      quality: "80",
+      quality: String(IMAGE_QUALITY),
     });
     if (item.SeriesPrimaryImageTag) {
       params.set("tag", item.SeriesPrimaryImageTag);

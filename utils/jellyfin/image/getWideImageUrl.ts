@@ -1,5 +1,6 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 
 /**
  * Landscape (16:9-ish) image for an item, as used by the continue-watching
@@ -19,7 +20,7 @@ export const getWideImageUrl = ({
   useEpisodePoster = false,
   fillHeight,
   fillWidth,
-  quality = 80,
+  quality = IMAGE_QUALITY,
 }: {
   api?: Api | null;
   item?: BaseItemDto | null;
@@ -45,6 +46,8 @@ export const getWideImageUrl = ({
 
     // Matched pair: the parent that owns the Thumb (ParentThumbItemId), not the
     // backdrop owner — otherwise the Thumb tag is requested on the wrong item → black.
+    // Unlike the TV card path (getTVPosterImageUrl), no series-backdrop
+    // fallback: a wide row card falls back on the episode's own still.
     if (item.ParentThumbItemId && item.ParentThumbImageTag) {
       return thumb(item.ParentThumbItemId, item.ParentThumbImageTag);
     }
