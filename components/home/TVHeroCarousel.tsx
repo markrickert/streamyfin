@@ -11,7 +11,6 @@ import React, {
 } from "react";
 import {
   Animated,
-  Dimensions,
   Easing,
   FlatList,
   Platform,
@@ -24,6 +23,7 @@ import { ProgressBar } from "@/components/common/ProgressBar";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import {
   type ScaledTVSizes,
   TV_BACKDROP_DEBOUNCE_MS,
@@ -38,11 +38,10 @@ import {
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
+import { getTVPosterImageUrl } from "@/utils/jellyfin/image/getTVPosterImageUrl";
 import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import { runtimeTicksToMinutes } from "@/utils/time";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface TVHeroCarouselProps {
   items: BaseItemDto[];
@@ -68,41 +67,18 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
     // Check if glass effect is available (tvOS 26+)
     const useGlass = Platform.OS === "ios" && isGlassEffectAvailable();
 
-    const posterUrl = useMemo(() => {
-      if (!api) return null;
-
-      // For episodes, always use series thumb.
-      // Matched pair: ParentThumbItemId owns the Thumb tag, not ParentBackdropItemId.
-      if (item.Type === "Episode") {
-        if (item.ParentThumbItemId && item.ParentThumbImageTag) {
-          return `${api.basePath}/Items/${item.ParentThumbItemId}/Images/Thumb?fillHeight=400&quality=80&tag=${item.ParentThumbImageTag}`;
-        }
-        // Series without a Thumb: fall back to its backdrop, like other Jellyfin
-        // clients do. The tagless Thumb request below 404s in that case.
-        const parentBackdropTag = item.ParentBackdropImageTags?.[0];
-        if (item.ParentBackdropItemId && parentBackdropTag) {
-          return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?fillHeight=400&quality=80&tag=${parentBackdropTag}`;
-        }
-        // Neither parent pair resolved. The tagless series request below is a
-        // 404 whenever the series has no Thumb, which leaves the hero blank, so
-        // try the episode's own image first like the poster cards do.
-        if (item.ImageTags?.Primary) {
-          return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=400&quality=80&tag=${item.ImageTags.Primary}`;
-        }
-        if (item.SeriesId) {
-          return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?fillHeight=400&quality=80`;
-        }
-      }
-
-      // For non-episodes, use item's own thumb/primary
-      if (item.ImageTags?.Thumb) {
-        return `${api.basePath}/Items/${item.Id}/Images/Thumb?fillHeight=400&quality=80&tag=${item.ImageTags.Thumb}`;
-      }
-      if (item.ImageTags?.Primary) {
-        return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=400&quality=80&tag=${item.ImageTags.Primary}`;
-      }
-      return null;
-    }, [api, item]);
+    // The same artwork the landscape poster cards ask for, at the size the
+    // hero card is drawn.
+    const posterUrl = useMemo(
+      () =>
+        getTVPosterImageUrl({
+          api,
+          item,
+          orientation: "horizontal",
+          widthPoints: sizes.posters.episode,
+        }),
+      [api, item, sizes.posters.episode],
+    );
 
     const animateTo = useCallback(
       (value: number) =>
@@ -256,6 +232,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
     return getBackdropUrl({
       api,
       item: activeItem,
+      quality: IMAGE_QUALITY,
       width: toImagePixels(screenWidth),
       height: toImagePixels(screenHeight),
     });
@@ -401,7 +378,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
 
   // Extra top padding for tvOS to clear the menu bar
   const tvosTopPadding = scaleSize(145);
-  const heroHeight = SCREEN_HEIGHT * sizes.padding.heroHeight;
+  const heroHeight = screenHeight * sizes.padding.heroHeight;
 
   return (
     <View
@@ -514,7 +491,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
             source={{ uri: logoUrl }}
             style={{
               height: scaleSize(100),
-              width: SCREEN_WIDTH * 0.35,
+              width: screenWidth * 0.35,
               marginBottom: scaleSize(16),
             }}
             contentFit='contain'
@@ -555,7 +532,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
               fontSize: typography.body,
               color: "rgba(255,255,255,0.8)",
               marginBottom: scaleSize(16),
-              maxWidth: SCREEN_WIDTH * 0.5,
+              maxWidth: screenWidth * 0.5,
               lineHeight: typography.body * 1.4,
             }}
             numberOfLines={2}

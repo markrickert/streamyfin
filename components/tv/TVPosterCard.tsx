@@ -155,7 +155,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
       api,
       item,
       orientation,
-      width,
+      widthPoints: width,
       preferEpisodeImage,
     });
   }, [api, item, orientation, width, imageUrlGetter, preferEpisodeImage]);

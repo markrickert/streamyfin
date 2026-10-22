@@ -53,7 +53,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: movie,
         orientation: "vertical",
-        width: PORTRAIT_WIDTH,
+        widthPoints: PORTRAIT_WIDTH,
       });
 
       expect(url).toBe(
@@ -68,7 +68,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: movie,
         orientation: "vertical",
-        width: PORTRAIT_WIDTH,
+        widthPoints: PORTRAIT_WIDTH,
       });
 
       expect(sizeOf(url)).toEqual({ fillWidth: "400", fillHeight: null });
@@ -81,7 +81,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: movie,
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(url).toBe(
@@ -96,7 +96,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: movie,
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(sizeOf(url)).toEqual({ fillWidth: "600", fillHeight: "338" });
@@ -109,7 +109,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: movie,
         orientation: "horizontal",
-        width: 600,
+        widthPoints: 600,
       });
 
       expect(sizeOf(url)).toEqual({ fillWidth: "800", fillHeight: "450" });
@@ -126,7 +126,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: episode,
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(url).toBe(
@@ -139,7 +139,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: episode,
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
         preferEpisodeImage: true,
       });
 
@@ -157,7 +157,7 @@ describe("getTVPosterImageUrl", () => {
           ParentThumbImageTag: undefined,
         },
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(url).toBe(
@@ -175,7 +175,7 @@ describe("getTVPosterImageUrl", () => {
           ParentBackdropImageTags: [],
         },
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(url).toBe(
@@ -188,11 +188,33 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: { ...movie, ImageTags: { Primary: "poster-tag" } },
         orientation: "horizontal",
-        width: LANDSCAPE_WIDTH,
+        widthPoints: LANDSCAPE_WIDTH,
       });
 
       expect(url).toBe(
-        `${api.basePath}/Items/movie-1/Images/Primary?fillWidth=300&fillHeight=169&quality=80`,
+        `${api.basePath}/Items/movie-1/Images/Primary?fillWidth=300&fillHeight=169&quality=80&tag=poster-tag`,
+      );
+    });
+
+    test("an episode carrying no artwork fields at all asks for the series thumb tagless", () => {
+      const url = getTVPosterImageUrl({
+        api,
+        item: {
+          ...episode,
+          ImageTags: {},
+          ParentThumbItemId: undefined,
+          ParentThumbImageTag: undefined,
+          ParentBackdropItemId: undefined,
+          ParentBackdropImageTags: undefined,
+        },
+        orientation: "horizontal",
+        widthPoints: LANDSCAPE_WIDTH,
+      });
+
+      // The episode's own Primary 404s when it has no tag; the series' thumb
+      // is what every other Jellyfin client shows here.
+      expect(url).toBe(
+        `${api.basePath}/Items/series-1/Images/Thumb?fillWidth=300&fillHeight=169&quality=80`,
       );
     });
 
@@ -201,7 +223,7 @@ describe("getTVPosterImageUrl", () => {
         api,
         item: episode,
         orientation: "vertical",
-        width: PORTRAIT_WIDTH,
+        widthPoints: PORTRAIT_WIDTH,
       });
 
       expect(url).toBe(
@@ -216,7 +238,7 @@ describe("getTVPosterImageUrl", () => {
         api: null,
         item: movie,
         orientation: "vertical",
-        width: PORTRAIT_WIDTH,
+        widthPoints: PORTRAIT_WIDTH,
       }),
     ).toBeNull();
   });
