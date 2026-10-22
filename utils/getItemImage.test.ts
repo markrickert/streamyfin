@@ -52,4 +52,18 @@ describe("getItemImage", () => {
       `${api.basePath}/Items/movie-1/Images/Backdrop/0?quality=90&tag=backdrop-tag&width=1000`,
     );
   });
+
+  // A Thumb tag must never reach the Backdrop endpoint: it 404s on an item
+  // that has a Thumb but no Backdrop.
+  test("the Thumb variant requests the Thumb image", () => {
+    const source = getItemImage({
+      api,
+      item: { Id: "movie-1", Type: "Movie", ImageTags: { Thumb: "thumb-tag" } },
+      variant: "Thumb",
+    });
+
+    expect(source?.uri).toBe(
+      `${api.basePath}/Items/movie-1/Images/Thumb?quality=90&tag=thumb-tag&width=1000`,
+    );
+  });
 });

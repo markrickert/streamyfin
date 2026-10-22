@@ -85,7 +85,7 @@ export const getItemImage = ({
       blurhash = item.ImageBlurHashes?.Thumb?.[tag];
 
       src = {
-        uri: `${api.basePath}/Items/${item.Id}/Images/Backdrop?quality=${quality}&tag=${tag}&${size}`,
+        uri: `${api.basePath}/Items/${item.Id}/Images/Thumb?quality=${quality}&tag=${tag}&${size}`,
         blurhash,
       };
       break;
