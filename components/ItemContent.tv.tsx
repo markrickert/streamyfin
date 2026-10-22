@@ -45,6 +45,7 @@ import {
   TVTechnicalDetails,
 } from "@/components/tv";
 import type { Track } from "@/components/video-player/controls/types";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import useDefaultPlaySettings from "@/hooks/useDefaultPlaySettings";
@@ -65,6 +66,7 @@ import { useSettings } from "@/utils/atoms/settings";
 import type { TVOptionItem } from "@/utils/atoms/tvOptionModal";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
 import { getPrimaryImageUrlById } from "@/utils/jellyfin/image/getPrimaryImageUrlById";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { streamLanguageName } from "@/utils/jellyfin/trackLabel";
@@ -597,11 +599,18 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
       return getPrimaryImageUrlById({ api, id: seasonId, width: 300 });
     }, [api, item?.Type, item?.SeasonId, item?.ParentId]);
 
+    // The episode still is drawn in a 16:9 box 35% of the screen wide; ask
+    // for the pixels that box covers instead of a fixed height.
+    const episodeImageBox = useMemo(() => {
+      const widthPx = toImagePixels(SCREEN_WIDTH * 0.35);
+      return `fillWidth=${widthPx}&fillHeight=${Math.round((widthPx * 9) / 16)}&quality=${IMAGE_QUALITY}`;
+    }, []);
+
     // Episode thumbnail URL - episode's own primary image (16:9 for episodes)
     const episodeThumbnailUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !api) return null;
-      return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=700&quality=80`;
-    }, [api, item]);
+      return `${api.basePath}/Items/${item.Id}/Images/Primary?${episodeImageBox}`;
+    }, [api, item, episodeImageBox]);
 
     // Series thumb URL - used when showSeriesPosterOnEpisode setting is enabled
     const seriesThumbUrl = useMemo(() => {
@@ -614,11 +623,11 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
         item.ParentBackdropItemId &&
         parentBackdropTag
       ) {
-        return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?fillHeight=700&quality=80&tag=${parentBackdropTag}`;
+        return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?${episodeImageBox}&tag=${parentBackdropTag}`;
       }
       if (!item.SeriesId) return null;
-      return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?fillHeight=700&quality=80`;
-    }, [api, item]);
+      return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?${episodeImageBox}`;
+    }, [api, item, episodeImageBox]);
 
     // Navigation handlers
     const handleActorPress = useCallback(

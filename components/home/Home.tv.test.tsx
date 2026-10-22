@@ -3,10 +3,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { getDefaultStore } from "jotai";
 import { useState } from "react";
+import { Dimensions, PixelRatio } from "react-native";
 import { prefetchServerImage } from "@/components/common/ServerImage";
 import {
   CARD_IMAGE_WIDTH_STEP_PX,
+  IMAGE_QUALITY,
   MAX_CARD_IMAGE_WIDTH_PX,
+  MAX_IMAGE_SIDE_PX,
 } from "@/constants/Images";
 import {
   TV_BACKDROP_CROSSFADE_MS,
@@ -525,6 +528,38 @@ describe("Home.tv behaviours", () => {
       expect.anything(),
       "disk",
     );
+  });
+
+  test("the backdrop is requested as a box cover at the screen's pixel size", async () => {
+    withSettings({ showHeroCarousel: false, showHomeBackdrop: true });
+
+    await render(<Home />, { wrapper: Wrapper });
+    await screen.findByText("Resume 0");
+    await act(async () => {
+      fireEvent(card("Resume-0"), "focus");
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(PAST_BACKDROP);
+    });
+
+    const call = jest
+      .mocked(prefetchServerImage)
+      .mock.calls.find(([url]) =>
+        url.includes("/Items/Resume-0/Images/Backdrop"),
+      );
+    expect(call).toBeDefined();
+
+    const params = new URL(call![0]).searchParams;
+    const { width, height } = Dimensions.get("window");
+    expect(params.get("fillWidth")).toBe(
+      String(PixelRatio.getPixelSizeForLayoutSize(width)),
+    );
+    expect(params.get("fillHeight")).toBe(
+      String(PixelRatio.getPixelSizeForLayoutSize(height)),
+    );
+    expect(params.get("maxWidth")).toBe(String(MAX_IMAGE_SIDE_PX));
+    expect(params.get("maxHeight")).toBe(String(MAX_IMAGE_SIDE_PX));
+    expect(params.get("quality")).toBe(String(IMAGE_QUALITY));
   });
 
   test.each([

@@ -15,10 +15,10 @@ import React, {
 import { useTranslation } from "react-i18next";
 import {
   Animated,
-  Dimensions,
   Easing,
   FlatList,
   ScrollView,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,6 +27,7 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { Loader } from "@/components/Loader";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
@@ -34,9 +35,8 @@ import useRouter from "@/hooks/useAppRouter";
 import { useTVItemActionModal } from "@/hooks/useTVItemActionModal";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const HORIZONTAL_PADDING = 80;
 const TOP_PADDING = 140;
@@ -128,6 +128,8 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
     staleTime: 60,
   });
 
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   // Get backdrop URL from the currently focused filmography item
   // Changes dynamically as user navigates through the list
   const backdropUrl = useMemo(() => {
@@ -137,10 +139,11 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
     return getBackdropUrl({
       api,
       item: itemForBackdrop,
-      quality: 90,
-      width: 1920,
+      quality: IMAGE_QUALITY,
+      width: toImagePixels(screenWidth),
+      height: toImagePixels(screenHeight),
     });
-  }, [api, focusedItem, movies, series]);
+  }, [api, focusedItem, movies, series, screenWidth, screenHeight]);
 
   // Crossfade animation for backdrop transitions
   // Use two alternating layers for smooth crossfade
@@ -444,7 +447,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
                   fontSize: typography.body,
                   color: "#D1D5DB",
                   lineHeight: typography.body * 1.4,
-                  maxWidth: SCREEN_WIDTH * 0.45,
+                  maxWidth: screenWidth * 0.45,
                 }}
                 numberOfLines={4}
               >
