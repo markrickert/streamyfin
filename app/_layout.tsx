@@ -21,7 +21,11 @@ import { GlobalModal } from "@/components/GlobalModal";
 import { PendingAccountSaveModal } from "@/components/PendingAccountSaveModal";
 import { SeerrAutoLogin } from "@/components/seerr/SeerrAutoLogin";
 import { SyncPlayPlaybackBridge } from "@/components/syncplay/SyncPlayPlaybackBridge";
-import { tvImageMemoryCacheBytes } from "@/constants/Images";
+import {
+  IMAGE_DISK_CACHE_BYTES,
+  MOBILE_IMAGE_MEMORY_CACHE_BYTES,
+  tvImageMemoryCacheBytes,
+} from "@/constants/Images";
 import {
   NOTIFICATION_PERMISSIONS,
   PERMISSION_ASKED_KEY,
@@ -157,19 +161,19 @@ SplashScreen.setOptions({
 });
 
 // Cap expo-image's in-memory cache. Default is unbounded (maxMemoryCost=0),
-// which on a 2GB Android TV box leads to ~200MB of decoded backdrops/posters
-// pinned in RAM after browsing. Caps are intentionally tighter on TV (which
-// has less RAM and runs alongside libmpv/MediaCodec) than on mobile.
+// which on a 2GB TV box leads to ~200MB of decoded backdrops/posters pinned
+// in RAM after browsing. Caps are intentionally tighter on TV (which has
+// less RAM and runs alongside libmpv/MediaCodec) than on mobile.
 // Cost is measured in bytes of decoded bitmap (ARGB8888 = 4 bytes/pixel).
-try {
+// The API is iOS/tvOS-only: on Android, expo-image caches through Glide and
+// offers no cache knobs from JS.
+if (Platform.OS === "ios") {
   Image.configureCache({
     maxMemoryCost: Platform.isTV
       ? tvImageMemoryCacheBytes(toImagePixels(Dimensions.get("screen").width))
-      : 128 * 1024 * 1024, // ~128 MB on mobile
-    maxDiskSize: 200 * 1024 * 1024, // 200 MB disk cache on all platforms
+      : MOBILE_IMAGE_MEMORY_CACHE_BYTES,
+    maxDiskSize: IMAGE_DISK_CACHE_BYTES,
   });
-} catch {
-  // configureCache is a no-op on some platforms/versions; safe to ignore.
 }
 
 /**
