@@ -160,13 +160,10 @@ SplashScreen.setOptions({
   fade: true,
 });
 
-// Cap expo-image's in-memory cache. Default is unbounded (maxMemoryCost=0),
-// which on a 2GB TV box leads to ~200MB of decoded backdrops/posters pinned
-// in RAM after browsing. Caps are intentionally tighter on TV (which has
-// less RAM and runs alongside libmpv/MediaCodec) than on mobile.
-// Cost is measured in bytes of decoded bitmap (ARGB8888 = 4 bytes/pixel).
-// The API is iOS/tvOS-only: on Android, expo-image caches through Glide and
-// offers no cache knobs from JS.
+// configureCache controls SDWebImage on iOS/tvOS only. Glide has its own
+// memory cache, bitmap pool and disk limits in the expo-image Android patch;
+// it does not implement this JS API. These are cache limits, not app RAM caps:
+// images still displayed on screen can remain decoded outside either cache.
 if (Platform.OS === "ios") {
   Image.configureCache({
     maxMemoryCost: Platform.isTV

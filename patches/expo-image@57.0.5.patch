@@ -1,0 +1,88 @@
+diff --git a/android/src/main/java/expo/modules/image/ExpoImageAppGlideModule.kt b/android/src/main/java/expo/modules/image/ExpoImageAppGlideModule.kt
+index 86a0d4d803a9a0b3b11f38bd63ad83761673108e..13531a25c5f81b38d9b578de5afa40ac880c50ed 100644
+--- a/android/src/main/java/expo/modules/image/ExpoImageAppGlideModule.kt
++++ b/android/src/main/java/expo/modules/image/ExpoImageAppGlideModule.kt
+@@ -1,11 +1,28 @@
+ package expo.modules.image
+ 
++import android.app.UiModeManager
+ import android.content.Context
++import android.content.res.Configuration
+ import android.util.Log
+ import com.bumptech.glide.GlideBuilder
+ import com.bumptech.glide.annotation.GlideModule
++import com.bumptech.glide.load.engine.bitmap_recycle.LruBitmapPool
+ import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory
++import com.bumptech.glide.load.engine.cache.LruResourceCache
++import com.bumptech.glide.load.engine.cache.MemorySizeCalculator
+ import com.bumptech.glide.module.AppGlideModule
++import kotlin.math.roundToLong
++
++// Match Streamyfin's screen-scaled TV artwork budget in constants/Images.ts.
++internal fun tvGlideCacheSizes(
++  screenWidthPx: Int,
++  defaultMemoryBytes: Long,
++  defaultBitmapPoolBytes: Long
++): Pair<Long, Long> {
++  val screenScale = screenWidthPx.toDouble() / 1920.0
++  val budget = (16.0 * 1024 * 1024 * screenScale * screenScale).roundToLong()
++  return minOf(defaultMemoryBytes, budget) to minOf(defaultBitmapPoolBytes, budget / 2)
++}
+ 
+ /**
+  * We need to include an [AppGlideModule] for [GlideModule] annotations
+@@ -16,8 +33,20 @@ class ExpoImageAppGlideModule : AppGlideModule() {
+   override fun applyOptions(context: Context, builder: GlideBuilder) {
+     super.applyOptions(context, builder)
+ 
++    val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
++    if (uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) {
++      val defaults = MemorySizeCalculator.Builder(context).build()
++      val (memoryBytes, bitmapPoolBytes) = tvGlideCacheSizes(
++        context.resources.displayMetrics.widthPixels,
++        defaults.memoryCacheSize.toLong(),
++        defaults.bitmapPoolSize.toLong()
++      )
++      builder.setMemoryCache(LruResourceCache(memoryBytes))
++      builder.setBitmapPool(LruBitmapPool(bitmapPoolBytes))
++    }
++
+     builder.setDiskCache(
+-      ExpoImageDiskCache.Factory(InternalCacheDiskCacheFactory(context))
++      ExpoImageDiskCache.Factory(InternalCacheDiskCacheFactory(context, 200L * 1024 * 1024))
+     )
+ 
+     builder.setLogLevel(
+diff --git a/android/src/test/java/expo/modules/image/ExpoImageAppGlideModuleTest.kt b/android/src/test/java/expo/modules/image/ExpoImageAppGlideModuleTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ce4a5448113ce481268a56b84e657bc4d774063
+--- /dev/null
++++ b/android/src/test/java/expo/modules/image/ExpoImageAppGlideModuleTest.kt
+@@ -0,0 +1,27 @@
++package expo.modules.image
++
++import org.junit.Assert.assertEquals
++import org.junit.Test
++
++class ExpoImageAppGlideModuleTest {
++  @Test
++  fun capsMemoryAndBitmapPoolAt1080p() {
++    val (memory, bitmapPool) = tvGlideCacheSizes(1920, Long.MAX_VALUE, Long.MAX_VALUE)
++    assertEquals(16L * 1024 * 1024, memory)
++    assertEquals(8L * 1024 * 1024, bitmapPool)
++  }
++
++  @Test
++  fun scalesTheBudgetsFor4k() {
++    val (memory, bitmapPool) = tvGlideCacheSizes(3840, Long.MAX_VALUE, Long.MAX_VALUE)
++    assertEquals(64L * 1024 * 1024, memory)
++    assertEquals(32L * 1024 * 1024, bitmapPool)
++  }
++
++  @Test
++  fun neverRaisesGlidesLowMemoryDefaults() {
++    val (memory, bitmapPool) = tvGlideCacheSizes(1920, 4L * 1024 * 1024, 0)
++    assertEquals(4L * 1024 * 1024, memory)
++    assertEquals(0L, bitmapPool)
++  }
++}

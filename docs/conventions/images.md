@@ -70,3 +70,13 @@ URLs built here still render through `Image` from `@/components/common/ServerIma
 custom proxy auth headers are attached — see [custom-headers.md](../custom-headers.md).
 The native tvOS `GlassPosterView` is the exception: its JS wrapper resolves the same
 per-URL headers and passes them as JSON to its native image request.
+
+## Cache limits are platform-specific
+
+`Image.configureCache` sets SDWebImage's limits on iOS/tvOS only. On Android,
+`patches/expo-image@57.0.5.patch` caps Glide's disk cache and, on TV, its
+separate memory cache and bitmap pool. The TV budget follows
+`tvImageMemoryCacheBytes` and never raises Glide's low-memory defaults.
+`package.json` opts `expo-image` out of prebuilt Android artifacts so this
+patch actually reaches the APK. These limits do not include images still on
+screen or the player's own allocations.
