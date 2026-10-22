@@ -219,7 +219,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
   // Get actor image URL
   const actorImageUrl = useMemo(() => {
     if (!item?.Id || !api?.basePath) return null;
-    return `${api.basePath}/Items/${item.Id}/Images/Primary?fillWidth=${ACTOR_IMAGE_SIZE * 2}&fillHeight=${ACTOR_IMAGE_SIZE * 2}&quality=90`;
+    return `${api.basePath}/Items/${item.Id}/Images/Primary?fillWidth=${toImagePixels(ACTOR_IMAGE_SIZE)}&fillHeight=${toImagePixels(ACTOR_IMAGE_SIZE)}&quality=90`;
   }, [api?.basePath, item?.Id]);
 
   // Handle filmography item press

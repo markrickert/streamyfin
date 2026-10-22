@@ -4,7 +4,6 @@ import React from "react";
 import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
 
@@ -36,7 +35,6 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
   const imageUrl = getPrimaryImageUrl({
     api,
     item: channel,
-    quality: IMAGE_QUALITY,
     width: 200,
   });
 

@@ -91,7 +91,7 @@ const TVLibraryRow: React.FC<{
   const { width: screenWidth } = useWindowDimensions();
 
   // The card covers the row's full width and CARD_HEIGHT; request the pixels
-  // that box covers instead of an unbounded 1920-wide backdrop.
+  // that box covers.
   const backdropUrl = useMemo(() => {
     return getBackdropUrl({
       api,

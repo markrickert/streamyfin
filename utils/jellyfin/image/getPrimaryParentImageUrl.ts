@@ -29,7 +29,7 @@ export const getPrimaryParentImageUrl = ({
 
   const params = new URLSearchParams({
     fillWidth: width ? String(width) : "500",
-    quality: quality ? String(quality) : String(IMAGE_QUALITY),
+    quality: String(quality || IMAGE_QUALITY),
     tag: primaryTag || "",
   });
 

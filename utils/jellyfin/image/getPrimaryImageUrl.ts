@@ -45,7 +45,7 @@ export const getPrimaryImageUrl = ({
 
   const params = new URLSearchParams({
     fillWidth: width ? String(width) : "500",
-    quality: quality ? String(quality) : String(IMAGE_QUALITY),
+    quality: String(quality || IMAGE_QUALITY),
     ...(height ? fillHeightParams(height) : null),
   });
 

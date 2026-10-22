@@ -54,7 +54,7 @@ export const MAX_CARD_IMAGE_WIDTH_PX = 800;
  * scrolled back into view come from memory. Full-screen backdrops (8 MB each)
  * are prefetched to disk only and do not count on this budget.
  */
-export const TV_IMAGE_MEMORY_CACHE_BYTES_1080P = 16 * 1024 * 1024;
+const TV_IMAGE_MEMORY_CACHE_BYTES_1080P = 16 * 1024 * 1024;
 
 /**
  * The TV image memory cache budget for a screen this many physical pixels

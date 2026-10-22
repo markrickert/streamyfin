@@ -1,7 +1,10 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { PixelRatio } from "react-native";
 import { makeApi } from "@/test-utils/jellyfinApi";
-import { getTVPosterImageUrl } from "./getTVPosterImageUrl";
+import {
+  getTVEpisodeArtworkUrl,
+  getTVPosterImageUrl,
+} from "./getTVPosterImageUrl";
 
 const api = makeApi();
 
@@ -116,7 +119,7 @@ describe("getTVPosterImageUrl", () => {
     });
   });
 
-  describe("picks the same artwork as before", () => {
+  describe("picks artwork in fallback order", () => {
     beforeEach(() => {
       onScreenDensity(1);
     });
@@ -230,6 +233,16 @@ describe("getTVPosterImageUrl", () => {
         `${api.basePath}/Items/series-1/Images/Primary?fillWidth=200&quality=80&tag=series-poster-tag`,
       );
     });
+  });
+
+  // The detail page draws the series artwork at its own size, not a card's,
+  // and must still ask for the tagged series thumb the cards ask for.
+  test("the episode artwork at an exact pixel width", () => {
+    const url = getTVEpisodeArtworkUrl({ api, item: episode, widthPx: 672 });
+
+    expect(url).toBe(
+      `${api.basePath}/Items/series-1/Images/Thumb?fillWidth=672&fillHeight=378&quality=80&tag=series-thumb-tag`,
+    );
   });
 
   test("returns null without an api", () => {

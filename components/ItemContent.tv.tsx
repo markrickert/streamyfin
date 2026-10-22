@@ -17,7 +17,7 @@ import React, {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Dimensions, ScrollView, View } from "react-native";
+import { Alert, ScrollView, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AwardsBadge } from "@/components/AwardsBadge";
 import { BITRATES, type Bitrate } from "@/components/BitrateSelector";
@@ -45,7 +45,6 @@ import {
   TVTechnicalDetails,
 } from "@/components/tv";
 import type { Track } from "@/components/video-player/controls/types";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import useDefaultPlaySettings from "@/hooks/useDefaultPlaySettings";
@@ -66,7 +65,11 @@ import { useSettings } from "@/utils/atoms/settings";
 import type { TVOptionItem } from "@/utils/atoms/tvOptionModal";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
 import { getPrimaryImageUrlById } from "@/utils/jellyfin/image/getPrimaryImageUrlById";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { getTVEpisodeArtworkUrl } from "@/utils/jellyfin/image/getTVPosterImageUrl";
+import {
+  landscapeBoxQuery,
+  toImagePixels,
+} from "@/utils/jellyfin/image/imagePixels";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { streamLanguageName } from "@/utils/jellyfin/trackLabel";
@@ -79,8 +82,6 @@ import {
   type TrackMenuRow,
 } from "@/utils/subtitles/trackMenu";
 import { formatDuration, runtimeTicksToMinutes } from "@/utils/time";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // One array for "no collections", so the memoized section is not handed a new
 // one on every render.
@@ -103,6 +104,11 @@ interface ItemContentTVProps {
 export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
   ({ item, itemWithSources }) => {
     const typography = useScaledTVTypography();
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    // An episode's still is drawn 16:9 at this width, and requested at the
+    // pixels that box covers.
+    const episodeImageWidth = screenWidth * 0.35;
+    const episodeImageWidthPx = toImagePixels(episodeImageWidth);
     const [api] = useAtom(apiAtom);
     const [user] = useAtom(userAtom);
     const isOffline = useOfflineMode();
@@ -599,35 +605,22 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
       return getPrimaryImageUrlById({ api, id: seasonId, width: 300 });
     }, [api, item?.Type, item?.SeasonId, item?.ParentId]);
 
-    // The episode still is drawn in a 16:9 box 35% of the screen wide; ask
-    // for the pixels that box covers instead of a fixed height.
-    const episodeImageBox = useMemo(() => {
-      const widthPx = toImagePixels(SCREEN_WIDTH * 0.35);
-      return `fillWidth=${widthPx}&fillHeight=${Math.round((widthPx * 9) / 16)}&quality=${IMAGE_QUALITY}`;
-    }, []);
-
     // Episode thumbnail URL - episode's own primary image (16:9 for episodes)
     const episodeThumbnailUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !api) return null;
-      return `${api.basePath}/Items/${item.Id}/Images/Primary?${episodeImageBox}`;
-    }, [api, item, episodeImageBox]);
+      return `${api.basePath}/Items/${item.Id}/Images/Primary?${landscapeBoxQuery(episodeImageWidthPx)}`;
+    }, [api, item, episodeImageWidthPx]);
 
     // Series thumb URL - used when showSeriesPosterOnEpisode setting is enabled
     const seriesThumbUrl = useMemo(() => {
-      if (item?.Type !== "Episode" || !api) return null;
-      // No parent thumb means the series carries no Thumb image, and the tagless
-      // request below 404s. Use the series backdrop instead, like the cards do.
-      const parentBackdropTag = item.ParentBackdropImageTags?.[0];
-      if (
-        !(item.ParentThumbItemId && item.ParentThumbImageTag) &&
-        item.ParentBackdropItemId &&
-        parentBackdropTag
-      ) {
-        return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?${episodeImageBox}&tag=${parentBackdropTag}`;
-      }
-      if (!item.SeriesId) return null;
-      return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?${episodeImageBox}`;
-    }, [api, item, episodeImageBox]);
+      if (item?.Type !== "Episode") return null;
+      // The cards' artwork cascade, so the two share one image.
+      return getTVEpisodeArtworkUrl({
+        api,
+        item,
+        widthPx: episodeImageWidthPx,
+      });
+    }, [api, item, episodeImageWidthPx]);
 
     // Navigation handlers
     const handleActorPress = useCallback(
@@ -697,7 +690,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
           <View
             style={{
               flexDirection: "row",
-              minHeight: SCREEN_HEIGHT * 0.45,
+              minHeight: screenHeight * 0.45,
             }}
           >
             {/* Left side - Content */}
@@ -776,7 +769,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   style={{
                     borderRadius: scaleSize(8),
                     overflow: "hidden",
-                    maxWidth: SCREEN_WIDTH * 0.45,
+                    maxWidth: screenWidth * 0.45,
                     marginBottom: scaleSize(24),
                   }}
                 >
@@ -978,8 +971,8 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
               style={{
                 width:
                   item.Type === "Episode"
-                    ? SCREEN_WIDTH * 0.35
-                    : SCREEN_WIDTH * 0.22,
+                    ? episodeImageWidth
+                    : screenWidth * 0.22,
                 marginLeft: scaleSize(50),
               }}
             >

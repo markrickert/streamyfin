@@ -1,6 +1,7 @@
 import { PixelRatio } from "react-native";
 import {
   CARD_IMAGE_WIDTH_STEP_PX,
+  IMAGE_QUALITY,
   MAX_CARD_IMAGE_WIDTH_PX,
   MAX_IMAGE_SIDE_PX,
 } from "@/constants/Images";
@@ -41,3 +42,7 @@ export const cardImageWidth = (cardWidth: number) =>
       CARD_IMAGE_WIDTH_STEP_PX,
     MAX_CARD_IMAGE_WIDTH_PX,
   );
+
+/** Query asking for artwork that covers a 16:9 box this many pixels wide. */
+export const landscapeBoxQuery = (widthPx: number) =>
+  `fillWidth=${widthPx}&fillHeight=${Math.round((widthPx * 9) / 16)}&quality=${IMAGE_QUALITY}`;

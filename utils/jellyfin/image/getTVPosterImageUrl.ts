@@ -1,35 +1,43 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { IMAGE_QUALITY } from "@/constants/Images";
 import { getPrimaryImageUrl } from "./getPrimaryImageUrl";
-import { cardImageWidth } from "./imagePixels";
+import { cardImageWidth, landscapeBoxQuery } from "./imagePixels";
+
+type Artwork = {
+  itemId: string;
+  imageType: ImageType;
+  tag?: string | null;
+};
 
 /**
  * Where a landscape card's episode artwork comes from, in fallback order:
- * the series' thumb, then its backdrop, then the episode's own still, then a
- * tagless series-thumb request for episodes carrying no artwork fields at
- * all (their own Primary 404s, the series' usually does not).
+ * the series' thumb, then its backdrop, then the episode's own still (first,
+ * with `preferEpisodeImage`), then a tagless series-thumb request for
+ * episodes carrying no artwork fields at all (their own Primary 404s, the
+ * series' usually does not).
  */
 const episodeArtwork = (
   item: BaseItemDto,
   preferEpisodeImage: boolean,
-): {
-  itemId: string;
-  imageType: "Primary" | "Thumb" | "Backdrop";
-  tag?: string | null;
-} | null => {
-  if (preferEpisodeImage && item.Id && item.ImageTags?.Primary) {
-    return {
-      itemId: item.Id,
-      imageType: "Primary",
-      tag: item.ImageTags.Primary,
-    };
-  }
+): Artwork => {
+  const still: Artwork | null =
+    item.Id && item.ImageTags?.Primary
+      ? {
+          itemId: item.Id,
+          imageType: ImageType.Primary,
+          tag: item.ImageTags.Primary,
+        }
+      : null;
+  if (preferEpisodeImage && still) return still;
   // Matched pair: ParentThumbItemId owns the Thumb tag, not ParentBackdropItemId.
   if (item.ParentThumbItemId && item.ParentThumbImageTag) {
     return {
       itemId: item.ParentThumbItemId,
-      imageType: "Thumb",
+      imageType: ImageType.Thumb,
       tag: item.ParentThumbImageTag,
     };
   }
@@ -37,30 +45,49 @@ const episodeArtwork = (
   if (item.ParentBackdropItemId && parentBackdropTag) {
     return {
       itemId: item.ParentBackdropItemId,
-      imageType: "Backdrop",
+      imageType: ImageType.Backdrop,
       tag: parentBackdropTag,
     };
   }
-  if (item.Id && item.ImageTags?.Primary) {
-    return {
-      itemId: item.Id,
-      imageType: "Primary",
-      tag: item.ImageTags.Primary,
-    };
-  }
-  if (item.SeriesId) {
-    return { itemId: item.SeriesId, imageType: "Thumb" };
-  }
-  return null;
+  if (still) return still;
+  if (item.SeriesId)
+    return { itemId: item.SeriesId, imageType: ImageType.Thumb };
+  return { itemId: item.Id!, imageType: ImageType.Primary };
 };
+
+const landscapeUrl = (
+  api: Api,
+  { itemId, imageType, tag }: Artwork,
+  widthPx: number,
+) =>
+  `${api.basePath}/Items/${itemId}/Images/${imageType}?${landscapeBoxQuery(widthPx)}${tag ? `&tag=${tag}` : ""}`;
+
+/**
+ * An episode's landscape artwork, picked as `episodeArtwork` does, covering a
+ * 16:9 box this many pixels wide. For artwork drawn at a size of its own; a
+ * card goes through `getTVPosterImageUrl`.
+ */
+export const getTVEpisodeArtworkUrl = ({
+  api,
+  item,
+  widthPx,
+  preferEpisodeImage = false,
+}: {
+  api?: Api | null;
+  item: BaseItemDto;
+  widthPx: number;
+  preferEpisodeImage?: boolean;
+}): string | null =>
+  api
+    ? landscapeUrl(api, episodeArtwork(item, preferEpisodeImage), widthPx)
+    : null;
 
 /**
  * Artwork for a TV poster card, requested at the size the card is drawn.
  *
- * A landscape card prefers wide artwork: an episode shows its series' thumb,
- * then its series' backdrop, then its own still (first, with
- * `preferEpisodeImage`); anything else shows its thumb, then its primary
- * image. A portrait card shows the primary image, an episode its series'.
+ * A landscape card prefers wide artwork: an episode follows `episodeArtwork`,
+ * anything else shows its thumb, then its primary image. A portrait card
+ * shows the primary image, an episode its series'.
  *
  * @param widthPoints - The card's width in layout points.
  */
@@ -82,20 +109,21 @@ export const getTVPosterImageUrl = ({
   const imageWidth = cardImageWidth(widthPoints);
 
   if (orientation === "horizontal") {
-    const box = `fillWidth=${imageWidth}&fillHeight=${Math.round((imageWidth * 9) / 16)}&quality=${IMAGE_QUALITY}`;
-    const image = (itemId: string, type: string, tag?: string | null) =>
-      `${api.basePath}/Items/${itemId}/Images/${type}?${box}${tag ? `&tag=${tag}` : ""}`;
-
-    if (item.Type === "Episode") {
-      const artwork = episodeArtwork(item, preferEpisodeImage);
-      if (artwork) return image(artwork.itemId, artwork.imageType, artwork.tag);
-      return image(item.Id!, "Primary", item.ImageTags?.Primary);
-    }
-
-    if (item.ImageTags?.Thumb) {
-      return image(item.Id!, "Thumb", item.ImageTags.Thumb);
-    }
-    return image(item.Id!, "Primary", item.ImageTags?.Primary);
+    const artwork: Artwork =
+      item.Type === "Episode"
+        ? episodeArtwork(item, preferEpisodeImage)
+        : item.ImageTags?.Thumb
+          ? {
+              itemId: item.Id!,
+              imageType: ImageType.Thumb,
+              tag: item.ImageTags.Thumb,
+            }
+          : {
+              itemId: item.Id!,
+              imageType: ImageType.Primary,
+              tag: item.ImageTags?.Primary,
+            };
+    return landscapeUrl(api, artwork, imageWidth);
   }
 
   if (item.Type === "Episode" && item.SeriesId && item.SeriesPrimaryImageTag) {
