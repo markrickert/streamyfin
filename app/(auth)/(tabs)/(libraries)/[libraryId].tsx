@@ -815,7 +815,7 @@ const Page = () => {
         const playlistImageUrl = getPrimaryImageUrl({
           api,
           item,
-          width: TV_PLAYLIST_SQUARE_SIZE * 2,
+          widthPoints: TV_PLAYLIST_SQUARE_SIZE,
         });
 
         return (

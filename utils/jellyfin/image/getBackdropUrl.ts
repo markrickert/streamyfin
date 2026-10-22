@@ -1,64 +1,61 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
+import { IMAGE_QUALITY } from "@/constants/Images";
 import { getPrimaryImageUrl } from "./getPrimaryImageUrl";
-import { fillHeightParams } from "./imagePixels";
+import { imageUrl, pointsBox } from "./imageUrl";
 
 /**
- * Retrieves the backdrop image URL for a given item, falling back to its
- * primary image when it has no backdrop.
+ * Build the item's backdrop URL, falling back to its primary image when it
+ * has no backdrop.
  *
  * @param api - The Jellyfin API instance.
  * @param item - The media item to retrieve the backdrop image URL for.
  * @param quality - The desired image quality.
- * @param width - The image width in physical pixels, not layout points:
- *   convert with `toImagePixels`.
- * @param height - The height of the box the image has to cover, in physical
- *   pixels. Pass it whenever the image is drawn cover fit.
+ * @param widthPoints - The width the backdrop draws at, in layout points;
+ *   the request asks for the pixels that covers.
+ * @param heightPoints - The height of the box the backdrop covers, in
+ *   layout points — pass it whenever the image draws cover fit.
  */
 export const getBackdropUrl = ({
   api,
   item,
-  quality,
-  width,
-  height,
+  quality = IMAGE_QUALITY,
+  widthPoints,
+  heightPoints,
 }: {
   api?: Api | null;
   item?: BaseItemDto | null;
   quality?: number;
-  width?: number;
-  height?: number;
+  widthPoints?: number;
+  heightPoints?: number;
 }) => {
   if (!api || !item) {
     return null;
   }
 
-  const backdropImageTags = item.BackdropImageTags?.[0];
+  const backdropImageTag = item.BackdropImageTags?.[0];
 
-  const params = new URLSearchParams();
-
-  if (quality) {
-    params.append("quality", quality.toString());
+  if (item.Type === "Episode" || !item.Id || !backdropImageTag) {
+    return getPrimaryImageUrl({
+      api,
+      item,
+      quality,
+      widthPoints,
+      heightPoints,
+    });
   }
 
-  if (width) {
-    params.append("fillWidth", width.toString());
-  }
-
-  if (height) {
-    for (const [name, value] of Object.entries(fillHeightParams(height))) {
-      params.append(name, value);
-    }
-  }
-
-  if (item.Type === "Episode") {
-    return getPrimaryImageUrl({ api, item, quality, width, height });
-  }
-
-  if (backdropImageTags) {
-    params.append("tag", backdropImageTags);
-    return `${api.basePath}/Items/${
-      item.Id
-    }/Images/Backdrop/0?${params.toString()}`;
-  }
-  return getPrimaryImageUrl({ api, item, quality, width, height });
+  return imageUrl(
+    api,
+    {
+      itemId: item.Id,
+      imageType: ImageType.Backdrop,
+      tag: backdropImageTag,
+      index: 0,
+    },
+    { ...pointsBox({ widthPoints, heightPoints }), quality },
+  );
 };

@@ -5,7 +5,10 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { useAtom } from "jotai";
 import React, {
   useCallback,
@@ -40,6 +43,7 @@ import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 
 interface Props {
   open: boolean;
@@ -107,11 +111,15 @@ export const TrackOptionsSheet: React.FC<Props> = ({
     [track?.Id, storageUpdateCounter],
   );
 
-  const imageUrl = useMemo(() => {
+  const artwork = useMemo(() => {
     if (!track) return null;
     const albumId = track.AlbumId || track.ParentId;
     if (albumId) {
-      return `${api?.basePath}/Items/${albumId}/Images/Primary?maxHeight=200&maxWidth=200`;
+      return imageUrl(
+        api,
+        { itemId: albumId, imageType: ImageType.Primary },
+        { maxHeightPx: 200, maxWidthPx: 200 },
+      );
     }
     return getPrimaryImageUrl({ api, item: track });
   }, [api, track]);
@@ -262,9 +270,9 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               marginRight: 12,
             }}
           >
-            {imageUrl ? (
+            {artwork ? (
               <Image
-                source={{ uri: imageUrl }}
+                source={{ uri: artwork }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit='cover'
                 cachePolicy='memory-disk'

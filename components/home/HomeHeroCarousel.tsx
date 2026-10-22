@@ -1,7 +1,8 @@
 import type { Api } from "@jellyfin/sdk";
-import type {
-  BaseItemDto,
-  BaseItemKind,
+import {
+  type BaseItemDto,
+  type BaseItemKind,
+  ImageType,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import {
   getItemsApi,
@@ -35,8 +36,8 @@ import {
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
 import { getParentBackdropImageUrl } from "@/utils/jellyfin/image/getParentBackdropImageUrl";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
+import { resolveArtwork } from "@/utils/jellyfin/image/resolveArtwork";
 import { runtimeTicksToMinutes } from "@/utils/time";
 import { getItemNavigation } from "../common/TouchableItemRouter";
 
@@ -51,13 +52,7 @@ const heroMetrics = (windowWidth: number) => {
   // Matches the 36pt page margin inside the native view.
   const cardWidth = Math.max(windowWidth - 72, 1);
   const cardHeight = Math.round(Math.min(cardWidth * 1.15, 440));
-  return {
-    cardHeight,
-    // The backdrop covers the whole card, which on a phone is taller than
-    // 16:9: the request has to carry both sides, in physical pixels.
-    backdropWidth: toImagePixels(cardWidth),
-    backdropHeight: toImagePixels(cardHeight),
-  };
+  return { cardWidth, cardHeight };
 };
 
 const IMAGE_TYPES = ["Primary", "Backdrop", "Logo", "Thumb"] as const;
@@ -229,8 +224,8 @@ const buildSubtitle = (item: BaseItemDto): string | null => {
 const buildBackdropUrl = (
   api: Api,
   item: BaseItemDto,
-  width: number,
-  height: number,
+  widthPoints: number,
+  heightPoints: number,
 ): string | null => {
   // Episodes/seasons: prefer the series backdrop over the episode still.
   if (
@@ -238,45 +233,39 @@ const buildBackdropUrl = (
     item.ParentBackdropItemId &&
     item.ParentBackdropImageTags?.length
   ) {
-    return getParentBackdropImageUrl({
-      api,
-      item,
-      quality: IMAGE_QUALITY,
-      width,
-      height,
-    });
+    return getParentBackdropImageUrl({ api, item, widthPoints, heightPoints });
   }
-  return getBackdropUrl({ api, item, quality: IMAGE_QUALITY, width, height });
+  return getBackdropUrl({ api, item, widthPoints, heightPoints });
 };
 
 const buildLogoUrl = (api: Api, item: BaseItemDto): string | null => {
   // Handles the item's own logo and the Episode → parent logo case.
-  const own = getLogoImageUrlById({ api, item, height: 120 });
+  const own = getLogoImageUrlById({ api, item, heightPx: 120 });
   if (own) return own;
   // Seasons carry the series logo only through the Parent* fields.
   if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-    const params = new URLSearchParams({
-      tag: item.ParentLogoImageTag,
-      quality: "90",
-      fillHeight: "120",
-    });
-    return `${api.basePath}/Items/${item.ParentLogoItemId}/Images/Logo?${params.toString()}`;
+    return imageUrl(
+      api,
+      {
+        itemId: item.ParentLogoItemId,
+        imageType: ImageType.Logo,
+        tag: item.ParentLogoImageTag,
+      },
+      { fillHeightPx: 120, quality: 90 },
+    );
   }
   return null;
 };
 
 const buildPosterUrl = (api: Api, item: BaseItemDto): string | null => {
-  // An episode's Primary is a 16:9 still that crops badly in the portrait
-  // thumb slot; use the series poster instead.
-  if (item.Type === "Episode" && item.SeriesId && item.SeriesPrimaryImageTag) {
-    const params = new URLSearchParams({
-      tag: item.SeriesPrimaryImageTag,
-      quality: "90",
-      fillWidth: "240",
-    });
-    return `${api.basePath}/Items/${item.SeriesId}/Images/Primary?${params.toString()}`;
-  }
-  return getPrimaryImageUrl({ api, item, width: 240 });
+  // Borrow the series poster through `portraitCard`: the episode's own
+  // Primary is a 16:9 still that crops badly in the portrait slot.
+  const artwork = resolveArtwork(item, "portraitCard");
+  if (!artwork) return null;
+  // Request the borrowed poster at quality 90 — it leads a whole show —
+  // while the item's own keeps `IMAGE_QUALITY`.
+  const quality = artwork.itemId === item.Id ? IMAGE_QUALITY : 90;
+  return imageUrl(api, artwork, { fillWidthPx: 240, quality });
 };
 
 const buildBadges = (item: BaseItemDto): string[] => {
@@ -556,8 +545,8 @@ export const HomeHeroCarousel = () => {
       backdropUrl: buildBackdropUrl(
         api,
         item,
-        metrics.backdropWidth,
-        metrics.backdropHeight,
+        metrics.cardWidth,
+        metrics.cardHeight,
       ),
       logoUrl: buildLogoUrl(api, item),
       posterUrl: buildPosterUrl(api, item),
@@ -567,7 +556,7 @@ export const HomeHeroCarousel = () => {
         ? item.UserData.PlayedPercentage / 100
         : null,
     }));
-  }, [api, entries, t, metrics.backdropWidth, metrics.backdropHeight]);
+  }, [api, entries, t, metrics.cardWidth, metrics.cardHeight]);
 
   // An admin-locked setting is dropped by updateSettings, so offering its row
   // would just be a dead tap. Omit those rows the way the settings screen

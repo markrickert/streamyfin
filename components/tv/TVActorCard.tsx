@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { ImageType } from "@jellyfin/sdk/lib/generated-client/models";
 import React from "react";
 import { Animated, Pressable, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { useScaledTVTypography } from "@/constants/TVTypography";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -24,9 +26,14 @@ export const TVActorCard = React.forwardRef<View, TVActorCardProps>(
     const { focused, handleFocus, handleBlur, animatedStyle } =
       useTVFocusAnimation();
 
-    const imageUrl = person.Id
-      ? `${apiBasePath}/Items/${person.Id}/Images/Primary?fillWidth=280&fillHeight=280&quality=90`
-      : null;
+    const artwork =
+      person.Id && apiBasePath
+        ? imageUrl(
+            { basePath: apiBasePath },
+            { itemId: person.Id, imageType: ImageType.Primary },
+            { fillWidthPx: 280, fillHeightPx: 280, quality: 90 },
+          )
+        : null;
 
     return (
       <Pressable
@@ -61,9 +68,9 @@ export const TVActorCard = React.forwardRef<View, TVActorCardProps>(
               borderColor: focused ? "#FFFFFF" : "transparent",
             }}
           >
-            {imageUrl ? (
+            {artwork ? (
               <Image
-                source={{ uri: imageUrl }}
+                source={{ uri: artwork }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit='cover'
               />

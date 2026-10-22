@@ -1,63 +1,50 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { IMAGE_QUALITY } from "@/constants/Images";
+import { cardImageWidth } from "./imagePixels";
+import { imageUrl } from "./imageUrl";
+import { resolveArtwork } from "./resolveArtwork";
 
 /**
- * Landscape (16:9-ish) image for an item, as used by the continue-watching
- * cards: the Thumb when the item has one, with a failover to Primary.
+ * Build a landscape (16:9-ish) card image URL through the `wideCard`
+ * chain — the Thumb when the item has one, failing over to Primary.
  *
  * @param useEpisodePoster - Prefer the episode's own still over the series
  *   Thumb for episodes (the `useEpisodeImagesForNextUp` setting).
- * @param fillHeight - The image height in physical pixels, not layout points:
- *   convert with `toImagePixels`.
- * @param fillWidth - The width of the box the image has to cover, in physical
- *   pixels. Pass it whenever the image is drawn cover fit: the Primary
- *   failover can be a 2:3 poster, which the height alone leaves far too narrow.
+ * @param widthPoints - The card's width in layout points; the request asks
+ *   for the pixels that covers.
  */
 export const getWideImageUrl = ({
   api,
   item,
   useEpisodePoster = false,
-  fillHeight,
-  fillWidth,
+  widthPoints,
   quality = IMAGE_QUALITY,
 }: {
   api?: Api | null;
   item?: BaseItemDto | null;
   useEpisodePoster?: boolean;
-  fillHeight: number;
-  fillWidth?: number;
+  widthPoints: number;
   quality?: number;
-}): string | undefined => {
-  if (!api || !item?.Id) return undefined;
+}): string | null => {
+  if (!api || !item?.Id) return null;
 
-  // With both sides the server returns the smallest image that fills the box,
-  // whichever side binds. A Thumb is as wide as the card, so its height is
-  // enough; a Primary image is whatever shape the item's artwork has.
-  const primaryBox = fillWidth
-    ? `fillWidth=${fillWidth}&fillHeight=${fillHeight}`
-    : `fillHeight=${fillHeight}`;
-  const primary = `${api.basePath}/Items/${item.Id}/Images/Primary?${primaryBox}&quality=${quality}`;
-  const thumb = (itemId: string, tag: string) =>
-    `${api.basePath}/Items/${itemId}/Images/Thumb?fillHeight=${fillHeight}&quality=${quality}&tag=${tag}`;
+  const artwork = resolveArtwork(item, "wideCard", {
+    preferEpisodeImage: useEpisodePoster,
+  });
+  if (!artwork) return null;
 
-  if (item.Type === "Episode") {
-    if (useEpisodePoster) return primary;
-
-    // Matched pair: the parent that owns the Thumb (ParentThumbItemId), not the
-    // backdrop owner — otherwise the Thumb tag is requested on the wrong item → black.
-    // Unlike the TV card path (getTVPosterImageUrl), no series-backdrop
-    // fallback: a wide row card falls back on the episode's own still.
-    if (item.ParentThumbItemId && item.ParentThumbImageTag) {
-      return thumb(item.ParentThumbItemId, item.ParentThumbImageTag);
-    }
-
-    return primary;
-  }
-
-  if (item.ImageTags?.Thumb) {
-    return thumb(item.Id, item.ImageTags.Thumb);
-  }
-
-  return primary;
+  const widthPx = cardImageWidth(widthPoints);
+  const heightPx = Math.round((widthPx * 9) / 16);
+  // A Thumb spans the card's width, so ask by height alone. A Primary
+  // keeps the artwork's own shape — a 2:3 poster asked by height alone
+  // returns far too narrow — so it asks by width too.
+  const box =
+    artwork.imageType === ImageType.Thumb
+      ? { fillHeightPx: heightPx, quality }
+      : { fillWidthPx: widthPx, fillHeightPx: heightPx, quality };
+  return imageUrl(api, artwork, box);
 };

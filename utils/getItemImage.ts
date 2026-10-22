@@ -1,20 +1,27 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import type { ImageSource } from "expo-image";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
-import { fillHeightParams } from "@/utils/jellyfin/image/imagePixels";
+import {
+  type Artwork,
+  coverBox,
+  imageUrl,
+} from "@/utils/jellyfin/image/imageUrl";
 
 interface Props {
   item: BaseItemDto;
   api: Api;
   quality?: number;
   /** Image width in physical pixels, not layout points. */
-  width?: number;
+  widthPx?: number;
   /**
-   * Height of the box the image has to cover, in physical pixels. With it the
-   * request becomes "cover a `width` by `height` box" instead of a fixed width.
+   * Height of the box the image covers, in physical pixels. With it the
+   * request covers a `widthPx` by `heightPx` box instead of a fixed width.
    */
-  height?: number;
+  heightPx?: number;
   variant?:
     | "Primary"
     | "Backdrop"
@@ -32,76 +39,79 @@ export const getItemImage = ({
   api,
   variant = "Primary",
   quality = 90,
-  width = 1000,
-  height,
+  widthPx = 1000,
+  heightPx,
 }: Props) => {
   if (!api) return null;
 
-  const size = height
-    ? new URLSearchParams({
-        fillWidth: String(Math.round(width)),
-        ...fillHeightParams(height),
-      }).toString()
-    : `width=${width}`;
+  const size = heightPx
+    ? coverBox({ fillWidthPx: widthPx, fillHeightPx: heightPx })
+    : { widthPx };
 
-  let tag: string | null | undefined;
+  let artwork: Artwork | null = null;
   let blurhash: string | null | undefined;
-  let src: ImageSource | null = null;
 
   switch (variant) {
-    case "Backdrop":
+    case "Backdrop": {
       if (item.Type === "Episode") {
-        tag = item.ParentBackdropImageTags?.[0];
-        if (!tag) break;
+        const tag = item.ParentBackdropImageTags?.[0];
+        if (!item.ParentBackdropItemId || !tag) break;
         blurhash = item.ImageBlurHashes?.Backdrop?.[tag];
-        src = {
-          uri: `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop/0?quality=${quality}&tag=${tag}&${size}`,
-          blurhash,
+        artwork = {
+          itemId: item.ParentBackdropItemId,
+          imageType: ImageType.Backdrop,
+          tag,
+          index: 0,
         };
         break;
       }
 
-      tag = item.BackdropImageTags?.[0];
-      if (!tag) break;
+      const tag = item.BackdropImageTags?.[0];
+      if (!item.Id || !tag) break;
       blurhash = item.ImageBlurHashes?.Backdrop?.[tag];
-      src = {
-        uri: `${api.basePath}/Items/${item.Id}/Images/Backdrop/0?quality=${quality}&tag=${tag}&${size}`,
-        blurhash,
+      artwork = {
+        itemId: item.Id,
+        imageType: ImageType.Backdrop,
+        tag,
+        index: 0,
       };
       break;
+    }
     case "Primary":
-      tag = item.ImageTags?.Primary;
-      if (!tag) break;
-      blurhash = item.ImageBlurHashes?.Primary?.[tag];
-
-      src = {
-        uri: `${api.basePath}/Items/${item.Id}/Images/Primary?quality=${quality}&tag=${tag}&${size}`,
-        blurhash,
+      if (!item.Id || !item.ImageTags?.Primary) break;
+      blurhash = item.ImageBlurHashes?.Primary?.[item.ImageTags.Primary];
+      artwork = {
+        itemId: item.Id,
+        imageType: ImageType.Primary,
+        tag: item.ImageTags.Primary,
       };
       break;
     case "Thumb":
-      tag = item.ImageTags?.Thumb;
-      if (!tag) break;
-      blurhash = item.ImageBlurHashes?.Thumb?.[tag];
-
-      src = {
-        uri: `${api.basePath}/Items/${item.Id}/Images/Thumb?quality=${quality}&tag=${tag}&${size}`,
-        blurhash,
+      if (!item.Id || !item.ImageTags?.Thumb) break;
+      blurhash = item.ImageBlurHashes?.Thumb?.[item.ImageTags.Thumb];
+      artwork = {
+        itemId: item.Id,
+        imageType: ImageType.Thumb,
+        tag: item.ImageTags.Thumb,
       };
       break;
     default:
-      tag = item.ImageTags?.Primary;
-      src = {
-        uri: `${api.basePath}/Items/${item.Id}/Images/Primary?quality=${quality}&tag=${tag}&${size}`,
+      if (!item.Id) break;
+      artwork = {
+        itemId: item.Id,
+        imageType: ImageType.Primary,
+        tag: item.ImageTags?.Primary,
       };
       break;
   }
 
-  if (!src?.uri) return null;
+  const uri = artwork && imageUrl(api, artwork, { ...size, quality });
+  if (!uri) return null;
 
   // The consumers pass this straight to expo-image or download it, so the
   // proxy auth headers have to travel with the source rather than be added by
   // the <Image> wrapper.
-  const headers = getJellyfinHeadersForUrl(src.uri, api.basePath);
+  const headers = getJellyfinHeadersForUrl(uri, api.basePath);
+  const src: ImageSource = { uri, blurhash: blurhash ?? undefined };
   return headers ? { ...src, headers } : src;
 };

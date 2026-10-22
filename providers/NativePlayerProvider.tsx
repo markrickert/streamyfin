@@ -101,7 +101,8 @@ import {
   getAdjacentStartTicks,
   getDefaultPlaySettings,
 } from "@/utils/jellyfin/getDefaultPlaySettings";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
+import { resolveArtwork } from "@/utils/jellyfin/image/resolveArtwork";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { subtitleSearchErrorMessage } from "@/utils/jellyfin/subtitleSearchAccess";
 import {
@@ -834,11 +835,9 @@ const NativePlayerProviderInner: React.FC<{
         title: next.Name ?? "",
         subtitle: [next.SeriesName, epNumber].filter(Boolean).join(" · "),
         imageUrl:
-          getPrimaryImageUrl({
-            api: apiRef.current,
-            item: next,
+          imageUrl(apiRef.current, resolveArtwork(next, "primary"), {
+            fillWidthPx: 300,
             quality: 80,
-            width: 300,
           }) ?? undefined,
         countdownSeconds: autoplayAllowed ? NEXT_EPISODE_COUNTDOWN_SECONDS : 0,
         // Autoplay would have run but the session is long enough to ask:
@@ -883,11 +882,9 @@ const NativePlayerProviderInner: React.FC<{
             title: ep.Name ?? "",
             indexNumber: ep.IndexNumber ?? undefined,
             imageUrl:
-              getPrimaryImageUrl({
-                api: apiRef.current,
-                item: ep,
+              imageUrl(apiRef.current, resolveArtwork(ep, "primary"), {
+                fillWidthPx: 300,
                 quality: 80,
-                width: 300,
               }) ?? undefined,
             progressPercent: ep.UserData?.PlayedPercentage ?? 0,
             isCurrent: ep.Id === item.Id,

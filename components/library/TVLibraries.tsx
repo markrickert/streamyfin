@@ -22,13 +22,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 
 const HORIZONTAL_PADDING = scaleSize(80);
@@ -96,9 +94,8 @@ const TVLibraryRow: React.FC<{
     return getBackdropUrl({
       api,
       item: library.previewItems?.[0] ?? library,
-      quality: IMAGE_QUALITY,
-      width: toImagePixels(screenWidth),
-      height: toImagePixels(CARD_HEIGHT),
+      widthPoints: screenWidth,
+      heightPoints: CARD_HEIGHT,
     });
   }, [api, library, screenWidth]);
 

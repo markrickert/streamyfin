@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { ImageType } from "@jellyfin/sdk/lib/generated-client/models";
 import { useAtom } from "jotai";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -25,6 +26,7 @@ import { Text } from "@/components/common/Text";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 
 const HORIZONTAL_MARGIN = Platform.OS === "android" ? 12 : 20;
 const BOTTOM_TAB_HEIGHT = Platform.OS === "android" ? 56 : 52;
@@ -60,13 +62,16 @@ export const MiniPlayerBar: React.FC = () => {
   // Gesture state
   const translateY = useSharedValue(0);
 
-  const imageUrl = useMemo(() => {
+  const artwork = useMemo(() => {
     if (!api || !currentTrack) return null;
     const albumId = currentTrack.AlbumId || currentTrack.ParentId;
-    if (albumId) {
-      return `${api.basePath}/Items/${albumId}/Images/Primary?maxHeight=100&maxWidth=100`;
-    }
-    return `${api.basePath}/Items/${currentTrack.Id}/Images/Primary?maxHeight=100&maxWidth=100`;
+    const artworkId = albumId || currentTrack.Id;
+    if (!artworkId) return null;
+    return imageUrl(
+      api,
+      { itemId: artworkId, imageType: ImageType.Primary },
+      { maxHeightPx: 100, maxWidthPx: 100 },
+    );
   }, [api, currentTrack]);
 
   const _progressPercentage = useMemo(() => {
@@ -166,9 +171,9 @@ export const MiniPlayerBar: React.FC = () => {
       >
         {/* Album art */}
         <View style={styles.albumArt}>
-          {imageUrl ? (
+          {artwork ? (
             <Image
-              source={{ uri: imageUrl }}
+              source={{ uri: artwork }}
               style={styles.albumImage}
               contentFit='cover'
               cachePolicy='memory-disk'

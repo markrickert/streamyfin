@@ -3,7 +3,6 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { getItemProgressPercentage } from "@/components/common/ProgressBar";
 import { getPortraitImageUrl } from "@/utils/jellyfin/image/getPortraitImageUrl";
 import { getWideImageUrl } from "@/utils/jellyfin/image/getWideImageUrl";
-import { cardImageWidth } from "@/utils/jellyfin/image/imagePixels";
 import { isLiveBroadcast } from "@/utils/jellyfin/media/isLiveBroadcast";
 
 /** One card. Everything is prebuilt here; the card view is presentational. */
@@ -230,8 +229,7 @@ export function buildItemCards(
   if (!api) return [];
 
   const layout = CARD_LAYOUTS[kind];
-  const imageWidth = cardImageWidth(cardWidth ?? layout.cardWidth);
-  const imageHeight = Math.round(imageWidth / layout.aspectRatio);
+  const widthPoints = cardWidth ?? layout.cardWidth;
 
   return items.flatMap((item) => {
     if (!item.Id) return [];
@@ -245,13 +243,12 @@ export function buildItemCards(
     const unplayed = item.UserData?.UnplayedItemCount ?? 0;
     const imageUrl =
       kind === "portrait"
-        ? getPortraitImageUrl({ api, item, width: imageWidth })
+        ? getPortraitImageUrl({ api, item, widthPoints })
         : getWideImageUrl({
             api,
             item,
             useEpisodePoster,
-            fillWidth: imageWidth,
-            fillHeight: imageHeight,
+            widthPoints,
           });
 
     const progress = itemProgressFraction(item);

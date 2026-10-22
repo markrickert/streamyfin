@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,7 +30,6 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { Loader } from "@/components/Loader";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
@@ -36,6 +38,7 @@ import { useTVItemActionModal } from "@/hooks/useTVItemActionModal";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 
 const HORIZONTAL_PADDING = 80;
@@ -139,9 +142,8 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
     return getBackdropUrl({
       api,
       item: itemForBackdrop,
-      quality: IMAGE_QUALITY,
-      width: toImagePixels(screenWidth),
-      height: toImagePixels(screenHeight),
+      widthPoints: screenWidth,
+      heightPoints: screenHeight,
     });
   }, [api, focusedItem, movies, series, screenWidth, screenHeight]);
 
@@ -219,7 +221,16 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
   // Get actor image URL
   const actorImageUrl = useMemo(() => {
     if (!item?.Id || !api?.basePath) return null;
-    return `${api.basePath}/Items/${item.Id}/Images/Primary?fillWidth=${toImagePixels(ACTOR_IMAGE_SIZE)}&fillHeight=${toImagePixels(ACTOR_IMAGE_SIZE)}&quality=90`;
+    const imagePx = toImagePixels(ACTOR_IMAGE_SIZE);
+    return imageUrl(
+      api,
+      {
+        itemId: item.Id,
+        imageType: ImageType.Primary,
+        tag: item.ImageTags?.Primary,
+      },
+      { fillWidthPx: imagePx, fillHeightPx: imagePx, quality: 90 },
+    );
   }, [api?.basePath, item?.Id]);
 
   // Handle filmography item press

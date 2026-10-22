@@ -12,14 +12,12 @@ import React, {
 } from "react";
 import { Animated, Easing, useWindowDimensions, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
 } from "@/constants/TVSizes";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 export interface TVHomeBackdropRef {
   handleItemFocus: (item: BaseItemDto) => void;
@@ -73,9 +71,8 @@ export const TVHomeBackdrop = React.memo(
       return getBackdropUrl({
         api,
         item: focusedItem,
-        quality: IMAGE_QUALITY,
-        width: toImagePixels(screenWidth),
-        height: toImagePixels(screenHeight),
+        widthPoints: screenWidth,
+        heightPoints: screenHeight,
       });
     }, [api, focusedItem, screenWidth, screenHeight]);
 

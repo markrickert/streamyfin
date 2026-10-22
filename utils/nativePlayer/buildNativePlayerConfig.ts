@@ -29,7 +29,8 @@ import {
   hasHeaders,
 } from "@/utils/customHeaders";
 import { withAcceptLanguageForUrl } from "@/utils/jellyfin/acceptLanguage";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
+import { resolveArtwork } from "@/utils/jellyfin/image/resolveArtwork";
 import { getStreamUrl } from "@/utils/jellyfin/media/getStreamUrl";
 import {
   getPlayMethod,
@@ -368,7 +369,10 @@ const buildMetadata = (item: BaseItemDto, api: Api | null) => {
     subtitle = String(item.ProductionYear);
   }
 
-  const artworkUri = getPrimaryImageUrl({ api, item, quality: 90, width: 500 });
+  const artworkUri = imageUrl(api, resolveArtwork(item, "primary"), {
+    fillWidthPx: 500,
+    quality: 90,
+  });
 
   return {
     itemId: item.Id ?? undefined,

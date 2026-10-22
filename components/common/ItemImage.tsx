@@ -53,8 +53,8 @@ export const ItemImage: FC<Props> = ({
       api,
       variant,
       quality,
-      width,
-      height,
+      widthPx: width,
+      heightPx: height,
     });
   }, [api, item, quality, variant, width, height]);
 

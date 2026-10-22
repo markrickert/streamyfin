@@ -46,7 +46,7 @@ describe("getLogoImageUrlById", () => {
     onScreenDensity(3);
 
     expect(
-      fillHeightOf(getLogoImageUrlById({ api, item: movie, height: 120 })),
+      fillHeightOf(getLogoImageUrlById({ api, item: movie, heightPx: 120 })),
     ).toBe("120");
   });
 
@@ -54,7 +54,7 @@ describe("getLogoImageUrlById", () => {
     onScreenDensity(3);
 
     expect(
-      fillHeightOf(getLogoImageUrlById({ api, item: movie, height: 2000 })),
+      fillHeightOf(getLogoImageUrlById({ api, item: movie, heightPx: 2000 })),
     ).toBe("600");
   });
 

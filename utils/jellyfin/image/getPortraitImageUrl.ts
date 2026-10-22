@@ -1,39 +1,26 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { IMAGE_QUALITY } from "@/constants/Images";
-import { getPrimaryImageUrl } from "./getPrimaryImageUrl";
+import { cardImageWidth } from "./imagePixels";
+import { imageUrl } from "./imageUrl";
+import { resolveArtwork } from "./resolveArtwork";
 
 /**
- * Portrait (10:15) poster image for an item, as used by the poster cards.
+ * Build a portrait (10:15) poster URL through the `portraitCard` chain: an
+ * episode has no poster of its own, so it borrows its series' primary
+ * image — what a vertical row of episodes is expected to show.
  *
- * An episode has no poster of its own, so it borrows its series' primary
- * image — that is what a vertical row of episodes is expected to show.
- *
- * @param width - The image width in physical pixels, not layout points:
- *   convert with `toImagePixels`.
+ * @param widthPoints - The card's width in layout points; the request asks
+ *   for the pixels that covers.
  */
 export const getPortraitImageUrl = ({
   api,
   item,
-  width,
+  widthPoints,
 }: {
   api?: Api | null;
   item?: BaseItemDto | null;
-  width: number;
-}): string | undefined => {
-  if (!api || !item) return undefined;
-
-  if (item.Type === "Episode" && item.SeriesId) {
-    // The same request the series' own card makes, so the two share one image.
-    const params = new URLSearchParams({
-      fillWidth: String(width),
-      quality: String(IMAGE_QUALITY),
-    });
-    if (item.SeriesPrimaryImageTag) {
-      params.set("tag", item.SeriesPrimaryImageTag);
-    }
-    return `${api.basePath}/Items/${item.SeriesId}/Images/Primary?${params.toString()}`;
-  }
-
-  return getPrimaryImageUrl({ api, item, width }) ?? undefined;
-};
+  widthPoints: number;
+}): string | null =>
+  imageUrl(api, resolveArtwork(item, "portraitCard"), {
+    fillWidthPx: cardImageWidth(widthPoints),
+  });

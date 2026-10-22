@@ -30,13 +30,16 @@ import type { Artwork } from "./imageUrl";
  *   instead of empty.
  * - `discoveryPoster`: episode → season Primary → series Primary → own
  *   Primary, all tag-verified. Non-episode → own Primary.
+ * - `primary`: the item's own Primary — no episode special-casing. The
+ *   chain behind `getPrimaryImageUrl`.
  */
 export type ArtworkChain =
   | "tvCardLandscape"
   | "wideCard"
   | "portraitCard"
   | "discoveryLandscape"
-  | "discoveryPoster";
+  | "discoveryPoster"
+  | "primary";
 
 /** The item's own Primary, only when its tag is known — an episode's still. */
 const ownPrimaryTagged = (item: BaseItemDto): Artwork | null =>
@@ -167,5 +170,7 @@ export const resolveArtwork = (
       return episode && !preferEpisodeImage
         ? pick(item, [seasonPrimary, seriesPrimary, ownPrimaryTagged])
         : ownPrimaryTagged(item);
+    case "primary":
+      return ownPrimaryAnyTag(item);
   }
 };

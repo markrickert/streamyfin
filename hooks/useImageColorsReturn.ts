@@ -63,7 +63,7 @@ export const useImageColorsReturn = ({
         api,
         variant: "Primary",
         quality: 80,
-        width: 300,
+        widthPx: 300,
       });
     return null;
   }, [api, item, url]);

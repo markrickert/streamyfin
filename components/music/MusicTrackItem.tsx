@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { useAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
@@ -18,6 +21,7 @@ import {
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { formatDuration } from "@/utils/time";
 
 interface Props {
@@ -41,10 +45,14 @@ export const MusicTrackItem: React.FC<Props> = ({
   const { isConnected, serverConnected } = useNetworkStatus();
   const haptic = useHaptic("light");
 
-  const imageUrl = useMemo(() => {
+  const artwork = useMemo(() => {
     const albumId = track.AlbumId || track.ParentId;
     if (albumId) {
-      return `${api?.basePath}/Items/${albumId}/Images/Primary?maxHeight=100&maxWidth=100`;
+      return imageUrl(
+        api,
+        { itemId: albumId, imageType: ImageType.Primary },
+        { maxHeightPx: 100, maxWidthPx: 100 },
+      );
     }
     return getPrimaryImageUrl({ api, item: track });
   }, [api, track]);
@@ -144,9 +152,9 @@ export const MusicTrackItem: React.FC<Props> = ({
             marginRight: 12,
           }}
         >
-          {imageUrl ? (
+          {artwork ? (
             <Image
-              source={{ uri: imageUrl }}
+              source={{ uri: artwork }}
               style={{ width: "100%", height: "100%" }}
               contentFit='cover'
               cachePolicy='memory-disk'

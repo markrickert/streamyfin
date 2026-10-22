@@ -1,7 +1,8 @@
 import type { Api } from "@jellyfin/sdk";
-import type {
-  BaseItemDto,
-  MediaSourceInfo,
+import {
+  type BaseItemDto,
+  ImageType,
+  type MediaSourceInfo,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getPlaystateApi } from "@jellyfin/sdk/lib/utils/api";
 import { useAtomValue } from "jotai";
@@ -35,6 +36,7 @@ import {
 import { settingsAtom } from "@/utils/atoms/settings";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import {
   type MusicRepeatMode,
   parsePlaybackModeCommand,
@@ -405,7 +407,11 @@ const itemToTrack = (
   const albumId = item.AlbumId || item.ParentId;
   const artworkId = albumId || item.Id;
   const artwork = artworkId
-    ? `${api.basePath}/Items/${artworkId}/Images/Primary?maxHeight=512&maxWidth=512&quality=90`
+    ? (imageUrl(
+        api,
+        { itemId: artworkId, imageType: ImageType.Primary },
+        { maxHeightPx: 512, maxWidthPx: 512, quality: 90 },
+      ) ?? undefined)
     : undefined;
   const artworkHeaders = getJellyfinHeadersForUrl(artwork, api.basePath);
 

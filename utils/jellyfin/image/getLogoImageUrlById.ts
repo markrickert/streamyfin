@@ -1,57 +1,59 @@
 import type { Api } from "@jellyfin/sdk";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { LOGO_HEIGHT, MAX_LOGO_HEIGHT_PX } from "@/constants/Images";
 import { toImagePixels } from "./imagePixels";
+import { imageUrl } from "./imageUrl";
 
 /**
- * Retrieves the logo image URL for a given item. An episode has no logo of
- * its own and gets its series' logo.
+ * Build the item's logo URL. An episode has no logo of its own and gets
+ * its series' logo.
  *
  * @param api - The Jellyfin API instance.
  * @param item - The media item to retrieve the logo image URL for.
- * @param height - The image height in physical pixels, not layout points:
- *   convert with `toImagePixels`. Defaults to the detail page logo slot on
- *   this screen.
+ * @param heightPx - The image height in physical pixels, capped at
+ *   `MAX_LOGO_HEIGHT_PX`. Defaults to the detail page logo slot on this
+ *   screen.
  */
 export const getLogoImageUrlById = ({
   api,
   item,
-  height = toImagePixels(LOGO_HEIGHT),
+  heightPx = toImagePixels(LOGO_HEIGHT),
 }: {
   api?: Api | null;
   item?: BaseItemDto | null;
-  height?: number;
+  heightPx?: number;
 }) => {
   if (!api || !item) {
     return null;
   }
 
-  const params = new URLSearchParams();
-
-  params.append("quality", "90");
-  params.append(
-    "fillHeight",
-    Math.min(Math.round(height), MAX_LOGO_HEIGHT_PX).toString(),
-  );
+  const box = {
+    fillHeightPx: Math.min(Math.round(heightPx), MAX_LOGO_HEIGHT_PX),
+    quality: 90,
+  };
 
   if (item.Type === "Episode") {
-    const imageTag = item.ParentLogoImageTag;
-    const parentId = item.ParentLogoItemId;
-
-    if (!parentId || !imageTag) {
+    if (!item.ParentLogoItemId || !item.ParentLogoImageTag) {
       return null;
     }
-
-    params.append("tag", imageTag);
-
-    return `${api.basePath}/Items/${parentId}/Images/Logo?${params.toString()}`;
+    return imageUrl(
+      api,
+      {
+        itemId: item.ParentLogoItemId,
+        imageType: ImageType.Logo,
+        tag: item.ParentLogoImageTag,
+      },
+      box,
+    );
   }
 
-  const imageTag = item.ImageTags?.Logo;
-
-  if (!imageTag) return null;
-
-  params.append("tag", imageTag);
-
-  return `${api.basePath}/Items/${item.Id}/Images/Logo?${params.toString()}`;
+  if (!item.Id || !item.ImageTags?.Logo) return null;
+  return imageUrl(
+    api,
+    { itemId: item.Id, imageType: ImageType.Logo, tag: item.ImageTags.Logo },
+    box,
+  );
 };

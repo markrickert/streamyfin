@@ -23,7 +23,6 @@ import Animated, {
 import { Text } from "@/components/common/Text";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -79,7 +78,7 @@ export const TVNextEpisodeCountdown: FC<TVNextEpisodeCountdownProps> = ({
   const imageUrl = getPrimaryImageUrl({
     api,
     item: nextItem,
-    width: toImagePixels(scaleSize(180)),
+    widthPoints: scaleSize(180),
   });
 
   // Animated position based on controls visibility

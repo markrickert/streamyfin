@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import type {
-  BaseItemDto,
-  MediaSourceInfo,
-  MediaStream,
+import {
+  type BaseItemDto,
+  ImageType,
+  type MediaSourceInfo,
+  type MediaStream,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getTvShowsApi, getUserLibraryApi } from "@jellyfin/sdk/lib/utils/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,12 +65,9 @@ import { getSubtitlesForItem } from "@/utils/atoms/downloadedSubtitles";
 import { useSettings } from "@/utils/atoms/settings";
 import type { TVOptionItem } from "@/utils/atoms/tvOptionModal";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
-import { getPrimaryImageUrlById } from "@/utils/jellyfin/image/getPrimaryImageUrlById";
 import { getTVEpisodeArtworkUrl } from "@/utils/jellyfin/image/getTVPosterImageUrl";
-import {
-  landscapeBoxQuery,
-  toImagePixels,
-} from "@/utils/jellyfin/image/imagePixels";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { imageUrl, landscapeBox } from "@/utils/jellyfin/image/imageUrl";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { streamLanguageName } from "@/utils/jellyfin/trackLabel";
@@ -595,20 +593,36 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
     // Series/Season image URLs for episodes
     const seriesImageUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !item.SeriesId) return null;
-      return getPrimaryImageUrlById({ api, id: item.SeriesId, width: 300 });
+      return imageUrl(
+        api,
+        { itemId: item.SeriesId, imageType: ImageType.Primary },
+        { fillWidthPx: 300, quality: 90 },
+      );
     }, [api, item?.Type, item?.SeriesId]);
 
     const seasonImageUrl = useMemo(() => {
       if (item?.Type !== "Episode") return null;
       const seasonId = item.SeasonId || item.ParentId;
       if (!seasonId) return null;
-      return getPrimaryImageUrlById({ api, id: seasonId, width: 300 });
+      return imageUrl(
+        api,
+        { itemId: seasonId, imageType: ImageType.Primary },
+        { fillWidthPx: 300, quality: 90 },
+      );
     }, [api, item?.Type, item?.SeasonId, item?.ParentId]);
 
     // Episode thumbnail URL - episode's own primary image (16:9 for episodes)
     const episodeThumbnailUrl = useMemo(() => {
-      if (item?.Type !== "Episode" || !api) return null;
-      return `${api.basePath}/Items/${item.Id}/Images/Primary?${landscapeBoxQuery(episodeImageWidthPx)}`;
+      if (item?.Type !== "Episode" || !item.Id) return null;
+      return imageUrl(
+        api,
+        {
+          itemId: item.Id,
+          imageType: ImageType.Primary,
+          tag: item.ImageTags?.Primary,
+        },
+        landscapeBox(episodeImageWidthPx),
+      );
     }, [api, item, episodeImageWidthPx]);
 
     // Series thumb URL - used when showSeriesPosterOnEpisode setting is enabled
@@ -618,9 +632,9 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
       return getTVEpisodeArtworkUrl({
         api,
         item,
-        widthPx: episodeImageWidthPx,
+        widthPoints: episodeImageWidth,
       });
-    }, [api, item, episodeImageWidthPx]);
+    }, [api, item, episodeImageWidth]);
 
     // Navigation handlers
     const handleActorPress = useCallback(

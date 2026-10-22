@@ -1,5 +1,9 @@
 import { PixelRatio } from "react-native";
-import { fillHeightParams, toImagePixels } from "./imagePixels";
+import {
+  CARD_IMAGE_WIDTH_STEP_PX,
+  MAX_CARD_IMAGE_WIDTH_PX,
+} from "@/constants/Images";
+import { cardImageWidth, toImagePixels } from "./imagePixels";
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -19,16 +23,16 @@ describe("toImagePixels", () => {
   });
 });
 
-describe("fillHeightParams", () => {
-  test("carries the box height and bounds both sides of the result", () => {
-    expect(fillHeightParams(1500)).toEqual({
-      fillHeight: "1500",
-      maxWidth: "1920",
-      maxHeight: "1920",
-    });
+describe("cardImageWidth", () => {
+  test("rounds the drawn size up to the next step", () => {
+    jest.spyOn(PixelRatio, "get").mockReturnValue(1);
+
+    expect(cardImageWidth(189)).toBe(CARD_IMAGE_WIDTH_STEP_PX * 2);
   });
 
-  test("sends whole pixels", () => {
-    expect(fillHeightParams(1049.6).fillHeight).toBe("1050");
+  test("never requests past the card artwork cap", () => {
+    jest.spyOn(PixelRatio, "get").mockReturnValue(3);
+
+    expect(cardImageWidth(600)).toBe(MAX_CARD_IMAGE_WIDTH_PX);
   });
 });

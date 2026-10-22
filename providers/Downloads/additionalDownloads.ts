@@ -163,7 +163,7 @@ export async function downloadCoverImage(
       api,
       variant: "Primary",
       quality: 90,
-      width: 500,
+      widthPx: 500,
     });
 
     if (!itemImage?.uri) {

@@ -23,7 +23,6 @@ import { ProgressBar } from "@/components/common/ProgressBar";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
-import { IMAGE_QUALITY } from "@/constants/Images";
 import {
   type ScaledTVSizes,
   TV_BACKDROP_DEBOUNCE_MS,
@@ -39,7 +38,6 @@ import { apiAtom } from "@/providers/JellyfinProvider";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
 import { getTVPosterImageUrl } from "@/utils/jellyfin/image/getTVPosterImageUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import { runtimeTicksToMinutes } from "@/utils/time";
 
@@ -232,9 +230,8 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
     return getBackdropUrl({
       api,
       item: activeItem,
-      quality: IMAGE_QUALITY,
-      width: toImagePixels(screenWidth),
-      height: toImagePixels(screenHeight),
+      widthPoints: screenWidth,
+      heightPoints: screenHeight,
     });
   }, [api, activeItem, screenWidth, screenHeight]);
 

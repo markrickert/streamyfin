@@ -1,6 +1,7 @@
 import type { Api } from "@jellyfin/sdk";
 import type { ImageType } from "@jellyfin/sdk/lib/generated-client/models";
-import { IMAGE_QUALITY } from "@/constants/Images";
+import { IMAGE_QUALITY, MAX_IMAGE_SIDE_PX } from "@/constants/Images";
+import { toImagePixels } from "./imagePixels";
 
 /**
  * Identify one concrete image on the server: the owning `itemId`, the
@@ -36,14 +37,16 @@ export type ImageBox = {
  * artwork budget, or a request a spec dictates.
  *
  * With no size at all the request gets `fillWidth=400`, the family's long
- * standing default.
+ * standing default. A null `artwork` returns null, so the resolver and the
+ * constructor compose in one expression.
  */
 export const imageUrl = (
-  api: Api | null | undefined,
-  { itemId, imageType, tag, index }: Artwork,
+  api: Pick<Api, "basePath"> | null | undefined,
+  artwork: Artwork | null,
   box: ImageBox = {},
 ): string | null => {
-  if (!api) return null;
+  if (!api || !artwork) return null;
+  const { itemId, imageType, tag, index } = artwork;
 
   const {
     fillWidthPx,
@@ -71,3 +74,46 @@ export const imageUrl = (
   const path = `/Items/${itemId}/Images/${imageType}${index != null ? `/${index}` : ""}`;
   return `${api.basePath}${path}?${params.toString()}`;
 };
+
+/**
+ * Cover the box: a fill request plus the hard caps that bound the cost. The
+ * server applies the maximums first and never scales back up — a wide
+ * backdrop asked by width alone returns too few rows and gets stretched to
+ * cover.
+ */
+export const coverBox = (
+  box: Pick<ImageBox, "fillWidthPx" | "fillHeightPx">,
+): ImageBox => ({
+  ...box,
+  maxWidthPx: MAX_IMAGE_SIDE_PX,
+  maxHeightPx: MAX_IMAGE_SIDE_PX,
+});
+
+/** The 16:9 fill box landscape cards and episode stills are drawn in. */
+export const landscapeBox = (widthPx: number): ImageBox => ({
+  fillWidthPx: widthPx,
+  fillHeightPx: Math.round((widthPx * 9) / 16),
+});
+
+/**
+ * Convert the drawn box from layout points to the pixels the server sizes
+ * in — the shape every caller-facing helper takes. With a height the
+ * request covers the box (see `coverBox`); width alone is a plain fill.
+ */
+export const pointsBox = ({
+  widthPoints,
+  heightPoints,
+}: {
+  widthPoints?: number | null;
+  heightPoints?: number | null;
+}): ImageBox =>
+  heightPoints != null
+    ? coverBox({
+        fillWidthPx:
+          widthPoints != null ? toImagePixels(widthPoints) : undefined,
+        fillHeightPx: toImagePixels(heightPoints),
+      })
+    : {
+        fillWidthPx:
+          widthPoints != null ? toImagePixels(widthPoints) : undefined,
+      };

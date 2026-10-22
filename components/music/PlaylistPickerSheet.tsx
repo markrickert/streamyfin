@@ -5,7 +5,10 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  type BaseItemDto,
+  ImageType,
+} from "@jellyfin/sdk/lib/generated-client/models";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
@@ -30,6 +33,7 @@ import { Text } from "@/components/common/Text";
 import { useAddToPlaylist } from "@/hooks/usePlaylistMutations";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 
 interface Props {
   open: boolean;
@@ -133,8 +137,12 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
 
   const getPlaylistImageUrl = useCallback(
     (playlist: BaseItemDto) => {
-      if (!api) return null;
-      return `${api.basePath}/Items/${playlist.Id}/Images/Primary?maxHeight=100&maxWidth=100`;
+      if (!api || !playlist.Id) return null;
+      return imageUrl(
+        api,
+        { itemId: playlist.Id, imageType: ImageType.Primary },
+        { maxHeightPx: 100, maxWidthPx: 100 },
+      );
     },
     [api],
   );

@@ -37,7 +37,6 @@ import {
 } from "@/utils/downloads/offline-series";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 import { storage } from "@/utils/mmkv";
 import { getSeriesPlaybackTarget } from "@/utils/seriesPlaybackTarget";
@@ -114,8 +113,8 @@ const page: React.FC = () => {
       api,
       item,
       quality: 90,
-      width: toImagePixels(windowWidth),
-      height: toImagePixels(HEADER_HEIGHT),
+      widthPoints: windowWidth,
+      heightPoints: HEADER_HEIGHT,
     });
   }, [isOffline, base64Image, api, item, windowWidth]);
 

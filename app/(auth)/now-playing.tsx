@@ -1,9 +1,10 @@
 import { ExpoAvRoutePickerView } from "@douglowder/expo-av-route-picker-view";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import type {
-  BaseItemDto,
-  MediaSourceInfo,
+import {
+  type BaseItemDto,
+  ImageType,
+  type MediaSourceInfo,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { useAtom } from "jotai";
 import React, {
@@ -47,6 +48,7 @@ import {
   useMusicPlayer,
 } from "@/providers/MusicPlayerProvider";
 import { formatBitrate } from "@/utils/bitrate";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { formatDuration } from "@/utils/time";
 
 // Conditionally require VolumeManager (not available on TV)
@@ -148,13 +150,16 @@ export default function NowPlayingScreen() {
     prevCastState.current = castState;
   }, [castState, queue, queueIndex, castQueue, pause]);
 
-  const imageUrl = useMemo(() => {
+  const artwork = useMemo(() => {
     if (!api || !currentTrack) return null;
-    const albumId = currentTrack.AlbumId || currentTrack.ParentId;
-    if (albumId) {
-      return `${api.basePath}/Items/${albumId}/Images/Primary?maxHeight=600&maxWidth=600`;
-    }
-    return `${api.basePath}/Items/${currentTrack.Id}/Images/Primary?maxHeight=600&maxWidth=600`;
+    const artworkId =
+      currentTrack.AlbumId || currentTrack.ParentId || currentTrack.Id;
+    if (!artworkId) return null;
+    return imageUrl(
+      api,
+      { itemId: artworkId, imageType: ImageType.Primary },
+      { maxHeightPx: 600, maxWidthPx: 600 },
+    );
   }, [api, currentTrack]);
 
   const progressText = useMemo(() => {
@@ -297,7 +302,7 @@ export default function NowPlayingScreen() {
           <PlayerView
             api={api}
             currentTrack={currentTrack}
-            imageUrl={imageUrl}
+            imageUrl={artwork}
             sliderProgress={sliderProgress}
             sliderMin={sliderMin}
             sliderMax={sliderMax}
@@ -731,9 +736,17 @@ const QueueView: React.FC<QueueViewProps> = ({
           key: `${item.Id}-${index}`,
           title: item.Name ?? "",
           subtitle: item.Artists?.join(", ") || item.AlbumArtist || undefined,
-          imageUrl: api
-            ? `${api.basePath}/Items/${albumId || item.Id}/Images/Primary?maxHeight=80&maxWidth=80`
-            : null,
+          imageUrl:
+            api && (albumId || item.Id)
+              ? imageUrl(
+                  api,
+                  {
+                    itemId: (albumId || item.Id) as string,
+                    imageType: ImageType.Primary,
+                  },
+                  { maxHeightPx: 80, maxWidthPx: 80 },
+                )
+              : null,
         };
       }),
     [api, queue],

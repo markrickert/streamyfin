@@ -82,7 +82,8 @@ import {
   getAdjacentStartTicks,
   getDefaultPlaySettings,
 } from "@/utils/jellyfin/getDefaultPlaySettings";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
+import { resolveArtwork } from "@/utils/jellyfin/image/resolveArtwork";
 import { getStreamUrl } from "@/utils/jellyfin/media/getStreamUrl";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 import {
@@ -1003,11 +1004,9 @@ export default function DirectPlayerPage() {
   const nowPlayingMetadata = useMemo(() => {
     if (!item || !api) return undefined;
 
-    const artworkUri = getPrimaryImageUrl({
-      api,
-      item,
+    const artworkUri = imageUrl(api, resolveArtwork(item, "primary"), {
+      fillWidthPx: 500,
       quality: 90,
-      width: 500,
     });
 
     return {

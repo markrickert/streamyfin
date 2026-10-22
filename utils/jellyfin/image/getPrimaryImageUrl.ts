@@ -1,63 +1,53 @@
 import type { Api } from "@jellyfin/sdk";
-import type {
-  BaseItemDto,
-  BaseItemPerson,
+import {
+  type BaseItemDto,
+  type BaseItemPerson,
+  ImageType,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { IMAGE_QUALITY } from "@/constants/Images";
 import { isBaseItemDto } from "../jellyfin";
-import { fillHeightParams } from "./imagePixels";
+import { imageUrl, pointsBox } from "./imageUrl";
+import { resolveArtwork } from "./resolveArtwork";
 
 /**
- * Retrieves the primary image URL for a given item.
+ * Build the item's primary image URL.
  *
  * @param api - The Jellyfin API instance.
- * @param item - The media item to retrieve the backdrop image URL for.
- * @param quality - The desired image quality (default: 80).
- * @param width - The image width in physical pixels, not layout points:
- *   convert with `toImagePixels`.
- * @param height - The height of the box the image has to cover, in physical
- *   pixels. Pass it whenever the image is drawn cover fit.
+ * @param item - The media item to retrieve the primary image URL for.
+ * @param quality - The desired image quality.
+ * @param widthPoints - The width the image draws at, in layout points;
+ *   the request asks for the pixels that covers.
+ * @param heightPoints - The height of the box the image covers, in layout
+ *   points — pass it whenever the image draws cover fit.
  */
 export const getPrimaryImageUrl = ({
   api,
   item,
   quality = IMAGE_QUALITY,
-  width = 400,
-  height,
+  widthPoints,
+  heightPoints,
 }: {
   api?: Api | null;
   item?: BaseItemDto | BaseItemPerson | null;
   quality?: number | null;
-  width?: number | null;
-  height?: number | null;
+  widthPoints?: number | null;
+  heightPoints?: number | null;
 }) => {
   if (!item || !api) {
     return null;
   }
 
+  const box = {
+    ...pointsBox({ widthPoints, heightPoints }),
+    quality: quality ?? IMAGE_QUALITY,
+  };
+
+  // A person carries no artwork fields; its primary image is the only one.
   if (!isBaseItemDto(item)) {
-    return `${api?.basePath}/Items/${item?.Id}/Images/Primary`;
+    return item.Id
+      ? imageUrl(api, { itemId: item.Id, imageType: ImageType.Primary }, box)
+      : null;
   }
 
-  const primaryTag = item.ImageTags?.Primary;
-  const backdropTag = item.BackdropImageTags?.[0];
-  const parentBackdropTag = item.ParentBackdropImageTags?.[0];
-
-  const params = new URLSearchParams({
-    fillWidth: width ? String(width) : "500",
-    quality: String(quality || IMAGE_QUALITY),
-    ...(height ? fillHeightParams(height) : null),
-  });
-
-  if (primaryTag) {
-    params.set("tag", primaryTag);
-  } else if (backdropTag) {
-    params.set("tag", backdropTag);
-  } else if (parentBackdropTag) {
-    params.set("tag", parentBackdropTag);
-  }
-
-  return `${api?.basePath}/Items/${
-    item.Id
-  }/Images/Primary?${params.toString()}`;
+  return imageUrl(api, resolveArtwork(item, "primary"), box);
 };

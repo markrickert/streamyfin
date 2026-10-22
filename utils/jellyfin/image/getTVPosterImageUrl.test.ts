@@ -237,8 +237,13 @@ describe("getTVPosterImageUrl", () => {
 
   // The detail page draws the series artwork at its own size, not a card's,
   // and must still ask for the tagged series thumb the cards ask for.
-  test("the episode artwork at an exact pixel width", () => {
-    const url = getTVEpisodeArtworkUrl({ api, item: episode, widthPx: 672 });
+  test("the episode artwork at a layout width", () => {
+    onScreenDensity(1);
+    const url = getTVEpisodeArtworkUrl({
+      api,
+      item: episode,
+      widthPoints: 672,
+    });
 
     expect(url).toBe(
       `${api.basePath}/Items/series-1/Images/Thumb?fillWidth=672&fillHeight=378&quality=80&tag=series-thumb-tag`,
