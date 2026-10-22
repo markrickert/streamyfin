@@ -6,18 +6,17 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import { Animated, Easing, useWindowDimensions, View } from "react-native";
+import { Animated, Easing, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
 } from "@/constants/TVSizes";
+import { useBackdropUrl } from "@/hooks/useBackdropUrl";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 
 export interface TVHomeBackdropRef {
   handleItemFocus: (item: BaseItemDto) => void;
@@ -63,18 +62,8 @@ export const TVHomeBackdrop = React.memo(
       };
     }, []);
 
-    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-
     // Get backdrop URL from focused item
-    const backdropUrl = useMemo(() => {
-      if (!focusedItem) return null;
-      return getBackdropUrl({
-        api,
-        item: focusedItem,
-        widthPoints: screenWidth,
-        heightPoints: screenHeight,
-      });
-    }, [api, focusedItem, screenWidth, screenHeight]);
+    const backdropUrl = useBackdropUrl(focusedItem);
 
     // Crossfade animation for backdrop transitions. The layer shown is flipped
     // when the fade starts, not when it ends: an image that arrives mid-fade

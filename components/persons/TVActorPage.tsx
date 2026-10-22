@@ -34,9 +34,9 @@ import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
+import { useBackdropUrl } from "@/hooks/useBackdropUrl";
 import { useTVItemActionModal } from "@/hooks/useTVItemActionModal";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
@@ -131,21 +131,12 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
     staleTime: 60,
   });
 
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
 
   // Get backdrop URL from the currently focused filmography item
   // Changes dynamically as user navigates through the list
-  const backdropUrl = useMemo(() => {
-    // Use focused item if available, otherwise fall back to first movie or series
-    const itemForBackdrop = focusedItem ?? movies[0] ?? series[0];
-    if (!itemForBackdrop) return null;
-    return getBackdropUrl({
-      api,
-      item: itemForBackdrop,
-      widthPoints: screenWidth,
-      heightPoints: screenHeight,
-    });
-  }, [api, focusedItem, movies, series, screenWidth, screenHeight]);
+  const itemForBackdrop = focusedItem ?? movies[0] ?? series[0];
+  const backdropUrl = useBackdropUrl(itemForBackdrop);
 
   // Crossfade animation for backdrop transitions
   // Use two alternating layers for smooth crossfade

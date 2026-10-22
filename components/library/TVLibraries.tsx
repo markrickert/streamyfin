@@ -10,23 +10,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Animated,
-  Easing,
-  FlatList,
-  Pressable,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Animated, Easing, FlatList, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
+import { useBackdropUrl } from "@/hooks/useBackdropUrl";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { scaleSize } from "@/utils/scaleSize";
 
 const HORIZONTAL_PADDING = scaleSize(80);
@@ -62,7 +55,6 @@ const TVLibraryRow: React.FC<{
   isFirst: boolean;
   onPress: () => void;
 }> = ({ library, isFirst, onPress }) => {
-  const [api] = useAtom(apiAtom);
   const { t } = useTranslation();
   const typography = useScaledTVTypography();
   const [focused, setFocused] = useState(false);
@@ -86,18 +78,11 @@ const TVLibraryRow: React.FC<{
     ]).start();
   };
 
-  const { width: screenWidth } = useWindowDimensions();
-
   // The card covers the row's full width and CARD_HEIGHT; request the pixels
   // that box covers.
-  const backdropUrl = useMemo(() => {
-    return getBackdropUrl({
-      api,
-      item: library.previewItems?.[0] ?? library,
-      widthPoints: screenWidth,
-      heightPoints: CARD_HEIGHT,
-    });
-  }, [api, library, screenWidth]);
+  const backdropUrl = useBackdropUrl(library.previewItems?.[0] ?? library, {
+    heightPoints: CARD_HEIGHT,
+  });
 
   const iconName = icons[library.CollectionType!] || "folder";
 

@@ -30,12 +30,12 @@ import {
 } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
+import { useBackdropUrl } from "@/hooks/useBackdropUrl";
 import {
   GlassPosterView,
   isGlassEffectAvailable,
 } from "@/modules/glass-poster";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
 import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
 import { getTVPosterImageUrl } from "@/utils/jellyfin/image/getTVPosterImageUrl";
 import { scaleSize } from "@/utils/scaleSize";
@@ -225,15 +225,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   // Get backdrop URL for active item
-  const backdropUrl = useMemo(() => {
-    if (!activeItem) return null;
-    return getBackdropUrl({
-      api,
-      item: activeItem,
-      widthPoints: screenWidth,
-      heightPoints: screenHeight,
-    });
-  }, [api, activeItem, screenWidth, screenHeight]);
+  const backdropUrl = useBackdropUrl(activeItem);
 
   // Get logo URL for active item
   const logoUrl = useMemo(() => {
