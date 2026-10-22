@@ -12,6 +12,9 @@ jest.mock("@/utils/atoms/settings", () => ({
 jest.mock("@/components/common/ServerImage", () => ({
   Image: () => null,
 }));
+jest.mock("@/hooks/useHeadersForUrl", () => ({
+  useHeadersForUrl: () => undefined,
+}));
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

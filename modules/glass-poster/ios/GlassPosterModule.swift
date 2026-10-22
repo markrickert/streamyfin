@@ -20,6 +20,10 @@ public class GlassPosterModule: Module {
         view.setImageUrl(url)
       }
 
+      Prop("headersJson") { (view: GlassPosterExpoView, headers: String) in
+        view.setHeadersJson(headers)
+      }
+
       Prop("aspectRatio") { (view: GlassPosterExpoView, ratio: Double) in
         view.setAspectRatio(ratio)
       }

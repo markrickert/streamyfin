@@ -171,9 +171,9 @@ export const TVSearchPage: React.FC<TVSearchPageProps> = ({
 
   // Image URL getter for music items
   const getImageUrl = useMemo(() => {
-    return (item: BaseItemDto): string | undefined => {
+    return (item: BaseItemDto, widthPoints: number): string | undefined => {
       if (!api) return undefined;
-      const url = getPrimaryImageUrl({ api, item });
+      const url = getPrimaryImageUrl({ api, item, widthPoints });
       return url ?? undefined;
     };
   }, [api]);

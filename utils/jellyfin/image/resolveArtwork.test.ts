@@ -190,6 +190,36 @@ describe("resolveArtwork", () => {
     });
   });
 
+  test("a primary without a tag never borrows a backdrop tag", () => {
+    expect(
+      resolveArtwork(
+        {
+          Id: "movie-1",
+          Type: "Movie",
+          ImageTags: {},
+          BackdropImageTags: ["backdrop-tag"],
+          ParentBackdropImageTags: ["parent-backdrop-tag"],
+        },
+        "primary",
+      ),
+    ).toEqual({ itemId: "movie-1", imageType: ImageType.Primary });
+    expect(
+      resolveArtwork(
+        {
+          Id: "episode-1",
+          Type: "Episode",
+          ParentBackdropImageTags: ["parent-backdrop-tag"],
+        },
+        "primary",
+      ),
+    ).toEqual({ itemId: "episode-1", imageType: ImageType.Primary });
+    expect(resolveArtwork(movie, "primary")).toEqual({
+      itemId: "movie-1",
+      imageType: ImageType.Primary,
+      tag: "poster-tag",
+    });
+  });
+
   describe("discoveryLandscape — nothing speculative leaves the tile", () => {
     test("an episode without a series thumb resolves to null, not a tagless request", () => {
       expect(

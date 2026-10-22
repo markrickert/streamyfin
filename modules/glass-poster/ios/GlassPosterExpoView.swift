@@ -6,6 +6,7 @@ import Combine
 /// Observable state that SwiftUI can watch for changes without rebuilding the entire view
 class GlassPosterState: ObservableObject {
   @Published var imageUrl: String? = nil
+  @Published var headersJson: String = "{}"
   @Published var aspectRatio: Double = 10.0 / 15.0
   @Published var cornerRadius: Double = 24
   @Published var progress: Double = 0
@@ -62,6 +63,10 @@ class GlassPosterExpoView: ExpoView {
 
   func setImageUrl(_ url: String?) {
     state.imageUrl = url
+  }
+
+  func setHeadersJson(_ headers: String) {
+    state.headersJson = headers
   }
 
   func setAspectRatio(_ ratio: Double) {

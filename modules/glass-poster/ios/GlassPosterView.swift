@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Wrapper view that observes state changes from GlassPosterState
 /// This allows SwiftUI to efficiently update only the changed properties
@@ -9,6 +10,7 @@ struct GlassPosterViewWrapper: View {
   var body: some View {
     GlassPosterView(
       imageUrl: state.imageUrl,
+      headersJson: state.headersJson,
       aspectRatio: state.aspectRatio,
       cornerRadius: state.cornerRadius,
       progress: state.progress,
@@ -22,6 +24,7 @@ struct GlassPosterViewWrapper: View {
 /// SwiftUI view with tvOS 26 Liquid Glass effect
 struct GlassPosterView: View {
   var imageUrl: String? = nil
+  var headersJson: String = "{}"
   var aspectRatio: Double = 10.0 / 15.0
   var cornerRadius: Double = 24
   var progress: Double = 0
@@ -118,22 +121,9 @@ struct GlassPosterView: View {
   private var imageContent: some View {
     Group {
       if let urlString = imageUrl, let url = URL(string: urlString) {
-        AsyncImage(url: url) { phase in
-          switch phase {
-          case .empty:
-            placeholderView
-          case .success(let image):
-            image
-              .resizable()
-              .aspectRatio(contentMode: .fill)
-              .frame(width: width, height: height)
-              .clipped()
-          case .failure:
-            placeholderView
-          @unknown default:
-            placeholderView
-          }
-        }
+        GlassPosterRemoteImage(url: url, headersJson: headersJson)
+          .frame(width: width, height: height)
+          .clipped()
       } else {
         placeholderView
       }
@@ -182,6 +172,38 @@ struct GlassPosterView: View {
         .padding(8)
       }
       Spacer()
+    }
+  }
+}
+
+private struct GlassPosterRemoteImage: View {
+  let url: URL
+  let headersJson: String
+
+  @State private var image: UIImage?
+
+  var body: some View {
+    Group {
+      if let image {
+        Image(uiImage: image)
+          .resizable()
+          .aspectRatio(contentMode: .fill)
+      } else {
+        Rectangle().fill(Color.gray.opacity(0.3))
+      }
+    }
+    .task(id: [url.absoluteString, headersJson]) {
+      image = nil
+      var request = URLRequest(url: url)
+      if let data = headersJson.data(using: .utf8),
+         let headers = try? JSONDecoder().decode([String: String].self, from: data) {
+        for (name, value) in headers {
+          request.setValue(value, forHTTPHeaderField: name)
+        }
+      }
+      guard let (data, _) = try? await URLSession.shared.data(for: request),
+            let loaded = UIImage(data: data) else { return }
+      image = loaded
     }
   }
 }

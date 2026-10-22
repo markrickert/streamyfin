@@ -19,7 +19,10 @@ interface TVSearchSectionProps extends ViewProps {
   isFirstSection?: boolean;
   onItemPress: (item: BaseItemDto) => void;
   onItemLongPress?: (item: BaseItemDto) => void;
-  imageUrlGetter?: (item: BaseItemDto) => string | undefined;
+  imageUrlGetter?: (
+    item: BaseItemDto,
+    widthPoints: number,
+  ) => string | undefined;
   /** Override the horizontal edge padding (defaults to the scaled TV padding). */
   horizontalPadding?: number;
 }
@@ -76,7 +79,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
 
       // Special handling for MusicArtist (circular avatar)
       if (item.Type === "MusicArtist") {
-        const imageUrl = imageUrlGetter?.(item);
+        const imageUrl = imageUrlGetter?.(item, 160);
         return (
           <View style={{ marginRight: ITEM_GAP, width: 160 }}>
             <TVFocusablePoster
@@ -141,7 +144,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
         item.Type === "Audio" ||
         item.Type === "Playlist"
       ) {
-        const imageUrl = imageUrlGetter?.(item);
+        const imageUrl = imageUrlGetter?.(item, posterSizes.poster);
         const icon =
           item.Type === "Playlist" ? "🎶" : item.Type === "Audio" ? "🎵" : "🎵";
         return (

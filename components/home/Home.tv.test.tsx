@@ -62,6 +62,10 @@ jest.mock("@/components/tv/TVPosterCard", () => {
   };
 });
 
+jest.mock("@/hooks/useHeadersForUrl", () => ({
+  useHeadersForUrl: () => undefined,
+}));
+
 jest.mock("@/utils/atoms/settings", () => ({
   TVTypographyScale: { Default: "default" },
   useSettings: () => ({

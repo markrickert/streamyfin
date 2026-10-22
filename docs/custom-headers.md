@@ -65,7 +65,7 @@ them.
 | Server check on login | `checkJellyfinServer` |
 | Reachability probe | `jellyfinProbe` via `NetworkStatusProvider` |
 | Session WebSocket | third argument of RN's `WebSocket` in `WebSocketProvider` |
-| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs) and `getItemImage`, whose source wins when it already resolved them |
+| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs), `getItemImage` (whose source wins when it already resolved them), and the native tvOS `GlassPosterView` (headers forwarded as JSON) |
 | Image prefetch | `prefetchServerImage` |
 | Video playback | `MpvVideoSource.headers` in `direct-player` |
 | Now Playing artwork (iOS) | `nowPlayingMetadata.artworkHeaders` |

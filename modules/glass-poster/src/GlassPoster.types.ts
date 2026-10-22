@@ -3,6 +3,8 @@ import type { StyleProp, ViewStyle } from "react-native";
 export interface GlassPosterViewProps {
   /** URL of the image to display */
   imageUrl: string | null;
+  /** Serialized proxy headers for the native image request. */
+  headersJson?: string;
   /** Aspect ratio of the poster (width/height). Default: 10/15 for portrait, 16/9 for landscape */
   aspectRatio: number;
   /** Corner radius in points. Default: 24 */

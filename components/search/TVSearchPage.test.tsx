@@ -1,5 +1,10 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import {
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react-native";
 import { TVSearchPage } from "./TVSearchPage";
 
 jest.mock("react-i18next", () => ({
@@ -34,7 +39,12 @@ jest.mock("@/components/tv/TVPosterCard", () => {
     ),
   };
 });
-jest.mock("@/components/common/ServerImage", () => ({ Image: () => null }));
+jest.mock("@/components/common/ServerImage", () => ({
+  Image: ({ source }: { source: { uri: string } }) => {
+    const { Text } = jest.requireActual("react-native");
+    return <Text testID={source.uri}>image</Text>;
+  },
+}));
 // The native search field and the Discover rows are not what is under test.
 jest.mock("@/modules/tv-search", () => ({ TvSearchView: () => null }));
 jest.mock("@/components/seerr/discover/TVDiscover", () => ({
@@ -49,7 +59,12 @@ const studio: BaseItemDto = { Id: "studio-1", Type: "Studio", Name: "Pixar" };
 const actor: BaseItemDto = { Id: "person-1", Type: "Person", Name: "Tom" };
 
 const renderPage = async (
-  results: { studios?: BaseItemDto[]; actors?: BaseItemDto[] },
+  results: {
+    studios?: BaseItemDto[];
+    actors?: BaseItemDto[];
+    albums?: BaseItemDto[];
+    artists?: BaseItemDto[];
+  },
   onItemPress = jest.fn(),
   onItemLongPress = jest.fn(),
 ) => {
@@ -100,4 +115,45 @@ describe("TV search studios", () => {
     await fireEvent(screen.getByText("Tom"), "longPress");
     expect(onItemLongPress).toHaveBeenCalledWith(actor);
   });
+});
+
+test("TV music search requests artwork at the square's drawn width", async () => {
+  const { PixelRatio } = jest.requireActual("react-native");
+  const { useScaledTVPosterSizes } = jest.requireActual(
+    "@/constants/TVPosterSizes",
+  );
+  const { result } = await renderHook(() => useScaledTVPosterSizes());
+  const width = result.current.poster;
+  await renderPage({
+    albums: [
+      {
+        Id: "album-1",
+        Type: "MusicAlbum",
+        Name: "Album",
+        ImageTags: { Primary: "p" },
+      },
+    ],
+    artists: [
+      {
+        Id: "artist-1",
+        Type: "MusicArtist",
+        Name: "Artist",
+        ImageTags: { Primary: "p" },
+      },
+    ],
+  });
+  expect(
+    screen.getByTestId(
+      new RegExp(
+        `/Items/album-1/Images/Primary\\?fillWidth=${PixelRatio.getPixelSizeForLayoutSize(width)}&`,
+      ),
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByTestId(
+      new RegExp(
+        `/Items/artist-1/Images/Primary\\?fillWidth=${PixelRatio.getPixelSizeForLayoutSize(160)}&`,
+      ),
+    ),
+  ).toBeTruthy();
 });

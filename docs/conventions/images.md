@@ -68,3 +68,5 @@ the window width.
 
 URLs built here still render through `Image` from `@/components/common/ServerImage`, so
 custom proxy auth headers are attached — see [custom-headers.md](../custom-headers.md).
+The native tvOS `GlassPosterView` is the exception: its JS wrapper resolves the same
+per-URL headers and passes them as JSON to its native image request.

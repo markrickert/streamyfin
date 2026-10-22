@@ -107,20 +107,6 @@ const seasonPrimary = (item: BaseItemDto): Artwork | null =>
       }
     : null;
 
-// Carry whichever tag the item offers — `getPrimaryImageUrl`'s
-// long-standing behaviour.
-const ownPrimaryAnyTag = (item: BaseItemDto): Artwork | null =>
-  item.Id
-    ? {
-        itemId: item.Id,
-        imageType: ImageType.Primary,
-        tag:
-          item.ImageTags?.Primary ??
-          item.BackdropImageTags?.[0] ??
-          item.ParentBackdropImageTags?.[0],
-      }
-    : null;
-
 type Candidate = (item: BaseItemDto) => Artwork | null;
 
 const pick = (item: BaseItemDto, candidates: (Candidate | null)[]) => {
@@ -159,7 +145,7 @@ export const resolveArtwork = (
       }
       return pick(item, [ownThumb, ownPrimary]);
     case "portraitCard":
-      return pick(item, [episode ? seriesPrimary : null, ownPrimaryAnyTag]);
+      return pick(item, [episode ? seriesPrimary : null, ownPrimary]);
     case "discoveryLandscape":
       return episode
         ? preferEpisodeImage
@@ -171,6 +157,6 @@ export const resolveArtwork = (
         ? pick(item, [seasonPrimary, seriesPrimary, ownPrimaryTagged])
         : ownPrimaryTagged(item);
     case "primary":
-      return ownPrimaryAnyTag(item);
+      return ownPrimary(item);
   }
 };
