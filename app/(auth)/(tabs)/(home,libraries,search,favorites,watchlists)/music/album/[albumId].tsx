@@ -99,7 +99,10 @@ export default function AlbumDetailScreen() {
   }, [album?.Name, navigation]);
 
   const imageUrl = useMemo(
-    () => (album ? getPrimaryImageUrl({ api, item: album }) : null),
+    () =>
+      album
+        ? getPrimaryImageUrl({ api, item: album, widthPoints: ARTWORK_SIZE })
+        : null,
     [api, album],
   );
 

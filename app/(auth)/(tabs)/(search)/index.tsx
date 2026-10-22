@@ -760,7 +760,11 @@ export default function SearchPage() {
               items={artists}
               header={t("search.artists")}
               renderItem={(item: BaseItemDto) => {
-                const imageUrl = getPrimaryImageUrl({ api, item });
+                const imageUrl = getPrimaryImageUrl({
+                  api,
+                  item,
+                  widthPoints: 80,
+                });
                 return (
                   <TouchableItemRouter
                     item={item}
@@ -799,7 +803,11 @@ export default function SearchPage() {
               items={albums}
               header={t("search.albums")}
               renderItem={(item: BaseItemDto) => {
-                const imageUrl = getPrimaryImageUrl({ api, item });
+                const imageUrl = getPrimaryImageUrl({
+                  api,
+                  item,
+                  widthPoints: 112,
+                });
                 return (
                   <TouchableItemRouter
                     item={item}
@@ -841,7 +849,11 @@ export default function SearchPage() {
               items={songs}
               header={t("search.songs")}
               renderItem={(item: BaseItemDto) => {
-                const imageUrl = getPrimaryImageUrl({ api, item });
+                const imageUrl = getPrimaryImageUrl({
+                  api,
+                  item,
+                  widthPoints: 112,
+                });
                 return (
                   <TouchableItemRouter
                     item={item}
@@ -883,7 +895,11 @@ export default function SearchPage() {
               items={playlists}
               header={t("search.playlists")}
               renderItem={(item: BaseItemDto) => {
-                const imageUrl = getPrimaryImageUrl({ api, item });
+                const imageUrl = getPrimaryImageUrl({
+                  api,
+                  item,
+                  widthPoints: 112,
+                });
                 return (
                   <TouchableItemRouter
                     item={item}

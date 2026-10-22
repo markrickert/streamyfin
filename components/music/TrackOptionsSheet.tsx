@@ -43,6 +43,7 @@ import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 
 interface Props {
@@ -53,6 +54,8 @@ interface Props {
   playlistId?: string;
   onRemoveFromPlaylist?: () => void;
 }
+
+const ARTWORK_SIZE = 56;
 
 export const TrackOptionsSheet: React.FC<Props> = ({
   open,
@@ -118,10 +121,10 @@ export const TrackOptionsSheet: React.FC<Props> = ({
       return imageUrl(
         api,
         { itemId: albumId, imageType: ImageType.Primary },
-        { maxHeightPx: 200, maxWidthPx: 200 },
+        { fillWidthPx: toImagePixels(ARTWORK_SIZE) },
       );
     }
-    return getPrimaryImageUrl({ api, item: track });
+    return getPrimaryImageUrl({ api, item: track, widthPoints: ARTWORK_SIZE });
   }, [api, track]);
 
   const handleDismissed = useSheetOpenState(bottomSheetModalRef, open);
@@ -262,8 +265,8 @@ export const TrackOptionsSheet: React.FC<Props> = ({
         <View className='flex-row items-center mb-6 px-2'>
           <View
             style={{
-              width: 56,
-              height: 56,
+              width: ARTWORK_SIZE,
+              height: ARTWORK_SIZE,
               borderRadius: 6,
               overflow: "hidden",
               backgroundColor: "#1a1a1a",

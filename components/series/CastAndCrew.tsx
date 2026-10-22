@@ -5,6 +5,7 @@ import type React from "react";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { ViewProps } from "react-native";
+import { CARD_LAYOUTS } from "@/components/cards/CardData";
 import { CardRow } from "@/components/cards/CardRow";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
@@ -44,7 +45,11 @@ export const CastAndCrew: React.FC<Props> = ({ item, loading, ...props }) => {
                 id: person.Id,
                 title: person.Name ?? "",
                 subtitle: person.Role ?? null,
-                imageUrl: getPrimaryImageUrl({ api, item: person }),
+                imageUrl: getPrimaryImageUrl({
+                  api,
+                  item: person,
+                  widthPoints: CARD_LAYOUTS.portrait.cardWidth,
+                }),
               },
             ]
           : [],

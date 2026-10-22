@@ -21,6 +21,7 @@ import {
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { imageUrl } from "@/utils/jellyfin/image/imageUrl";
 import { formatDuration } from "@/utils/time";
 
@@ -31,6 +32,8 @@ interface Props {
   showArtwork?: boolean;
   onOptionsPress?: (track: BaseItemDto) => void;
 }
+
+const ARTWORK_SIZE = 44;
 
 export const MusicTrackItem: React.FC<Props> = ({
   track,
@@ -51,10 +54,10 @@ export const MusicTrackItem: React.FC<Props> = ({
       return imageUrl(
         api,
         { itemId: albumId, imageType: ImageType.Primary },
-        { maxHeightPx: 100, maxWidthPx: 100 },
+        { fillWidthPx: toImagePixels(ARTWORK_SIZE) },
       );
     }
-    return getPrimaryImageUrl({ api, item: track });
+    return getPrimaryImageUrl({ api, item: track, widthPoints: ARTWORK_SIZE });
   }, [api, track]);
 
   const isCurrentTrack = currentTrack?.Id === track.Id;
@@ -144,8 +147,8 @@ export const MusicTrackItem: React.FC<Props> = ({
       {showArtwork && (
         <View
           style={{
-            width: 44,
-            height: 44,
+            width: ARTWORK_SIZE,
+            height: ARTWORK_SIZE,
             borderRadius: 4,
             overflow: "hidden",
             backgroundColor: "#1a1a1a",

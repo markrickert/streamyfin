@@ -7,7 +7,7 @@ import type {
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TouchableOpacityProps, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
@@ -42,16 +42,23 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
   const [api] = useAtom(apiAtom);
   const [user] = useAtom(userAtom);
   const { settings } = useSettings();
+  const [coverWidth, setCoverWidth] = useState(0);
+  const cover =
+    settings?.libraryOptions?.display !== "row" &&
+    settings?.libraryOptions?.imageStyle === "cover";
 
   const { t } = useTranslation();
 
   const url = useMemo(
     () =>
-      getPrimaryImageUrl({
-        api,
-        item: library,
-      }),
-    [api, library],
+      cover && !coverWidth
+        ? null
+        : getPrimaryImageUrl({
+            api,
+            item: library,
+            widthPoints: cover ? coverWidth : 128,
+          }),
+    [api, library, cover, coverWidth],
   );
 
   const itemType = useMemo(() => {
@@ -105,7 +112,10 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
     enabled: !!api,
   });
 
-  if (!url) return null;
+  // Measure the full-width cover before requesting it, rather than downloading
+  // a default-sized image that will be replaced immediately after layout.
+  const waitingForCoverLayout = cover && !coverWidth;
+  if (!api || (!url && !waitingForCoverLayout)) return null;
 
   if (settings?.libraryOptions?.display === "row") {
     return (
@@ -132,7 +142,11 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
   if (settings?.libraryOptions?.imageStyle === "cover") {
     return (
       <TouchableItemRouter item={library} className='w-full'>
-        <View className='flex justify-center rounded-xl w-full relative border border-neutral-900 h-20 '>
+        <View
+          testID='library-cover'
+          className='flex justify-center rounded-xl w-full relative border border-neutral-900 h-20 '
+          onLayout={(event) => setCoverWidth(event.nativeEvent.layout.width)}
+        >
           <View
             style={{
               width: "100%",
@@ -144,14 +158,16 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
               overflow: "hidden",
             }}
           >
-            <Image
-              source={{ uri: url }}
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-              cachePolicy={"memory-disk"}
-            />
+            {url && (
+              <Image
+                source={{ uri: url }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+                cachePolicy={"memory-disk"}
+              />
+            )}
             <View
               style={{
                 position: "absolute",
@@ -193,7 +209,7 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
         </View>
         <View className='p-2'>
           <Image
-            source={{ uri: url }}
+            source={url ? { uri: url } : null}
             className='h-full aspect-[2/1] object-cover rounded-lg overflow-hidden'
           />
         </View>

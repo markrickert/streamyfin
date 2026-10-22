@@ -21,7 +21,7 @@ export const MusicArtistCard: React.FC<Props> = ({ artist }) => {
   const router = useRouter();
 
   const imageUrl = useMemo(
-    () => getPrimaryImageUrl({ api, item: artist }),
+    () => getPrimaryImageUrl({ api, item: artist, widthPoints: IMAGE_SIZE }),
     [api, artist],
   );
 

@@ -96,6 +96,11 @@ them.
 
 ## Known limitations
 
+- **TV launcher artwork is fetched by the system.** Apple Top Shelf and Android TV
+  recommendations receive Jellyfin image URLs, but the system image loaders cannot
+  attach custom proxy headers. Their artwork can be blank behind an access gateway
+  even when in-app posters work. Do not put proxy header values in those URLs; this
+  needs a separately designed, locally cached image path for the launcher.
 - **MPV applies headers globally, not per URL.** They are only sent when the
   main stream is served by the Jellyfin server. If an item's stream is a remote
   URL while its external subtitles are on Jellyfin, those subtitles load

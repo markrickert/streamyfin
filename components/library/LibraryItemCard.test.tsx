@@ -4,8 +4,15 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react-native";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
 import { createStore, Provider as JotaiProvider } from "jotai";
+import { PixelRatio } from "react-native";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { makeApi } from "@/test-utils/jellyfinApi";
 import { LibraryItemCard } from "./LibraryItemCard";
@@ -17,16 +24,23 @@ jest.mock("@/providers/JellyfinProvider", () => {
     userAtom: atom({ Id: "user-1" }),
   };
 });
+let mockLibraryOptions = {
+  display: "row",
+  imageStyle: "cover",
+  showStats: true,
+};
 jest.mock("@/utils/atoms/settings", () => ({
-  useSettings: () => ({
-    settings: { libraryOptions: { display: "row", showStats: true } },
-  }),
+  useSettings: () => ({ settings: { libraryOptions: mockLibraryOptions } }),
 }));
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-// The row layout these specs render draws no image.
-jest.mock("@/components/common/ServerImage", () => ({ Image: () => null }));
+jest.mock("@/components/common/ServerImage", () => ({
+  Image: ({ source }: { source: { uri: string } }) => {
+    const { View } = jest.requireActual("react-native");
+    return <View testID={source.uri} />;
+  },
+}));
 // Navigation is not what is under test; the card shows up as its content.
 jest.mock("../common/TouchableItemRouter", () => ({
   TouchableItemRouter: ({ children }: { children: React.ReactNode }) =>
@@ -64,6 +78,14 @@ const renderCard = async () => {
 };
 
 describe("LibraryItemCard", () => {
+  beforeEach(() => {
+    mockLibraryOptions = {
+      display: "row",
+      imageStyle: "cover",
+      showStats: true,
+    };
+  });
+
   // Sentry REACT-NATIVE-D7: the card mounted before the api was restored and
   // its count query handed the null api to the SDK, which threw "Cannot read
   // property 'configuration' of null".
@@ -96,5 +118,39 @@ describe("LibraryItemCard", () => {
       includeItemTypes: "Movie",
     });
     expect(errors).toEqual([]);
+  });
+
+  test("a cover requests its measured width rather than a fixed image size", async () => {
+    mockLibraryOptions = {
+      display: "card",
+      imageStyle: "cover",
+      showStats: false,
+    };
+    const api = makeApi();
+    api.mock.onGet(/\/Items\?/).reply(200, { Items: [], TotalRecordCount: 12 });
+    const { store } = await renderCard();
+    await act(async () => store.set(apiAtom, api));
+
+    expect(screen.queryByTestId(/\/Items\/library-1\/Images\//)).toBeNull();
+    await fireEvent(screen.getByTestId("library-cover"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 80 } },
+    });
+    expect(
+      screen.getByTestId(
+        new RegExp(
+          `/Items/library-1/Images/Primary\\?fillWidth=${PixelRatio.getPixelSizeForLayoutSize(320)}&`,
+        ),
+      ),
+    ).toBeTruthy();
+    await fireEvent(screen.getByTestId("library-cover"), "layout", {
+      nativeEvent: { layout: { width: 240, height: 80 } },
+    });
+    expect(
+      screen.getByTestId(
+        new RegExp(
+          `/Items/library-1/Images/Primary\\?fillWidth=${PixelRatio.getPixelSizeForLayoutSize(240)}&`,
+        ),
+      ),
+    ).toBeTruthy();
   });
 });
