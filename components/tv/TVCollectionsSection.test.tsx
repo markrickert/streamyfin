@@ -9,6 +9,9 @@ jest.mock("@/utils/atoms/settings", () => ({
 }));
 // The poster artwork is not what this spec is about, and the real component
 // brings the proxy-header machinery along.
+jest.mock("@/hooks/useHeadersForUrl", () => ({
+  useHeadersForUrl: () => undefined,
+}));
 jest.mock("@/components/common/ServerImage", () => ({
   Image: () => null,
 }));

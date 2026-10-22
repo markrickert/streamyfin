@@ -65,7 +65,7 @@ them.
 | Server check on login | `checkJellyfinServer` |
 | Reachability probe | `jellyfinProbe` via `NetworkStatusProvider` |
 | Session WebSocket | third argument of RN's `WebSocket` in `WebSocketProvider` |
-| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs) and `getItemImage`, whose source wins when it already resolved them |
+| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs), `getItemImage` (whose source wins when it already resolved them), and the native tvOS `GlassPosterView` (headers forwarded as JSON, re-scoped to their URL on device) |
 | Image prefetch | `prefetchServerImage` |
 | Video playback | `MpvVideoSource.headers` in `direct-player` |
 | Now Playing artwork (iOS) | `nowPlayingMetadata.artworkHeaders` |
@@ -93,6 +93,10 @@ them.
   `normalizeCustomHeaders` is the single gate.
 - **Local network URLs get no headers.** Headers are keyed on the remote
   address; a LAN URL reaches the server directly, bypassing the gateway.
+- **Native artwork requests keep the scoping on device.** The tvOS poster
+  loader applies a header set only when the URL inside the payload is the URL
+  being fetched. A redirect to another host goes out stripped of every header
+  the original request carried.
 
 ## Known limitations
 

@@ -3,6 +3,10 @@ import type { StyleProp, ViewStyle } from "react-native";
 export interface GlassPosterViewProps {
   /** URL of the image to display */
   imageUrl: string | null;
+  /** Serialized `{ url, headers }` for the native image request. The native
+   * view applies the headers only when `url` matches `imageUrl`, so a payload
+   * applied out of order can never reach another host. */
+  headersJson?: string;
   /** Aspect ratio of the poster (width/height). Default: 10/15 for portrait, 16/9 for landscape */
   aspectRatio: number;
   /** Corner radius in points. Default: 24 */

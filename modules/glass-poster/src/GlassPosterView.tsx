@@ -1,7 +1,7 @@
 import { requireNativeView } from "expo";
 import * as React from "react";
 import { Platform, View } from "react-native";
-
+import { useHeadersForUrl } from "@/hooks/useHeadersForUrl";
 import type { GlassPosterViewProps } from "./GlassPoster.types";
 import { isGlassEffectAvailable } from "./GlassPosterModule";
 
@@ -26,6 +26,7 @@ if (Platform.OS === "ios" && Platform.isTV) {
  * On other platforms: Returns null (use existing poster components)
  */
 const GlassPosterView: React.FC<GlassPosterViewProps> = (props) => {
+  const headers = useHeadersForUrl(props.imageUrl);
   // Only render on tvOS
   if (!Platform.isTV || Platform.OS !== "ios") {
     return null;
@@ -33,7 +34,15 @@ const GlassPosterView: React.FC<GlassPosterViewProps> = (props) => {
 
   // Use native view if available
   if (NativeGlassPosterView) {
-    return <NativeGlassPosterView {...props} />;
+    return (
+      <NativeGlassPosterView
+        {...props}
+        headersJson={JSON.stringify({
+          url: props.imageUrl,
+          headers: headers ?? {},
+        })}
+      />
+    );
   }
 
   // Fallback: return empty view (caller should handle this)
