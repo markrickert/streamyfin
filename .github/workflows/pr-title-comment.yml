@@ -1,9 +1,10 @@
 name: 📝 PR Title Comment
 
-# Posts / updates / deletes the PR-title lint sticky comment with a write token,
-# so it works on FORK PRs too (the pull_request-triggered pr-title.yml only has a
-# read-only token on forks). workflow_run runs from the base branch with the base
-# repo's token. This is comment-only — the required check stays pr-title.yml.
+# Posts / updates / deletes the PR-title lint sticky comment on FORK PRs, where
+# the pull_request-triggered pr-title.yml only has a read-only token. Same-repo
+# PRs are commented on by pr-title.yml itself. workflow_run runs from the base
+# branch with the base repo's token. This is comment-only — the required check
+# stays pr-title.yml.
 on:
   workflow_run:
     workflows: ["📝 PR Title"]
@@ -14,8 +15,10 @@ permissions:
   actions: read # download the artifact from the triggering run
   pull-requests: write # post/update/delete the sticky comment
 
+# One group per PR branch, so a newer lint result cancels a stale queued run
+# instead of each one holding a runner to post the same comment.
 concurrency:
-  group: pr-title-comment-${{ github.event.workflow_run.id }}
+  group: pr-title-comment-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
@@ -25,9 +28,19 @@ jobs:
     # conclusion "cancelled" before uploading it, and would fail the download.
     if: >
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name != github.repository &&
       contains(fromJSON('["success", "failure"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-26.04
     steps:
+      # Checks out the default branch, so the composite action runs trusted
+      # code from this repo, never from the fork.
+      - name: 📥 Checkout comment action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/actions
+          show-progress: false
+          persist-credentials: false
+
       - name: ⬇️ Download lint result
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,41 +54,15 @@ jobs:
         id: result
         run: |
           echo "number=$(cat result/number)" >> "$GITHUB_OUTPUT"
-          if [ -s result/error ]; then
-            echo "has_error=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_error=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: 📥 Load error message
-        if: steps.result.outputs.has_error == 'true'
-        run: |
           {
-            echo "LINT_ERROR<<PR_TITLE_ERR_EOF"
+            echo "error<<PR_TITLE_ERR_EOF"
             cat result/error
             echo
             echo "PR_TITLE_ERR_EOF"
-          } >> "$GITHUB_ENV"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: 💬 Post title error
-        if: steps.result.outputs.has_error == 'true'
-        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+      - name: 💬 Post or clear title error
+        uses: ./.github/actions/pr-title-comment
         with:
           number: ${{ steps.result.outputs.number }}
-          header: pr-title-lint-error
-          message: |
-            Hey there and thank you for opening this pull request! 👋🏼
-            We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
-
-            **Error details:**
-            ```
-            ${{ env.LINT_ERROR }}
-            ```
-
-      - name: 🧹 Clear title error
-        if: steps.result.outputs.has_error == 'false'
-        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
-        with:
-          number: ${{ steps.result.outputs.number }}
-          header: pr-title-lint-error
-          delete: true
+          error: ${{ steps.result.outputs.error }}

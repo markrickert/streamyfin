@@ -1,0 +1,38 @@
+name: PR title lint comment
+description: >-
+  Post the PR-title lint error as a sticky comment, or delete that comment once
+  the title passes. Shared by pr-title.yml (same-repo PRs) and
+  pr-title-comment.yml (fork PRs).
+
+inputs:
+  number:
+    description: Pull request number.
+    required: true
+  error:
+    description: Lint error message. Empty means the title passed.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - if: inputs.error != ''
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+      with:
+        number: ${{ inputs.number }}
+        header: pr-title-lint-error
+        message: |
+          Hey there and thank you for opening this pull request! 👋🏼
+          We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
+
+          **Error details:**
+          ```
+          ${{ inputs.error }}
+          ```
+
+    - if: inputs.error == ''
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+      with:
+        number: ${{ inputs.number }}
+        header: pr-title-lint-error
+        delete: true
