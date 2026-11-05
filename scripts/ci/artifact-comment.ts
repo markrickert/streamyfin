@@ -16,6 +16,8 @@
  * "Building" until the backstop run.
  */
 
+import { GitHubError, github } from "./github";
+
 /** The step name every caller in `build-apps.yml` must use for this script. */
 export const REFRESH_STEP = "🔄 Refresh PR build comment";
 
@@ -79,53 +81,49 @@ export interface SelfJob {
  * Each target lists its build job and its repack job: either may hold the
  * artifact while the other sits skipped.
  */
-export const JOB_MAPPINGS: Record<string, string[]> = {
-  "Android Phone": [
-    "🤖 Build Android APK (Phone)",
-    "🤖 Repack Android APK (Phone)",
-  ],
-  "Android TV": ["🤖 Build Android APK (TV)", "🤖 Repack Android APK (TV)"],
-  iOS: ["🍎 Build iOS IPA (Phone)", "🍎 Repack iOS IPA (Phone)"],
-  "iOS Unsigned": [
-    "🍎 Build iOS IPA (Phone - Unsigned)",
-    "🍎 Repack iOS IPA (Phone - Unsigned)",
-  ],
-  "tvOS Unsigned": [
-    "🍎 Build tvOS IPA (Unsigned)",
-    "🍎 Repack tvOS IPA (Unsigned)",
-  ],
-};
-
 const BUILD_TARGETS = [
   {
     name: "Android Phone",
     platform: "🤖",
     device: "📱 Phone",
+    fileType: "APK",
     artifactPattern: /android.*phone/i,
+    jobs: ["🤖 Build Android APK (Phone)", "🤖 Repack Android APK (Phone)"],
   },
   {
     name: "Android TV",
     platform: "🤖",
     device: "📺 TV",
+    fileType: "APK",
     artifactPattern: /android.*tv/i,
+    jobs: ["🤖 Build Android APK (TV)", "🤖 Repack Android APK (TV)"],
   },
   {
     name: "iOS",
     platform: "🍎",
     device: "📱 Phone",
+    fileType: "IPA",
     artifactPattern: /^(?!.*unsigned).*ios.*phone.*ipa/i,
+    jobs: ["🍎 Build iOS IPA (Phone)", "🍎 Repack iOS IPA (Phone)"],
   },
   {
     name: "iOS Unsigned",
     platform: "🍎",
     device: "📱 Phone Unsigned",
+    fileType: "IPA",
     artifactPattern: /ios.*phone.*unsigned/i,
+    jobs: [
+      "🍎 Build iOS IPA (Phone - Unsigned)",
+      "🍎 Repack iOS IPA (Phone - Unsigned)",
+    ],
   },
   {
     name: "tvOS Unsigned",
     platform: "🍎",
     device: "📺 TV Unsigned",
+    fileType: "IPA",
     artifactPattern: /ios.*tv.*unsigned/i,
+    jobs: ["🍎 Build tvOS IPA (Unsigned)", "🍎 Repack tvOS IPA (Unsigned)"],
   },
 ];
 
@@ -167,9 +165,9 @@ export const settleJobs = (jobs: Job[], self: SelfJob | undefined): Job[] =>
  * not cancelled, then the newest.
  */
 export const findBestRun = (runs: Run[]): Run | undefined => {
-  const sorted = runs
-    .filter((run) => run.name.includes("Build Apps"))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const sorted = [...runs].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
   return (
     sorted.find((run) => run.status === "in_progress") ??
     sorted.find((run) => run.status === "queued") ??
@@ -181,7 +179,7 @@ export const findBestRun = (runs: Run[]): Run | undefined => {
 };
 
 /**
- * Prefers an exact name match, so '...(Phone)' never swallows
+ * Matches job names exactly, so '...(Phone)' never swallows
  * '...(Phone - Unsigned)'. Among a target's two jobs it prefers the live one,
  * then the successful one, so a skipped job never stands in for the one that
  * ran.
@@ -190,10 +188,7 @@ export const findJobForTarget = (
   jobs: Job[],
   jobNames: string[],
 ): Job | undefined => {
-  const exact = jobs.filter((j) => jobNames.includes(j.name));
-  const pool = exact.length
-    ? exact
-    : jobs.filter((j) => jobNames.some((name) => j.name.includes(name)));
+  const pool = jobs.filter((j) => jobNames.includes(j.name));
   return (
     pool.find((j) => j.status !== "completed") ??
     pool.find((j) => j.conclusion === "success") ??
@@ -217,9 +212,9 @@ export const buildStatuses = (
   jobs: Job[] | undefined,
 ): Record<string, BuildStatus> => {
   const statuses: Record<string, BuildStatus> = {};
-  for (const [target, jobNames] of Object.entries(JOB_MAPPINGS)) {
-    const job = jobs && findJobForTarget(jobs, jobNames);
-    statuses[target] = job
+  for (const target of BUILD_TARGETS) {
+    const job = jobs && findJobForTarget(jobs, target.jobs);
+    statuses[target.name] = job
       ? {
           name: job.name,
           status: job.status,
@@ -317,11 +312,10 @@ export const renderComment = ({
 
   for (const target of BUILD_TARGETS) {
     const artifact = artifacts.find((a) => target.artifactPattern.test(a.name));
-    const fileType = target.name.includes("Android") ? "APK" : "IPA";
     const [status, download] = targetRow(
       statuses[target.name],
       artifact,
-      fileType,
+      target.fileType,
       referenceDurations,
       repository,
     );
@@ -368,35 +362,6 @@ export const renderComment = ({
   return body;
 };
 
-class GitHubError extends Error {
-  constructor(
-    readonly status: number,
-    url: string,
-  ) {
-    super(`GitHub answered ${status} for ${url}`);
-  }
-}
-
-const github = async <T>(
-  token: string,
-  path: string,
-  init: { method?: string; body?: unknown } = {},
-): Promise<T> => {
-  const url = `https://api.github.com${path}`;
-  const response = await fetch(url, {
-    method: init.method ?? "GET",
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: init.body ? JSON.stringify(init.body) : undefined,
-  });
-  if (!response.ok) throw new GitHubError(response.status, url);
-  return (await response.json()) as T;
-};
-
 interface PullRequest {
   number: number;
   head: { sha: string; repo: { full_name: string } | null };
@@ -404,7 +369,7 @@ interface PullRequest {
 
 interface EventPayload {
   pull_request?: PullRequest;
-  workflow_run?: {
+  workflow_run?: Run & {
     head_sha: string;
     head_repository?: { full_name: string };
   };
@@ -420,32 +385,39 @@ const findPullRequest = async (
   if (eventName === "pull_request" && payload.pull_request) {
     return { pr: payload.pull_request, sha: payload.pull_request.head.sha };
   }
-  if (eventName === "workflow_run" && payload.workflow_run) {
-    const commit = payload.workflow_run.head_sha;
-    const prs = await github<PullRequest[]>(
-      token,
-      `/repos/${repo}/commits/${commit}/pulls`,
-    );
-    return prs[0] && { pr: prs[0], sha: commit };
+  if (eventName !== "workflow_run" && eventName !== "workflow_dispatch") {
+    console.log("Unsupported event type:", eventName);
+    return undefined;
   }
-  if (eventName === "workflow_dispatch") {
-    // Manual testing: the PR for this commit, else the latest open one.
-    const prs = await github<PullRequest[]>(
+  const commit = payload.workflow_run?.head_sha ?? sha;
+  const [pr] = await github<PullRequest[]>(
+    token,
+    `/repos/${repo}/commits/${commit}/pulls`,
+  );
+  if (pr || eventName === "workflow_run") return pr && { pr, sha: commit };
+  // Manual testing: no PR for this commit, so take the latest open one.
+  const [latest] = await github<PullRequest[]>(
+    token,
+    `/repos/${repo}/pulls?state=open&sort=updated&direction=desc&per_page=1`,
+  );
+  return latest && { pr: latest, sha: latest.head.sha };
+};
+
+const fetchArtifacts = async (
+  token: string,
+  repo: string,
+  runId: number,
+): Promise<Artifact[]> => {
+  try {
+    const body = await github<{ artifacts: Artifact[] }>(
       token,
-      `/repos/${repo}/commits/${sha}/pulls`,
+      `/repos/${repo}/actions/runs/${runId}/artifacts?per_page=100`,
     );
-    const pr =
-      prs[0] ??
-      (
-        await github<PullRequest[]>(
-          token,
-          `/repos/${repo}/pulls?state=open&sort=updated&direction=desc&per_page=1`,
-        )
-      )[0];
-    return pr && { pr, sha: pr.head.sha };
+    return body.artifacts;
+  } catch (error) {
+    console.log(`Failed to get artifacts for run ${runId}:`, error);
+    return [];
   }
-  console.log("Unsupported event type:", eventName);
-  return undefined;
 };
 
 /**
@@ -469,7 +441,7 @@ const fetchReferenceDurations = async (
       token,
       `/repos/${repo}/actions/runs/${workflow_runs[0].id}/jobs?per_page=100`,
     );
-    const mapped = new Set(Object.values(JOB_MAPPINGS).flat());
+    const mapped = new Set(BUILD_TARGETS.flatMap((t) => t.jobs));
     for (const job of jobs) {
       if (
         mapped.has(job.name) &&
@@ -560,14 +532,27 @@ const main = async () => {
   const { pr, sha } = found;
   console.log(`Processing PR #${pr.number} for commit ${sha.substring(0, 7)}`);
 
-  const { workflow_runs } = await github<{ workflow_runs: Run[] }>(
-    token,
-    `/repos/${repo}/actions/runs?head_sha=${sha}&per_page=30`,
-  );
-  const run = findBestRun(workflow_runs);
+  // Inside a Build Apps job the run is this one, and the backstop's payload
+  // carries it. Only a manual dispatch has to search for it.
+  const run =
+    eventName === "pull_request"
+      ? await github<Run>(
+          token,
+          `/repos/${repo}/actions/runs/${env.GITHUB_RUN_ID}`,
+        )
+      : (payload.workflow_run ??
+        findBestRun(
+          (
+            await github<{ workflow_runs: Run[] }>(
+              token,
+              `/repos/${repo}/actions/workflows/build-apps.yml/runs?head_sha=${sha}&per_page=30`,
+            )
+          ).workflow_runs,
+        ));
 
   let statuses: Record<string, BuildStatus> = {};
   let artifacts: Artifact[] = [];
+  let referenceDurations: Record<string, number> = {};
   if (run) {
     let jobs: Job[] | undefined;
     try {
@@ -579,7 +564,7 @@ const main = async () => {
         body.jobs,
         eventName === "pull_request"
           ? {
-              runId: Number(env.GITHUB_RUN_ID),
+              runId: run.id,
               runnerName: env.RUNNER_NAME,
               now: new Date().toISOString(),
             }
@@ -600,20 +585,17 @@ const main = async () => {
     }
     statuses = buildStatuses(run, jobs);
 
-    if (
+    const values = Object.values(statuses);
+    [artifacts, referenceDurations] = await Promise.all([
       run.status === "completed" ||
-      Object.values(statuses).some((s) => s.conclusion === "success")
-    ) {
-      try {
-        const body = await github<{ artifacts: Artifact[] }>(
-          token,
-          `/repos/${repo}/actions/runs/${run.id}/artifacts?per_page=100`,
-        );
-        artifacts = body.artifacts;
-      } catch (error) {
-        console.log(`Failed to get artifacts for run ${run.id}:`, error);
-      }
-    }
+      values.some((s) => s.conclusion === "success")
+        ? fetchArtifacts(token, repo, run.id)
+        : [],
+      // The ETA only shows on a queued or building row.
+      values.some((s) => s.status !== "completed")
+        ? fetchReferenceDurations(token, repo)
+        : {},
+    ]);
   }
 
   const body = renderComment({
@@ -622,7 +604,7 @@ const main = async () => {
     sha,
     statuses,
     artifacts,
-    referenceDurations: await fetchReferenceDurations(token, repo),
+    referenceDurations,
     runUrl: `${env.GITHUB_SERVER_URL ?? "https://github.com"}/${repo}/actions/runs/${env.GITHUB_RUN_ID}`,
   });
 

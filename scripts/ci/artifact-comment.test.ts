@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type Artifact,
   buildStatuses,
@@ -185,5 +187,25 @@ describe("renderComment", () => {
     });
     expect(body).toContain("| 🍎 iOS | 📱 Phone | ⏳ Pending |");
     expect(body).toContain("Builds are starting up");
+  });
+});
+
+describe("build-apps.yml", () => {
+  it("names every refresh step the way settleJobs looks for it", () => {
+    const workflow = readFileSync(
+      join(__dirname, "../../.github/workflows/build-apps.yml"),
+      "utf8",
+    );
+    const names = [
+      ...workflow.matchAll(
+        /- name: (.+)\n\s+uses: \.\/\.github\/actions\/refresh-pr-comment/g,
+      ),
+    ].map((m) => m[1]);
+    const callers = workflow.match(
+      /uses: \.\/\.github\/actions\/refresh-pr-comment/g,
+    );
+    expect(names.length).toBe(callers?.length);
+    expect(names.length).toBeGreaterThan(0);
+    expect(new Set(names)).toEqual(new Set([REFRESH_STEP]));
   });
 });
