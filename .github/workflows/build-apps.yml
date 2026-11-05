@@ -49,6 +49,7 @@ jobs:
     permissions:
       contents: read
       actions: read # list and download earlier runs' artifacts
+      pull-requests: write # post the PR build comment before any build starts
     outputs:
       ios_hash: ${{ steps.hash.outputs.ios }}
       tv_hash: ${{ steps.hash.outputs.tv }}
@@ -73,6 +74,12 @@ jobs:
         with:
           # renovate: datasource=npm depName=bun
           bun-version: "1.4.4"
+
+      # Posts the placeholder before any build job can finish. Every build job
+      # waits on this one, so they only ever update the comment and never race
+      # to create two.
+      - name: 🔄 Refresh PR build comment
+        uses: ./.github/actions/refresh-pr-comment
 
       - name: 💾 Cache Bun dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -156,7 +163,8 @@ jobs:
     name: 🤖 Repack Android APK (Phone)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.android_hash }}
 
@@ -229,7 +237,8 @@ jobs:
     name: 🤖 Build Android APK (Phone)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.android_hash }}
 
@@ -341,7 +350,8 @@ jobs:
     name: 🤖 Repack Android APK (TV)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.android_tv_hash }}
 
@@ -414,7 +424,8 @@ jobs:
     name: 🤖 Build Android APK (TV)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.android_tv_hash }}
 
@@ -525,7 +536,8 @@ jobs:
     name: 🍎 Repack iOS IPA (Phone)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
 
@@ -595,7 +607,8 @@ jobs:
     name: 🍎 Build iOS IPA (Phone)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
 
@@ -677,7 +690,8 @@ jobs:
     name: 🍎 Repack iOS IPA (Phone - Unsigned)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
 
@@ -742,7 +756,8 @@ jobs:
     name: 🍎 Build iOS IPA (Phone - Unsigned)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
 
@@ -813,7 +828,8 @@ jobs:
     name: 🍎 Repack tvOS IPA (Unsigned)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.tv_hash }}
 
@@ -880,7 +896,8 @@ jobs:
     name: 🍎 Build tvOS IPA (Unsigned)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+      actions: read # job statuses and artifacts for the PR build comment
+      pull-requests: write # update the PR build comment
     env:
       FINGERPRINT: ${{ needs.fingerprint.outputs.tv_hash }}
 
