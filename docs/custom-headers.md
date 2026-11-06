@@ -65,8 +65,9 @@ them.
 | Server check on login | `checkJellyfinServer` |
 | Reachability probe | `jellyfinProbe` via `NetworkStatusProvider` |
 | Session WebSocket | third argument of RN's `WebSocket` in `WebSocketProvider` |
-| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs) and `getItemImage`, whose source wins when it already resolved them |
+| Images | `<Image>` from `components/common/ServerImage` (it carries expo-image's statics, so it is the only import a screen needs); a source from `utils/jellyfin/image/artwork.ts` keeps its already-resolved headers |
 | Image prefetch | `prefetchServerImage` |
+| TV launcher artwork | `prepareLauncherArtwork` downloads with the current session and scoped gateway headers before publishing local files; neither header nor token reaches Top Shelf or Android's launcher |
 | Video playback | `MpvVideoSource.headers` in `direct-player` |
 | Auto quality speed tests | `detectBitrate` (`utils/jellyfin/bitrateTest.ts`), which times the body with `expo/fetch` |
 | Now Playing artwork (iOS) | `nowPlayingMetadata.artworkHeaders` |

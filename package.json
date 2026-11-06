@@ -22,6 +22,7 @@
     "format": "biome format --write .",
     "doctor": "expo-doctor",
     "i18n:check": "bun scripts/check-i18n-keys.ts",
+    "image-urls:check": "bun scripts/check-image-url-ownership.ts",
     "i18n:fix-unused": "bun scripts/check-i18n-keys.ts --fix-unused",
     "test:unit": "jest",
     "test:coverage": "jest --coverage",

@@ -17,10 +17,19 @@ The TV home screen data starts in [components/home/Home.tv.tsx](../components/ho
 
 The sync layer:
 
-- builds a normalized TV discovery payload
+- builds a normalized TV discovery payload and downloads artwork with scoped
+  Jellyfin and custom gateway headers inside the signed-in app
+- caches copies in bounded persistent native storage and replaces remote
+  artwork URLs with local references before publishing
 - sends it to the tvOS Top Shelf cache writer on Apple TV
 - sends it to the Android TV recommendations module on Android TV
-- clears published content when server or user state changes
+- clears published content and images on sign-out or server/account changes;
+  an overlapping download from a prior session cannot publish later
+
+Home retains its previous native payload while the next set of hero items is
+loading. Unchanged images are reused across launches. A failed download leaves
+the tile without artwork and does not change its action links. The image
+selection and sizing rules are in [the image convention](conventions/images.md).
 
 ## Tile Actions
 
@@ -82,11 +91,10 @@ How it works:
 - the tvOS Top Shelf extension reads the cached payload
 - the extension renders sections and items for Top Shelf
 
-Why the API key is stored on tvOS:
-
-- the Top Shelf extension runs outside the app process
-- it may need authenticated image access when loading poster artwork
-- the app stores the API key so the extension can build authenticated requests
+The app copies posters into `TopShelfArtwork` in the shared App Group. The
+extension reads only existing files from that directory; it has no Jellyfin
+credential or network image URL. The writer removes the legacy shared Top
+Shelf API key when it next publishes or clears the payload.
 
 ## Android TV Recommendations
 
@@ -112,7 +120,10 @@ Important differences from tvOS:
 
 - Android TV does not use a separate extension target
 - Android TV content is persisted through `TvContractCompat`
-- artwork is currently published as poster URLs, not app-proxied local content
+- landscape artwork is copied into a bounded private directory and served to
+  the launcher through a read-only `TvArtworkProvider` content URI
+- the provider rejects remote references and write requests; cached legacy
+  remote image URLs are stripped when native recommendations refresh
 
 ## Logging
 
@@ -167,12 +178,12 @@ Typical commands:
 
 ## Current Limitations
 
-- Android TV artwork may fail on authenticated Jellyfin servers because the launcher fetches poster URLs outside the app
+- Authenticated image delivery and local-reader persistence still need
+  verification on Apple TV and Android TV at 1080p with a live server
 - Android TV currently publishes a preview channel only, not Watch Next
 - tvOS and Android TV both use the same payload source, so section selection is shared unless explicitly split later
 
 ## Future Improvements
 
-- add a local image proxy or cache for Android TV artwork
 - add Watch Next support for resumable content
 - add a native debug dump method for querying TV provider state from inside the app process

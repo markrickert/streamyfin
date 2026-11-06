@@ -84,6 +84,7 @@ jobs:
           - "format"
           - "typecheck"
           - "i18n:check"
+          - "image-urls:check"
           - "test:unit"
           - "e2e:bench:test"
 
