@@ -1,5 +1,6 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
+import { trickplaySheetUrl } from "@/utils/jellyfin/image/trickplaySheetUrl";
 import { isAlternateVersion } from "@/utils/jellyfin/mediaSourceVersion";
 import { ticksToMs } from "@/utils/time";
 
@@ -81,19 +82,7 @@ export const getTrickplayInfo = (
  * URL of one trickplay sheet. The server serves the primary version's sheets
  * unless MediaSourceId names another one.
  */
-export const trickplaySheetUrl = (
-  api: Api,
-  itemId: string,
-  resolution: string,
-  sheetIndex: number,
-  mediaSourceId?: string | null,
-) => {
-  const version =
-    mediaSourceId && mediaSourceId !== itemId
-      ? `&MediaSourceId=${mediaSourceId}`
-      : "";
-  return `${api.basePath}/Videos/${itemId}/Trickplay/${resolution}/${sheetIndex}.jpg?ApiKey=${api.accessToken}${version}`;
-};
+export { trickplaySheetUrl };
 
 /** Generates a trickplay URL based on the item, resolution, and sheet index. */
 export const generateTrickplayUrl = (

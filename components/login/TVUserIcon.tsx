@@ -6,6 +6,7 @@ import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getUserImageUrl } from "@/utils/jellyfin/image/getUserImageUrl";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import type { AccountSecurityType } from "@/utils/secureCredentials";
 
@@ -58,7 +59,7 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
             serverAddress,
             userId,
             primaryImageTag,
-            width: 280,
+            width: toImagePixels(scaleSize(140) * 1.05),
           })
         : null;
 

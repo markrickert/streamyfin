@@ -28,6 +28,20 @@ describe("generateTrickplayUrl", () => {
       "https://jellyfin.example.com/Videos/item-1/Trickplay/320/2.jpg?ApiKey=SECRET_TOKEN",
     );
   });
+
+  test("preserves media-source and sheet identity when the id needs encoding", () => {
+    const versioned: BaseItemDto = {
+      ...item,
+      Trickplay: {
+        ...item.Trickplay,
+        "version & 2": item.Trickplay!["item-1"],
+      },
+    };
+    const url = generateTrickplayUrl(versioned, 4, makeApi(), "version & 2");
+
+    expect(new URL(url!).pathname).toBe("/Videos/item-1/Trickplay/320/4.jpg");
+    expect(new URL(url!).searchParams.get("MediaSourceId")).toBe("version & 2");
+  });
 });
 
 describe("alternate versions", () => {

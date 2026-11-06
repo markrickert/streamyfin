@@ -21,7 +21,7 @@ export const getUserImageUrl = ({
   primaryImageTag?: string | null;
   width?: number;
 }): string | null => {
-  if (!primaryImageTag) {
+  if (!serverAddress || !userId || !primaryImageTag) {
     return null;
   }
 
