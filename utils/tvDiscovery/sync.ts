@@ -1,24 +1,46 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Platform } from "react-native";
-import { clearTvRecommendations, syncTvRecommendations } from "@/modules";
+import { TV_DISCOVERY_OWNER_KEY } from "@/constants/TVDiscovery";
+import {
+  clearTvRecommendations,
+  pruneTopShelfImages,
+  pruneTvImages,
+  syncTvRecommendations,
+} from "@/modules";
+import { storage } from "@/utils/mmkv";
 import {
   clearTopShelfCacheSafely,
   writeTopShelfPayload,
 } from "@/utils/topshelf/cache";
+import { prepareLauncherArtwork } from "./launcherArtwork";
 import { buildTVDiscoveryPayload } from "./payload";
 
-export function updateTVDiscovery({
+let revision = 0;
+
+export async function updateTVDiscovery({
   api,
+  userId,
   sections,
   useEpisodeImages,
 }: {
   api: Api | null | undefined;
+  userId?: string | null;
   sections: Array<{ title: string; items: BaseItemDto[] | undefined }>;
   useEpisodeImages?: boolean;
-}): void {
+}): Promise<void> {
   if (!Platform.isTV) return;
 
+  if (!api?.accessToken || !userId) {
+    clearTVDiscoverySafely();
+    return;
+  }
+  const owner = `${api.basePath}\0${userId}`;
+  if (storage.getString(TV_DISCOVERY_OWNER_KEY) !== owner) {
+    clearTVDiscoverySafely();
+    storage.set(TV_DISCOVERY_OWNER_KEY, owner);
+  }
+  const thisRevision = ++revision;
   const payload = buildTVDiscoveryPayload({
     api,
     sections,
@@ -33,6 +55,14 @@ export function updateTVDiscovery({
     return;
   }
 
+  const prepared = await prepareLauncherArtwork(
+    payload,
+    api,
+    userId,
+    () => thisRevision === revision,
+  );
+  if (!prepared || thisRevision !== revision) return;
+
   const sectionSummary = payload.sections
     .map((section) => `${section.title}:${section.items.length}`)
     .join(", ");
@@ -41,13 +71,16 @@ export function updateTVDiscovery({
   );
 
   if (Platform.OS === "ios") {
-    writeTopShelfPayload(payload, api?.accessToken || undefined);
+    if (writeTopShelfPayload(prepared.payload)) {
+      pruneTopShelfImages(prepared.keys);
+    }
     return;
   }
 
   if (Platform.OS === "android") {
     try {
-      const didSync = syncTvRecommendations(JSON.stringify(payload));
+      const didSync = syncTvRecommendations(JSON.stringify(prepared.payload));
+      if (didSync) pruneTvImages(prepared.keys);
 
       console.log(`[TVDiscovery] Android sync result: ${didSync}`);
 
@@ -68,6 +101,8 @@ export function updateTVDiscovery({
 export function clearTVDiscoverySafely(): void {
   if (!Platform.isTV) return;
 
+  revision++;
+  storage.remove(TV_DISCOVERY_OWNER_KEY);
   console.log(`[TVDiscovery] Clearing TV discovery for ${Platform.OS} TV`);
 
   if (Platform.OS === "ios") {

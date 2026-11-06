@@ -12,7 +12,7 @@ import { GenreTags } from "@/components/GenreTags";
 import { TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO } from "@/constants/TVDetailLayout";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { scaleSize } from "@/utils/scaleSize";
 
 interface TVSeriesHeaderProps {
@@ -26,7 +26,14 @@ export const TVSeriesHeader: React.FC<TVSeriesHeaderProps> = ({ item }) => {
 
   const logoUrl = useMemo(() => {
     if (!api || !item) return null;
-    return getLogoImageUrlById({ api, item });
+    return (
+      getArtwork({
+        api,
+        item,
+        purpose: "logo",
+        box: { width: scaleSize(600), height: scaleSize(100) },
+      })?.uri ?? null
+    );
   }, [api, item]);
 
   const yearString = useMemo(() => {

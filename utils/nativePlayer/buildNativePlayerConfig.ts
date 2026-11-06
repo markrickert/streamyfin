@@ -38,7 +38,7 @@ import {
 } from "@/utils/customHeaders";
 import { withAcceptLanguageForUrl } from "@/utils/jellyfin/acceptLanguage";
 import { autoBitrateOptions } from "@/utils/jellyfin/autoBitrateOptions";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtworkForPixelBudget } from "@/utils/jellyfin/image/artwork";
 import { resolveMaxStreamingBitrate } from "@/utils/jellyfin/maxStreamingBitrate";
 import { getStreamUrl } from "@/utils/jellyfin/media/getStreamUrl";
 import {
@@ -395,15 +395,20 @@ const buildMetadata = (item: BaseItemDto, api: Api | null) => {
     subtitle = String(item.ProductionYear);
   }
 
-  const artworkUri = getPrimaryImageUrl({ api, item, quality: 90, width: 500 });
+  const artwork = getArtworkForPixelBudget({
+    api,
+    item,
+    purpose: "portrait",
+    pixels: { width: 500, height: 750 },
+  });
 
   return {
     itemId: item.Id ?? undefined,
     title: item.Name ?? undefined,
     subtitle: subtitle || undefined,
-    artworkUri: artworkUri ?? undefined,
+    artworkUri: artwork?.uri,
     // Fetched natively for the Control Center, so it needs the headers too.
-    artworkHeaders: getJellyfinHeadersForUrl(artworkUri, api?.basePath),
+    artworkHeaders: artwork?.headers,
     isEpisode,
   };
 };

@@ -17,8 +17,7 @@ import {
 } from "@/components/ParallaxPage";
 import { TVActorPage } from "@/components/persons/TVActorPage";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 
 const PAGE_SIZE = 16;
@@ -81,18 +80,18 @@ const MobileActorPage: React.FC<{ personId: string }> = ({ personId }) => {
     [api, user?.Id, personId],
   );
 
-  const backdropUrl = useMemo(
-    () =>
-      getBackdropUrl({
+  const backdropUrl = useMemo(() => {
+    if (!item) return null;
+    return (
+      getArtwork({
         api,
         item,
-        quality: 90,
         // The image covers the header, which spans the window.
-        width: toImagePixels(windowWidth),
-        height: toImagePixels(PARALLAX_HEADER_HEIGHT),
-      }),
-    [api, item, windowWidth],
-  );
+        purpose: "backdrop",
+        box: { width: windowWidth, height: PARALLAX_HEADER_HEIGHT },
+      })?.uri ?? null
+    );
+  }, [api, item, windowWidth]);
 
   if (l1)
     return (

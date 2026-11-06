@@ -7,3 +7,9 @@
  * the OS keeps the socket open.
  */
 export const TOP_SHELF_PLAY_LOOKUP_TIMEOUT = 3000;
+
+export const TV_LAUNCHER_POSTER_WIDTH_PX = 400;
+export const TV_LAUNCHER_POSTER_HEIGHT_PX = 600;
+export const TV_LAUNCHER_WIDE_WIDTH_PX = 960;
+export const TV_LAUNCHER_WIDE_HEIGHT_PX = 540;
+export const TV_DISCOVERY_OWNER_KEY = "tvDiscoveryOwner";

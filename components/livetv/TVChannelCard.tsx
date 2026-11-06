@@ -5,7 +5,8 @@ import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { useScaledTVTypography } from "@/constants/TVTypography";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtworkByOwner } from "@/utils/jellyfin/image/artwork";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 interface TVChannelCardProps {
   channel: BaseItemDto;
@@ -32,11 +33,17 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
       duration: 120,
     });
 
-  const imageUrl = getPrimaryImageUrl({
+  const imageSource = getArtworkByOwner({
     api,
-    item: channel,
+    id: channel.Id,
+    type: "Primary",
+    tag: channel.ImageTags?.Primary,
+    pixels: {
+      width: toImagePixels(80 * 1.05),
+      height: toImagePixels(60 * 1.05),
+    },
+    fit: true,
     quality: 80,
-    width: 200,
   });
 
   return (
@@ -62,9 +69,14 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
       >
         {/* Channel logo or number */}
         <View style={styles.logoContainer}>
-          {imageUrl ? (
+          {imageSource?.uri ? (
             <Image
-              source={{ uri: imageUrl }}
+              source={{
+                uri: imageSource.uri,
+                ...(imageSource.headers
+                  ? { headers: imageSource.headers }
+                  : null),
+              }}
               style={styles.logo}
               resizeMode='contain'
             />

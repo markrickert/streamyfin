@@ -6,6 +6,10 @@ import { makeApi } from "@/test-utils/jellyfinApi";
 import { logAndCaptureError } from "@/utils/log";
 import { TVLibraries } from "./TVLibraries";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("@/providers/JellyfinProvider", () =>
   jest
     .requireActual("@/test-utils/jellyfinProvider")

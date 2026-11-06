@@ -344,6 +344,7 @@ export const JellyfinProvider: React.FC<{ children: ReactNode }> = ({
       headers,
       onAuthenticated: async ({ AccessToken, User }, sourceApi) => {
         if (!jellyfin) return;
+        clearTVDiscoverySafely();
         setUser(User);
         setApi(
           createApiWithCustomHeaders(jellyfin, sourceApi.basePath, AccessToken),
@@ -482,6 +483,7 @@ export const JellyfinProvider: React.FC<{ children: ReactNode }> = ({
             // What a previous session signs in with is not this user's. Its
             // other plugin settings stay until the refresh below replaces them.
             forgetPluginSignIns();
+            clearTVDiscoverySafely();
             setUser(auth.data.User);
             storage.set("user", JSON.stringify(auth.data.User));
             // Kept rather than only handed to setApi: the token is what makes
@@ -717,6 +719,7 @@ export const JellyfinProvider: React.FC<{ children: ReactNode }> = ({
         );
 
         // Token is valid, update state
+        clearTVDiscoverySafely();
         setApi(apiInstance);
         setUser(response.data);
         storage.set("serverUrl", serverUrl);
@@ -833,6 +836,7 @@ export const JellyfinProvider: React.FC<{ children: ReactNode }> = ({
           ),
         );
 
+        clearTVDiscoverySafely();
         setUser(auth.data.User);
         storage.set("user", JSON.stringify(auth.data.User));
         setApi(

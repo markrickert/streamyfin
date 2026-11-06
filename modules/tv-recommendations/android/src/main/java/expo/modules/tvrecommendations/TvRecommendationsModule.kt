@@ -21,5 +21,17 @@ class TvRecommendationsModule : Module() {
       val context = appContext.reactContext ?: return@Function false
       TvRecommendationsPublisher.refreshFromCache(context)
     }
+
+    Function("getCachedImage") { key: String ->
+      appContext.reactContext?.let { TvArtwork.getCached(it, key) }
+    }
+
+    Function("storeImage") { key: String, fileUri: String ->
+      appContext.reactContext?.let { TvArtwork.store(it, key, fileUri) }
+    }
+
+    Function("pruneImages") { keys: List<String> ->
+      appContext.reactContext?.let { TvArtwork.prune(it, keys) }
+    }
   }
 }

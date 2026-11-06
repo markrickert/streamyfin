@@ -160,6 +160,41 @@ describe("the native player's video output driver", () => {
   });
 });
 
+test("native now-playing artwork borrows a tagged series poster with scoped headers", async () => {
+  setJellyfinHeaders({ "X-Gateway": "private" }, SERVER);
+  jest.mocked(getStreamUrl).mockResolvedValue({
+    url: `${SERVER}/Videos/1/stream.mkv`,
+    sessionId: "session-1",
+    mediaSource: { Id: "source-1", MediaStreams: [] },
+  } as Awaited<ReturnType<typeof getStreamUrl>>);
+  const built = await buildNativePlayerConfig({
+    api,
+    userId: "user-1",
+    settings: {
+      playbackSpeedPerShow: {},
+      playbackSpeedPerMedia: {},
+    } as Settings,
+    req: { itemId: "episode-1", offline: false },
+    getDownloadedItemById: () => undefined,
+    strings: {} as NativePlayerStrings,
+    originalLabel: "Original",
+    qualityLabel: (bitrate: { key: string }) =>
+      bitrate.key === "Auto" ? "Auto" : bitrate.key,
+    item: {
+      Id: "episode-1",
+      Type: "Episode",
+      SeriesId: "series-1",
+      SeriesPrimaryImageTag: "series-tag",
+      ImageTags: { Primary: "still-tag" },
+    },
+  });
+  const metadata = built!.config.metadata!;
+  const url = new URL(metadata.artworkUri!);
+  expect(url.pathname).toBe("/Items/series-1/Images/Primary");
+  expect(url.searchParams.get("tag")).toBe("series-tag");
+  expect(metadata.artworkHeaders).toEqual({ "X-Gateway": "private" });
+});
+
 describe("the native player's exit confirmation", () => {
   const confirmExit = async (confirmBeforeStoppingPlayback: boolean) => {
     jest.mocked(getStreamUrl).mockResolvedValue({

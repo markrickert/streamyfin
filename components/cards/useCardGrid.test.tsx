@@ -3,6 +3,10 @@ import { renderHook } from "@testing-library/react-native";
 import { PixelRatio } from "react-native";
 import { useCardGrid } from "./useCardGrid";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 const mockWindow = { width: 430, height: 932, scale: 3, fontScale: 1 };
 
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({

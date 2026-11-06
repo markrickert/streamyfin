@@ -9,12 +9,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { type TouchableOpacityProps, View } from "react-native";
+import {
+  type TouchableOpacityProps,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { TouchableItemRouter } from "../common/TouchableItemRouter";
 
 interface Props extends TouchableOpacityProps {
@@ -42,16 +46,22 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
   const [api] = useAtom(apiAtom);
   const [user] = useAtom(userAtom);
   const { settings } = useSettings();
+  const { width: windowWidth } = useWindowDimensions();
 
   const { t } = useTranslation();
 
   const url = useMemo(
     () =>
-      getPrimaryImageUrl({
+      getArtwork({
         api,
         item: library,
-      }),
-    [api, library],
+        purpose: "wide",
+        box:
+          settings?.libraryOptions?.imageStyle === "cover"
+            ? { width: windowWidth - 32, height: 80 }
+            : { width: 128, height: 64 },
+      })?.uri ?? null,
+    [api, library, settings?.libraryOptions?.imageStyle, windowWidth],
   );
 
   const itemType = useMemo(() => {
@@ -117,8 +127,6 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
     enabled: !!api,
   });
 
-  if (!url) return null;
-
   if (settings?.libraryOptions?.display === "row") {
     return (
       <TouchableItemRouter item={library} className='w-full px-4'>
@@ -156,14 +164,16 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
               overflow: "hidden",
             }}
           >
-            <Image
-              source={{ uri: url }}
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-              cachePolicy={"memory-disk"}
-            />
+            {url && (
+              <Image
+                source={{ uri: url }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+                cachePolicy={"memory-disk"}
+              />
+            )}
             <View
               style={{
                 position: "absolute",
@@ -204,10 +214,12 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
           )}
         </View>
         <View className='p-2'>
-          <Image
-            source={{ uri: url }}
-            className='h-full aspect-[2/1] object-cover rounded-lg overflow-hidden'
-          />
+          {url && (
+            <Image
+              source={{ uri: url }}
+              className='h-full aspect-[2/1] object-cover rounded-lg overflow-hidden'
+            />
+          )}
         </View>
       </View>
     </TouchableItemRouter>

@@ -123,7 +123,7 @@ import {
   getAdjacentStartTicks,
   getDefaultPlaySettings,
 } from "@/utils/jellyfin/getDefaultPlaySettings";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtworkForPixelBudget } from "@/utils/jellyfin/image/artwork";
 import { closeLiveStream } from "@/utils/jellyfin/media/closeLiveStream";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { subtitleSearchErrorMessage } from "@/utils/jellyfin/subtitleSearchAccess";
@@ -995,13 +995,13 @@ const NativePlayerProviderInner: React.FC<{
         itemId: next.Id ?? "",
         title: next.Name ?? "",
         subtitle: [next.SeriesName, epNumber].filter(Boolean).join(" · "),
-        imageUrl:
-          getPrimaryImageUrl({
-            api: apiRef.current,
-            item: next,
-            quality: 80,
-            width: 300,
-          }) ?? undefined,
+        imageUrl: getArtworkForPixelBudget({
+          api: apiRef.current,
+          item: next,
+          purpose: "wide",
+          preferEpisodeImage: true,
+          pixels: { width: 300, height: 169 },
+        })?.uri,
         countdownSeconds: autoplayAllowed ? NEXT_EPISODE_COUNTDOWN_SECONDS : 0,
         // Autoplay would have run but the session is long enough to ask:
         // EOF shows the "Still watching?" card instead.
@@ -1044,13 +1044,13 @@ const NativePlayerProviderInner: React.FC<{
             itemId: ep.Id ?? "",
             title: ep.Name ?? "",
             indexNumber: ep.IndexNumber ?? undefined,
-            imageUrl:
-              getPrimaryImageUrl({
-                api: apiRef.current,
-                item: ep,
-                quality: 80,
-                width: 300,
-              }) ?? undefined,
+            imageUrl: getArtworkForPixelBudget({
+              api: apiRef.current,
+              item: ep,
+              purpose: "wide",
+              preferEpisodeImage: true,
+              pixels: { width: 300, height: 169 },
+            })?.uri,
             progressPercent: ep.UserData?.PlayedPercentage ?? 0,
             isCurrent: ep.Id === item.Id,
           }));

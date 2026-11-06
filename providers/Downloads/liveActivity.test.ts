@@ -41,12 +41,16 @@ describe("the poster staged for the download Live Activity", () => {
       ImageTags: { Primary: "tag-1" },
     });
 
-    expect(fakeFiles.downloads()).toEqual([
-      {
-        url: `https://jellyfin.example.com/Items/${id}/Images/Primary?quality=90&tag=tag-1&width=300`,
-        destination: `file:///app-group/LiveActivity/${id}.jpg`,
-      },
-    ]);
+    const [download] = fakeFiles.downloads();
+    const url = new URL(download.url);
+    expect(url.pathname).toBe(`/Items/${id}/Images/Primary`);
+    expect(url.searchParams.get("tag")).toBe("tag-1");
+    expect(Number(url.searchParams.get("fillWidth"))).toBeGreaterThanOrEqual(
+      300,
+    );
+    expect(download.destination).toBe(
+      `file:///app-group/LiveActivity/${id}.jpg`,
+    );
     expect(metadata?.posterFileName).toBe(`${id}.jpg`);
   });
 

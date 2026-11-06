@@ -34,7 +34,7 @@ import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useTVItemActionModal } from "@/hooks/useTVItemActionModal";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 
 const HORIZONTAL_PADDING = 80;
@@ -49,7 +49,7 @@ interface TVActorPageProps {
 export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const router = useRouter();
   const { showItemActions } = useTVItemActionModal();
   const segments = useSegments();
@@ -134,13 +134,15 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
     // Use focused item if available, otherwise fall back to first movie or series
     const itemForBackdrop = focusedItem ?? movies[0] ?? series[0];
     if (!itemForBackdrop) return null;
-    return getBackdropUrl({
-      api,
-      item: itemForBackdrop,
-      quality: 90,
-      width: 1920,
-    });
-  }, [api, focusedItem, movies, series]);
+    return (
+      getArtwork({
+        api,
+        item: itemForBackdrop,
+        purpose: "backdrop",
+        box: { width: windowWidth, height: windowHeight },
+      })?.uri ?? null
+    );
+  }, [api, focusedItem, movies, series, windowWidth, windowHeight]);
 
   // Crossfade animation for backdrop transitions
   // Use two alternating layers for smooth crossfade
@@ -215,9 +217,16 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
 
   // Get actor image URL
   const actorImageUrl = useMemo(() => {
-    if (!item?.Id || !api?.basePath) return null;
-    return `${api.basePath}/Items/${item.Id}/Images/Primary?fillWidth=${ACTOR_IMAGE_SIZE * 2}&fillHeight=${ACTOR_IMAGE_SIZE * 2}&quality=90`;
-  }, [api?.basePath, item?.Id]);
+    if (!item) return null;
+    return (
+      getArtwork({
+        api,
+        item,
+        purpose: "portrait",
+        box: { width: ACTOR_IMAGE_SIZE, height: ACTOR_IMAGE_SIZE },
+      })?.uri ?? null
+    );
+  }, [api, item]);
 
   // Handle filmography item press
   const handleItemPress = useCallback(

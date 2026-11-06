@@ -1,7 +1,14 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import i18next from "i18next";
-import { getWideImageUrl } from "@/utils/jellyfin/image/getWideImageUrl";
+import { PixelRatio } from "react-native";
+import {
+  TV_LAUNCHER_POSTER_HEIGHT_PX,
+  TV_LAUNCHER_POSTER_WIDTH_PX,
+  TV_LAUNCHER_WIDE_HEIGHT_PX,
+  TV_LAUNCHER_WIDE_WIDTH_PX,
+} from "@/constants/TVDiscovery";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 
 const TV_DISCOVERY_ITEM_LIMIT = 12;
@@ -48,74 +55,25 @@ function getTVDiscoveryImage(
   shape: TVDiscoveryImageShape,
   useEpisodeImages: boolean,
 ): { url: string } | undefined {
-  const baseUrl = api.basePath;
-
-  if (shape === "landscape") {
-    // getWideImageUrl falls back to an untagged Primary URL, which the server
-    // 404s on when the item has no such image — a broken tile instead of no
-    // tile. Gate per item type on the source the helper will actually select,
-    // so we only hand the extension URLs the server can fulfill:
-    // - episode + useEpisodeImages → the episode's own Primary
-    // - episode (default)          → the parent (season/series) Thumb pair
-    // - everything else            → own Thumb, else own Primary
-    const hasArt =
-      item.Type === "Episode"
-        ? useEpisodeImages
-          ? Boolean(item.ImageTags?.Primary)
-          : Boolean(item.ParentThumbItemId && item.ParentThumbImageTag)
-        : Boolean(item.ImageTags?.Thumb || item.ImageTags?.Primary);
-    if (!hasArt) return undefined;
-
-    // Google TV home tiles are landscape. Mirror the continue-watching cards'
-    // image selection (getWideImageUrl honors the useEpisodeImagesForNextUp
-    // setting) so home recommendations match the in-app rows: series/season
-    // Thumb by default, the episode's own still when the toggle is on.
-    const url = getWideImageUrl({
-      api,
-      item,
-      useEpisodePoster: useEpisodeImages,
-      fillHeight: 1080,
-      quality: 90,
-    });
-    return url ? { url } : undefined;
-  }
-
-  // Top Shelf items render in poster shape (portrait 2:3), so request the
-  // matching Primary poster art. Requesting backdrops here would force the
-  // extension to crop them into a poster, which looked bad. Each URL is gated
-  // on its image tag so we never hand the extension a URL the server can't
-  // fulfill (which would render a broken/blank poster).
-  const posterParams = "?fillWidth=400" + "&fillHeight=600" + "&quality=90";
-
-  const posterUrl = (id: string, tag: string) =>
-    `${baseUrl}/Items/${id}/Images/Primary${posterParams}` +
-    `&tag=${encodeURIComponent(tag)}`;
-
-  // For episodes, prefer the season -> show poster over the episode's own
-  // primary: episode primary images are usually landscape stills that crop
-  // badly in poster shape, and since most episodes have one the season/show
-  // poster would otherwise never get used. When useEpisodeImagesForNextUp is
-  // on, respect the user's preference for the episode's own image instead.
-  if (item.Type === "Episode" && !useEpisodeImages) {
-    // Season poster — for an episode the immediate parent is the season, so
-    // ParentPrimaryImageTag is the season's primary tag.
-    if (item.SeasonId && item.ParentPrimaryImageTag) {
-      return { url: posterUrl(item.SeasonId, item.ParentPrimaryImageTag) };
-    }
-
-    // Show poster
-    if (item.SeriesId && item.SeriesPrimaryImageTag) {
-      return { url: posterUrl(item.SeriesId, item.SeriesPrimaryImageTag) };
-    }
-  }
-
-  // Item's own poster (movies, series, or an episode with no season/show art)
-  const primaryTag = item.ImageTags?.Primary;
-  if (item.Id && primaryTag) {
-    return { url: posterUrl(item.Id, primaryTag) };
-  }
-
-  return undefined;
+  const density = PixelRatio.get();
+  const poster = shape === "poster";
+  const artwork = getArtwork({
+    api,
+    item,
+    purpose: poster ? "portrait" : "wide",
+    box: poster
+      ? {
+          width: TV_LAUNCHER_POSTER_WIDTH_PX / density,
+          height: TV_LAUNCHER_POSTER_HEIGHT_PX / density,
+        }
+      : {
+          width: TV_LAUNCHER_WIDE_WIDTH_PX / density,
+          height: TV_LAUNCHER_WIDE_HEIGHT_PX / density,
+        },
+    preferEpisodeImage: !poster && useEpisodeImages,
+    portraitCover: poster,
+  });
+  return artwork?.uri ? { url: artwork.uri } : undefined;
 }
 
 function formatEpisodeNumber(item: BaseItemDto): string | undefined {

@@ -1,7 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
-import { Platform } from "react-native";
+import { PixelRatio, Platform } from "react-native";
 import type * as ImageColorsType from "react-native-image-colors";
 import { apiAtom } from "@/providers/JellyfinProvider";
 
@@ -19,7 +19,7 @@ import {
   getJellyfinHeadersForUrl,
   optionsWithOptionalHeaders,
 } from "@/utils/customHeaders";
-import { getItemImage } from "@/utils/getItemImage";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { storage } from "@/utils/mmkv";
 
 export interface ThemeColors {
@@ -58,12 +58,15 @@ export const useImageColorsReturn = ({
     if (!api) return;
     if (url) return { uri: url };
     if (item)
-      return getItemImage({
+      return getArtwork({
         item,
         api,
-        variant: "Primary",
-        quality: 80,
-        width: 300,
+        purpose: "portrait",
+        box: {
+          width: 300 / PixelRatio.get(),
+          height: 450 / PixelRatio.get(),
+        },
+        maxWidthPx: 300,
       });
     return null;
   }, [api, item, url]);

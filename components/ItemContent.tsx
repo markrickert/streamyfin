@@ -37,7 +37,7 @@ import { useDownload } from "@/providers/DownloadProvider";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useOfflineMode } from "@/providers/OfflineModeProvider";
 import { useSettings } from "@/utils/atoms/settings";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import {
   canPlayInRemoteSession,
@@ -143,8 +143,16 @@ const ItemContentMobile: React.FC<ItemContentProps> = ({
   } = useDefaultPlaySettings(itemWithSources ?? item, settings);
 
   const logoUrl = useMemo(
-    () => (item ? getLogoImageUrlById({ api, item }) : null),
-    [api, item],
+    () =>
+      item
+        ? (getArtwork({
+            api,
+            item,
+            purpose: "logo",
+            box: { width: windowWidth, height: LOGO_HEIGHT },
+          })?.uri ?? null)
+        : null,
+    [api, item, windowWidth],
   );
 
   const onLogoLoad = React.useCallback(() => {

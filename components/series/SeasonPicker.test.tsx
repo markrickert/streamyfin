@@ -6,6 +6,10 @@ import type { DownloadedItem } from "@/providers/Downloads/types";
 import { userAtom } from "@/providers/JellyfinProvider";
 import { SeasonPicker, seasonIndexAtom } from "./SeasonPicker";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 let mockDownloads: DownloadedItem[] = [];
 let mockRefreshKey = 0;
 let mockOffline = true;

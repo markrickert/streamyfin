@@ -22,7 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Text } from "@/components/common/Text";
 import { useScaledTVTypography } from "@/constants/TVTypography";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -75,11 +75,13 @@ export const TVNextEpisodeCountdown: FC<TVNextEpisodeCountdownProps> = ({
 
   onFinishRef.current = onFinish;
 
-  const imageUrl = getPrimaryImageUrl({
+  const imageSource = getArtwork({
     api,
     item: nextItem,
-    width: scaleSize(360),
-    quality: 80,
+    purpose: "wide",
+    preferEpisodeImage: true,
+    focusScale: 1.05,
+    box: { width: scaleSize(180), height: scaleSize(102) },
   });
 
   // Animated position based on controls visibility
@@ -172,9 +174,14 @@ export const TVNextEpisodeCountdown: FC<TVNextEpisodeCountdownProps> = ({
         <RNAnimated.View style={[animatedStyle, focused && styles.focusedCard]}>
           <BlurView intensity={80} tint='dark' style={styles.blur}>
             <View style={styles.innerContainer}>
-              {imageUrl && (
+              {imageSource?.uri && (
                 <Image
-                  source={{ uri: imageUrl }}
+                  source={{
+                    uri: imageSource.uri,
+                    ...(imageSource.headers
+                      ? { headers: imageSource.headers }
+                      : null),
+                  }}
                   style={styles.thumbnail}
                   resizeMode='cover'
                 />

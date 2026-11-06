@@ -218,11 +218,13 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => {
 /**
  * A card's artwork, by the id of its item. The artwork sits inside the card's
  * pressable while the title is drawn below it, so this is where the remote's
- * events land. The backdrop loads the same item's Backdrop image; that one is
- * left out.
+ * events land. The full-screen backdrop can select the same image type, so
+ * the card's recycling key distinguishes the two.
  */
 const card = (itemId: string) =>
-  screen.getByTestId(new RegExp(`/Items/${itemId}/Images/(?!Backdrop)`));
+  screen
+    .getAllByTestId(new RegExp(`/Items/${itemId}/Images/`))
+    .find((image) => image.props.recyclingKey === itemId)!;
 
 const withSettings = (overrides: Partial<HomeSettings>) => {
   mockSettings = { ...defaultSettings, ...overrides };

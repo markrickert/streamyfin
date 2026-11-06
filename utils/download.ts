@@ -1,8 +1,10 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
+import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api";
 import { useAtom } from "jotai";
+import { DOWNLOAD_COVER_IMAGE_WIDTH_PX } from "@/constants/Images";
 import useImageStorage from "@/hooks/useImageStorage";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getPrimaryImageUrlById } from "@/utils/jellyfin/image/getPrimaryImageUrlById";
+import { getArtworkByOwner } from "@/utils/jellyfin/image/artwork";
 import { storage } from "@/utils/mmkv";
 
 const useDownloadHelper = () => {
@@ -13,12 +15,25 @@ const useDownloadHelper = () => {
     if (
       item.Type === "Episode" &&
       item.SeriesId &&
+      api &&
       !storage.getString(item.SeriesId)
     ) {
-      await saveImage(
-        item.SeriesId,
-        getPrimaryImageUrlById({ api, id: item.SeriesId }),
-      );
+      const tag =
+        item.SeriesPrimaryImageTag ??
+        (
+          await getLibraryApi(api).getItem({
+            itemId: item.SeriesId,
+          })
+        ).data.ImageTags?.Primary;
+      const source = getArtworkByOwner({
+        api,
+        id: item.SeriesId,
+        type: "Primary",
+        tag,
+        pixels: { width: DOWNLOAD_COVER_IMAGE_WIDTH_PX },
+      });
+      if (!source?.uri) return;
+      await saveImage(item.SeriesId, source.uri);
     }
   };
 

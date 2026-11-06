@@ -30,7 +30,7 @@ import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { squareArtworkSide } from "@/utils/artworkSize";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 import { runtimeTicksToMinutes } from "@/utils/time";
 
 export default function AlbumDetailScreen() {
@@ -100,8 +100,15 @@ export default function AlbumDetailScreen() {
   }, [album?.Name, navigation]);
 
   const imageUrl = useMemo(
-    () => (album ? getPrimaryImageUrl({ api, item: album }) : null),
-    [api, album],
+    () =>
+      album
+        ? (getMusicArtwork({
+            api,
+            item: album,
+            box: { width: artworkSize, height: artworkSize },
+          })?.uri ?? null)
+        : null,
+    [api, album, artworkSize],
   );
 
   const totalDuration = useMemo(() => {

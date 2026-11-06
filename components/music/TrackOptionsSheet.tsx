@@ -39,7 +39,7 @@ import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props {
   open: boolean;
@@ -109,11 +109,13 @@ export const TrackOptionsSheet: React.FC<Props> = ({
 
   const imageUrl = useMemo(() => {
     if (!track) return null;
-    const albumId = track.AlbumId || track.ParentId;
-    if (albumId) {
-      return `${api?.basePath}/Items/${albumId}/Images/Primary?maxHeight=200&maxWidth=200`;
-    }
-    return getPrimaryImageUrl({ api, item: track });
+    return (
+      getMusicArtwork({
+        api,
+        item: track,
+        box: { width: 56, height: 56 },
+      })?.uri ?? null
+    );
   }, [api, track]);
 
   const handleDismissed = useSheetOpenState(bottomSheetModalRef, open);

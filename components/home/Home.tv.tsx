@@ -49,7 +49,10 @@ import {
 import { useSettings } from "@/utils/atoms/settings";
 import { fetchCustomHomeSection } from "@/utils/customHomeSection";
 import { scaleSize } from "@/utils/scaleSize";
-import { updateTVDiscovery } from "@/utils/tvDiscovery/sync";
+import {
+  clearTVDiscoverySafely,
+  updateTVDiscovery,
+} from "@/utils/tvDiscovery/sync";
 
 const HORIZONTAL_PADDING = scaleSize(60);
 const TOP_PADDING = scaleSize(100);
@@ -174,8 +177,14 @@ export const Home = () => {
   });
 
   useEffect(() => {
-    updateTVDiscovery({
+    if (!api || !user?.Id) {
+      clearTVDiscoverySafely();
+      return;
+    }
+    if (!heroItems) return;
+    void updateTVDiscovery({
       api,
+      userId: user.Id,
       sections: [
         {
           title: t("home.continue_and_next_up"),
@@ -184,7 +193,7 @@ export const Home = () => {
       ],
       useEpisodeImages: settings?.useEpisodeImagesForNextUp,
     });
-  }, [api, heroItems, t, settings?.useEpisodeImagesForNextUp]);
+  }, [api, user?.Id, heroItems, t, settings?.useEpisodeImagesForNextUp]);
 
   const userViews = useMemo(
     () => data?.filter((l) => !settings?.hiddenLibraries?.includes(l.Id!)),

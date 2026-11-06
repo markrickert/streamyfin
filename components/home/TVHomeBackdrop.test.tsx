@@ -1,7 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { act, render, screen } from "@testing-library/react-native";
 import { createRef } from "react";
-import { Animated } from "react-native";
+import { Animated, Dimensions, PixelRatio } from "react-native";
 import { prefetchServerImage } from "@/components/common/ServerImage";
 import {
   TV_BACKDROP_CROSSFADE_MS,
@@ -15,6 +15,9 @@ jest.mock(
     jest.requireActual("@/test-utils/jellyfinProvider").jellyfinProviderModule,
 );
 jest.mock("expo-linear-gradient", () => ({ LinearGradient: () => null }));
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
 // TVSizes reads the typography scale from the settings, which pull in the
 // whole settings UI; the backdrop only needs its timings.
 
@@ -89,6 +92,26 @@ describe("TVHomeBackdrop", () => {
     await focus(ref, "b");
 
     expect(layers()).toEqual(["b", "a"]);
+  });
+
+  it("requests a backdrop covering the drawn screen rather than a fixed width", async () => {
+    const ref = createRef<TVHomeBackdropRef>();
+    await render(<TVHomeBackdrop ref={ref} />);
+    await focus(ref, "a");
+
+    const root = screen.toJSON() as { children?: { children?: unknown[] }[] };
+    const layer = root.children?.[1]?.children?.[0] as {
+      props?: { testID?: string };
+    };
+    const url = new URL(layer.props!.testID!.replace(/^image /, ""));
+    const { width, height } = Dimensions.get("window");
+    const scale = PixelRatio.get();
+    expect(Number(url.searchParams.get("fillWidth"))).toBeGreaterThanOrEqual(
+      width * scale,
+    );
+    expect(Number(url.searchParams.get("fillHeight"))).toBeGreaterThanOrEqual(
+      height * scale,
+    );
   });
 
   // The layer used to flip when the image was given to it, 50 ms before the

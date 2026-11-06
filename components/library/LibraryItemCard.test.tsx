@@ -10,6 +10,10 @@ import { apiAtom } from "@/providers/JellyfinProvider";
 import { makeApi } from "@/test-utils/jellyfinApi";
 import { LibraryItemCard } from "./LibraryItemCard";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("@/providers/JellyfinProvider", () =>
   jest
     .requireActual("@/test-utils/jellyfinProvider")
@@ -65,6 +69,16 @@ describe("LibraryItemCard", () => {
     const { errors } = await renderCard();
 
     expect(errors).toEqual([]);
+  });
+
+  test("keeps a text-only library row when artwork is missing", async () => {
+    await renderCard({
+      Id: "library-2",
+      Name: "No poster",
+      CollectionType: "movies",
+    });
+
+    expect(screen.getByText("No poster")).toBeTruthy();
   });
 
   // The query key does not carry the api, so a count that failed on a null

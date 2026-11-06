@@ -9,6 +9,10 @@ import {
 import { dragRow, shownItems } from "@/test-utils/drax";
 import { SyncPlayQueue } from "./SyncPlayQueue";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 // The real list needs gestures and layout: the double renders the same rows
 // and lets the spec drop a dragged one.
 jest.mock(

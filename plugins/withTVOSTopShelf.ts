@@ -9,15 +9,12 @@ import {
 const EXTENSION_TARGET_NAME = "StreamyfinTopShelf";
 const TARGET_SOURCE_DIR = "../targets/StreamyfinTopShelf";
 const APP_GROUP_INFO_PLIST_KEY = "StreamyfinAppGroupIdentifier";
-const KEYCHAIN_ACCESS_GROUP_INFO_PLIST_KEY =
-  "StreamyfinKeychainAccessGroupIdentifier";
 
 interface AppExtensionConfig {
   targetName: string;
   bundleIdentifier: string;
   entitlements: {
     "com.apple.security.application-groups": string[];
-    "keychain-access-groups": string[];
   };
 }
 
@@ -27,10 +24,6 @@ function getBundleIdentifier(config: ExpoConfig): string {
 
 function getAppGroupIdentifier(config: ExpoConfig): string {
   return `group.${getBundleIdentifier(config)}.tvtopshelf`;
-}
-
-function getKeychainAccessGroupIdentifier(config: ExpoConfig): string {
-  return `$(AppIdentifierPrefix)${getBundleIdentifier(config)}`;
 }
 
 // The xcode project object has no usable typings — keep `any` here.
@@ -53,29 +46,17 @@ function ensureAppGroup(value: unknown, appGroupIdentifier: string): string[] {
     : [...groups, appGroupIdentifier];
 }
 
-function ensureKeychainAccessGroup(
-  value: unknown,
-  keychainAccessGroupIdentifier: string,
-): string[] {
-  const groups = Array.isArray(value) ? value : [];
-  return groups.includes(keychainAccessGroupIdentifier)
-    ? groups
-    : [...groups, keychainAccessGroupIdentifier];
-}
-
 function ensureAppExtension(
   appExtensions: unknown,
   targetName: string,
   bundleIdentifier: string,
   appGroupIdentifier: string,
-  keychainAccessGroupIdentifier: string,
 ): AppExtensionConfig[] {
   const extensionConfig: AppExtensionConfig = {
     targetName,
     bundleIdentifier,
     entitlements: {
       "com.apple.security.application-groups": [appGroupIdentifier],
-      "keychain-access-groups": [keychainAccessGroupIdentifier],
     },
   };
   const extensions: AppExtensionConfig[] = Array.isArray(appExtensions)
@@ -97,8 +78,6 @@ function ensureAppExtension(
 
 const withTVOSTopShelf: ConfigPlugin = (config) => {
   const appGroupIdentifier = getAppGroupIdentifier(config);
-  const keychainAccessGroupIdentifier =
-    getKeychainAccessGroupIdentifier(config);
   const bundleIdentifier = getBundleIdentifier(config);
   const extensionBundleIdentifier = `${bundleIdentifier}.tvtopshelf`;
   const isTVBuild = process.env.EXPO_TV === "1";
@@ -119,7 +98,6 @@ const withTVOSTopShelf: ConfigPlugin = (config) => {
                 EXTENSION_TARGET_NAME,
                 extensionBundleIdentifier,
                 appGroupIdentifier,
-                keychainAccessGroupIdentifier,
               ),
             },
           },
@@ -129,8 +107,6 @@ const withTVOSTopShelf: ConfigPlugin = (config) => {
 
     config = withInfoPlist(config, (config) => {
       config.modResults[APP_GROUP_INFO_PLIST_KEY] = appGroupIdentifier;
-      config.modResults[KEYCHAIN_ACCESS_GROUP_INFO_PLIST_KEY] =
-        keychainAccessGroupIdentifier;
       return config;
     });
 
@@ -140,10 +116,6 @@ const withTVOSTopShelf: ConfigPlugin = (config) => {
           config.modResults["com.apple.security.application-groups"],
           appGroupIdentifier,
         );
-      config.modResults["keychain-access-groups"] = ensureKeychainAccessGroup(
-        config.modResults["keychain-access-groups"],
-        keychainAccessGroupIdentifier,
-      );
       return config;
     });
   }
@@ -200,7 +172,6 @@ const withTVOSTopShelf: ConfigPlugin = (config) => {
         SKIP_INSTALL: "YES",
         SWIFT_VERSION: "5.9",
         APP_GROUP_IDENTIFIER: appGroupIdentifier,
-        KEYCHAIN_ACCESS_GROUP_IDENTIFIER: `"${keychainAccessGroupIdentifier}"`,
         SUPPORTED_PLATFORMS: '"appletvos appletvsimulator"',
         TARGETED_DEVICE_FAMILY: "3",
       };

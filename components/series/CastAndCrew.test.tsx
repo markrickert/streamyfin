@@ -14,6 +14,9 @@ jest.mock("@/providers/JellyfinProvider", () => {
   // The cards are built from the api's base path; nothing is requested.
   return { apiAtom: atom({ basePath: "http://server" }) };
 });
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
 // The row itself is not under test: a card shows up as its two lines.
 jest.mock("@/components/cards/CardRow", () => ({
   CardRow: ({

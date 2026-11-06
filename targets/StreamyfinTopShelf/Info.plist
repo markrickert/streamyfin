@@ -4,8 +4,6 @@
 <dict>
   <key>StreamyfinAppGroupIdentifier</key>
   <string>$(APP_GROUP_IDENTIFIER)</string>
-  <key>StreamyfinKeychainAccessGroupIdentifier</key>
-  <string>$(KEYCHAIN_ACCESS_GROUP_IDENTIFIER)</string>
   <key>CFBundleDevelopmentRegion</key>
   <string>$(DEVELOPMENT_LANGUAGE)</string>
   <key>NSAppTransportSecurity</key>

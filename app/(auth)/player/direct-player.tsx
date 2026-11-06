@@ -87,7 +87,7 @@ import {
   getAdjacentStartTicks,
   getDefaultPlaySettings,
 } from "@/utils/jellyfin/getDefaultPlaySettings";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtworkForPixelBudget } from "@/utils/jellyfin/image/artwork";
 import { resolveMaxStreamingBitrate } from "@/utils/jellyfin/maxStreamingBitrate";
 import { closeLiveStream } from "@/utils/jellyfin/media/closeLiveStream";
 import { getStreamUrl } from "@/utils/jellyfin/media/getStreamUrl";
@@ -1055,11 +1055,11 @@ export default function DirectPlayerPage() {
   const nowPlayingMetadata = useMemo(() => {
     if (!item || !api) return undefined;
 
-    const artworkUri = getPrimaryImageUrl({
+    const artwork = getArtworkForPixelBudget({
       api,
       item,
-      quality: 90,
-      width: 500,
+      purpose: "portrait",
+      pixels: { width: 500, height: 750 },
     });
 
     return {
@@ -1072,8 +1072,8 @@ export default function DirectPlayerPage() {
         item.Type === "Episode" && item.SeasonName
           ? item.SeasonName
           : undefined,
-      artworkUri: artworkUri || undefined,
-      artworkHeaders: getJellyfinHeadersForUrl(artworkUri, api.basePath),
+      artworkUri: artwork?.uri,
+      artworkHeaders: artwork?.headers,
     };
   }, [item, api]);
 

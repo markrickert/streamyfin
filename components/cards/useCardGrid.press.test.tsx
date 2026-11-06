@@ -2,6 +2,10 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { fireEvent, render } from "@testing-library/react-native";
 import { useCardGrid } from "./useCardGrid";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
   default: () => ({ width: 430, height: 932, scale: 3, fontScale: 1 }),

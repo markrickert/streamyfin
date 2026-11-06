@@ -16,7 +16,6 @@ import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
 import org.json.JSONArray
 import org.json.JSONObject
-import java.security.MessageDigest
 
 internal object TvRecommendationsPublisher {
   private const val TAG = "TvRecommendations"
@@ -34,12 +33,13 @@ internal object TvRecommendationsPublisher {
       return false
     }
 
+    stripUnavailableImages(context, payload)
     val sectionCount = payload.optJSONArray("sections")?.length() ?: 0
     Log.d(TAG, "sync(): received payload with $sectionCount section(s)")
 
     preferences(context)
       .edit()
-      .putString(KEY_PAYLOAD, payloadJson)
+      .putString(KEY_PAYLOAD, payload.toString())
       .apply()
 
     return synchronize(context, payload)
@@ -54,6 +54,8 @@ internal object TvRecommendationsPublisher {
       return false
     }
 
+    stripUnavailableImages(context, payload)
+    preferences(context).edit().putString(KEY_PAYLOAD, payload.toString()).apply()
     val sectionCount = payload.optJSONArray("sections")?.length() ?: 0
     Log.d(TAG, "refreshFromCache(): replaying cached payload with $sectionCount section(s)")
 
@@ -124,7 +126,25 @@ internal object TvRecommendationsPublisher {
       .remove(KEY_PROGRAM_IDS)
       .apply()
 
+    TvArtwork.clear(context)
     return true
+  }
+
+  fun pruneImages(context: Context, keys: List<String>) {
+    TvArtwork.prune(context, keys)
+  }
+
+  private fun stripUnavailableImages(context: Context, payload: JSONObject) {
+    val sections = payload.optJSONArray("sections") ?: return
+    for (sectionIndex in 0 until sections.length()) {
+      val items = sections.optJSONObject(sectionIndex)?.optJSONArray("items") ?: continue
+      for (index in 0 until items.length()) {
+        val item = items.optJSONObject(index) ?: continue
+        if (!TvArtwork.isReadableReference(context, item.optString("imageUrl"))) {
+          item.remove("imageUrl")
+        }
+      }
+    }
   }
 
   /**
@@ -430,15 +450,17 @@ internal object TvRecommendationsPublisher {
       builder.setDescription(it)
     }
 
-    // Per Android docs: use unique URIs for all images to avoid stale cache
-    imageUrl.takeIf { it.isNotBlank() }?.let {
-      val uniqueImageUrl = appendCacheBuster(it)
-      val imageUri = Uri.parse(uniqueImageUrl)
+    imageUrl.takeIf { TvArtwork.isReadableReference(context, it) }?.let {
+      val imageUri = Uri.parse(it)
       builder.setPosterArtUri(imageUri)
       builder.setThumbnailUri(imageUri)
     }
 
     val contentValues = builder.build().toContentValues()
+    if (!TvArtwork.isReadableReference(context, imageUrl)) {
+      contentValues.putNull(TvContractCompat.PreviewPrograms.COLUMN_POSTER_ART_URI)
+      contentValues.putNull(TvContractCompat.PreviewPrograms.COLUMN_THUMBNAIL_URI)
+    }
     val contentResolver = context.contentResolver
 
     if (previousProgramId > 0L) {
@@ -474,21 +496,6 @@ internal object TvRecommendationsPublisher {
     val programId = ContentUris.parseId(insertedUri)
     Log.d(TAG, "upsertPreviewProgram(): inserted new programId=$programId")
     return programId
-  }
-
-  /**
-   * Append a stable cache key derived from the image URL.
-   * The Jellyfin image URLs already include a `tag=` query param (etag)
-   * that changes whenever the image content changes, so a deterministic
-   * hash of the URL is sufficient — the param only changes when the URL
-   * (and therefore the image) actually changes, avoiding unnecessary
-   * re-downloads on every sync.
-   */
-  private fun appendCacheBuster(imageUrl: String): String {
-    val digest = MessageDigest.getInstance("MD5").digest(imageUrl.toByteArray())
-    val hash = digest.joinToString("") { "%02x".format(it) }.substring(0, 16)
-    val separator = if (imageUrl.contains("?")) "&" else "?"
-    return "$imageUrl${separator}_v=$hash"
   }
 
   private fun buildIntentUri(context: Context, deepLink: String): Uri {

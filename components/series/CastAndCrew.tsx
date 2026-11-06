@@ -5,11 +5,12 @@ import type React from "react";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { ViewProps } from "react-native";
+import { CARD_LAYOUTS } from "@/components/cards/CardData";
 import { CardRow } from "@/components/cards/CardRow";
 import useRouter from "@/hooks/useAppRouter";
 import { useCastCrew } from "@/hooks/useCastCrew";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getPersonArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props extends ViewProps {
   item?: BaseItemDto | null;
@@ -29,12 +30,21 @@ export const CastAndCrew: React.FC<Props> = ({ item, loading, ...props }) => {
   // CardRow's item mapping.
   const cards = useMemo(
     () =>
-      distinctPeople.map((person) => ({
-        id: person.Id,
-        title: person.Name ?? "",
-        subtitle: person.Role ?? null,
-        imageUrl: getPrimaryImageUrl({ api, item: person }),
-      })),
+      distinctPeople.map((person) => {
+        const { cardWidth, aspectRatio } = CARD_LAYOUTS.portrait;
+        const imageSource = getPersonArtwork({
+          api,
+          person,
+          box: { width: cardWidth, height: cardWidth / aspectRatio },
+        });
+        return {
+          id: person.Id,
+          title: person.Name ?? "",
+          subtitle: person.Role ?? null,
+          imageUrl: imageSource?.uri,
+          imageSource,
+        };
+      }),
     [api, distinctPeople],
   );
 

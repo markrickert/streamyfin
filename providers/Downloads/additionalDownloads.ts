@@ -4,11 +4,13 @@ import type {
   MediaSourceInfo,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { Directory, File, Paths } from "expo-file-system";
+import { PixelRatio } from "react-native";
+import { DOWNLOAD_COVER_IMAGE_WIDTH_PX } from "@/constants/Images";
 import {
   getJellyfinHeadersForUrl,
   optionsWithOptionalHeaders,
 } from "@/utils/customHeaders";
-import { getItemImage } from "@/utils/getItemImage";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { getAuthHeaders } from "@/utils/jellyfin/jellyfin";
 import { getExternalSubtitleUrl } from "@/utils/jellyfin/subtitleUtils";
 import { fetchAndParseSegments, type SegmentBuckets } from "@/utils/segments";
@@ -158,12 +160,12 @@ export async function downloadCoverImage(
   }
 
   try {
-    const itemImage = getItemImage({
+    const width = DOWNLOAD_COVER_IMAGE_WIDTH_PX / PixelRatio.get();
+    const itemImage = getArtwork({
       item,
       api,
-      variant: "Primary",
-      quality: 90,
-      width: 500,
+      purpose: "portrait",
+      box: { width, height: width * 1.5 },
     });
 
     if (!itemImage?.uri) {

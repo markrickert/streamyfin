@@ -1,32 +1,35 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { BaseItemPerson } from "@jellyfin/sdk/lib/generated-client/models";
+import { useAtomValue } from "jotai";
 import React from "react";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { useScaledTVTypography } from "@/constants/TVTypography";
+import { apiAtom } from "@/providers/JellyfinProvider";
+import { getPersonArtwork } from "@/utils/jellyfin/image/artwork";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVActorCardProps {
-  person: {
-    Id?: string | null;
-    Name?: string | null;
-    Role?: string | null;
-  };
-  apiBasePath?: string;
+  person: BaseItemPerson;
   onPress: () => void;
   hasTVPreferredFocus?: boolean;
 }
 
 export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
-  ({ person, apiBasePath, onPress, hasTVPreferredFocus }, ref) => {
+  ({ person, onPress, hasTVPreferredFocus }, ref) => {
+    const api = useAtomValue(apiAtom);
     const typography = useScaledTVTypography();
     const { focused, handleFocus, handleBlur, animatedStyle } =
       useTVFocusAnimation();
 
-    const imageUrl = person.Id
-      ? `${apiBasePath}/Items/${person.Id}/Images/Primary?fillWidth=280&fillHeight=280&quality=90`
-      : null;
+    const imageSource = getPersonArtwork({
+      api,
+      person,
+      box: { width: scaleSize(140), height: scaleSize(140) },
+      focusScale: 1.05,
+    });
 
     return (
       <Pressable
@@ -61,9 +64,9 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
               borderColor: focused ? "#FFFFFF" : "transparent",
             }}
           >
-            {imageUrl ? (
+            {imageSource ? (
               <Image
-                source={{ uri: imageUrl }}
+                source={imageSource}
                 style={{ width: "100%", height: "100%" }}
                 contentFit='cover'
               />

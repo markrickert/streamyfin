@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 import { ALPHABET } from "@/utils/jellyfin/alphabetJump";
 import { AlphabetRail } from "./AlphabetRail";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 const LETTER_HEIGHT = 10;
 const RAIL_TOP = 200;
 const offsetOf = (letter: string) =>

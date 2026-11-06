@@ -20,7 +20,7 @@ import { useInterval } from "@/hooks/useInterval";
 import { useSessions, type useSessionsProps } from "@/hooks/useSessions";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { formatBitrate } from "@/utils/bitrate";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { formatTimeString } from "@/utils/time";
 
 export default function SessionsPage() {
@@ -175,7 +175,16 @@ const SessionCard = ({ session }: SessionCardProps) => {
         <View className='w-20 pr-4'>
           <Poster
             id={session.NowPlayingItem?.Id}
-            url={getPrimaryImageUrl({ api, item: session.NowPlayingItem })}
+            url={
+              session.NowPlayingItem
+                ? getArtwork({
+                    api,
+                    item: session.NowPlayingItem,
+                    purpose: "portrait",
+                    box: { width: 64, height: 96 },
+                  })?.uri
+                : null
+            }
           />
         </View>
         <View className='w-full flex-1'>

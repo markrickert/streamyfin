@@ -7,7 +7,7 @@ import { Text } from "@/components/common/Text";
 import { POSTER_IMAGE_TRANSITION } from "@/constants/Values";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props {
   artist: BaseItemDto;
@@ -21,7 +21,12 @@ export const MusicArtistCard: React.FC<Props> = ({ artist }) => {
   const router = useRouter();
 
   const imageUrl = useMemo(
-    () => getPrimaryImageUrl({ api, item: artist }),
+    () =>
+      getMusicArtwork({
+        api,
+        item: artist,
+        box: { width: IMAGE_SIZE, height: IMAGE_SIZE },
+      })?.uri ?? null,
     [api, artist],
   );
 

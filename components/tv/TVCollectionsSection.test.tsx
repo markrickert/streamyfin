@@ -5,6 +5,10 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 // brings the proxy-header machinery along.
 import { TVCollectionsSection } from "./TVCollectionsSection";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("@/providers/JellyfinProvider", () =>
   jest.requireActual("@/test-utils/realSessionAtoms"),
 );

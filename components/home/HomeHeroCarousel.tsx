@@ -9,7 +9,7 @@ import { useSegments } from "expo-router";
 import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useWindowDimensions } from "react-native";
+import { PixelRatio, useWindowDimensions } from "react-native";
 import useRouter from "@/hooks/useAppRouter";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useHeadersForUrl } from "@/hooks/useHeadersForUrl";
@@ -28,10 +28,7 @@ import {
   useSettings,
 } from "@/utils/atoms/settings";
 import { heroCardMaxFontScale } from "@/utils/heroCardFontScale";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
-import { getParentBackdropImageUrl } from "@/utils/jellyfin/image/getParentBackdropImageUrl";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getArtwork, getArtworkByOwner } from "@/utils/jellyfin/image/artwork";
 import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { runtimeTicksToMinutes } from "@/utils/time";
 import { getItemNavigation } from "../common/TouchableItemRouter";
@@ -234,29 +231,51 @@ const buildBackdropUrl = (
     item.ParentBackdropItemId &&
     item.ParentBackdropImageTags?.length
   ) {
-    return getParentBackdropImageUrl({
+    return (
+      getArtworkByOwner({
+        api,
+        id: item.ParentBackdropItemId,
+        type: "Backdrop",
+        tag: item.ParentBackdropImageTags[0],
+        pixels: { width, height },
+      })?.uri ?? null
+    );
+  }
+  return (
+    getArtwork({
       api,
       item,
-      quality: 80,
-      width,
-      height,
-    });
-  }
-  return getBackdropUrl({ api, item, quality: 80, width, height });
+      purpose: "backdrop",
+      box: {
+        width: width / PixelRatio.get(),
+        height: height / PixelRatio.get(),
+      },
+    })?.uri ?? null
+  );
 };
 
 const buildLogoUrl = (api: Api, item: BaseItemDto): string | null => {
   // Handles the item's own logo and the Episode → parent logo case.
-  const own = getLogoImageUrlById({ api, item, height: 120 });
+  const own = getArtwork({
+    api,
+    item,
+    purpose: "logo",
+    box: { width: 400 / PixelRatio.get(), height: 120 / PixelRatio.get() },
+  })?.uri;
   if (own) return own;
   // Seasons carry the series logo only through the Parent* fields.
   if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-    const params = new URLSearchParams({
-      tag: item.ParentLogoImageTag,
-      quality: "90",
-      fillHeight: "120",
-    });
-    return `${api.basePath}/Items/${item.ParentLogoItemId}/Images/Logo?${params.toString()}`;
+    return (
+      getArtworkByOwner({
+        api,
+        id: item.ParentLogoItemId,
+        type: "Logo",
+        tag: item.ParentLogoImageTag,
+        pixels: { width: 400, height: 120 },
+        fit: true,
+        quality: 90,
+      })?.uri ?? null
+    );
   }
   return null;
 };
@@ -264,15 +283,15 @@ const buildLogoUrl = (api: Api, item: BaseItemDto): string | null => {
 const buildPosterUrl = (api: Api, item: BaseItemDto): string | null => {
   // An episode's Primary is a 16:9 still that crops badly in the portrait
   // thumb slot; use the series poster instead.
-  if (item.Type === "Episode" && item.SeriesId && item.SeriesPrimaryImageTag) {
-    const params = new URLSearchParams({
-      tag: item.SeriesPrimaryImageTag,
-      quality: "90",
-      fillWidth: "240",
-    });
-    return `${api.basePath}/Items/${item.SeriesId}/Images/Primary?${params.toString()}`;
-  }
-  return getPrimaryImageUrl({ api, item, width: 240 });
+  return (
+    getArtwork({
+      api,
+      item,
+      purpose: "portrait",
+      box: { width: 240 / PixelRatio.get(), height: 360 / PixelRatio.get() },
+      maxWidthPx: 240,
+    })?.uri ?? null
+  );
 };
 
 const buildBadges = (item: BaseItemDto): string[] => {

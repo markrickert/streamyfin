@@ -57,6 +57,7 @@ import {
   TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO,
   TV_DETAIL_POSTER_WIDTH_RATIO,
 } from "@/constants/TVDetailLayout";
+import { TVAnimation, useScaledTVPosterSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import useDefaultPlaySettings from "@/hooks/useDefaultPlaySettings";
@@ -76,8 +77,8 @@ import { getSubtitlesForItem } from "@/utils/atoms/downloadedSubtitles";
 import { useSettings } from "@/utils/atoms/settings";
 import type { TVOptionItem } from "@/utils/atoms/tvOptionModal";
 import { bitrateLabel, toBitrateRequest } from "@/utils/bitrate";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
-import { getPrimaryImageUrlById } from "@/utils/jellyfin/image/getPrimaryImageUrlById";
+import { getArtwork, getArtworkByOwner } from "@/utils/jellyfin/image/artwork";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { isPlayableItem } from "@/utils/jellyfin/media/isPlayableItem";
 import { getPlayingRunTimeTicks } from "@/utils/jellyfin/mediaSourceVersion";
 import { streamLanguageName } from "@/utils/jellyfin/trackLabel";
@@ -126,6 +127,8 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
         ? getDownloadedItemById(item.Id)?.userData
         : undefined;
     const { settings } = useSettings();
+    const navigationPosterWidth =
+      useScaledTVPosterSizes().poster * TVAnimation.focusScale;
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showItemActions } = useTVItemActionModal();
@@ -195,8 +198,16 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
     } = useDefaultPlaySettings(itemWithSources ?? item, settings);
 
     const logoUrl = useMemo(
-      () => (item ? getLogoImageUrlById({ api, item }) : null),
-      [api, item],
+      () =>
+        item
+          ? (getArtwork({
+              api,
+              item,
+              purpose: "logo",
+              box: { width: windowWidth * 0.5, height: scaleSize(150) },
+            })?.uri ?? null)
+          : null,
+      [api, item, windowWidth],
     );
 
     // Set default play options
@@ -586,38 +597,69 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
     // Series/Season image URLs for episodes
     const seriesImageUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !item.SeriesId) return null;
-      return getPrimaryImageUrlById({ api, id: item.SeriesId, width: 300 });
-    }, [api, item?.Type, item?.SeriesId]);
+      return (
+        getArtworkByOwner({
+          api,
+          id: item.SeriesId,
+          type: "Primary",
+          tag: item.SeriesPrimaryImageTag,
+          pixels: {
+            width: toImagePixels(navigationPosterWidth),
+            height: toImagePixels(navigationPosterWidth * 1.5),
+          },
+        })?.uri ?? null
+      );
+    }, [api, item, navigationPosterWidth]);
 
     const seasonImageUrl = useMemo(() => {
       if (item?.Type !== "Episode") return null;
       const seasonId = item.SeasonId || item.ParentId;
       if (!seasonId) return null;
-      return getPrimaryImageUrlById({ api, id: seasonId, width: 300 });
-    }, [api, item?.Type, item?.SeasonId, item?.ParentId]);
+      return (
+        getArtworkByOwner({
+          api,
+          id: seasonId,
+          type: "Primary",
+          tag: item.ParentPrimaryImageTag,
+          pixels: {
+            width: toImagePixels(navigationPosterWidth),
+            height: toImagePixels(navigationPosterWidth * 1.5),
+          },
+        })?.uri ?? null
+      );
+    }, [api, item, navigationPosterWidth]);
 
     // Episode thumbnail URL - episode's own primary image (16:9 for episodes)
     const episodeThumbnailUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !api) return null;
-      return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=700&quality=80`;
-    }, [api, item]);
+      const width = windowWidth * 0.35;
+      return (
+        getArtworkByOwner({
+          api,
+          id: item.Id,
+          type: "Primary",
+          tag: item.ImageTags?.Primary,
+          pixels: {
+            width: toImagePixels(width),
+            height: toImagePixels((width * 9) / 16),
+          },
+        })?.uri ?? null
+      );
+    }, [api, item, windowWidth]);
 
     // Series thumb URL - used when showSeriesPosterOnEpisode setting is enabled
     const seriesThumbUrl = useMemo(() => {
       if (item?.Type !== "Episode" || !api) return null;
-      // No parent thumb means the series carries no Thumb image, and the tagless
-      // request below 404s. Use the series backdrop instead, like the cards do.
-      const parentBackdropTag = item.ParentBackdropImageTags?.[0];
-      if (
-        !(item.ParentThumbItemId && item.ParentThumbImageTag) &&
-        item.ParentBackdropItemId &&
-        parentBackdropTag
-      ) {
-        return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?fillHeight=700&quality=80&tag=${parentBackdropTag}`;
-      }
-      if (!item.SeriesId) return null;
-      return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?fillHeight=700&quality=80`;
-    }, [api, item]);
+      const width = windowWidth * 0.35;
+      return (
+        getArtwork({
+          api,
+          item,
+          purpose: "wide",
+          box: { width, height: (width * 9) / 16 },
+        })?.uri ?? null
+      );
+    }, [api, item, windowWidth]);
 
     // Navigation handlers
     const handleActorPress = useCallback(
@@ -1049,7 +1091,6 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
             {fullCast.length > 0 && (
               <TVCastSection
                 cast={fullCast}
-                apiBasePath={api?.basePath}
                 onActorPress={handleActorPress}
                 firstActorRefSetter={setFirstActorCardRef}
                 horizontalPadding={insets.left + scaleSize(80)}

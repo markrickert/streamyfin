@@ -1,10 +1,14 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { PixelRatio } from "react-native";
+import { setJellyfinHeaders } from "@/test-utils/customHeaders";
 import { makeApi } from "@/test-utils/jellyfinApi";
 import { stubReactNative } from "@/test-utils/reactNative";
 import { buildItemCards } from "./CardData";
 
 stubReactNative();
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
 
 const api = makeApi();
 
@@ -13,6 +17,7 @@ const onScreenDensity = (density: number) =>
 
 afterEach(() => {
   jest.restoreAllMocks();
+  setJellyfinHeaders();
 });
 
 const movie = {
@@ -120,14 +125,14 @@ describe("buildItemCards artwork size", () => {
     // 200 by 112.5 points. The fixed 389 pixels fell short from 3.5x up.
     onScreenDensity(3.75);
     expect(sizeOf(imageUrlOf(movie, { kind: "wide" }))).toEqual({
-      fillWidth: null,
+      fillWidth: "800",
       fillHeight: "450",
     });
 
     onScreenDensity(2);
     expect(sizeOf(imageUrlOf(movie, { kind: "wide" }))).toEqual({
-      fillWidth: null,
-      fillHeight: "225",
+      fillWidth: "400",
+      fillHeight: "250",
     });
   });
 
@@ -143,7 +148,7 @@ describe("buildItemCards artwork size", () => {
     );
 
     expect(url).toContain("/Items/movie-1/Images/Primary?");
-    expect(sizeOf(url)).toEqual({ fillWidth: "600", fillHeight: "338" });
+    expect(sizeOf(url)).toEqual({ fillWidth: "600", fillHeight: "350" });
   });
 
   test("covers the whole wide card with an episode's own still", () => {
@@ -156,7 +161,7 @@ describe("buildItemCards artwork size", () => {
     );
 
     expect(url).toContain("/Items/episode-1/Images/Primary?");
-    expect(sizeOf(url)).toEqual({ fillWidth: "600", fillHeight: "338" });
+    expect(sizeOf(url)).toEqual({ fillWidth: "600", fillHeight: "350" });
   });
 
   test("asks for less for the small artwork of a list row", () => {
@@ -164,8 +169,65 @@ describe("buildItemCards artwork size", () => {
 
     // 128 by 72 points.
     expect(sizeOf(imageUrlOf(movie, { kind: "rowWide" }))).toEqual({
-      fillWidth: null,
-      fillHeight: "225",
+      fillWidth: "400",
+      fillHeight: "250",
+    });
+  });
+});
+
+describe("buildItemCards artwork selection", () => {
+  test("wide cards prefer a tagged backdrop when there is no thumb", () => {
+    const url = imageUrlOf(
+      {
+        ...movie,
+        ImageTags: { Primary: "poster-tag" },
+        BackdropImageTags: ["backdrop-tag"],
+      },
+      { kind: "wide" },
+    );
+
+    expect(new URL(url).pathname).toBe("/Items/movie-1/Images/Backdrop");
+    expect(new URL(url).searchParams.get("tag")).toBe("backdrop-tag");
+  });
+
+  test("an episode uses its parent's backdrop tag when the parent thumb is missing", () => {
+    const url = imageUrlOf(
+      {
+        Id: "episode-1",
+        Type: "Episode",
+        ParentBackdropItemId: "series-1",
+        ParentBackdropImageTags: ["series-backdrop"],
+        ImageTags: { Primary: "still" },
+      },
+      { kind: "wide" },
+    );
+
+    expect(new URL(url).pathname).toBe("/Items/series-1/Images/Backdrop");
+    expect(new URL(url).searchParams.get("tag")).toBe("series-backdrop");
+  });
+
+  test("leaves an untagged item without a speculative image", () => {
+    expect(imageUrlOf({ Id: "no-art", Type: "Movie" }, { kind: "wide" })).toBe(
+      "",
+    );
+  });
+
+  test("passes the selected image's blurhash and only matching proxy headers to the card", () => {
+    setJellyfinHeaders({ "X-Gateway": "protected" }, api.basePath);
+    const [card] = buildItemCards(
+      [
+        {
+          ...movie,
+          ImageBlurHashes: { Thumb: { "thumb-tag": "thumb-blur" } },
+        },
+      ],
+      { api, kind: "wide" },
+    );
+
+    expect(card.imageSource).toMatchObject({
+      uri: expect.stringContaining("/Items/movie-1/Images/Thumb?"),
+      blurhash: "thumb-blur",
+      headers: { "X-Gateway": "protected" },
     });
   });
 });

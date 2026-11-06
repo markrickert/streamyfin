@@ -10,14 +10,14 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Animated, Easing, View } from "react-native";
+import { Animated, Easing, useWindowDimensions, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
 } from "@/constants/TVSizes";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 
 export interface TVHomeBackdropRef {
   handleItemFocus: (item: BaseItemDto) => void;
@@ -31,6 +31,7 @@ export interface TVHomeBackdropRef {
 export const TVHomeBackdrop = React.memo(
   forwardRef<TVHomeBackdropRef>((_props, ref) => {
     const api = useAtomValue(apiAtom);
+    const { width, height } = useWindowDimensions();
 
     // Dynamic backdrop state with debounce
     const [focusedItem, setFocusedItem] = useState<BaseItemDto | null>(null);
@@ -66,13 +67,15 @@ export const TVHomeBackdrop = React.memo(
     // Get backdrop URL from focused item
     const backdropUrl = useMemo(() => {
       if (!focusedItem) return null;
-      return getBackdropUrl({
-        api,
-        item: focusedItem,
-        quality: 90,
-        width: 1920,
-      });
-    }, [api, focusedItem]);
+      return (
+        getArtwork({
+          api,
+          item: focusedItem,
+          purpose: "backdrop",
+          box: { width, height },
+        })?.uri ?? null
+      );
+    }, [api, focusedItem, width, height]);
 
     // Crossfade animation for backdrop transitions. The layer shown is flipped
     // when the fade starts, not when it ends: an image that arrives mid-fade
@@ -91,9 +94,9 @@ export const TVHomeBackdrop = React.memo(
       let isCancelled = false;
 
       const performCrossfade = async () => {
-        // Prefetch to disk only - the full-size 1920x1080 backdrop (~8MB
-        // decoded ARGB) is too large to pin in the memory cache on every
-        // focus change. Disk cache is fast enough for a 500ms crossfade.
+        // Prefetch to disk only - a screen-sized backdrop is too large to pin
+        // in the memory cache on every focus change. Disk cache is fast enough
+        // for a 500ms crossfade.
         try {
           await prefetchServerImage(backdropUrl, api?.basePath, "disk");
         } catch {

@@ -49,6 +49,7 @@ import {
 } from "@/providers/MusicPlayerProvider";
 import { squareArtworkSide } from "@/utils/artworkSize";
 import { formatBitrate } from "@/utils/bitrate";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 import { formatDuration } from "@/utils/time";
 
 const formatFileSize = (bytes?: number | null) => {
@@ -142,14 +143,19 @@ export default function NowPlayingScreen() {
     prevCastState.current = castState;
   }, [castState, queue, queueIndex, castQueue, pause]);
 
+  const windowSize = useWindowDimensions();
+  // The same square PlayerView draws, see utils/artworkSize.ts.
+  const artworkSize = squareArtworkSide(windowSize, { inset: 80 });
   const imageUrl = useMemo(() => {
     if (!api || !currentTrack) return null;
-    const albumId = currentTrack.AlbumId || currentTrack.ParentId;
-    if (albumId) {
-      return `${api.basePath}/Items/${albumId}/Images/Primary?maxHeight=600&maxWidth=600`;
-    }
-    return `${api.basePath}/Items/${currentTrack.Id}/Images/Primary?maxHeight=600&maxWidth=600`;
-  }, [api, currentTrack]);
+    return (
+      getMusicArtwork({
+        api,
+        item: currentTrack,
+        box: { width: artworkSize, height: artworkSize },
+      })?.uri ?? null
+    );
+  }, [api, currentTrack, artworkSize]);
 
   const progressText = useMemo(() => {
     const progressTicks = progress * 10000000;
@@ -705,14 +711,16 @@ const QueueView: React.FC<QueueViewProps> = ({
   const rows = useMemo<QueueRow[]>(
     () =>
       queue.map((item, index) => {
-        const albumId = item.AlbumId || item.ParentId;
         return {
           key: `${item.Id}-${index}`,
           title: item.Name ?? "",
           subtitle: item.Artists?.join(", ") || item.AlbumArtist || undefined,
-          imageUrl: api
-            ? `${api.basePath}/Items/${albumId || item.Id}/Images/Primary?maxHeight=80&maxWidth=80`
-            : null,
+          imageUrl:
+            getMusicArtwork({
+              api,
+              item,
+              box: { width: 56, height: 56 },
+            })?.uri ?? null,
         };
       }),
     [api, queue],

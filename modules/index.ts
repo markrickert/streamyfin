@@ -97,10 +97,19 @@ export type {
   TopShelfCachePayload,
   TopShelfCacheSection,
 } from "./top-shelf-cache";
-export { clearTopShelfCache, writeTopShelfCache } from "./top-shelf-cache";
+export {
+  clearTopShelfCache,
+  getCachedTopShelfImage,
+  pruneTopShelfImages,
+  storeTopShelfImage,
+  writeTopShelfCache,
+} from "./top-shelf-cache";
 // TV recommendations (Android TV)
 export {
   clearTvRecommendations,
+  getCachedTvImage,
+  pruneTvImages,
   refreshTvRecommendations,
+  storeTvImage,
   syncTvRecommendations,
 } from "./tv-recommendations";

@@ -1,12 +1,9 @@
 import Foundation
-import Security
 import TVServices
 
 private let appGroupInfoPlistKey = "StreamyfinAppGroupIdentifier"
-private let keychainAccessGroupInfoPlistKey = "StreamyfinKeychainAccessGroupIdentifier"
 private let cacheKey = "TopShelfCache"
-private let apiKeyService = "StreamyfinTopShelf"
-private let apiKeyAccount = "JellyfinApiKey"
+private let artworkFolder = "TopShelfArtwork"
 
 private struct TopShelfCachePayload: Decodable {
   let sections: [TopShelfCacheSection]
@@ -42,9 +39,8 @@ final class TopShelfProvider: TVTopShelfContentProvider {
       return
     }
 
-    let apiKey = readAPIKey()
     let sections = payload.sections.compactMap { section -> TVTopShelfItemCollection<TVTopShelfSectionedItem>? in
-      let items = section.items.compactMap { makeTopShelfItem($0, apiKey: apiKey) }
+      let items = section.items.compactMap { makeTopShelfItem($0, appGroupIdentifier: appGroupIdentifier) }
       guard !items.isEmpty else { return nil }
 
       let collection = TVTopShelfItemCollection(items: items)
@@ -57,7 +53,7 @@ final class TopShelfProvider: TVTopShelfContentProvider {
 
   private func makeTopShelfItem(
     _ cacheItem: TopShelfCacheItem,
-    apiKey: String?
+    appGroupIdentifier: String
   ) -> TVTopShelfSectionedItem? {
     guard let route = URL(string: cacheItem.route) else {
       return nil
@@ -73,7 +69,7 @@ final class TopShelfProvider: TVTopShelfContentProvider {
     }
 
     if let imageUrl = cacheItem.imageUrl,
-       let url = imageURL(from: imageUrl, apiKey: apiKey) {
+       let url = imageURL(from: imageUrl, appGroupIdentifier: appGroupIdentifier) {
       item.setImageURL(url, for: .screenScale1x)
       item.setImageURL(url, for: .screenScale2x)
     }
@@ -81,45 +77,13 @@ final class TopShelfProvider: TVTopShelfContentProvider {
     return item
   }
 
-  private func imageURL(from imageUrl: String, apiKey: String?) -> URL? {
-    guard var components = URLComponents(string: imageUrl) else {
-      return nil
-    }
-
-    if let apiKey, !apiKey.isEmpty {
-      var queryItems = components.queryItems ?? []
-      queryItems.removeAll { $0.name == "api_key" || $0.name == "ApiKey" }
-      queryItems.append(URLQueryItem(name: "ApiKey", value: apiKey))
-      components.queryItems = queryItems
-    }
-
-    return components.url
-  }
-
-  private func readAPIKey() -> String? {
-    var query: [String: Any] = [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: apiKeyService,
-      kSecAttrAccount as String: apiKeyAccount,
-      kSecReturnData as String: true,
-      kSecMatchLimit as String: kSecMatchLimitOne
-    ]
-
-    if let keychainAccessGroupIdentifier = Bundle.main.object(
-      forInfoDictionaryKey: keychainAccessGroupInfoPlistKey
-    ) as? String {
-      query[kSecAttrAccessGroup as String] = keychainAccessGroupIdentifier
-    }
-
-    var item: CFTypeRef?
-    let status = SecItemCopyMatching(query as CFDictionary, &item)
-    guard
-      status == errSecSuccess,
-      let data = item as? Data
-    else {
-      return nil
-    }
-
-    return String(data: data, encoding: .utf8)
+  private func imageURL(from reference: String, appGroupIdentifier: String) -> URL? {
+    guard let url = URL(string: reference), url.isFileURL,
+          let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier),
+          url.standardizedFileURL.deletingLastPathComponent() ==
+            container.appendingPathComponent(artworkFolder, isDirectory: true).standardizedFileURL,
+          FileManager.default.fileExists(atPath: url.path)
+    else { return nil }
+    return url
   }
 }

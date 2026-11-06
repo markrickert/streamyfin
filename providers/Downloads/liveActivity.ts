@@ -2,11 +2,11 @@ import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Directory, File } from "expo-file-system";
 import type { TFunction } from "i18next";
-import { Platform } from "react-native";
+import { PixelRatio, Platform } from "react-native";
 import { BackgroundDownloader } from "@/modules";
 import type { DownloadActivityMetadata } from "@/modules/background-downloader";
 import { optionsWithOptionalHeaders } from "@/utils/customHeaders";
-import { getItemImage } from "@/utils/getItemImage";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { liveActivityPosterFileName } from "./utils";
 
 /**
@@ -75,12 +75,15 @@ async function stagePoster(
   if (!directoryPath || !item.Id) return undefined;
 
   try {
-    const image = getItemImage({
+    const image = getArtwork({
       item,
       api,
-      variant: item.Type === "Episode" ? "SeriesPrimary" : "Primary",
-      quality: 90,
-      width: 300,
+      purpose: "portrait",
+      box: {
+        width: 300 / PixelRatio.get(),
+        height: 450 / PixelRatio.get(),
+      },
+      maxWidthPx: 300,
     });
     if (!image?.uri) return undefined;
 

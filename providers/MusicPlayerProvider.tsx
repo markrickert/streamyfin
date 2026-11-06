@@ -36,6 +36,7 @@ import { settingsAtom } from "@/utils/atoms/settings";
 import { getJellyfinHeadersForUrl } from "@/utils/customHeaders";
 import { markExpectedError } from "@/utils/errors";
 import { getAudioStreamUrl } from "@/utils/jellyfin/audio/getAudioStreamUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 import {
   type MusicRepeatMode,
   parsePlaybackModeCommand,
@@ -407,12 +408,13 @@ const itemToTrack = (
   api: Api,
   preferLocalAudio = true,
 ): Track => {
-  const albumId = item.AlbumId || item.ParentId;
-  const artworkId = albumId || item.Id;
-  const artwork = artworkId
-    ? `${api.basePath}/Items/${artworkId}/Images/Primary?maxHeight=512&maxWidth=512&quality=90`
-    : undefined;
-  const artworkHeaders = getJellyfinHeadersForUrl(artwork, api.basePath);
+  const artworkSource = getMusicArtwork({
+    api,
+    item,
+    box: { width: 256, height: 256 },
+  });
+  const artwork = artworkSource?.uri;
+  const artworkHeaders = artworkSource?.headers;
 
   // Check if track is cached locally (permanent downloads take precedence)
   // getLocalPath returns full file:// URI if cached, null otherwise

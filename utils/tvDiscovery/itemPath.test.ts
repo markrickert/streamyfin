@@ -3,6 +3,10 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { getTopShelfItemPath } from "./itemPath";
 import { buildTVDiscoveryPayload } from "./payload";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 const HOME = "/(auth)/(tabs)/(home)";
 
 const api = { basePath: "https://jellyfin.example" } as Api;

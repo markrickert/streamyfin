@@ -30,6 +30,7 @@ import { Text } from "@/components/common/Text";
 import { useAddToPlaylist } from "@/hooks/usePlaylistMutations";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props {
   open: boolean;
@@ -132,10 +133,12 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
   }, [onCreateNew, setOpen]);
 
   const getPlaylistImageUrl = useCallback(
-    (playlist: BaseItemDto) => {
-      if (!api) return null;
-      return `${api.basePath}/Items/${playlist.Id}/Images/Primary?maxHeight=100&maxWidth=100`;
-    },
+    (playlist: BaseItemDto) =>
+      getMusicArtwork({
+        api,
+        item: playlist,
+        box: { width: 48, height: 48 },
+      })?.uri ?? null,
     [api],
   );
 

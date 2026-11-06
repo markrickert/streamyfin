@@ -25,6 +25,7 @@ import { Text } from "@/components/common/Text";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 
 const HORIZONTAL_MARGIN = Platform.OS === "android" ? 12 : 20;
 const BOTTOM_TAB_HEIGHT = Platform.OS === "android" ? 56 : 52;
@@ -62,11 +63,13 @@ export const MiniPlayerBar: React.FC = () => {
 
   const imageUrl = useMemo(() => {
     if (!api || !currentTrack) return null;
-    const albumId = currentTrack.AlbumId || currentTrack.ParentId;
-    if (albumId) {
-      return `${api.basePath}/Items/${albumId}/Images/Primary?maxHeight=100&maxWidth=100`;
-    }
-    return `${api.basePath}/Items/${currentTrack.Id}/Images/Primary?maxHeight=100&maxWidth=100`;
+    return (
+      getMusicArtwork({
+        api,
+        item: currentTrack,
+        box: { width: 32, height: 32 },
+      })?.uri ?? null
+    );
   }, [api, currentTrack]);
 
   const _progressPercentage = useMemo(() => {

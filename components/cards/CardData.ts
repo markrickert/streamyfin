@@ -1,13 +1,9 @@
 import type { Api } from "@jellyfin/sdk";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import type { ImageSource } from "expo-image";
 import { getItemProgressPercentage } from "@/components/common/ProgressBar";
-import {
-  CARD_IMAGE_WIDTH_STEP_PX,
-  MAX_CARD_IMAGE_WIDTH_PX,
-} from "@/constants/Images";
-import { getPortraitImageUrl } from "@/utils/jellyfin/image/getPortraitImageUrl";
-import { getWideImageUrl } from "@/utils/jellyfin/image/getWideImageUrl";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import { MAX_CARD_IMAGE_WIDTH_PX } from "@/constants/Images";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { isLiveBroadcast } from "@/utils/jellyfin/media/isLiveBroadcast";
 
 /** One card. Everything is prebuilt here; the card view is presentational. */
@@ -17,6 +13,7 @@ export type CardData = {
   title: string;
   subtitle?: string | null;
   imageUrl?: string | null;
+  imageSource?: ImageSource | null;
   /** Watch progress in 0...1. Draws the progress bar when > 0. */
   progress?: number;
   /** Unwatched movie or episode — draws the accent dot. */
@@ -119,18 +116,6 @@ export const cardRowHeight = (kind: CardKind) => {
   const { cardWidth, aspectRatio, verticalPadding } = CARD_LAYOUTS[kind];
   return cardWidth / aspectRatio + verticalPadding * 2;
 };
-
-/**
- * Pixel width to request artwork at for a card this many layout points wide:
- * what the screen draws, rounded up to the next step so cards of nearly the
- * same width share one image.
- */
-const cardImageWidth = (cardWidth: number) =>
-  Math.min(
-    Math.ceil(toImagePixels(cardWidth) / CARD_IMAGE_WIDTH_STEP_PX) *
-      CARD_IMAGE_WIDTH_STEP_PX,
-    MAX_CARD_IMAGE_WIDTH_PX,
-  );
 
 /**
  * The second line under a title: which episode this is, or when it came out.
@@ -246,8 +231,6 @@ export function buildItemCards(
   if (!api) return [];
 
   const layout = CARD_LAYOUTS[kind];
-  const imageWidth = cardImageWidth(cardWidth ?? layout.cardWidth);
-  const imageHeight = Math.round(imageWidth / layout.aspectRatio);
 
   return items.flatMap((item) => {
     if (!item.Id) return [];
@@ -259,16 +242,15 @@ export function buildItemCards(
       : cardSubtitle(item);
 
     const unplayed = item.UserData?.UnplayedItemCount ?? 0;
-    const imageUrl =
-      kind === "portrait"
-        ? getPortraitImageUrl({ api, item, width: imageWidth })
-        : getWideImageUrl({
-            api,
-            item,
-            useEpisodePoster,
-            fillWidth: imageWidth,
-            fillHeight: imageHeight,
-          });
+    const width = cardWidth ?? layout.cardWidth;
+    const imageSource = getArtwork({
+      api,
+      item,
+      purpose: kind === "portrait" ? "portrait" : "wide",
+      box: { width, height: width / layout.aspectRatio },
+      preferEpisodeImage: useEpisodePoster,
+      maxWidthPx: MAX_CARD_IMAGE_WIDTH_PX,
+    });
 
     const progress = itemProgressFraction(item);
     // Strict === false: items without UserData (unknown state) get no dot.
@@ -285,7 +267,8 @@ export function buildItemCards(
         id: item.Id,
         title,
         subtitle,
-        imageUrl,
+        imageUrl: imageSource?.uri,
+        imageSource,
         progress,
         unwatched,
         unplayedCount,

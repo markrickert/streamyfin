@@ -76,6 +76,7 @@ import { makeApi } from "@/test-utils/jellyfinApi";
 import { store } from "@/utils/store";
 import {
   downloadAdditionalAssets,
+  downloadCoverImage,
   downloadSubtitles,
   downloadTrickplayImages,
 } from "./additionalDownloads";
@@ -138,6 +139,32 @@ describe("downloadTrickplayImages", () => {
       "https://jellyfin.example.com/Videos/item-1/Trickplay/320/3.jpg?ApiKey=SECRET_TOKEN",
     ]);
   });
+});
+
+test("an episode download uses its series poster and does not request untagged art", async () => {
+  const saved: { id: string; url?: string }[] = [];
+  const save = async (id: string, url?: string) => {
+    saved.push({ id, url });
+  };
+  await downloadCoverImage(
+    {
+      Id: "episode-1",
+      Type: "Episode",
+      SeriesId: "series-1",
+      SeriesPrimaryImageTag: "series-tag",
+      ImageTags: { Primary: "episode-still" },
+    },
+    api,
+    save,
+  );
+  expect(new URL(saved[0].url!).pathname).toBe(
+    "/Items/series-1/Images/Primary",
+  );
+  expect(new URL(saved[0].url!).searchParams.get("tag")).toBe("series-tag");
+
+  saved.length = 0;
+  await downloadCoverImage({ Id: "no-art", Type: "Movie" }, api, save);
+  expect(saved).toEqual([]);
 });
 
 describe("downloadSubtitles", () => {

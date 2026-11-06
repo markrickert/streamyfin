@@ -12,27 +12,37 @@ import {
   optionsWithOptionalHeaders,
 } from "@/utils/customHeaders";
 
-function ServerImage({ source, ...props }: ImageProps) {
+function ServerImage({ source, placeholder, ...props }: ImageProps) {
   const objectSource =
     source && !Array.isArray(source) && typeof source === "object"
       ? (source as ImageSource)
       : undefined;
   const uri = typeof source === "string" ? source : objectSource?.uri;
+  const blurhash = uri && objectSource?.blurhash;
+  const sourceWithoutHash = blurhash
+    ? { ...objectSource, blurhash: undefined }
+    : source;
 
-  // A source built by getItemImage already carries them; resolving again would
+  // A source built by the artwork resolver carries them; resolving again would
   // give two answers for the same image.
   const resolvedHeaders = useHeadersForUrl(
     objectSource?.headers ? undefined : uri,
   );
 
   const sourceWithHeaders = useMemo(() => {
-    if (!resolvedHeaders || !uri) return source;
-    return typeof source === "string"
-      ? { uri: source, headers: resolvedHeaders }
-      : { ...(source as ImageSource), headers: resolvedHeaders };
+    if (!resolvedHeaders || !uri) return sourceWithoutHash;
+    return typeof sourceWithoutHash === "string"
+      ? { uri: sourceWithoutHash, headers: resolvedHeaders }
+      : { ...(sourceWithoutHash as ImageSource), headers: resolvedHeaders };
   }, [source, uri, resolvedHeaders]);
 
-  return <ExpoImage source={sourceWithHeaders} {...props} />;
+  return (
+    <ExpoImage
+      source={sourceWithHeaders}
+      placeholder={placeholder ?? (blurhash ? { blurhash } : undefined)}
+      {...props}
+    />
+  );
 }
 
 /**

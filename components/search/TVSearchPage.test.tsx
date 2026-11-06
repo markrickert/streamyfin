@@ -2,6 +2,10 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { TVSearchPage } from "./TVSearchPage";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("@/providers/JellyfinProvider", () => {
   const { atom } = jest.requireActual("jotai");
   return { apiAtom: atom({ basePath: "http://server" }) };

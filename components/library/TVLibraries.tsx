@@ -14,7 +14,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Animated, Easing, FlatList, Pressable, View } from "react-native";
+import {
+  Animated,
+  Easing,
+  FlatList,
+  Pressable,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
@@ -23,7 +30,7 @@ import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { logAndCaptureError } from "@/utils/log";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -62,6 +69,7 @@ const TVLibraryRow: React.FC<{
   const [api] = useAtom(apiAtom);
   const { t } = useTranslation();
   const typography = useScaledTVTypography();
+  const { width: windowWidth } = useWindowDimensions();
   const [focused, setFocused] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0.7)).current;
@@ -85,19 +93,18 @@ const TVLibraryRow: React.FC<{
 
   const backdropUrl = useMemo(() => {
     // Try to get backdrop from library or first preview item
-    if (library.previewItems?.[0]) {
-      return getBackdropUrl({
+    return (
+      getArtwork({
         api,
-        item: library.previewItems[0],
-        width: 1920,
-      });
-    }
-    return getBackdropUrl({
-      api,
-      item: library,
-      width: 1920,
-    });
-  }, [api, library]);
+        item: library.previewItems?.[0] ?? library,
+        purpose: "backdrop",
+        box: {
+          width: (windowWidth - 2 * HORIZONTAL_PADDING) * 1.02,
+          height: CARD_HEIGHT * 1.02,
+        },
+      })?.uri ?? null
+    );
+  }, [api, library, windowWidth]);
 
   const iconName = icons[library.CollectionType!] || "folder";
 

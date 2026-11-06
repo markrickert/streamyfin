@@ -21,7 +21,7 @@ import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { squareArtworkSide } from "@/utils/artworkSize";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 
 export default function ArtistDetailScreen() {
   const { artistId } = useLocalSearchParams<{ artistId: string }>();
@@ -34,6 +34,7 @@ export default function ArtistDetailScreen() {
   const windowSize = useWindowDimensions();
   // The square follows the window's short side, see utils/artworkSize.ts.
   const artworkSize = squareArtworkSide(windowSize, { ratio: 0.4 });
+
 
   const [selectedTrack, setSelectedTrack] = useState<BaseItemDto | null>(null);
   const [trackOptionsOpen, setTrackOptionsOpen] = useState(false);
@@ -109,8 +110,15 @@ export default function ArtistDetailScreen() {
   }, [artist?.Name, navigation]);
 
   const imageUrl = useMemo(
-    () => (artist ? getPrimaryImageUrl({ api, item: artist }) : null),
-    [api, artist],
+    () =>
+      artist
+        ? (getMusicArtwork({
+            api,
+            item: artist,
+            box: { width: artworkSize, height: artworkSize },
+          })?.uri ?? null)
+        : null,
+    [api, artist, artworkSize],
   );
 
   const handlePlayAllTracks = useCallback(() => {

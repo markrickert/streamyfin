@@ -1,2 +1,8 @@
 export * from "./TopShelfCache.types";
-export { clearTopShelfCache, writeTopShelfCache } from "./TopShelfCacheModule";
+export {
+  clearTopShelfCache,
+  getCachedTopShelfImage,
+  pruneTopShelfImages,
+  storeTopShelfImage,
+  writeTopShelfCache,
+} from "./TopShelfCacheModule";

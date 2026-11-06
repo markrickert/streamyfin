@@ -35,8 +35,7 @@ import {
   isGlassEffectAvailable,
 } from "@/modules/glass-poster";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 import { scaleSize } from "@/utils/scaleSize";
 import { runtimeTicksToMinutes } from "@/utils/time";
 
@@ -66,41 +65,21 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
     // Check if glass effect is available (tvOS 26+)
     const useGlass = Platform.OS === "ios" && isGlassEffectAvailable();
 
-    const posterUrl = useMemo(() => {
-      if (!api) return null;
-
-      // For episodes, always use series thumb.
-      // Matched pair: ParentThumbItemId owns the Thumb tag, not ParentBackdropItemId.
-      if (item.Type === "Episode") {
-        if (item.ParentThumbItemId && item.ParentThumbImageTag) {
-          return `${api.basePath}/Items/${item.ParentThumbItemId}/Images/Thumb?fillHeight=400&quality=80&tag=${item.ParentThumbImageTag}`;
-        }
-        // Series without a Thumb: fall back to its backdrop, like other Jellyfin
-        // clients do. The tagless Thumb request below 404s in that case.
-        const parentBackdropTag = item.ParentBackdropImageTags?.[0];
-        if (item.ParentBackdropItemId && parentBackdropTag) {
-          return `${api.basePath}/Items/${item.ParentBackdropItemId}/Images/Backdrop?fillHeight=400&quality=80&tag=${parentBackdropTag}`;
-        }
-        // Neither parent pair resolved. The tagless series request below is a
-        // 404 whenever the series has no Thumb, which leaves the hero blank, so
-        // try the episode's own image first like the poster cards do.
-        if (item.ImageTags?.Primary) {
-          return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=400&quality=80&tag=${item.ImageTags.Primary}`;
-        }
-        if (item.SeriesId) {
-          return `${api.basePath}/Items/${item.SeriesId}/Images/Thumb?fillHeight=400&quality=80`;
-        }
-      }
-
-      // For non-episodes, use item's own thumb/primary
-      if (item.ImageTags?.Thumb) {
-        return `${api.basePath}/Items/${item.Id}/Images/Thumb?fillHeight=400&quality=80&tag=${item.ImageTags.Thumb}`;
-      }
-      if (item.ImageTags?.Primary) {
-        return `${api.basePath}/Items/${item.Id}/Images/Primary?fillHeight=400&quality=80&tag=${item.ImageTags.Primary}`;
-      }
-      return null;
-    }, [api, item]);
+    const posterSource = useMemo(
+      () =>
+        getArtwork({
+          api,
+          item,
+          purpose: "wide",
+          box: {
+            width: sizes.posters.episode,
+            height: sizes.posters.episode * (9 / 16),
+          },
+          focusScale: useGlass ? 1 : sizes.animation.focusScale,
+        }),
+      [api, item, sizes.posters.episode, sizes.animation.focusScale, useGlass],
+    );
+    const posterUrl = posterSource?.uri;
 
     const animateTo = useCallback(
       (value: number) =>
@@ -185,7 +164,7 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
         >
           {posterUrl ? (
             <Image
-              source={{ uri: posterUrl }}
+              source={posterSource}
               style={{ width: "100%", height: "100%" }}
               contentFit='cover'
             />
@@ -247,23 +226,34 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
   const [layer1Url, setLayer1Url] = useState<string | null>(null);
   const layer0Opacity = useRef(new Animated.Value(0)).current;
   const layer1Opacity = useRef(new Animated.Value(0)).current;
+  const backdropHeight =
+    windowHeight * sizes.padding.heroHeight + insets.top + scaleSize(145);
 
   // Get backdrop URL for active item
   const backdropUrl = useMemo(() => {
     if (!activeItem) return null;
-    return getBackdropUrl({
-      api,
-      item: activeItem,
-      quality: 90,
-      width: 1920,
-    });
-  }, [api, activeItem]);
+    return (
+      getArtwork({
+        api,
+        item: activeItem,
+        purpose: "backdrop",
+        box: { width: windowWidth, height: backdropHeight },
+      })?.uri ?? null
+    );
+  }, [api, activeItem, backdropHeight, windowWidth]);
 
   // Get logo URL for active item
   const logoUrl = useMemo(() => {
     if (!activeItem) return null;
-    return getLogoImageUrlById({ api, item: activeItem });
-  }, [api, activeItem]);
+    return (
+      getArtwork({
+        api,
+        item: activeItem,
+        purpose: "logo",
+        box: { width: windowWidth * 0.35, height: scaleSize(100) },
+      })?.uri ?? null
+    );
+  }, [api, activeItem, windowWidth]);
 
   // Crossfade effect for backdrop
   useEffect(() => {

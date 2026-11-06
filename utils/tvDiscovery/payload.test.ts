@@ -3,6 +3,10 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import i18next from "i18next";
 import { buildTVDiscoveryPayload, type TVDiscoveryItem } from "./payload";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 beforeAll(() =>
   i18next.init({
     lng: "fr",
@@ -155,5 +159,51 @@ describe("buildTVDiscoveryPayload: the title of an episode's tile", () => {
 
     expect(bySeason.title).toBe("Doctor Who - Saison 2");
     expect(byNumber.title).toBe("Doctor Who - Épisode 3");
+  });
+});
+
+describe("buildTVDiscoveryPayload: launcher artwork selection", () => {
+  test("Top Shelf prefers the series poster and its tag over the season poster", () => {
+    const tile = tileFor({
+      Id: "episode-1",
+      Name: "Pilot",
+      Type: "Episode",
+      SeriesId: "series-1",
+      SeriesPrimaryImageTag: "series-poster",
+      SeasonId: "season-1",
+      ParentPrimaryImageTag: "season-tag",
+    });
+    expect(new URL(tile.imageUrl!).pathname).toBe(
+      "/Items/series-1/Images/Primary",
+    );
+    expect(new URL(tile.imageUrl!).searchParams.get("tag")).toBe(
+      "series-poster",
+    );
+    expect(new URL(tile.imageUrl!).searchParams.get("fillWidth")).toBe("400");
+    expect(new URL(tile.imageUrl!).searchParams.get("fillHeight")).toBe("600");
+  });
+
+  test("Android falls back from missing Thumb to a matched backdrop", () => {
+    const payload = buildTVDiscoveryPayload({
+      api,
+      imageShape: "landscape",
+      sections: [
+        {
+          title: "Continue",
+          items: [
+            {
+              Id: "episode-1",
+              Name: "Pilot",
+              Type: "Episode",
+              ParentBackdropItemId: "series-1",
+              ParentBackdropImageTags: ["backdrop-tag"],
+            },
+          ],
+        },
+      ],
+    });
+    const imageUrl = payload?.sections[0].items[0].imageUrl;
+    expect(new URL(imageUrl!).pathname).toBe("/Items/series-1/Images/Backdrop");
+    expect(new URL(imageUrl!).searchParams.get("tag")).toBe("backdrop-tag");
   });
 });

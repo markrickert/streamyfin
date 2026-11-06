@@ -3,25 +3,20 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import type { ImageProps } from "expo-image";
 import { useAtom } from "jotai";
 import { type FC, useMemo } from "react";
-import { View, type ViewProps } from "react-native";
+import {
+  PixelRatio,
+  useWindowDimensions,
+  View,
+  type ViewProps,
+} from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { BACKGROUND_IMAGE_TRANSITION } from "@/constants/Values";
 import { apiAtom } from "@/providers/JellyfinProvider";
-import { getItemImage } from "@/utils/getItemImage";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props extends ImageProps {
   item: BaseItemDto;
-  variant?:
-    | "Primary"
-    | "Backdrop"
-    | "ParentBackdrop"
-    | "ParentLogo"
-    | "Logo"
-    | "AlbumPrimary"
-    | "SeriesPrimary"
-    | "Screenshot"
-    | "Thumb";
-  quality?: number;
+  variant?: "Primary" | "Backdrop";
   /** Requested image width in physical pixels, not layout points. */
   width?: number;
   /**
@@ -35,28 +30,29 @@ interface Props extends ImageProps {
 export const ItemImage: FC<Props> = ({
   item,
   variant = "Primary",
-  quality = 90,
-  width = 1000,
+  width,
   height,
   onError,
   ...props
 }) => {
   const [api] = useAtom(apiAtom);
+  const window = useWindowDimensions();
 
   const source = useMemo(() => {
     if (!api) {
       onError?.();
       return;
     }
-    return getItemImage({
-      item,
+    return getArtwork({
       api,
-      variant,
-      quality,
-      width,
-      height,
+      item,
+      purpose: variant === "Backdrop" ? "backdrop" : "portrait",
+      box: {
+        width: width ? width / PixelRatio.get() : window.width,
+        height: height ? height / PixelRatio.get() : window.height,
+      },
     });
-  }, [api, item, quality, variant, width, height]);
+  }, [api, item, variant, width, height, window.width, window.height]);
 
   // return placeholder icon if no source
   if (!source?.uri)

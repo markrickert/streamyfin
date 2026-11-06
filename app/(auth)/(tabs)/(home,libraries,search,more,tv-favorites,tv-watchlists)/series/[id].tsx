@@ -32,9 +32,13 @@ import { useLeaveWhenGone } from "@/hooks/useLeaveWhenGone";
 import { playableQueueItems, useShuffleQueue } from "@/hooks/useShuffleQueue";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { OfflineModeProvider } from "@/providers/OfflineModeProvider";
-import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { getLogoImageUrlById } from "@/utils/jellyfin/image/getLogoImageUrlById";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
+import {
+  buildOfflineSeriesFromEpisodes,
+  getDownloadedEpisodesForSeries,
+} from "@/utils/downloads/offline-series";
+import { getArtwork } from "@/utils/jellyfin/image/artwork";
+import { isJellyfinItem, refetchUnlessItem } from "@/utils/jellyfin/jellyfin";
+import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 import { storage } from "@/utils/mmkv";
 import { getSeriesPlaybackTarget } from "@/utils/seriesPlaybackTarget";
 
@@ -92,24 +96,30 @@ const page: React.FC = () => {
     if (isOffline && base64Image) {
       return `data:image/jpeg;base64,${base64Image}`;
     }
-    return getBackdropUrl({
-      api,
-      item,
-      quality: 90,
-      width: toImagePixels(windowWidth),
-      height: toImagePixels(HEADER_HEIGHT),
-    });
+    if (!item) return null;
+    return (
+      getArtwork({
+        api,
+        item,
+        purpose: "backdrop",
+        box: { width: windowWidth, height: HEADER_HEIGHT },
+      })?.uri ?? null
+    );
   }, [isOffline, base64Image, api, item, windowWidth]);
 
   const logoUrl = useMemo(() => {
     if (isOffline) {
       return null; // No logo in offline mode
     }
-    return getLogoImageUrlById({
-      api,
-      item,
-    });
-  }, [isOffline, api, item]);
+    return item
+      ? (getArtwork({
+          api,
+          item,
+          purpose: "logo",
+          box: { width: windowWidth, height: LOGO_HEIGHT },
+        })?.uri ?? null)
+      : null;
+  }, [isOffline, api, item, windowWidth]);
 
   useEffect(() => {
     if (requestedSeasonIndex === undefined) {

@@ -24,3 +24,13 @@ export function clearTvRecommendations(): boolean {
 export function refreshTvRecommendations(): boolean {
   return TvRecommendationsModule?.refreshRecommendations() ?? false;
 }
+
+export const getCachedTvImage = (key: string): string | null =>
+  TvRecommendationsModule?.getCachedImage(key) ?? null;
+
+export const storeTvImage = (key: string, fileUri: string): string | null =>
+  TvRecommendationsModule?.storeImage(key, fileUri) ?? null;
+
+export const pruneTvImages = (keys: string[]): void => {
+  TvRecommendationsModule?.pruneImages(keys);
+};

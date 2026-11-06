@@ -1,5 +1,5 @@
 import { PixelRatio } from "react-native";
-import { fillHeightParams, toImagePixels } from "./imagePixels";
+import { toImagePixels } from "./imagePixels";
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -16,19 +16,5 @@ describe("toImagePixels", () => {
     jest.spyOn(PixelRatio, "get").mockReturnValue(2.625);
 
     expect(toImagePixels(411)).toBe(1079);
-  });
-});
-
-describe("fillHeightParams", () => {
-  test("carries the box height and bounds both sides of the result", () => {
-    expect(fillHeightParams(1500)).toEqual({
-      fillHeight: "1500",
-      maxWidth: "1920",
-      maxHeight: "1920",
-    });
-  });
-
-  test("sends whole pixels", () => {
-    expect(fillHeightParams(1049.6).fillHeight).toBe("1050");
   });
 });

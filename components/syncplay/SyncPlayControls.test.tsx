@@ -6,6 +6,10 @@ import {
 } from "@testing-library/react-native";
 import { SyncPlayOptions, SyncPlayPlayback } from "./SyncPlayControls";
 
+jest.mock("@/utils/customHeaders", () =>
+  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
+);
+
 jest.mock("@/providers/JellyfinProvider", () => ({
   apiAtom: jest.requireActual("jotai").atom({ basePath: "http://host" }),
 }));

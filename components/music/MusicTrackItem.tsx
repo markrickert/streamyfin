@@ -17,7 +17,7 @@ import {
 } from "@/providers/AudioStorage";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
-import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { getMusicArtwork } from "@/utils/jellyfin/image/artwork";
 import { formatDuration } from "@/utils/time";
 
 interface Props {
@@ -42,11 +42,13 @@ export const MusicTrackItem: React.FC<Props> = ({
   const haptic = useHaptic("light");
 
   const imageUrl = useMemo(() => {
-    const albumId = track.AlbumId || track.ParentId;
-    if (albumId) {
-      return `${api?.basePath}/Items/${albumId}/Images/Primary?maxHeight=100&maxWidth=100`;
-    }
-    return getPrimaryImageUrl({ api, item: track });
+    return (
+      getMusicArtwork({
+        api,
+        item: track,
+        box: { width: 44, height: 44 },
+      })?.uri ?? null
+    );
   }, [api, track]);
 
   const isCurrentTrack = currentTrack?.Id === track.Id;
