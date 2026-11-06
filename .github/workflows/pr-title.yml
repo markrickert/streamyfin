@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write # sticky comment on same-repo PRs; forks get read-only regardless
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -18,6 +19,10 @@ jobs:
   validate_pr_title:
     name: "📝 Validate PR Title"
     runs-on: ubuntu-26.04
+    env:
+      # Only a same-repo PR gets a write token; a fork's is read-only.
+      SAME_REPO: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
     steps:
       - if: github.event_name == 'pull_request'
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
@@ -28,10 +33,25 @@ jobs:
       - if: github.event_name == 'merge_group'
         run: echo "PR titles were validated before entering the merge queue"
 
+      # Same-repo PRs get a write token, so post the sticky comment here and
+      # skip a second trip through the runner queue.
+      - if: always() && env.SAME_REPO == 'true' && steps.lint_pr_title.outcome != 'skipped'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/actions
+          show-progress: false
+          persist-credentials: false
+
+      - if: always() && env.SAME_REPO == 'true' && steps.lint_pr_title.outcome != 'skipped'
+        uses: ./.github/actions/pr-title-comment
+        with:
+          number: ${{ github.event.pull_request.number }}
+          error: ${{ steps.lint_pr_title.outputs.error_message }}
+
       # Fork PRs only get a read-only GITHUB_TOKEN here, so the sticky comment
       # is posted from the privileged pr-title-comment.yml (workflow_run). Hand
       # off the result (PR number + lint error) as an artifact for it to read.
-      - if: always() && github.event_name == 'pull_request'
+      - if: always() && env.FORK == 'true'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LINT_ERROR: ${{ steps.lint_pr_title.outputs.error_message }}
@@ -40,7 +60,7 @@ jobs:
           printf '%s' "$PR_NUMBER" > pr-title-result/number
           printf '%s' "$LINT_ERROR" > pr-title-result/error
 
-      - if: always() && github.event_name == 'pull_request'
+      - if: always() && env.FORK == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pr-title-result

@@ -21,6 +21,7 @@
  * request's commits.
  */
 import { appendFileSync } from "node:fs";
+import { github } from "./github";
 
 /** The branch whose builds every pull request and merge queue entry may reuse. */
 export const TRUSTED_BRANCH = "develop";
@@ -83,20 +84,6 @@ export const pickSource = (
   );
 };
 
-const github = async <T>(url: string, token: string): Promise<T> => {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`GitHub answered ${response.status} for ${url}`);
-  }
-  return (await response.json()) as T;
-};
-
 const fetchArtifacts = async (
   repository: string,
   name: string,
@@ -107,8 +94,8 @@ const fetchArtifacts = async (
   let total = Number.POSITIVE_INFINITY;
   while (artifacts.length < total) {
     const body = await github<{ total_count: number; artifacts: Artifact[] }>(
-      `https://api.github.com/repos/${repository}/actions/artifacts?name=${encodeURIComponent(name)}&per_page=100&page=${page}`,
       token,
+      `/repos/${repository}/actions/artifacts?name=${encodeURIComponent(name)}&per_page=100&page=${page}`,
     );
     total = body.total_count;
     artifacts.push(...body.artifacts);
@@ -127,8 +114,8 @@ const fetchPullRequestCommits = async (
   let page = 1;
   for (;;) {
     const body = await github<{ sha: string }[]>(
-      `https://api.github.com/repos/${repository}/pulls/${prNumber}/commits?per_page=100&page=${page}`,
       token,
+      `/repos/${repository}/pulls/${prNumber}/commits?per_page=100&page=${page}`,
     );
     for (const commit of body) commits.add(commit.sha);
     if (body.length < 100) return commits;
