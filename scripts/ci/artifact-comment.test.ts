@@ -3,14 +3,23 @@ import { join } from "node:path";
 import {
   type Artifact,
   buildStatuses,
+  COMMENT_MARKER,
   findJobForTarget,
   type Job,
   REFRESH_STEP,
   type Run,
+  readSnapshotAt,
   renderComment,
   type Step,
   settleJobs,
+  upsertComment,
 } from "./artifact-comment";
+import { github } from "./github";
+
+jest.mock("./github", () => ({
+  ...jest.requireActual("./github"),
+  github: jest.fn(),
+}));
 
 const RUN_ID = 42;
 const NOW = "2026-11-05T12:10:00Z";
@@ -168,6 +177,7 @@ describe("renderComment", () => {
       artifacts: [artifact],
       referenceDurations: {},
       runUrl: "https://github.com/o/r/actions/runs/42",
+      snapshotAt: 1000,
     });
     expect(body).toContain(
       "| 🤖 Android Phone | 📱 Phone | ✅ Complete | [📥 Download APK](https://github.com/o/r/actions/runs/42/artifacts/7) (50.0 MB) - 8m 0s |",
@@ -184,9 +194,72 @@ describe("renderComment", () => {
       artifacts: [],
       referenceDurations: {},
       runUrl: "https://github.com/o/r/actions/runs/42",
+      snapshotAt: 1000,
     });
     expect(body).toContain("| 🍎 iOS | 📱 Phone | ⏳ Pending |");
     expect(body).toContain("Builds are starting up");
+  });
+});
+
+describe("upsertComment", () => {
+  const mockGithub = github as jest.MockedFunction<typeof github>;
+  const PATH = "/repos/o/r/issues/comments/5";
+  const commentBody = (snapshotAt: number) =>
+    renderComment({
+      repository: "o/r",
+      prNumber: 12,
+      sha: "abcdef1234567",
+      statuses: {},
+      artifacts: [],
+      referenceDurations: {},
+      runUrl: "https://github.com/o/r/actions/runs/42",
+      snapshotAt,
+    });
+  const bot = (body: string) => ({ id: 5, body, user: { type: "Bot" } });
+
+  /** Answers the list with `listed`, each read back with the next of `reads`. */
+  const serve = (listed: string, reads: string[]) => {
+    mockGithub.mockImplementation(async (_token, path, init) => {
+      if (path.includes("/issues/12/comments?")) return [bot(listed)];
+      if (path === PATH && !init?.method) return bot(reads.shift() ?? "");
+      return {};
+    });
+  };
+  const patches = () =>
+    mockGithub.mock.calls.filter(([, , init]) => init?.method === "PATCH");
+  const noWait = async () => {};
+
+  beforeEach(() => mockGithub.mockReset());
+
+  it("reads the snapshot time a comment carries", () => {
+    expect(readSnapshotAt(commentBody(1234))).toBe(1234);
+    expect(readSnapshotAt(`old ${COMMENT_MARKER}`)).toBe(0);
+  });
+
+  it("never puts an older snapshot over a newer one", async () => {
+    serve(commentBody(2000), []);
+    await upsertComment("t", "o/r", 12, commentBody(1000), noWait);
+    expect(patches()).toHaveLength(0);
+  });
+
+  it("writes a newer snapshot once it reads back as written", async () => {
+    const mine = commentBody(2000);
+    serve(commentBody(1000), [mine]);
+    await upsertComment("t", "o/r", 12, mine, noWait);
+    expect(patches()).toHaveLength(1);
+  });
+
+  it("puts its snapshot back when an older one landed over it", async () => {
+    const mine = commentBody(2000);
+    serve(commentBody(1000), [commentBody(1500), mine]);
+    await upsertComment("t", "o/r", 12, mine, noWait);
+    expect(patches()).toHaveLength(2);
+  });
+
+  it("stops once a newer snapshot lands after its own", async () => {
+    serve(commentBody(1000), [commentBody(3000)]);
+    await upsertComment("t", "o/r", 12, commentBody(2000), noWait);
+    expect(patches()).toHaveLength(1);
   });
 });
 
