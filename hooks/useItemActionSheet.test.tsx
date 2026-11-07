@@ -16,9 +16,6 @@ const mockMarkAsPlayed = jest.fn(async (_played: boolean) => {});
 jest.mock("@expo/react-native-action-sheet", () => ({
   useActionSheet: () => ({ showActionSheetWithOptions: mockShowActionSheet }),
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("@/hooks/useMarkAsPlayed", () => ({
   useMarkAsPlayed: () => mockMarkAsPlayed,
 }));
@@ -28,9 +25,10 @@ jest.mock("@/hooks/useFavorite", () => ({
 jest.mock("@/providers/DownloadProvider", () => ({
   useDownload: () => ({ deleteFile: () => {} }),
 }));
-jest.mock("@/providers/OfflineModeProvider", () => ({
-  useOfflineMode: () => false,
-}));
+jest.mock(
+  "@/providers/OfflineModeProvider",
+  () => jest.requireActual("@/test-utils/stubModules").onlineModule,
+);
 
 // Hands the "sheet closed" promise back inside an object: returned bare,
 // awaiting the render would also wait for a sheet nobody has answered yet.

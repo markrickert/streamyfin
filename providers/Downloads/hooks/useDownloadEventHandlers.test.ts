@@ -10,14 +10,6 @@ import { clearMmkv } from "@/test-utils/mmkv";
 
 // The pending records and the downloads database are real, over the MMKV double: together they
 // are what says whether a completed file belongs to anything.
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-jest.mock(
-  "expo-file-system",
-  () => jest.requireActual("@/test-utils/fileSystem").fileSystemModule,
-);
 const mockListeners: {
   started?: (event: DownloadStartedEvent) => void;
   complete?: (event: DownloadCompleteEvent) => Promise<void>;
@@ -60,9 +52,6 @@ jest.mock("sonner-native", () => ({
 jest.mock("@/utils/log", () => ({
   logAndCaptureError: jest.fn(),
   writeToLog: jest.fn(),
-}));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 import { DOWNLOAD_FAILURE_TOAST_DURATION_MS } from "@/constants/Downloads";

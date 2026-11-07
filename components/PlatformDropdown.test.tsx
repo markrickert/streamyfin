@@ -34,12 +34,6 @@ jest.mock("@expo/ui/swift-ui", () => {
   };
 });
 jest.mock("@expo/ui/swift-ui/modifiers", () => ({ disabled: jest.fn() }));
-jest.mock("@gorhom/bottom-sheet", () =>
-  jest.requireActual("@gorhom/bottom-sheet/mock"),
-);
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("@/providers/GlobalModalProvider", () => ({
   useGlobalModal: () => ({
     showModal: jest.fn(),

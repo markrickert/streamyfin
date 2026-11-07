@@ -12,6 +12,8 @@ import {
   withoutRedundantSaves,
 } from "./queryPersistence";
 
+// The real log is under test, not the silent double `test-utils/unitSetup.ts` installs.
+jest.unmock("@/utils/log");
 jest.mock("@sentry/react-native", () => ({ addBreadcrumb: () => {} }));
 jest.mock("./logStorage", () => ({
   readFromLog: jest.fn(() => []),
@@ -228,6 +230,7 @@ test("a second write in the same millisecond is still saved", async () => {
   client.setQueryData(["home", "row"], "first");
   client.setQueryData(["home", "row"], "second");
   unsubscribe();
+  client.clear();
   now.mockRestore();
 
   expect(saved.at(-1)).toBe("second");

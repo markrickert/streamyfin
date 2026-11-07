@@ -43,9 +43,6 @@ jest.mock("sonner-native", () => ({
     error: (...args: unknown[]) => mockError(...args),
   },
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 
 const response = (actionIdentifier: string) => ({
   actionIdentifier,

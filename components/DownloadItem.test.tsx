@@ -9,6 +9,8 @@ import type { OptionGroup } from "./PlatformDropdown";
 const mockStartBackgroundDownload = jest.fn();
 let mockDownloadedItems: { item: BaseItemDto }[] = [];
 
+// The real bitrate selector is rendered here, not the `BITRATES` double `test-utils/unitSetup.ts` installs.
+jest.unmock("@/components/BitrateSelector");
 jest.mock("@/providers/DownloadProvider", () => ({
   useDownload: () => ({
     processes: [],
@@ -26,13 +28,6 @@ jest.mock("@/providers/JellyfinProvider", () => {
     }),
   };
 });
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-jest.mock("@/utils/atoms/settings", () => ({
-  useSettings: () => ({ settings: null }),
-}));
 jest.mock("@/utils/jellyfin/media/getStreamUrl", () => ({
   getDownloadStreamUrl: jest.fn(),
 }));
@@ -40,15 +35,7 @@ jest.mock("@/utils/log", () => ({
   logAndCaptureError: jest.fn(),
   writeToLog: jest.fn(),
 }));
-jest.mock("@/hooks/useAppRouter", () => ({
-  __esModule: true,
-  default: () => ({ push: jest.fn() }),
-}));
-jest.mock("@/hooks/useHaptic", () => ({ useHaptic: () => () => {} }));
 jest.mock("i18next", () => ({ t: (key: string) => key }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("sonner-native", () => ({ toast: { error: jest.fn() } }));
 // The sheet is always open here: what is under test is what confirming it
 // does, not how it is presented.

@@ -16,14 +16,9 @@ import {
   SETTINGS_KEY,
 } from "@/utils/storedSettings";
 
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-// BitrateSelector is a React component module; only the BITRATES table matters.
-jest.mock("@/components/BitrateSelector", () => ({
-  BITRATES: [{ key: "Max", value: undefined }],
-}));
+// This spec is about the real settings, not the double `test-utils/unitSetup.ts` installs.
+jest.unmock("@/utils/atoms/settings");
+
 // The api atoms read react-native-device-info (native at test time);
 // settings.ts only reads the atoms.
 jest.mock("@/utils/atoms/api", () => ({

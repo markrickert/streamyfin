@@ -50,8 +50,81 @@ say which one, so the next person does not delete it as redundant.
 
 ## Mocks
 
-`jest-expo` already mocks the native Expo surface, so most specs need no module mock at
-all. When you do need one:
+**Mock the boundary and run everything else for real.** The boundary is what Jest cannot
+run: native modules, the file system, the network, the keychain and Sentry. The app's own
+code (settings, log, the Jellyfin provider, router hooks) runs for real. A double of your
+own code can drift from the real one, and a broken spec keeps passing.
+
+Doubles for the boundary live in `test-utils/` and are wired once for every spec. A spec
+declares only what is specific to it.
+
+### The rules
+
+1. **Check what is already wired before writing a mock.** `jest.config.js`
+   (`moduleNameMapper`) maps packages to doubles in `test-utils/`. `test-utils/unitSetup.ts`
+   mocks the app modules that wrap native code or IO. `jest-expo` mocks the native Expo
+   modules. Most specs need no `jest.mock` at all.
+2. **Wire a double for every spec only if it stands in for native code, IO or the
+   network.** Put it in `test-utils/` and add it to the config or `unitSetup.ts`. If the
+   same factory appears in a second spec, move it there.
+3. **Do not wire doubles of the app's own code for every spec.** A spec that needs a double
+   of an app provider, hook or atom adds one line that uses a shared double:
+
+   ```typescript
+   jest.mock("@/hooks/useAppRouter", () =>
+     jest.requireActual("@/test-utils/stubModules").appRouterModule,
+   );
+   ```
+
+   This keeps visible in the spec what was replaced. When a second spec needs the same
+   double, move it to `test-utils/`.
+4. **Unmock the module a spec is about.** A spec for `hooks/useHaptic.ts` calls
+   `jest.unmock("<path>")` with a short comment saying why. Otherwise it tests the double
+   and passes for the wrong reason.
+5. **A double behaves like the real module and exposes a handle.** To simulate a failure,
+   use the handle (`jest.mocked(jellyfinProbe)`, `appRouter`, `fakeFiles`, `clearMmkv()`,
+   `clearSecureStore()`, `setJellyfinHeaders()`) instead of rewriting the double. If the
+   real function is pure, use it.
+6. **Do not depend on mock state left by another test.** `clearMocks` is on, so call counts
+   reset before each test. Implementations set with `mockReturnValue` or
+   `mockImplementation` are kept. Set them in the test or in `beforeEach`, or call
+   `mockReset()` to start from an empty `jest.fn()`.
+7. **Restore spies and timers.** A `jest.spyOn` or fake timer stays active until it is
+   undone. Call `mockRestore()` or `jest.useRealTimers()` in `afterEach`.
+8. **Assert on results, not on the double.** Check what the user sees or what left the app
+   (a request sent, a route pushed). A test that counts calls to a double breaks on every
+   refactor.
+
+### What is wired
+
+- **Packages** are mapped in `jest.config.js` (`moduleNameMapper`).
+- **App modules that wrap native code or IO** are mocked by path in
+  `test-utils/unitSetup.ts`. `moduleNameMapper` matches only the exact import string, so it
+  cannot replace a module that other files import by a relative path.
+- **Doubles of the app's own code** (`makeSettingsModule()`, `makeJellyfinAtomsModule()`,
+  `appRouterModule`, `networkStatusModule`, `customHeadersModule()` and others) are in
+  `test-utils/` but not wired. A spec adds one as described in rule 3.
+
+### Doubles a spec adds itself
+
+Most specs do not need these, so they are not wired. A spec that does adds one with
+`jest.requireActual`:
+
+```typescript
+jest.mock(
+  "react-native-reanimated",
+  () => jest.requireActual("@/test-utils/reanimated").reanimatedModule,
+);
+```
+
+- `reanimatedModule`: for a component that holds shared values. Reanimated's own Jest mock
+  returns a new shared value on every render, which re-runs any effect that depends on it.
+- `stubReactNative()`: patches `Platform` and `AppState` on the real module. A module that
+  reads `Platform` when it loads must be required after the call, not imported.
+- `stubModules` also exports `expoWithoutNativeModule`, `onlineModule` and
+  `emptyTVTypographyModule`.
+
+### Writing your own mock
 
 ```typescript
 jest.mock("expo-secure-store", () => ({
@@ -59,50 +132,18 @@ jest.mock("expo-secure-store", () => ({
 }));
 ```
 
-Three rules keep mocks from becoming the thing that breaks:
+- Jest hoists `jest.mock` above the imports, so its factory cannot reference an outer
+  variable. Prefix the variable with `mock` (`mockStore`), or load the real module inside
+  the factory with `jest.requireActual`.
+- Each test file has its own module registry. A `jest.mock` in a spec replaces the wired
+  double for that file only.
 
-- `jest.mock` is hoisted above the imports, so its factory cannot reference an
-  out-of-scope variable. Give the variable a `mock` prefix (`mockStore`), or read the real
-  module inside the factory with `jest.requireActual`.
-- Jest gives every test file its own module registry, so a mock never leaks into another
-  spec. Stub only what the module under test touches, and do not try to keep stubs
-  compatible across files.
-- Prefer a real implementation to a stub whenever it is pure. `jest.requireActual` on a
-  helper is more faithful than a hand written double that drifts from it.
+### Perf scenarios
 
-### Shared doubles
-
-`test-utils/` holds the doubles several specs need:
-
-- `stubReactNative()` patches `Platform` and `AppState` on the real module. A module that
-  reads `Platform` when it loads has to be required after the call, not imported, or it
-  keeps the platform it saw first.
-- `mmkvModule` stands for `react-native-mmkv`, backed by one map per spec file;
-  `clearMmkv()` empties it between tests.
-- `secureStoreModule` stands for `expo-secure-store`, the same way; `clearSecureStore()`
-  empties it, and `secureStoreValues` seeds or reads it back. `lockSecureStore()` locks the
-  phone: a read then throws, as the Keychain's does, unless the item was created as readable
-  after the first unlock.
-- `fileSystemModule` stands for `expo-file-system` in specs that delete or download files: a
-  path exists once `fakeFiles.add()` puts it there, or a download lands on it, and until
-  something deletes it. `fakeFiles.clear()` empties the disk, `fakeFiles.remaining()`,
-  `fakeFiles.deleted()` and `fakeFiles.downloads()` read it back.
-- `customHeadersModule()` stands for the `@/utils/customHeaders` barrel, with the pure
-  helpers for real and the native side stubbed; `setJellyfinHeaders()` sets what it reports.
-- `reanimatedModule` stands for `react-native-reanimated` when a spec renders a component
-  that holds shared values. Reanimated's own Jest mock returns a new shared value on
-  every render, which re-runs any effect that depends on one.
-- `tsxRequireHook` stands for `tsx/cjs` in every spec, wired once through
-  `moduleNameMapper` instead of per spec. A require hook registered from a spec lands on
-  the Jest worker's own loader and breaks whichever spec that worker loads next.
-
-A module double is wired the same way everywhere:
-
-```typescript
-jest.mock("react-native-mmkv", () =>
-  jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-```
+`jest.perf.config.js` keeps the package mappings except `expo-router`, `react-i18next`,
+`expo-file-system` and `@expo/vector-icons`, and replaces the unit setup file with
+`test-utils/perfSetup.ts`. A scenario therefore measures the real cost of translation, the
+file system, icons, settings, images and the network. See [performance.md](performance.md).
 
 ## React Native components
 

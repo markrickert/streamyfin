@@ -9,6 +9,10 @@ import {
 import { offerSettingsLinkOnce } from "@/utils/notificationPermissions";
 import { useNotificationRegistration } from "./useNotificationRegistration";
 
+jest.mock("@/providers/JellyfinProvider", () =>
+  jest.requireActual("@/test-utils/jellyfinProviderModule"),
+);
+
 const mockPush = jest.fn();
 const mockNotifications = {
   DEFAULT_ACTION_IDENTIFIER: "expo.modules.notifications.actions.DEFAULT",
@@ -28,10 +32,6 @@ jest.mock("@/hooks/useAppRouter", () => ({
   __esModule: true,
   default: () => ({ push: mockPush }),
 }));
-jest.mock("@/providers/JellyfinProvider", () => {
-  const { atom } = jest.requireActual("jotai");
-  return { userAtom: atom(null) };
-});
 jest.mock("@/utils/background-tasks", () => ({
   registerBackgroundFetchAsyncSessions: jest.fn(async () => {}),
   unregisterBackgroundFetchAsyncSessions: jest.fn(async () => {}),

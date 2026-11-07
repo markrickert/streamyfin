@@ -14,16 +14,17 @@ import { useLibraryPlayQueue } from "./useLibraryPlayQueue";
 import { usePlaybackManager } from "./usePlaybackManager";
 import { useShuffleQueue } from "./useShuffleQueue";
 
+jest.mock("@/providers/JellyfinProvider", () =>
+  jest.requireActual("@/test-utils/jellyfinProviderModule"),
+);
+jest.mock(
+  "@/hooks/useNetworkStatus",
+  () => jest.requireActual("@/test-utils/appProviders").networkStatusModule,
+);
+
 const mockPlayMedia = jest.fn();
 
 // BitrateSelector is a React component module; only the BITRATES table matters.
-jest.mock("@/components/BitrateSelector", () => ({
-  BITRATES: [{ key: "Max", value: undefined }],
-}));
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
 // A new function on every render, as the real hook hands out.
 jest.mock("@/hooks/usePlayMedia", () => ({
   usePlayMedia:
@@ -31,22 +32,12 @@ jest.mock("@/hooks/usePlayMedia", () => ({
     (...args: unknown[]) =>
       mockPlayMedia(...args),
 }));
-jest.mock("@/hooks/useNetworkStatus", () => ({
-  useNetworkStatus: () => ({ isConnected: true }),
-}));
 jest.mock("@/providers/DownloadProvider", () => ({
   useDownload: () => ({
     getDownloadedItemById: () => undefined,
     getDownloadedItems: () => [],
     updateDownloadedItem: () => {},
   }),
-}));
-jest.mock("@/providers/JellyfinProvider", () => {
-  const { atom } = jest.requireActual("jotai");
-  return { apiAtom: atom(null), userAtom: atom(null) };
-});
-jest.mock("@/utils/atoms/settings", () => ({
-  useSettings: () => ({ settings: {} }),
 }));
 // The log module reaches Sentry, whose client keeps a timer running past the
 // last test.

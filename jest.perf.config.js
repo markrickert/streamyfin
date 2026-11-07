@@ -1,10 +1,16 @@
-const { jest: base } = require("./package.json");
+const base = require("./jest.config");
 
-// The expo-router stub in the unit config is for specs that opt in with an
-// explicit jest.mock; mapping it globally here rewires the auto-mocks these
-// scenarios already use.
-const { "^expo-router$": _expoRouter, ...moduleNameMapper } =
-  base.moduleNameMapper;
+// `expo-router` is mocked explicitly by the scenarios, `react-i18next` must
+// translate for real, and the file-system and icon doubles would stand in for
+// the real packages. The unit setup file (`ServerImage`, haptics, the device
+// id) is replaced below, so the scenarios measure the real modules.
+const {
+  "^expo-router$": _expoRouter,
+  "^react-i18next$": _i18next,
+  "^expo-file-system$": _fileSystem,
+  "^@expo/vector-icons$": _vectorIcons,
+  ...moduleNameMapper
+} = base.moduleNameMapper;
 
 module.exports = {
   ...base,

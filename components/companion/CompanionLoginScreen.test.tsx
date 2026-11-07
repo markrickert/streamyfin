@@ -42,7 +42,6 @@ jest.mock("@/hooks/useAppRouter", () => ({
   __esModule: true,
   default: () => mockRouter,
 }));
-jest.mock("@/hooks/useHaptic", () => ({ useHaptic: () => () => {} }));
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, string>) =>

@@ -7,14 +7,6 @@ import { DOCUMENTS, fakeFiles } from "@/test-utils/fileSystem";
 import { clearMmkv } from "@/test-utils/mmkv";
 
 // The pending records are real, over the MMKV double: they are what cancel reads its files from.
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-jest.mock(
-  "expo-file-system",
-  () => jest.requireActual("@/test-utils/fileSystem").fileSystemModule,
-);
 const mockDownloader = {
   enqueueDownload: jest.fn(),
   cancelDownload: jest.fn(),
@@ -45,12 +37,8 @@ jest.mock("@/utils/download", () => ({
 jest.mock("@/utils/customHeaders", () => ({
   getJellyfinHeadersForUrl: () => undefined,
 }));
-jest.mock("@/utils/device", () => ({ getOrSetDeviceId: () => "device" }));
 jest.mock("@/utils/log", () => ({ logAndCaptureError: jest.fn() }));
 jest.mock("react-native-device-info", () => ({}));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("sonner-native", () => ({
   toast: { info: jest.fn(), success: jest.fn(), error: jest.fn() },
 }));
@@ -491,7 +479,7 @@ describe("startBackgroundDownload", () => {
       item,
       mediaSource,
       maxBitrate: { key: "Max", value: undefined },
-      deviceId: "device",
+      deviceId: "device-1",
     });
 
     expect(await start()).toBeUndefined();

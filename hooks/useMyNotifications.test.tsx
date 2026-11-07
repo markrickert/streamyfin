@@ -36,19 +36,12 @@ jest.mock("@/providers/JellyfinProvider", () => {
 jest.mock("sonner-native", () => ({
   toast: { error: (...args: unknown[]) => mockToastError(...args) },
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+// The reporter writes what it keeps from Sentry to the local log, which MMKV backs.
 jest.mock("@sentry/react-native", () => ({
   withScope: (report: (scope: unknown) => void) =>
     report({ setContext: jest.fn(), setFingerprint: jest.fn() }),
   captureException: (...args: unknown[]) => mockCapture(...args),
 }));
-// The reporter writes what it keeps from Sentry to the local log, which MMKV backs.
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
 
 let client: QueryClient;
 

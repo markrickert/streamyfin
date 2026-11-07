@@ -7,9 +7,6 @@ import { stubReactNative } from "@/test-utils/reactNative";
 
 // The Live Activity only exists on the iPhone and the iPad.
 stubReactNative({ OS: "ios", isTV: false });
-jest.mock("@/utils/customHeaders", () =>
-  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
-);
 // No proxy headers in these specs.
 beforeEach(() => setJellyfinHeaders());
 jest.mock("@/modules", () => ({
@@ -18,11 +15,6 @@ jest.mock("@/modules", () => ({
     getLiveActivityDirectory: () => "/app-group/LiveActivity",
   },
 }));
-
-jest.mock(
-  "expo-file-system",
-  () => jest.requireActual("@/test-utils/fileSystem").fileSystemModule,
-);
 
 // liveActivity.ts reads Platform when it loads, so it is required after the stub above.
 const { buildDownloadActivityMetadata } =

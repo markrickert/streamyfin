@@ -5,6 +5,10 @@ import type {
 } from "@/utils/atoms/tvLibrarySheet";
 import { TVLibrarySheet } from "./TVLibrarySheet";
 
+jest.mock("@/providers/JellyfinProvider", () =>
+  jest.requireActual("@/test-utils/jellyfinProviderModule"),
+);
+
 let mockBackPress: (() => boolean | null | undefined) | undefined;
 
 jest.mock("@/hooks/useTVBackPress", () => ({
@@ -12,14 +16,8 @@ jest.mock("@/hooks/useTVBackPress", () => ({
     mockBackPress = handler;
   },
 }));
-jest.mock("@/providers/InactivityProvider", () => ({
-  useInactivity: () => ({ resetInactivityTimer: () => {} }),
-}));
 jest.mock("@/constants/TVTypography", () => ({
   useScaledTVTypography: () => ({ callout: 18 }),
-}));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 const group = (

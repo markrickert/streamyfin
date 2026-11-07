@@ -11,9 +11,6 @@ let mockChoice: number | undefined;
 const mockToast = { success: jest.fn(), error: jest.fn() };
 let mockOffline = false;
 
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("@expo/vector-icons", () => ({ MaterialCommunityIcons: () => null }));
 jest.mock("@expo/react-native-action-sheet", () => ({
   useActionSheet: () => ({

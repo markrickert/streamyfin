@@ -29,9 +29,6 @@ jest.mock("@/hooks/useAwaitedTitles", () => ({
 jest.mock("expo-notifications", () => ({
   getPermissionsAsync: () => Promise.resolve({ status: mockPermission }),
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("@/components/PlatformDropdown", () => ({
   PlatformDropdown: ({ trigger }: { trigger: React.ReactNode }) => trigger,
 }));

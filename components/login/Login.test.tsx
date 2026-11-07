@@ -7,6 +7,10 @@ import type { QuickConnectStatus } from "@/hooks/useQuickConnect";
 import { pendingAccountSaveAtom, userAtom } from "@/providers/JellyfinProvider";
 import { Login } from "./Login";
 
+jest.mock("react-i18next", () =>
+  jest.requireActual("@/test-utils/realI18next"),
+);
+
 const mockStopPolling = jest.fn();
 const mockJellyfin = {
   setServer: jest.fn(),
@@ -89,9 +93,6 @@ jest.mock("@/components/settings/CustomHeaderSheet", () => ({
 jest.mock("@/providers/GlobalModalProvider", () => ({
   useGlobalModal: () => ({ showModal: () => {}, hideModal: () => {} }),
 }));
-jest.mock("@/utils/customHeaders", () =>
-  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
-);
 jest.mock("@/utils/jellyfin/checkServer", () => ({
   checkJellyfinServer: jest.fn(),
   ServerTooOldError: class extends Error {},

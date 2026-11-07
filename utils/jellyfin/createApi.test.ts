@@ -9,11 +9,12 @@ import "@/augmentations/api";
 import { setJellyfinHeaders } from "@/test-utils/customHeaders";
 import { createApiWithCustomHeaders } from "./createApi";
 
-// The plugin settings' transport, which the augmentation loads, logs what it refuses.
-jest.mock("@/utils/log", () => ({ writeErrorLog: () => undefined }));
 jest.mock("@/utils/customHeaders", () =>
   jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
 );
+
+// The plugin settings' transport, which the augmentation loads, logs what it refuses.
+jest.mock("@/utils/log", () => ({ writeErrorLog: () => undefined }));
 // Each test sets the proxy headers it needs; none carry over to the next.
 afterEach(() => setJellyfinHeaders());
 

@@ -11,6 +11,11 @@ import {
   releaseSharedValueWrites,
 } from "@/test-utils/reanimated";
 
+jest.mock(
+  "@/hooks/useNetworkStatus",
+  () => jest.requireActual("@/test-utils/appProviders").networkStatusModule,
+);
+
 /** 19m 18s, the resume position of the item in the bug report. */
 const RESUME_TICKS = 11_580_000_000;
 /** 5m, the resume position of the episode after it. */
@@ -67,9 +72,6 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: () => mockParams,
   useNavigation: () => mockNavigation,
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 jest.mock("react-native-reanimated", () => ({
   ...jest.requireActual("@/test-utils/reanimated").reanimatedModule,
   useAnimatedReaction: (_prepare: unknown, react: typeof mockSeekReaction) => {
@@ -77,13 +79,6 @@ jest.mock("react-native-reanimated", () => ({
   },
 }));
 jest.mock("react-native-volume-manager", () => ({}));
-jest.mock(
-  "react-native-mmkv",
-  () => jest.requireActual("@/test-utils/mmkv").mmkvModule,
-);
-jest.mock("@/utils/customHeaders", () =>
-  jest.requireActual("@/test-utils/customHeaders").customHeadersModule(),
-);
 jest.mock("@/providers/JellyfinProvider", () => {
   const { atom } = jest.requireActual("jotai");
   const { makeApi: make } = jest.requireActual("@/test-utils/jellyfinApi");
@@ -111,9 +106,6 @@ jest.mock("@/hooks/useAppRouter", () => ({
   default: () => mockRouter,
 }));
 jest.mock("@/hooks/useHaptic", () => ({ useHaptic: () => mockNoop }));
-jest.mock("@/hooks/useNetworkStatus", () => ({
-  useNetworkStatus: () => ({ isConnected: true }),
-}));
 jest.mock("@/hooks/useOrientation", () => ({
   useOrientation: () => ({
     lockOrientation: mockNoop,
@@ -168,9 +160,6 @@ jest.mock("@/utils/jellyfin/media/getStreamUrl", () => ({
 jest.mock("@/utils/subtitles/subtitleStyle", () => ({
   applySubtitleStyle: async () => {},
   buildSubtitleStyle: () => ({}),
-}));
-jest.mock("@/components/BitrateSelector", () => ({
-  BITRATES: [{ key: "Max", value: undefined }],
 }));
 jest.mock("@/components/Loader", () => ({ Loader: () => null }));
 jest.mock("@/components/common/Text", () => ({ Text: () => null }));
