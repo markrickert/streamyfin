@@ -1041,6 +1041,12 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   <ItemImage
                     variant='Primary'
                     item={item}
+                    width={toImagePixels(
+                      windowWidth * TV_DETAIL_POSTER_WIDTH_RATIO,
+                    )}
+                    height={toImagePixels(
+                      windowWidth * TV_DETAIL_POSTER_WIDTH_RATIO * 1.5,
+                    )}
                     style={{
                       width: "100%",
                       height: "100%",

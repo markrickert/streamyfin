@@ -54,6 +54,7 @@ import {
   downloadsKeyPart,
   getDownloadedEpisodesForSeason,
 } from "@/utils/downloads/offline-series";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import { scaleSize } from "@/utils/scaleSize";
 import { seasonHeading, seasonLabel } from "@/utils/seasonLabel";
 import { replacementSeason } from "@/utils/seasonSelection";
@@ -557,6 +558,12 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
               <ItemImage
                 variant='Primary'
                 item={item}
+                width={toImagePixels(
+                  windowWidth * TV_DETAIL_POSTER_WIDTH_RATIO,
+                )}
+                height={toImagePixels(
+                  windowWidth * TV_DETAIL_POSTER_WIDTH_RATIO * 1.5,
+                )}
                 style={{ width: "100%", height: "100%" }}
               />
             </View>

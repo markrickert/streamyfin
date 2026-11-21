@@ -1,6 +1,9 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { PixelRatio } from "react-native";
-import { MAX_FULLSCREEN_IMAGE_PIXELS } from "@/constants/Images";
+import {
+  FULLSCREEN_IMAGE_QUALITY,
+  MAX_FULLSCREEN_IMAGE_PIXELS,
+} from "@/constants/Images";
 import { setJellyfinHeaders } from "@/test-utils/customHeaders";
 import { makeApi } from "@/test-utils/jellyfinApi";
 import { getArtwork, getArtworkByOwner, getMusicArtwork } from "./artwork";
@@ -41,6 +44,17 @@ test("4K backdrop covers its actual box while a smaller target requests less", (
   expect(Number(fullHD.searchParams.get("fillHeight"))).toBeLessThan(
     Number(fourK.searchParams.get("fillHeight")),
   );
+});
+
+// A full-screen backdrop is drawn at its own pixel size, where quality 80
+// showed JPEG blocking on Apple TV (2026-11-21).
+test("requests a backdrop at the full-screen quality", () => {
+  jest.spyOn(PixelRatio, "get").mockReturnValue(1);
+  const url = new URL(backdrop(1920, 1080)!.uri!);
+  expect(url.searchParams.get("quality")).toBe(
+    String(FULLSCREEN_IMAGE_QUALITY),
+  );
+  expect(FULLSCREEN_IMAGE_QUALITY).toBe(90);
 });
 
 test("bounds a very large target's decoded pixel budget", () => {

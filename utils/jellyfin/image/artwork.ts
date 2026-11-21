@@ -8,7 +8,9 @@ import { PixelRatio } from "react-native";
 import {
   CARD_IMAGE_HEIGHT_STEP_PX,
   CARD_IMAGE_WIDTH_STEP_PX,
+  FULLSCREEN_IMAGE_QUALITY,
   FULLSCREEN_IMAGE_STEP_PX,
+  IMAGE_QUALITY,
   MAX_FULLSCREEN_IMAGE_PIXELS,
   MAX_LOGO_HEIGHT_PX,
 } from "@/constants/Images";
@@ -17,7 +19,7 @@ import { toImagePixels } from "./imagePixels";
 import { itemImageUrl } from "./itemImageUrl";
 
 type ArtworkPurpose = "portrait" | "wide" | "backdrop" | "logo";
-type SelectedArt = {
+type SelectedImage = {
   id: string;
   type: "Primary" | "Thumb" | "Backdrop" | "Logo";
   tag: string;
@@ -30,11 +32,11 @@ export function getArtworkByOwner({
   tag,
   pixels,
   fit = false,
-  quality = 80,
+  quality = IMAGE_QUALITY,
 }: {
   api?: Api | null;
   id?: string | null;
-  type: SelectedArt["type"];
+  type: SelectedImage["type"];
   tag?: string | null;
   pixels: { width: number; height?: number };
   fit?: boolean;
@@ -152,6 +154,106 @@ export function getArtworkForPixelBudget({
   });
 }
 
+const imageWithTag = (
+  id: string | null | undefined,
+  type: SelectedImage["type"],
+  tag: string | null | undefined,
+): SelectedImage | null => (id && tag ? { id, type, tag } : null);
+
+/** First candidate that has both an owner id and an image tag wins. */
+function selectImage(
+  item: BaseItemDto,
+  purpose: ArtworkPurpose,
+  preferEpisodeImage: boolean,
+): SelectedImage | null {
+  const isEpisode = item.Type === "Episode";
+  const episodeOnly = (image: SelectedImage | null) =>
+    isEpisode ? image : null;
+
+  const ownPrimary = imageWithTag(item.Id, "Primary", item.ImageTags?.Primary);
+  const ownThumb = imageWithTag(item.Id, "Thumb", item.ImageTags?.Thumb);
+  const ownBackdrop = imageWithTag(
+    item.Id,
+    "Backdrop",
+    item.BackdropImageTags?.[0],
+  );
+  const parentBackdrop = episodeOnly(
+    imageWithTag(
+      item.ParentBackdropItemId,
+      "Backdrop",
+      item.ParentBackdropImageTags?.[0],
+    ),
+  );
+
+  switch (purpose) {
+    case "logo":
+      return (
+        episodeOnly(
+          imageWithTag(item.ParentLogoItemId, "Logo", item.ParentLogoImageTag),
+        ) ?? imageWithTag(item.Id, "Logo", item.ImageTags?.Logo)
+      );
+    case "portrait":
+      return (
+        episodeOnly(
+          imageWithTag(item.SeriesId, "Primary", item.SeriesPrimaryImageTag),
+        ) ??
+        episodeOnly(
+          imageWithTag(item.SeasonId, "Primary", item.ParentPrimaryImageTag),
+        ) ??
+        ownPrimary
+      );
+    case "backdrop":
+      return parentBackdrop ?? ownBackdrop ?? ownPrimary;
+    case "wide":
+      return (
+        (preferEpisodeImage ? episodeOnly(ownPrimary) : null) ??
+        episodeOnly(
+          imageWithTag(
+            item.ParentThumbItemId,
+            "Thumb",
+            item.ParentThumbImageTag,
+          ),
+        ) ??
+        ownThumb ??
+        parentBackdrop ??
+        ownBackdrop ??
+        ownPrimary
+      );
+  }
+}
+
+type ImageSizingRule = {
+  widthStep: number;
+  heightStep: number;
+  quality: number;
+  /** Shrinks the request below the screen's pixels; 1 leaves it alone. */
+  scaleToLimit: (pixels: { width: number; height: number }) => number;
+};
+
+const CARD_IMAGE_SIZING: ImageSizingRule = {
+  widthStep: CARD_IMAGE_WIDTH_STEP_PX,
+  heightStep: CARD_IMAGE_HEIGHT_STEP_PX,
+  quality: IMAGE_QUALITY,
+  scaleToLimit: () => 1,
+};
+
+const IMAGE_SIZING_BY_PURPOSE: Record<ArtworkPurpose, ImageSizingRule> = {
+  portrait: CARD_IMAGE_SIZING,
+  wide: CARD_IMAGE_SIZING,
+  logo: {
+    ...CARD_IMAGE_SIZING,
+    quality: 90,
+    scaleToLimit: ({ height }) => Math.min(1, MAX_LOGO_HEIGHT_PX / height),
+  },
+  backdrop: {
+    widthStep: FULLSCREEN_IMAGE_STEP_PX,
+    heightStep: FULLSCREEN_IMAGE_STEP_PX,
+    quality: FULLSCREEN_IMAGE_QUALITY,
+    scaleToLimit: ({ width, height }) =>
+      Math.min(1, Math.sqrt(MAX_FULLSCREEN_IMAGE_PIXELS / (width * height))),
+  },
+};
+
 export function getArtwork({
   api,
   item,
@@ -173,143 +275,44 @@ export function getArtwork({
 }): ImageSource | null {
   if (!api || box.width <= 0 || box.height <= 0) return null;
 
-  let art: SelectedArt | null = null;
-  if (purpose === "logo") {
-    if (
-      item.Type === "Episode" &&
-      item.ParentLogoItemId &&
-      item.ParentLogoImageTag
-    ) {
-      art = {
-        id: item.ParentLogoItemId,
-        type: "Logo",
-        tag: item.ParentLogoImageTag,
-      };
-    } else if (item.Id && item.ImageTags?.Logo) {
-      art = { id: item.Id, type: "Logo", tag: item.ImageTags.Logo };
-    }
-  } else if (purpose === "portrait") {
-    if (
-      item.Type === "Episode" &&
-      item.SeriesId &&
-      item.SeriesPrimaryImageTag
-    ) {
-      art = {
-        id: item.SeriesId,
-        type: "Primary",
-        tag: item.SeriesPrimaryImageTag,
-      };
-    } else if (
-      item.Type === "Episode" &&
-      item.SeasonId &&
-      item.ParentPrimaryImageTag
-    ) {
-      art = {
-        id: item.SeasonId,
-        type: "Primary",
-        tag: item.ParentPrimaryImageTag,
-      };
-    } else if (item.Id && item.ImageTags?.Primary) {
-      art = { id: item.Id, type: "Primary", tag: item.ImageTags.Primary };
-    }
-  } else if (purpose === "backdrop") {
-    if (
-      item.Type === "Episode" &&
-      item.ParentBackdropItemId &&
-      item.ParentBackdropImageTags?.[0]
-    ) {
-      art = {
-        id: item.ParentBackdropItemId,
-        type: "Backdrop",
-        tag: item.ParentBackdropImageTags[0],
-      };
-    } else if (item.Id && item.BackdropImageTags?.[0]) {
-      art = { id: item.Id, type: "Backdrop", tag: item.BackdropImageTags[0] };
-    } else if (item.Id && item.ImageTags?.Primary) {
-      art = { id: item.Id, type: "Primary", tag: item.ImageTags.Primary };
-    }
-  } else if (
-    item.Type === "Episode" &&
-    preferEpisodeImage &&
-    item.Id &&
-    item.ImageTags?.Primary
-  ) {
-    art = { id: item.Id, type: "Primary", tag: item.ImageTags.Primary };
-  } else if (
-    item.Type === "Episode" &&
-    item.ParentThumbItemId &&
-    item.ParentThumbImageTag
-  ) {
-    art = {
-      id: item.ParentThumbItemId,
-      type: "Thumb",
-      tag: item.ParentThumbImageTag,
-    };
-  } else if (item.Id && item.ImageTags?.Thumb) {
-    art = { id: item.Id, type: "Thumb", tag: item.ImageTags.Thumb };
-  } else if (
-    item.Type === "Episode" &&
-    item.ParentBackdropItemId &&
-    item.ParentBackdropImageTags?.[0]
-  ) {
-    art = {
-      id: item.ParentBackdropItemId,
-      type: "Backdrop",
-      tag: item.ParentBackdropImageTags[0],
-    };
-  } else if (item.Id && item.BackdropImageTags?.[0]) {
-    art = { id: item.Id, type: "Backdrop", tag: item.BackdropImageTags[0] };
-  } else if (item.Id && item.ImageTags?.Primary) {
-    art = { id: item.Id, type: "Primary", tag: item.ImageTags.Primary };
-  }
-
-  if (!art) return null;
+  const selectedImage = selectImage(item, purpose, preferEpisodeImage);
+  if (!selectedImage) return null;
 
   /**
-   * Pixel width to request artwork at for a card this many layout points wide:
-   * what the screen draws, rounded up to the next step so cards of nearly the
-   * same width share one image.
+   * Pixel size to request artwork at for a box this many layout points wide:
+   * what the screen draws, rounded to a step so images of nearly the same
+   * size share one URL.
    */
-  const pixelWidth = toImagePixels(box.width * focusScale);
-  const pixelHeight = toImagePixels(box.height * focusScale);
-  const step =
-    purpose === "backdrop"
-      ? FULLSCREEN_IMAGE_STEP_PX
-      : CARD_IMAGE_WIDTH_STEP_PX;
-  const budgetScale =
-    purpose === "backdrop"
-      ? Math.min(
-          1,
-          Math.sqrt(MAX_FULLSCREEN_IMAGE_PIXELS / (pixelWidth * pixelHeight)),
-        )
-      : purpose === "logo"
-        ? Math.min(1, MAX_LOGO_HEIGHT_PX / pixelHeight)
-        : 1;
-  const bucket = budgetScale < 1 ? Math.floor : Math.ceil;
-  const requestedWidth = bucket((pixelWidth * budgetScale) / step) * step;
-  const width = Math.min(requestedWidth, maxWidthPx ?? Infinity);
-  const heightStep =
-    purpose === "backdrop"
-      ? FULLSCREEN_IMAGE_STEP_PX
-      : CARD_IMAGE_HEIGHT_STEP_PX;
-  const height =
-    bucket((pixelHeight * budgetScale * width) / requestedWidth / heightStep) *
-    heightStep;
+  const drawWidthPx = toImagePixels(box.width * focusScale);
+  const drawHeightPx = toImagePixels(box.height * focusScale);
+  const { widthStep, heightStep, quality, scaleToLimit } =
+    IMAGE_SIZING_BY_PURPOSE[purpose];
+  const sizeScale = scaleToLimit({ width: drawWidthPx, height: drawHeightPx });
+  const roundToStep = sizeScale < 1 ? Math.floor : Math.ceil;
+  const roundedWidthPx =
+    roundToStep((drawWidthPx * sizeScale) / widthStep) * widthStep;
+  const requestWidthPx = Math.min(roundedWidthPx, maxWidthPx ?? Infinity);
+  const requestHeightPx =
+    roundToStep(
+      (drawHeightPx * sizeScale * requestWidthPx) / roundedWidthPx / heightStep,
+    ) * heightStep;
   const source = getArtworkByOwner({
     api,
-    id: art.id,
-    type: art.type,
-    tag: art.tag,
+    id: selectedImage.id,
+    type: selectedImage.type,
+    tag: selectedImage.tag,
     pixels: {
-      width,
-      height: purpose === "portrait" && !portraitCover ? undefined : height,
+      width: requestWidthPx,
+      height:
+        purpose === "portrait" && !portraitCover ? undefined : requestHeightPx,
     },
     fit: purpose === "logo",
-    quality: purpose === "logo" ? 90 : 80,
+    quality,
   });
   const blurhash =
-    art.id === item.Id
-      ? (item.ImageBlurHashes?.[art.type]?.[art.tag] ?? undefined)
+    selectedImage.id === item.Id
+      ? (item.ImageBlurHashes?.[selectedImage.type]?.[selectedImage.tag] ??
+        undefined)
       : undefined;
   return source ? { ...source, blurhash } : null;
 }

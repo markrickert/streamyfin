@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ItemImage } from "@/components/common/ItemImage";
 import { Text } from "@/components/common/Text";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 export default function LiveTvChannelsPage() {
   const [api] = useAtom(apiAtom);
@@ -37,6 +38,8 @@ export default function LiveTvChannelsPage() {
           <View className='flex flex-row items-center px-4 mb-2'>
             <View className='w-22 mr-4 rounded-lg overflow-hidden'>
               <ItemImage
+                width={toImagePixels(60)}
+                height={toImagePixels(60)}
                 style={{
                   aspectRatio: "1/1",
                   width: 60,

@@ -8,6 +8,7 @@ import { StyleSheet } from "react-native";
 import type { TestInstance } from "test-renderer";
 import LiveTvGuidePage from "@/app/(auth)/(tabs)/(home,libraries,search,more,tv-favorites,tv-watchlists)/livetv/guide";
 import { LIVE_TV_GUIDE_PINNED_TITLE_MIN_WIDTH } from "@/constants/LiveTVGuide";
+import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 let mockWindowWidth = 400;
 
@@ -55,7 +56,14 @@ jest.mock("@tanstack/react-query", () => ({
           },
   }),
 }));
-jest.mock("@/components/common/ItemImage", () => ({ ItemImage: () => null }));
+jest.mock("@/components/common/ItemImage", () => ({
+  ItemImage: ({ width, height }: { width?: number; height?: number }) => {
+    const { View } = jest.requireActual(
+      "react-native",
+    ) as typeof import("react-native");
+    return <View testID={`guide-channel-artwork-${width}x${height}`} />;
+  },
+}));
 jest.mock("@/components/livetv/HourHeader", () => ({ HourHeader: () => null }));
 jest.mock("../common/TouchableItemRouter", () => ({
   TouchableItemRouter: ({ children }: { children: React.ReactNode }) => (
@@ -120,5 +128,15 @@ describe("LiveTvGuidePage layout", () => {
     });
     // 350 wide: the title stops short of the end, keeping its room.
     expect(marginLeftOf()).toBe(350 - LIVE_TV_GUIDE_PINNED_TITLE_MIN_WIDTH);
+  });
+
+  test("requests channel images for their 64-point slots, not the screen", async () => {
+    await renderPage();
+
+    expect(
+      screen.getByTestId(
+        `guide-channel-artwork-${toImagePixels(64)}x${toImagePixels(64)}`,
+      ),
+    ).toBeTruthy();
   });
 });

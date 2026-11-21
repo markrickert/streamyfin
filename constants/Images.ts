@@ -27,6 +27,18 @@ export const FULLSCREEN_IMAGE_STEP_PX = 100;
 
 export const MAX_FULLSCREEN_IMAGE_PIXELS = 12_000_000;
 
+/**
+ * Default JPEG quality for images.
+ */
+export const IMAGE_QUALITY = 80;
+
+/**
+ * JPEG quality of a full-screen backdrop. It is drawn at its own pixel size,
+ * so compression blocks show on its gradients and dark scenes at the 80 cards
+ * use. 90 is what the backdrop asked for before requests followed the screen.
+ */
+export const FULLSCREEN_IMAGE_QUALITY = 90;
+
 export const DOWNLOAD_COVER_IMAGE_WIDTH_PX = 500;
 
 /**
