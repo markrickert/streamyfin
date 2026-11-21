@@ -30,7 +30,7 @@ test("a full-screen image covers the current viewport without a 1920px cap", asy
         Type: "Movie",
         BackdropImageTags: ["backdrop"],
       }}
-      variant='Backdrop'
+      purpose='backdrop'
     />,
   );
 
@@ -47,14 +47,14 @@ test("a full-screen image covers the current viewport without a 1920px cap", asy
 
 test("a full-screen image without artwork has a fallback instead of a broken URL", async () => {
   await render(
-    <ItemImage item={{ Id: "movie-1", Type: "Movie" }} variant='Backdrop' />,
+    <ItemImage item={{ Id: "movie-1", Type: "Movie" }} purpose='backdrop' />,
   );
 
   expect(screen.queryByTestId(/^image /)).toBeNull();
 });
 
-// An explicit pixel size, like the TV detail poster's, bounds the request
-// to the poster's box instead of the whole window.
+// An explicit layout-point box, like the TV detail poster's, bounds the
+// request to the poster's box instead of the whole window.
 test("an explicit portrait size requests bounded fill, not the screen's pixels", async () => {
   jest.spyOn(PixelRatio, "get").mockReturnValue(2);
   const posterPoints = 1920 * TV_DETAIL_POSTER_WIDTH_RATIO;
@@ -67,9 +67,7 @@ test("an explicit portrait size requests bounded fill, not the screen's pixels",
         Type: "Movie",
         ImageTags: { Primary: "poster" },
       }}
-      variant='Primary'
-      width={posterWidthPx}
-      height={toImagePixels(posterPoints * 1.5)}
+      box={{ width: posterPoints, height: posterPoints * 1.5 }}
     />,
   );
 
@@ -91,9 +89,10 @@ test("a general episode portrait uses its series poster with the series tag", as
         SeriesPrimaryImageTag: "series-poster",
         ImageTags: { Primary: "episode-still" },
       }}
-      variant='Primary'
-      width={300}
-      height={450}
+      box={{
+        width: 300 / PixelRatio.get(),
+        height: 450 / PixelRatio.get(),
+      }}
     />,
   );
 

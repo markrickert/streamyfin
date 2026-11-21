@@ -38,7 +38,6 @@ import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useOfflineMode } from "@/providers/OfflineModeProvider";
 import { useSettings } from "@/utils/atoms/settings";
 import { getArtwork } from "@/utils/jellyfin/image/artwork";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 import {
   canPlayInRemoteSession,
   isPlayableItem,
@@ -263,12 +262,11 @@ const ItemContentMobile: React.FC<ItemContentProps> = ({
         headerImage={
           <View style={[{ flex: 1 }]}>
             <ItemImage
-              variant={
-                item.Type === "Movie" && logoUrl ? "Backdrop" : "Primary"
+              purpose={
+                item.Type === "Movie" && logoUrl ? "backdrop" : "portrait"
               }
               item={item}
-              width={toImagePixels(windowWidth)}
-              height={toImagePixels(headerImageHeight)}
+              box={{ width: windowWidth, height: headerImageHeight }}
               style={{
                 width: "100%",
                 height: "100%",

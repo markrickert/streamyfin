@@ -17,7 +17,6 @@ import { HourHeader } from "@/components/livetv/HourHeader";
 import { LiveTVGuideRow } from "@/components/livetv/LiveTVGuideRow";
 import { LIVE_TV_GUIDE_CHANNEL_COLUMN_WIDTH } from "@/constants/LiveTVGuide";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
-import { toImagePixels } from "@/utils/jellyfin/image/imagePixels";
 
 const HOUR_HEIGHT = 30;
 const ITEMS_PER_PAGE = 20;
@@ -141,8 +140,7 @@ export default function LiveTvGuidePage() {
           {channels?.Items?.map((c, i) => (
             <View className='h-16 w-16 mr-4 rounded-lg overflow-hidden' key={i}>
               <ItemImage
-                width={toImagePixels(64)}
-                height={toImagePixels(64)}
+                box={{ width: 64, height: 64 }}
                 style={{
                   width: "100%",
                   height: "100%",

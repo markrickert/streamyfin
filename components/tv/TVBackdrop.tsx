@@ -20,7 +20,7 @@ export const TVBackdrop: React.FC<TVBackdropProps> = React.memo(({ item }) => {
       }}
     >
       <ItemImage
-        variant='Backdrop'
+        purpose='backdrop'
         item={item}
         style={{
           width: "100%",

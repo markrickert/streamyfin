@@ -3,12 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import type { ImageProps } from "expo-image";
 import { useAtom } from "jotai";
 import { type FC, useMemo } from "react";
-import {
-  PixelRatio,
-  useWindowDimensions,
-  View,
-  type ViewProps,
-} from "react-native";
+import { useWindowDimensions, View, type ViewProps } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { BACKGROUND_IMAGE_TRANSITION } from "@/constants/Values";
 import { apiAtom } from "@/providers/JellyfinProvider";
@@ -16,22 +11,19 @@ import { getArtwork } from "@/utils/jellyfin/image/artwork";
 
 interface Props extends ImageProps {
   item: BaseItemDto;
-  variant?: "Primary" | "Backdrop";
-  /** Requested image width in physical pixels, not layout points. */
-  width?: number;
+  purpose?: "portrait" | "backdrop";
   /**
-   * Height of the box the image covers, in physical pixels. Pass it with
-   * `width` for a cover fit image, so the request is sized to the box.
+   * Rendered image box in layout points. Defaults to the window for
+   * full-screen art.
    */
-  height?: number;
+  box?: { width: number; height: number };
   onError?: () => void;
 }
 
 export const ItemImage: FC<Props> = ({
   item,
-  variant = "Primary",
-  width,
-  height,
+  purpose = "portrait",
+  box,
   onError,
   ...props
 }) => {
@@ -46,13 +38,18 @@ export const ItemImage: FC<Props> = ({
     return getArtwork({
       api,
       item,
-      purpose: variant === "Backdrop" ? "backdrop" : "portrait",
-      box: {
-        width: width ? width / PixelRatio.get() : window.width,
-        height: height ? height / PixelRatio.get() : window.height,
-      },
+      purpose,
+      box: box ?? { width: window.width, height: window.height },
     });
-  }, [api, item, variant, width, height, window.width, window.height]);
+  }, [
+    api,
+    item,
+    purpose,
+    box?.width,
+    box?.height,
+    window.width,
+    window.height,
+  ]);
 
   // return placeholder icon if no source
   if (!source?.uri)
