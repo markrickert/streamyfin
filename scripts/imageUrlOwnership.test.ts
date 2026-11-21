@@ -49,6 +49,21 @@ test("checks native image paths", () => {
   ).not.toEqual([]);
 });
 
+// Native unit tests feed the players canned metadata; their artwork URLs are
+// fixtures, not requests.
+test.each([
+  "modules/mpv-player/android/src/test/java/expo/Foo.kt",
+  "modules/mpv-player/android/src/androidTest/java/expo/Foo.kt",
+  "modules/mpv-player/ios/Tests/FooTests.swift",
+])("allows image path fixtures in the native test %s", (path) => {
+  expect(
+    imageUrlViolations(
+      'val url = "https://server/Items/1/Images/Primary"',
+      path,
+    ),
+  ).toEqual([]);
+});
+
 test("rejects image query assembly even if the path and params are separated", () => {
   expect(
     imageUrlViolations(

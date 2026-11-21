@@ -35,7 +35,6 @@ export default function ArtistDetailScreen() {
   // The square follows the window's short side, see utils/artworkSize.ts.
   const artworkSize = squareArtworkSide(windowSize, { ratio: 0.4 });
 
-
   const [selectedTrack, setSelectedTrack] = useState<BaseItemDto | null>(null);
   const [trackOptionsOpen, setTrackOptionsOpen] = useState(false);
   const [playlistPickerOpen, setPlaylistPickerOpen] = useState(false);

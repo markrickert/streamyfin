@@ -19,7 +19,9 @@ export function imageUrlViolations(
   if (
     filename.startsWith("utils/jellyfin/image/") ||
     filename.startsWith("scripts/") ||
-    /\.(?:test|spec|perf-test)\.[jt]sx?$/.test(filename)
+    /\.(?:test|spec|perf-test)\.[jt]sx?$/.test(filename) ||
+    /\/src\/(?:test|androidTest)\//.test(filename) ||
+    /Tests\.swift$/.test(filename)
   ) {
     return [];
   }

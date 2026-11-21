@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react-native";
 import { Image } from "./ServerImage";
 
+// The real ServerImage is under test, not the double `test-utils/unitSetup.ts` installs.
+jest.unmock("@/components/common/ServerImage");
+
 jest.mock("expo-image", () => ({
   Image: ({
     source,

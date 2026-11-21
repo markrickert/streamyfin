@@ -32,13 +32,7 @@ import { useLeaveWhenGone } from "@/hooks/useLeaveWhenGone";
 import { playableQueueItems, useShuffleQueue } from "@/hooks/useShuffleQueue";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { OfflineModeProvider } from "@/providers/OfflineModeProvider";
-import {
-  buildOfflineSeriesFromEpisodes,
-  getDownloadedEpisodesForSeries,
-} from "@/utils/downloads/offline-series";
 import { getArtwork } from "@/utils/jellyfin/image/artwork";
-import { isJellyfinItem, refetchUnlessItem } from "@/utils/jellyfin/jellyfin";
-import { getUserItemData } from "@/utils/jellyfin/user-library/getUserItemData";
 import { storage } from "@/utils/mmkv";
 import { getSeriesPlaybackTarget } from "@/utils/seriesPlaybackTarget";
 
