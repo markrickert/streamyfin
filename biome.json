@@ -95,6 +95,28 @@
     },
     {
       "includes": [
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "components/**/*.ts",
+        "components/**/*.tsx",
+        "hooks/**/*.ts",
+        "hooks/**/*.tsx",
+        "providers/**/*.ts",
+        "providers/**/*.tsx",
+        "utils/**/*.ts",
+        "utils/**/*.tsx",
+        "services/**/*.ts",
+        "services/**/*.tsx",
+        "modules/**/*.ts",
+        "modules/**/*.tsx",
+        "!**/*.test.ts",
+        "!**/*.test.tsx",
+        "!**/*.perf-test.tsx"
+      ],
+      "plugins": ["./biome-plugins/no-color-literal.grit"]
+    },
+    {
+      "includes": [
         "**/*.test.ts",
         "**/*.test.tsx",
         "**/*.perf-test.tsx",
