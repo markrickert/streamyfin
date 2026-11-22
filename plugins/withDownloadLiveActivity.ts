@@ -177,6 +177,7 @@ const withDownloadLiveActivity: ConfigPlugin = (config) => {
       [
         `${TARGET_SOURCE_DIR}/StreamyfinDownloadActivityBundle.swift`,
         `${TARGET_SOURCE_DIR}/DownloadActivityWidget.swift`,
+        `${TARGET_SOURCE_DIR}/Colors.swift`,
         SHARED_ATTRIBUTES_SOURCE,
       ],
       "PBXSourcesBuildPhase",
