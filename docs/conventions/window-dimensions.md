@@ -52,8 +52,10 @@ It is still a snapshot; for reactive screen layout in React, subscribe to
 ## Enforcement
 
 `biome-plugins/no-dimensions-window-in-ui.grit` errors on `Dimensions.get("window")`
-in `app/`, `components/`, `hooks/` and `providers/`, `.ts` and `.tsx` files alike.
-Specs are left out: a spec may read the window it mocks to work out what it expects.
+in every `.ts` and `.tsx` file, `utils/` and `services/` among them, except
+`utils/scaleSize.ts`, the exception above. It shares its `biome.json` override with
+`no-color-literal`, which lists what it leaves out: specs, test utils, scripts, e2e
+and native config plugins. Specs are left out: a spec may read the window it mocks to work out what it expects.
 The rule cannot tell a component from a helper; for a legitimate one-shot read, an
 imperative helper or an event handler that needs the value when it runs rather than a
 layout value, suppress it with a reason:

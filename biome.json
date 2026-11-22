@@ -79,25 +79,10 @@
     },
     {
       "includes": [
-        "app/**/*.ts",
-        "app/**/*.tsx",
-        "components/**/*.ts",
-        "components/**/*.tsx",
-        "hooks/**/*.ts",
-        "hooks/**/*.tsx",
-        "providers/**/*.ts",
-        "providers/**/*.tsx",
-        "!**/*.test.ts",
-        "!**/*.test.tsx",
-        "!**/*.perf-test.tsx"
-      ],
-      "plugins": ["./biome-plugins/no-dimensions-window-in-ui.grit"]
-    },
-    {
-      "includes": [
         "**/*.ts",
         "**/*.tsx",
         "!constants/Colors.ts",
+        "!utils/scaleSize.ts",
         "!**/*.test.ts",
         "!**/*.test.tsx",
         "!**/*.perf-test.tsx",
@@ -110,7 +95,10 @@
         "!packages/**",
         "!biome-plugins/**"
       ],
-      "plugins": ["./biome-plugins/no-color-literal.grit"]
+      "plugins": [
+        "./biome-plugins/no-color-literal.grit",
+        "./biome-plugins/no-dimensions-window-in-ui.grit"
+      ]
     },
     {
       "includes": [
