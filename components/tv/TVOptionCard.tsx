@@ -5,6 +5,7 @@ import { Text } from "@/components/common/Text";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVOptionCardProps {
@@ -77,7 +78,7 @@ export const TVOptionCard = React.forwardRef<ViewInstance, TVOptionCardProps>(
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? Colors.black : Colors.foreground,
+                color: tvFocusedTextColor(focused),
                 fontWeight: focused || selected ? "600" : "400",
                 textAlign: "center",
                 flexShrink: 1,

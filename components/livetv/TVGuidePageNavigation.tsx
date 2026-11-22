@@ -12,6 +12,7 @@ import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVGuidePageNavigationProps {
   currentPage: number;
@@ -72,17 +73,13 @@ const NavButton: React.FC<NavButtonProps> = ({
           },
         ]}
       >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={focused ? Colors.black : Colors.foreground}
-        />
+        <Ionicons name={icon} size={20} color={tvFocusedTextColor(focused)} />
         <Text
           style={[
             styles.navButtonText,
             {
               fontSize: typography.callout,
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
             },
           ]}
         >

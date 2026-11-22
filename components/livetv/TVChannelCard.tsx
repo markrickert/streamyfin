@@ -7,6 +7,7 @@ import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVChannelCardProps {
   channel: BaseItemDto;
@@ -83,7 +84,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
                   styles.numberText,
                   {
                     fontSize: typography.title,
-                    color: focused ? Colors.black : Colors.foreground,
+                    color: tvFocusedTextColor(focused),
                   },
                 ]}
               >
@@ -100,7 +101,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
             styles.channelName,
             {
               fontSize: typography.callout,
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
             },
           ]}
         >

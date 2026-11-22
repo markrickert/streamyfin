@@ -20,6 +20,7 @@ import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVPasswordEntryModalProps {
   visible: boolean;
@@ -71,21 +72,18 @@ const TVSubmitButton: React.FC<{
         ]}
       >
         {loading ? (
-          <ActivityIndicator
-            size='small'
-            color={focused ? Colors.black : Colors.foreground}
-          />
+          <ActivityIndicator size='small' color={tvFocusedTextColor(focused)} />
         ) : (
           <>
             <Ionicons
               name='log-in-outline'
               size={scaleSize(20)}
-              color={focused ? Colors.black : Colors.foreground}
+              color={tvFocusedTextColor(focused)}
             />
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? Colors.black : Colors.foreground,
+                color: tvFocusedTextColor(focused),
                 fontWeight: "600",
               }}
             >

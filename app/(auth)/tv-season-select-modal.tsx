@@ -31,9 +31,10 @@ import type { MediaRequestBody } from "@/utils/seerr/types";
 import { MediaStatus, MediaType } from "@/utils/seerr/types";
 import { store } from "@/utils/store";
 import { createSubmission } from "@/utils/submission";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 // A season already asked for or in the library shows where it stands, in the
-// colours of the phone's season list (SeasonPicker).
+// colors of the phone's season list (SeasonPicker).
 const STATUS_COLORS: Partial<Record<MediaStatus, string>> = {
   [MediaStatus.PENDING]: SEERR_STATUS_COLORS.pending,
   [MediaStatus.PROCESSING]: SEERR_STATUS_COLORS.requested,
@@ -111,10 +112,7 @@ const TVSeasonToggleCard: React.FC<{
           )}
         </View>
         <Text
-          style={[
-            styles.seasonTitle,
-            { color: focused ? Colors.black : Colors.foreground },
-          ]}
+          style={[styles.seasonTitle, { color: tvFocusedTextColor(focused) }]}
           numberOfLines={1}
         >
           {row.seasonNumber === 0

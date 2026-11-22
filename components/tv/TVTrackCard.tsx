@@ -11,6 +11,7 @@ import { Text } from "@/components/common/Text";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVTrackCardProps {
@@ -52,7 +53,7 @@ export const TVTrackCard = React.forwardRef<ViewInstance, TVTrackCardProps>(
           <Text
             style={[
               styles.trackCardText,
-              { color: focused ? Colors.black : Colors.foreground },
+              { color: tvFocusedTextColor(focused) },
               (focused || selected) && { fontWeight: "600" },
             ]}
             numberOfLines={2}

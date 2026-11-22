@@ -4,6 +4,7 @@ import { Text } from "@/components/common/Text";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVTabButtonProps {
@@ -60,7 +61,7 @@ export const TVTabButton: React.FC<TVTabButtonProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? Colors.black : Colors.foreground,
+            color: tvFocusedTextColor(focused),
             fontWeight: focused || active ? "600" : "400",
           }}
         >

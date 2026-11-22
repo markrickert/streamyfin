@@ -4,6 +4,7 @@ import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 export interface TVSearchBadgeProps {
   label: string;
@@ -45,7 +46,7 @@ export const TVSearchBadge: React.FC<TVSearchBadgeProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? Colors.black : Colors.foreground,
+            color: tvFocusedTextColor(focused),
             fontWeight: focused ? "600" : "400",
           }}
         >

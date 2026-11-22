@@ -11,6 +11,7 @@ import { Text } from "@/components/common/Text";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVLanguageCardProps {
@@ -54,7 +55,7 @@ export const TVLanguageCard = React.forwardRef<
         <Text
           style={[
             styles.languageCardText,
-            { color: focused ? Colors.black : Colors.foreground },
+            { color: tvFocusedTextColor(focused) },
             (focused || selected) && { fontWeight: "600" },
           ]}
           numberOfLines={1}
