@@ -1,0 +1,38 @@
+language js
+
+or {
+  or {
+    JsStringLiteralExpression(),
+    JsxString()
+  } as $s where {
+    $s <: r"^.#[0-9a-fA-F]{3,8}.$",
+    register_diagnostic(span=$s, message="Never write a hex color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
+  },
+  or {
+    JsStringLiteralExpression(),
+    JsxString()
+  } as $s where {
+    $s <: r"^.rgba?\(.*\).$",
+    register_diagnostic(span=$s, message="Never write an rgb() or rgba() color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
+  },
+  or {
+    JsStringLiteralExpression(),
+    JsxString(),
+    JsTemplateChunkElement()
+  } as $s where {
+    $s <: r"(?s)^.*(?:^|[^A-Za-z0-9_-])(?:bg|text|border|ring|divide|from|to|via|shadow|fill|stroke|outline|placeholder)(?:-[tblrxyse])?-(?:\[#|\[rgb|(?:neutral|gray|zinc|slate|stone|purple|red|green|yellow|amber|blue|indigo|violet|pink|orange|emerald|teal|cyan|sky|lime|rose|fuchsia)-[0-9]).*$",
+    register_diagnostic(span=$s, message="Never use a Tailwind color outside the palette. Use a class such as bg-surface or text-foreground-muted, see docs/conventions/colors.md.", severity="error")
+  },
+  `$k: $v` where {
+    $k <: r"^(?:color|[A-Za-z]*Color|fill|stroke)$",
+    $v <: JsStringLiteralExpression(),
+    $v <: r"^.(?:white|black|red|blue|green|yellow|gray|grey|gold|purple|orange|pink).$",
+    register_diagnostic(span=$v, message="Never write a named color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
+  },
+  JsxAttribute(name=$n, initializer=$i) where {
+    $n <: r"^(?:tintColor|fill|stroke|thumbColor|backgroundColor|borderColor)$",
+    $i <: contains JsxString() as $v,
+    $v <: r"^.(?:white|black|red|blue|green|yellow|gray|grey|gold|purple|orange|pink).$",
+    register_diagnostic(span=$v, message="Never write a named color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
+  }
+}

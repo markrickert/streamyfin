@@ -1,6 +1,7 @@
 import { requireNativeView } from "expo";
 import * as React from "react";
 import { useImperativeHandle, useRef } from "react";
+import { EXOPLAYER_CLEAR_COLOR } from "@/constants/Colors";
 
 import type {
   MpvPlayerViewProps,
@@ -119,7 +120,9 @@ export default React.forwardRef<MpvPlayerViewRef, MpvPlayerViewProps>(
           await nativeRef.current?.setSubtitleBorderStyle("background-box");
         } else if (style.background !== undefined) {
           await nativeRef.current?.setSubtitleBorderStyle("outline-and-shadow");
-          await nativeRef.current?.setSubtitleBackgroundColor("#00000000");
+          await nativeRef.current?.setSubtitleBackgroundColor(
+            EXOPLAYER_CLEAR_COLOR,
+          );
         }
       },
       setSubtitleFontSize: async (size: number) => {

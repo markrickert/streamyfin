@@ -143,3 +143,9 @@ export const SubtitleColors = {
   magenta: "#FF00FF",
   red: "#FF0000",
 } as const;
+
+/**
+ * A clear background in the #AARRGGBB form the ExoPlayer subtitle view parses:
+ * Android's Color.parseColor does not know "transparent". Data, not a palette color.
+ */
+export const EXOPLAYER_CLEAR_COLOR = "#00000000";
