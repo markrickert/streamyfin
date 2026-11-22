@@ -1,6 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import React, { useMemo } from "react";
 import { StyleSheet, View, type ViewInstance } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { TVGuideProgramCell } from "./TVGuideProgramCell";
 
 interface TVGuideChannelRowProps {
@@ -127,8 +128,8 @@ const styles = StyleSheet.create({
     height: 80,
     position: "relative",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.2)",
-    backgroundColor: "rgba(20, 20, 20, 1)",
+    borderBottomColor: Colors.white20,
+    backgroundColor: Colors.surface,
   },
   programCellWrapper: {
     position: "absolute",
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     left: 4,
     top: 4,
     bottom: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: Colors.white05,
     borderRadius: 8,
   },
 });

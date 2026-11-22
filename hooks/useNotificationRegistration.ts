@@ -11,6 +11,7 @@ import type {
 import { useAtomValue } from "jotai";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
+import { Colors } from "@/constants/Colors";
 import {
   EXPO_PROJECT_ID,
   NOTIFICATION_PERMISSIONS,
@@ -196,7 +197,7 @@ export const useNotificationRegistration = (): ExpoPushToken | undefined => {
           name: "Downloads",
           importance: Notifications.AndroidImportance.DEFAULT,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#FF231F7C",
+          lightColor: Colors.dangerSubtle,
         });
       }
 

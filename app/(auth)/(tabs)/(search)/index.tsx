@@ -52,6 +52,7 @@ import {
   SeerrIndexPage,
   SeerrSearchSort,
 } from "@/components/seerr/SeerrIndexPage";
+import { Colors } from "@/constants/Colors";
 import { SEARCH_RESULT_LIMIT } from "@/constants/Search";
 import useRouter from "@/hooks/useAppRouter";
 import { useSeerr } from "@/hooks/useSeerr";
@@ -337,10 +338,10 @@ export default function SearchPage() {
         hideWhenScrolling: false,
         autoFocus: false,
         // Android: color of the user-typed text (was dark and unreadable on the dark header)
-        textColor: "#fff",
+        textColor: Colors.foreground,
         // Android: placeholder and icon color
-        hintTextColor: "#fff",
-        headerIconColor: "#fff",
+        hintTextColor: Colors.white,
+        headerIconColor: Colors.white,
       },
     });
   }, [navigation]);
@@ -910,7 +911,7 @@ export default function SearchPage() {
                         height: 80,
                         borderRadius: 40,
                         overflow: "hidden",
-                        backgroundColor: "#1a1a1a",
+                        backgroundColor: Colors.surface,
                       }}
                     >
                       {imageUrl ? (
@@ -949,7 +950,7 @@ export default function SearchPage() {
                         height: 112,
                         borderRadius: 8,
                         overflow: "hidden",
-                        backgroundColor: "#1a1a1a",
+                        backgroundColor: Colors.surface,
                       }}
                     >
                       {imageUrl ? (
@@ -991,7 +992,7 @@ export default function SearchPage() {
                         height: 112,
                         borderRadius: 8,
                         overflow: "hidden",
-                        backgroundColor: "#1a1a1a",
+                        backgroundColor: Colors.surface,
                       }}
                     >
                       {imageUrl ? (
@@ -1033,7 +1034,7 @@ export default function SearchPage() {
                         height: 112,
                         borderRadius: 8,
                         overflow: "hidden",
-                        backgroundColor: "#1a1a1a",
+                        backgroundColor: Colors.surface,
                       }}
                     >
                       {imageUrl ? (

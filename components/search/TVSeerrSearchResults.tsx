@@ -6,6 +6,7 @@ import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { TVSeerrPosterCard } from "@/components/tv/TVSeerrPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useSeerr } from "@/hooks/useSeerr";
@@ -39,7 +40,7 @@ const TVSeerrPersonPoster: React.FC<TVSeerrPersonPosterProps> = ({
           {
             width: 160,
             alignItems: "center",
-            shadowColor: "#fff",
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.4 : 0,
             shadowRadius: focused ? 12 : 0,
@@ -52,9 +53,9 @@ const TVSeerrPersonPoster: React.FC<TVSeerrPersonPosterProps> = ({
             height: 140,
             borderRadius: 70,
             overflow: "hidden",
-            backgroundColor: "rgba(255,255,255,0.1)",
+            backgroundColor: Colors.white10,
             borderWidth: focused ? 3 : 0,
-            borderColor: "#fff",
+            borderColor: Colors.white,
           }}
         >
           {posterUrl ? (
@@ -72,14 +73,18 @@ const TVSeerrPersonPoster: React.FC<TVSeerrPersonPosterProps> = ({
                 alignItems: "center",
               }}
             >
-              <Ionicons name='person' size={56} color='rgba(255,255,255,0.4)' />
+              <Ionicons
+                name='person'
+                size={56}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           )}
         </View>
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#fff" : "rgba(255,255,255,0.9)",
+            color: focused ? Colors.foreground : Colors.foreground,
             fontWeight: "600",
             marginTop: 12,
             textAlign: "center",
@@ -116,7 +121,7 @@ const TVSeerrMovieSection: React.FC<TVSeerrMovieSectionProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "bold",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 16,
           marginLeft: sizes.padding.horizontal,
         }}
@@ -169,7 +174,7 @@ const TVSeerrTvSection: React.FC<TVSeerrTvSectionProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "bold",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 16,
           marginLeft: sizes.padding.horizontal,
         }}
@@ -222,7 +227,7 @@ const TVSeerrPersonSection: React.FC<TVSeerrPersonSectionProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "bold",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 16,
           marginLeft: sizes.padding.horizontal,
         }}
@@ -285,7 +290,7 @@ export const TVSeerrSearchResults: React.FC<TVSeerrSearchResultsProps> = ({
           style={{
             fontSize: typography.heading,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: 8,
           }}
         >
@@ -294,7 +299,7 @@ export const TVSeerrSearchResults: React.FC<TVSeerrSearchResultsProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: "rgba(255,255,255,0.6)",
+            color: Colors.foregroundMuted,
           }}
         >
           "{searchQuery}"

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -135,10 +136,10 @@ const TVLibraryRow: React.FC<{
           height: CARD_HEIGHT,
           borderRadius: scaleSize(20),
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: Colors.surface,
           borderWidth: focused ? scaleSize(4) : 0,
-          borderColor: "#FFFFFF",
-          shadowColor: "#FFFFFF",
+          borderColor: Colors.white,
+          shadowColor: Colors.white,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: focused ? 0.3 : 0,
           shadowRadius: focused ? scaleSize(30) : 0,
@@ -160,7 +161,7 @@ const TVLibraryRow: React.FC<{
 
         {/* Gradient Overlay */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
+          colors={[Colors.black30, Colors.black80]}
           style={{
             position: "absolute",
             width: "100%",
@@ -188,10 +189,14 @@ const TVLibraryRow: React.FC<{
               justifyContent: "center",
               alignItems: "center",
               overflow: "hidden",
-              backgroundColor: "rgba(255,255,255,0.1)",
+              backgroundColor: Colors.white10,
             }}
           >
-            <Ionicons name={iconName} size={scaleSize(40)} color='#FFFFFF' />
+            <Ionicons
+              name={iconName}
+              size={scaleSize(40)}
+              color={Colors.foreground}
+            />
           </BlurView>
 
           {/* Text Content */}
@@ -201,8 +206,8 @@ const TVLibraryRow: React.FC<{
               style={{
                 fontSize: typography.heading,
                 fontWeight: "700",
-                color: "#FFFFFF",
-                textShadowColor: "rgba(0,0,0,0.8)",
+                color: Colors.foreground,
+                textShadowColor: Colors.black80,
                 textShadowOffset: { width: 0, height: 2 },
                 textShadowRadius: 4,
               }}
@@ -213,9 +218,9 @@ const TVLibraryRow: React.FC<{
               <Text
                 style={{
                   fontSize: typography.body,
-                  color: "rgba(255,255,255,0.7)",
+                  color: Colors.foregroundMuted,
                   marginTop: scaleSize(4),
-                  textShadowColor: "rgba(0,0,0,0.8)",
+                  textShadowColor: Colors.black80,
                   textShadowOffset: { width: 0, height: 1 },
                   textShadowRadius: 2,
                 }}
@@ -234,7 +239,7 @@ const TVLibraryRow: React.FC<{
             <Ionicons
               name='chevron-forward'
               size={scaleSize(32)}
-              color='#FFFFFF'
+              color={Colors.foreground}
             />
           </Animated.View>
         </View>
@@ -400,7 +405,12 @@ export const TVLibraries: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Text style={{ fontSize: typography.body, color: "#737373" }}>
+        <Text
+          style={{
+            fontSize: typography.body,
+            color: Colors.foregroundDisabled,
+          }}
+        >
           {t("library.no_libraries_found")}
         </Text>
       </View>

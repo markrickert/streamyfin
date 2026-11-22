@@ -4,6 +4,7 @@ import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getUserImageUrl } from "@/utils/jellyfin/image/getUserImageUrl";
 import { scaleSize } from "@/utils/scaleSize";
@@ -79,7 +80,7 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
               alignItems: "center",
               width: scaleSize(160),
               overflow: "visible",
-              shadowColor: "#fff",
+              shadowColor: Colors.white,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: focused ? 0.5 : 0,
               shadowRadius: focused ? scaleSize(16) : 0,
@@ -93,12 +94,10 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
                 height: scaleSize(140),
                 borderRadius: scaleSize(70),
                 overflow: "hidden",
-                backgroundColor: focused
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.1)",
+                backgroundColor: focused ? Colors.white20 : Colors.white10,
                 marginBottom: scaleSize(14),
                 borderWidth: focused ? scaleSize(3) : 0,
-                borderColor: "#fff",
+                borderColor: Colors.white,
                 justifyContent: "center",
                 alignItems: "center",
               }}
@@ -115,7 +114,7 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
                   name='person'
                   size={scaleSize(56)}
                   color={
-                    focused ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)"
+                    focused ? Colors.foregroundMuted : Colors.foregroundDisabled
                   }
                 />
               )}
@@ -131,10 +130,10 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
                   width: scaleSize(32),
                   height: scaleSize(32),
                   borderRadius: scaleSize(16),
-                  backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.9)",
+                  backgroundColor: focused ? Colors.white : Colors.white80,
                   justifyContent: "center",
                   alignItems: "center",
-                  shadowColor: "#000",
+                  shadowColor: Colors.black,
                   shadowOffset: { width: 0, height: scaleSize(2) },
                   shadowOpacity: 0.3,
                   shadowRadius: scaleSize(4),
@@ -143,7 +142,7 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
                 <Ionicons
                   name={getSecurityIcon()}
                   size={scaleSize(16)}
-                  color='#000'
+                  color={Colors.black}
                 />
               </View>
             )}
@@ -153,7 +152,7 @@ export const TVUserIcon = React.forwardRef<ViewInstance, TVUserIconProps>(
             style={{
               fontSize: typography.body,
               fontWeight: "600",
-              color: focused ? "#fff" : "rgba(255,255,255,0.9)",
+              color: focused ? Colors.foreground : Colors.foreground,
               textAlign: "center",
             }}
             numberOfLines={2}

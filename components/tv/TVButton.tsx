@@ -6,6 +6,7 @@ import {
   type ViewInstance,
   type ViewStyle,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { SEERR_ISSUE_COLORS } from "@/constants/Seerr";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -36,31 +37,21 @@ const getButtonStyles = (
           ? SEERR_ISSUE_COLORS.focused
           : SEERR_ISSUE_COLORS.background,
         borderWidth: scaleSize(2),
-        borderColor: focused
-          ? "rgba(255, 255, 255, 0.9)"
-          : SEERR_ISSUE_COLORS.border,
+        borderColor: focused ? Colors.white80 : SEERR_ISSUE_COLORS.border,
       };
     case "glass":
       return {
         // Constant border width, color swaps only — toggling width would
         // relayout the row on every focus move.
-        backgroundColor: focused
-          ? "rgba(255, 255, 255, 0.25)"
-          : "rgba(255, 255, 255, 0.1)",
+        backgroundColor: focused ? Colors.white20 : Colors.white10,
         borderWidth: scaleSize(2),
-        borderColor: focused
-          ? "rgba(255, 255, 255, 0.9)"
-          : "rgba(255, 255, 255, 0)",
+        borderColor: focused ? Colors.white80 : Colors.transparent,
       };
     case "secondary":
       return {
-        backgroundColor: focused
-          ? "rgba(255, 255, 255, 0.3)"
-          : "rgba(255, 255, 255, 0.15)",
+        backgroundColor: focused ? Colors.white30 : Colors.white10,
         borderWidth: scaleSize(2),
-        borderColor: focused
-          ? "rgba(255, 255, 255, 0.9)"
-          : "rgba(255, 255, 255, 0)",
+        borderColor: focused ? Colors.white80 : Colors.transparent,
       };
     default:
       // The fill itself must signal focus: a white-on-white border ring is
@@ -68,9 +59,9 @@ const getButtonStyles = (
       // render the iOS glow, so dim the resting fill and go fully opaque +
       // glow when focused.
       return {
-        backgroundColor: focused ? "#ffffff" : "rgba(255, 255, 255, 0.7)",
+        backgroundColor: focused ? Colors.white : Colors.white80,
         borderWidth: 0,
-        borderColor: "transparent",
+        borderColor: Colors.transparent,
       };
   }
 };
@@ -123,7 +114,7 @@ export const TVButton: React.FC<TVButtonProps> = ({
             // detached glow blob), and shadowOpacity/shadowRadius are iOS
             // props. Android TV's focus signal is the fill/border swap plus
             // the scale animation, matching leanback conventions.
-            shadowColor: "#fff",
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.5 : 0,
             shadowRadius: focused ? scaleSize(15) : 0,

@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 /**
  * Scrim rendered via the `headerBackground` screen option, under a
@@ -9,7 +10,7 @@ import { StyleSheet } from "react-native";
  */
 export const HeaderGradient = () => (
   <LinearGradient
-    colors={["rgba(0,0,0,1)", "rgba(0,0,0,0.8)", "rgba(0,0,0,0)"]}
+    colors={[Colors.black, Colors.black80, Colors.transparent]}
     locations={[0, 0.7, 1]}
     style={StyleSheet.absoluteFill}
     pointerEvents='none'

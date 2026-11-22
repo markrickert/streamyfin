@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
 import { watchlistTypeLabel } from "@/components/watchlists/watchlistOptions";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import {
   useAddToWatchlist,
@@ -88,13 +89,17 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
       </View>
       <View className='w-8 h-8 items-center justify-center'>
         {isLoading ? (
-          <ActivityIndicator size='small' color='#a78bfa' />
+          <ActivityIndicator size='small' color={Colors.accent} />
         ) : isInWatchlist ? (
-          <Ionicons name='checkmark-circle' size={26} color='#a78bfa' />
+          <Ionicons name='checkmark-circle' size={26} color={Colors.accent} />
         ) : isCompatible ? (
-          <Ionicons name='add-circle-outline' size={26} color='#9ca3af' />
+          <Ionicons
+            name='add-circle-outline'
+            size={26}
+            color={Colors.foregroundMuted}
+          />
         ) : (
-          <Ionicons name='ban-outline' size={22} color='#525252' />
+          <Ionicons name='ban-outline' size={22} color={Colors.border} />
         )}
       </View>
     </TouchableOpacity>
@@ -187,7 +192,7 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
   if (isLoading) {
     return (
       <View className='py-12 items-center justify-center'>
-        <ActivityIndicator size='large' color='#a78bfa' />
+        <ActivityIndicator size='large' color={Colors.accent} />
         <Text className='text-neutral-400 mt-4'>{t("watchlists.loading")}</Text>
       </View>
     );
@@ -214,7 +219,7 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
       {/* Watchlist List */}
       {sortedWatchlists.length === 0 ? (
         <View className='py-8 items-center'>
-          <Ionicons name='list-outline' size={48} color='#4b5563' />
+          <Ionicons name='list-outline' size={48} color={Colors.border} />
           <Text className='text-neutral-400 text-center mt-4'>
             {t("watchlists.empty_title")}
           </Text>
@@ -254,7 +259,7 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
         className='flex-row items-center justify-center py-4 bg-neutral-800 rounded-xl'
         activeOpacity={0.7}
       >
-        <Ionicons name='add' size={20} color='#a78bfa' />
+        <Ionicons name='add' size={20} color={Colors.accent} />
         <Text className='text-purple-400 font-medium'>
           {t("watchlists.create_new")}
         </Text>
@@ -303,10 +308,10 @@ export const WatchlistSheet = forwardRef<WatchlistSheetRef, object>(
         maxDynamicContentSize={600}
         backdropComponent={renderBackdrop}
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
-          backgroundColor: "#171717",
+          backgroundColor: Colors.surface,
         }}
       >
         {/* Rows can outgrow the sheet's height, two lines of description

@@ -14,6 +14,7 @@ import {
 } from "react-native-drax";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 
 export interface QueueRow {
   /** Unique within the list, and stable while the row moves. */
@@ -53,7 +54,7 @@ interface Props {
   onDragActiveChange?: (active: boolean) => void;
 }
 
-const ACCENT = "#9334E9";
+const ACCENT = Colors.primary;
 /**
  * A drag starts on the handle at once: the rest of a row stays free to
  * scroll and to be pressed, in a list that scrolls itself as in a sheet.
@@ -87,7 +88,11 @@ const QueueHandle: React.FC = () => {
         onTouchStart={measureRoot}
         className='flex-1 justify-center pl-4 pr-2'
       >
-        <Ionicons name='reorder-three' size={20} color='#666' />
+        <Ionicons
+          name='reorder-three'
+          size={20}
+          color={Colors.foregroundDisabled}
+        />
       </View>
     </DraxHandle>
   );
@@ -163,7 +168,7 @@ export const DraggableQueueList: React.FC<Props> = ({
           index={slot}
           dragHandle
           draggable={!disabled}
-          hoverDraggingStyle={{ backgroundColor: "#2a2a2a" }}
+          hoverDraggingStyle={{ backgroundColor: Colors.surfaceRaised }}
           onDragEnd={endDrag}
           onDragDrop={endDrag}
         >
@@ -172,8 +177,8 @@ export const DraggableQueueList: React.FC<Props> = ({
             style={{
               opacity: isPast ? 0.5 : 1,
               backgroundColor: isCurrent
-                ? "rgba(147, 52, 233, 0.3)"
-                : "#121212",
+                ? Colors.primarySubtle
+                : Colors.surface,
             }}
           >
             <QueueHandle />
@@ -198,7 +203,11 @@ export const DraggableQueueList: React.FC<Props> = ({
                   />
                 ) : (
                   <View className='flex-1 items-center justify-center'>
-                    <Ionicons name={icon} size={16} color='#666' />
+                    <Ionicons
+                      name={icon}
+                      size={16}
+                      color={Colors.foregroundDisabled}
+                    />
                   </View>
                 )}
               </View>
@@ -227,7 +236,11 @@ export const DraggableQueueList: React.FC<Props> = ({
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   className='p-2'
                 >
-                  <Ionicons name='close' size={20} color='#666' />
+                  <Ionicons
+                    name='close'
+                    size={20}
+                    color={Colors.foregroundDisabled}
+                  />
                 </TouchableOpacity>
               )}
             </TouchableOpacity>

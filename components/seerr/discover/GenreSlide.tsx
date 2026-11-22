@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { TouchableOpacity, type ViewProps } from "react-native";
 import GenericSlideCard from "@/components/seerr/discover/GenericSlideCard";
 import Slide, { type SlideProps } from "@/components/seerr/discover/Slide";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useSeerr } from "@/hooks/useSeerr";
 import { useSeerrGenreSliders } from "@/hooks/useSeerrDiscoverData";
@@ -41,7 +42,7 @@ const GenreSlide: React.FC<SlideProps & ViewProps> = ({ slide, ...props }) => {
               className='w-28 rounded-lg overflow-hidden border border-neutral-900'
               id={item.id.toString()}
               title={item.name}
-              colors={["transparent", "transparent"]}
+              colors={[Colors.transparent, Colors.transparent]}
               contentFit={"cover"}
               url={seerrApi?.imageProxy(
                 item.backdrops?.[0],

@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface TVGuideTimeHeaderProps {
@@ -55,10 +56,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingLeft: 12,
     borderLeftWidth: 1,
-    borderLeftColor: "rgba(255, 255, 255, 0.1)",
+    borderLeftColor: Colors.white10,
   },
   hourText: {
-    color: "rgba(255, 255, 255, 0.6)",
+    color: Colors.foregroundMuted,
     fontWeight: "500",
   },
 });

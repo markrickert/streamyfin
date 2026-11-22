@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity, type TouchableOpacityProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useFilterReset } from "@/hooks/useFilterReset";
 
 interface Props extends TouchableOpacityProps {
@@ -23,7 +24,7 @@ export const ResetFiltersButton: React.FC<Props> = ({
       // After the spread so a forwarded onPress can't disable the reset.
       onPress={resetAllFilters}
     >
-      <Ionicons name='close' size={20} color='white' />
+      <Ionicons name='close' size={20} color={Colors.foreground} />
     </TouchableOpacity>
   );
 };

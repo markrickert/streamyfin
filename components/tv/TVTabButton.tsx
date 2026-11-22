@@ -1,6 +1,7 @@
 import React from "react";
 import { Animated, Pressable } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -44,11 +45,11 @@ export const TVTabButton: React.FC<TVTabButtonProps> = ({
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : active
-                ? "rgba(255,255,255,0.2)"
+                ? Colors.white20
                 : "transparent",
-            borderBottomColor: active ? "#fff" : "transparent",
+            borderBottomColor: active ? Colors.white : Colors.transparent,
             borderBottomWidth: scaleSize(2),
             paddingHorizontal: scaleSize(20),
             paddingVertical: scaleSize(12),
@@ -59,7 +60,7 @@ export const TVTabButton: React.FC<TVTabButtonProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#000" : "#fff",
+            color: focused ? Colors.black : Colors.foreground,
             fontWeight: focused || active ? "600" : "400",
           }}
         >

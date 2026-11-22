@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 
 /**
  * A word on a card's artwork, for `CardSlots.overlay`: an air time, a missing
@@ -17,7 +18,7 @@ export const CardPill: React.FC<{ label: string }> = ({ label }) => (
       paddingHorizontal: 7,
       borderRadius: 10,
       justifyContent: "center",
-      backgroundColor: "rgba(0,0,0,0.75)",
+      backgroundColor: Colors.black60,
     }}
   >
     <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: "700" }}>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 export interface TVSectionHeaderProps {
@@ -14,7 +15,7 @@ export const TVSectionHeader: React.FC<TVSectionHeaderProps> = ({ title }) => {
       style={{
         fontSize: typography.callout,
         fontWeight: "600",
-        color: "#9CA3AF",
+        color: Colors.foregroundMuted,
         textTransform: "uppercase",
         letterSpacing: 1,
         marginTop: 32,

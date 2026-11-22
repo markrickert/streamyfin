@@ -2,6 +2,7 @@ import type React from "react";
 import { View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useSeerr } from "@/hooks/useSeerr";
 import { scaleSize } from "@/utils/scaleSize";
@@ -34,7 +35,7 @@ export const TVSeerrTitlesHeading: React.FC<{
       style={{
         fontSize: typography.title,
         fontWeight: "bold",
-        color: "white",
+        color: Colors.foreground,
         textAlign: "center",
       }}
     >

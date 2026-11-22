@@ -11,6 +11,7 @@ import { type SharedValue } from "react-native-reanimated";
 import { ChapterList } from "@/components/chapters/ChapterList";
 import { ChapterTicks } from "@/components/chapters/ChapterTicks";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import {
   chapterMarkers,
@@ -174,7 +175,7 @@ export const BottomControls: FC<BottomControlsProps> = ({
               accessibilityRole='button'
               accessibilityLabel={t("chapters.open")}
             >
-              <Ionicons name='bookmarks' size={24} color='white' />
+              <Ionicons name='bookmarks' size={24} color={Colors.foreground} />
             </Pressable>
           )}
         </View>
@@ -198,12 +199,12 @@ export const BottomControls: FC<BottomControlsProps> = ({
           >
             <Slider
               theme={{
-                maximumTrackTintColor: "rgba(255,255,255,0.2)",
-                minimumTrackTintColor: "#fff",
-                cacheTrackTintColor: "rgba(255,255,255,0.3)",
-                bubbleBackgroundColor: "#fff",
-                bubbleTextColor: "#666",
-                heartbeatColor: "#999",
+                maximumTrackTintColor: Colors.white20,
+                minimumTrackTintColor: Colors.white,
+                cacheTrackTintColor: Colors.white30,
+                bubbleBackgroundColor: Colors.white,
+                bubbleTextColor: Colors.foregroundDisabled,
+                heartbeatColor: Colors.foregroundMuted,
               }}
               renderThumb={() => null}
               cache={cacheProgress}

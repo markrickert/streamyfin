@@ -6,6 +6,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
@@ -99,7 +100,7 @@ export function TVHorizontalList<T>({
             style={{
               fontSize: typography.heading,
               fontWeight: "700",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: scaleSize(20),
               marginLeft: sizes.padding.scale,
               letterSpacing: 0.5,
@@ -110,7 +111,7 @@ export function TVHorizontalList<T>({
         )}
         <Text
           style={{
-            color: "#737373",
+            color: Colors.foregroundDisabled,
             fontSize: typography.callout,
             marginLeft: sizes.padding.scale,
           }}
@@ -130,7 +131,7 @@ export function TVHorizontalList<T>({
             style={{
               fontSize: typography.heading,
               fontWeight: "700",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: scaleSize(20),
               marginLeft: sizes.padding.scale,
               letterSpacing: 0.5,
@@ -175,7 +176,7 @@ export function TVHorizontalList<T>({
           style={{
             fontSize: typography.heading,
             fontWeight: "700",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(20),
             marginLeft: sizes.padding.scale,
             letterSpacing: 0.5,

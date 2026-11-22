@@ -20,6 +20,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { TVButton, TVOptionSelector } from "@/components/tv";
 import type { TVOptionItem } from "@/components/tv/TVOptionSelector";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useSeerr } from "@/hooks/useSeerr";
 import { requestTagIds } from "@/utils/seerr/requests";
@@ -352,7 +353,7 @@ export const TVRequestModal: React.FC<TVRequestModalProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.6)",
+          backgroundColor: Colors.black60,
           justifyContent: "flex-end",
           zIndex: 1000,
           opacity: overlayOpacity,
@@ -390,7 +391,7 @@ export const TVRequestModal: React.FC<TVRequestModalProps> = ({
                 style={{
                   fontSize: typography.heading,
                   fontWeight: "bold",
-                  color: "#FFFFFF",
+                  color: Colors.foreground,
                   marginBottom: 8,
                 }}
               >
@@ -399,7 +400,7 @@ export const TVRequestModal: React.FC<TVRequestModalProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "rgba(255,255,255,0.6)",
+                  color: Colors.foregroundMuted,
                   marginBottom: 24,
                 }}
               >
@@ -452,7 +453,7 @@ export const TVRequestModal: React.FC<TVRequestModalProps> = ({
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <Text style={{ color: Colors.foregroundMuted }}>
                     {t("common.loading")}
                   </Text>
                 </View>
@@ -467,14 +468,14 @@ export const TVRequestModal: React.FC<TVRequestModalProps> = ({
                   <Ionicons
                     name='add'
                     size={22}
-                    color='#FFFFFF'
+                    color={Colors.foreground}
                     style={{ marginRight: 8 }}
                   />
                   <Text
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                     }}
                   >
                     {t("seerr.request_button")}

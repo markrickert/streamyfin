@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { scaleSize } from "@/utils/scaleSize";
 
 export interface TVProgressBarProps {
@@ -18,8 +19,8 @@ export interface TVProgressBarProps {
 export const TVProgressBar: React.FC<TVProgressBarProps> = React.memo(
   ({
     progress,
-    trackColor = "rgba(255,255,255,0.2)",
-    fillColor = "#ffffff",
+    trackColor = Colors.white20,
+    fillColor = Colors.white,
     maxWidth = 400,
     height = 4,
   }) => {

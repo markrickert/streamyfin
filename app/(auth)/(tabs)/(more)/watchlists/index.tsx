@@ -9,6 +9,7 @@ import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
 import { watchlistTypeLabel } from "@/components/watchlists/watchlistOptions";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import {
@@ -52,7 +53,7 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
           <Ionicons
             name={watchlist.isPublic ? "globe-outline" : "lock-closed-outline"}
             size={16}
-            color='#9ca3af'
+            color={Colors.foregroundMuted}
           />
         </View>
       </View>
@@ -65,7 +66,11 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
 
       <View className='flex-row items-center gap-4'>
         <View className='flex-row items-center gap-1'>
-          <Ionicons name='film-outline' size={14} color='#9ca3af' />
+          <Ionicons
+            name='film-outline'
+            size={14}
+            color={Colors.foregroundMuted}
+          />
           <Text className='text-neutral-400 text-sm'>
             {t("watchlists.item_count", { count: watchlist.itemCount ?? 0 })}
           </Text>
@@ -89,7 +94,7 @@ const EmptyState: React.FC<{ onCreatePress: () => void }> = ({
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='list-outline' size={64} color='#4b5563' />
+      <Ionicons name='list-outline' size={64} color={Colors.border} />
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.empty_title")}
       </Text>
@@ -106,7 +111,7 @@ const NotConfiguredState: React.FC = () => {
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='settings-outline' size={64} color='#4b5563' />
+      <Ionicons name='settings-outline' size={64} color={Colors.border} />
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.not_configured_title")}
       </Text>
@@ -135,7 +140,7 @@ const LoadFailedState: React.FC<{
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='cloud-offline-outline' size={64} color='#4b5563' />
+      <Ionicons name='cloud-offline-outline' size={64} color={Colors.border} />
       <Text
         className='text-xl font-semibold mt-4 text-center'
         style={isTV ? { fontSize: typography.title } : undefined}

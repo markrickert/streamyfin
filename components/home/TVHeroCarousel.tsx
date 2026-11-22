@@ -23,6 +23,7 @@ import { ProgressBar } from "@/components/common/ProgressBar";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
+import { Colors } from "@/constants/Colors";
 import {
   type ScaledTVSizes,
   TV_BACKDROP_DEBOUNCE_MS,
@@ -176,8 +177,8 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
             overflow: "hidden",
             transform: [{ scale }],
             borderWidth: scaleSize(2),
-            borderColor: focused ? "#FFFFFF" : "transparent",
-            shadowColor: "#FFFFFF",
+            borderColor: focused ? Colors.white : Colors.transparent,
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.6 : 0,
             shadowRadius: focused ? scaleSize(20) : 0,
@@ -194,7 +195,7 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
               style={{
                 width: "100%",
                 height: "100%",
-                backgroundColor: "rgba(255,255,255,0.1)",
+                backgroundColor: Colors.white10,
                 justifyContent: "center",
                 alignItems: "center",
               }}
@@ -202,7 +203,7 @@ const HeroCard: React.FC<HeroCardProps> = React.memo(
               <Ionicons
                 name='film-outline'
                 size={scaleSize(48)}
-                color='rgba(255,255,255,0.3)'
+                color={Colors.white50}
               />
             </View>
           )}
@@ -462,7 +463,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
 
         {/* Gradient overlays */}
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.95)"]}
+          colors={[Colors.transparent, Colors.black50, Colors.black80]}
           locations={[0, 0.5, 1]}
           style={{
             position: "absolute",
@@ -473,7 +474,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
           }}
         />
         <LinearGradient
-          colors={["rgba(0,0,0,0.4)", "transparent"]}
+          colors={[Colors.black30, Colors.transparent]}
           locations={[0, 1]}
           style={{
             position: "absolute",
@@ -485,7 +486,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
         />
         {/* Horizontal gradient for left side text contrast */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.9)", "rgba(0,0,0,0.6)", "transparent"]}
+          colors={[Colors.black80, Colors.black60, Colors.transparent]}
           locations={[0, 0.5, 0.85]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -529,7 +530,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
             style={{
               fontSize: typography.display,
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: scaleSize(12),
             }}
             numberOfLines={1}
@@ -543,7 +544,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
           <Text
             style={{
               fontSize: typography.body,
-              color: "rgba(255,255,255,0.9)",
+              color: Colors.white80,
               marginBottom: scaleSize(12),
             }}
             numberOfLines={1}
@@ -557,7 +558,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
           <Text
             style={{
               fontSize: typography.body,
-              color: "rgba(255,255,255,0.8)",
+              color: Colors.white80,
               marginBottom: scaleSize(16),
               maxWidth: windowWidth * 0.5,
               lineHeight: typography.body * 1.4,
@@ -580,7 +581,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "rgba(255,255,255,0.8)",
+                color: Colors.white80,
               }}
             >
               {year}
@@ -590,7 +591,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "rgba(255,255,255,0.8)",
+                color: Colors.white80,
               }}
             >
               {duration}
@@ -603,13 +604,13 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
                 paddingVertical: scaleSize(2),
                 borderRadius: scaleSize(4),
                 borderWidth: scaleSize(1),
-                borderColor: "rgba(255,255,255,0.5)",
+                borderColor: Colors.white50,
               }}
             >
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "rgba(255,255,255,0.8)",
+                  color: Colors.white80,
                 }}
               >
                 {activeItem.OfficialRating}
@@ -628,7 +629,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
                 style={{
                   width: scaleSize(60),
                   height: scaleSize(4),
-                  backgroundColor: "rgba(255,255,255,0.3)",
+                  backgroundColor: Colors.white30,
                   borderRadius: scaleSize(2),
                   overflow: "hidden",
                 }}
@@ -637,7 +638,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
                   style={{
                     width: `${playedPercent}%`,
                     height: "100%",
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: Colors.white,
                     borderRadius: 2,
                   }}
                 />
@@ -645,7 +646,7 @@ const TVHeroCarouselComponent: React.FC<TVHeroCarouselProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "rgba(255,255,255,0.8)",
+                  color: Colors.white80,
                 }}
               >
                 {Math.round(playedPercent)}%

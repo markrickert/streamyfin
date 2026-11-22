@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View, type ViewStyle } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 export interface ChapterMarkersProps {
   /** Array of chapter positions as percentages (0-100) */
@@ -21,7 +22,7 @@ export const ChapterMarkers: React.FC<ChapterMarkersProps> = React.memo(
     chapterPositions,
     style,
     markerHeight = 15,
-    markerColor = "rgba(255, 255, 255, 0.6)",
+    markerColor = Colors.white50,
   }) => {
     if (!chapterPositions.length) {
       return null;

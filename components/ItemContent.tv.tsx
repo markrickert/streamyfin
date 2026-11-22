@@ -52,6 +52,7 @@ import {
 } from "@/components/tv";
 import { useTVCast } from "@/components/tv/useTVCast";
 import type { Track } from "@/components/video-player/controls/types";
+import { Colors } from "@/constants/Colors";
 import {
   TV_DETAIL_HEADER_MIN_HEIGHT_RATIO,
   TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO,
@@ -667,7 +668,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
       <View
         style={{
           flex: 1,
-          backgroundColor: "#000000",
+          backgroundColor: Colors.black,
         }}
       >
         {/* Full-screen backdrop */}
@@ -709,7 +710,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   style={{
                     fontSize: typography.display,
                     fontWeight: "bold",
-                    color: "#FFFFFF",
+                    color: Colors.foreground,
                     marginBottom: scaleSize(20),
                   }}
                   numberOfLines={2}
@@ -724,7 +725,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   <Text
                     style={{
                       fontSize: typography.title,
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                       fontWeight: "600",
                     }}
                   >
@@ -733,7 +734,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   <Text
                     style={{
                       fontSize: typography.body,
-                      color: "white",
+                      color: Colors.foreground,
                       marginTop: scaleSize(6),
                     }}
                   >
@@ -773,13 +774,13 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   <View
                     style={{
                       padding: scaleSize(16),
-                      backgroundColor: "rgba(0,0,0,0.3)",
+                      backgroundColor: Colors.black30,
                     }}
                   >
                     <Text
                       style={{
                         fontSize: typography.body,
-                        color: "#E5E7EB",
+                        color: Colors.foreground,
                         lineHeight: scaleSize(32),
                       }}
                       numberOfLines={4}
@@ -797,7 +798,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                 <Text
                   style={{
                     fontSize: typography.callout,
-                    color: "#E5E7EB",
+                    color: Colors.foreground,
                     marginBottom: scaleSize(20),
                   }}
                 >
@@ -822,14 +823,14 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                     <Ionicons
                       name='play'
                       size={scaleSize(28)}
-                      color='#000000'
+                      color={Colors.black}
                       style={{ marginRight: scaleSize(10) }}
                     />
                     <Text
                       style={{
                         fontSize: typography.callout,
                         fontWeight: "bold",
-                        color: "#000000",
+                        color: Colors.black,
                       }}
                     >
                       {hasProgress
@@ -841,7 +842,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                       <Ionicons
                         name='people'
                         size={scaleSize(26)}
-                        color='#000000'
+                        color={Colors.black}
                         style={{ marginLeft: scaleSize(10) }}
                       />
                     )}
@@ -958,7 +959,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   progress={
                     (userData?.PlaybackPositionTicks || 0) / runTimeTicks
                   }
-                  fillColor='#FFFFFF'
+                  fillColor={Colors.white}
                 />
               )}
             </View>
@@ -978,7 +979,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   aspectRatio: item.Type === "Episode" ? 16 / 9 : 2 / 3,
                   borderRadius: scaleSize(16),
                   overflow: "hidden",
-                  shadowColor: "#000",
+                  shadowColor: Colors.black,
                   shadowOffset: { width: 0, height: 10 },
                   shadowOpacity: 0.5,
                   shadowRadius: 20,
@@ -1018,7 +1019,7 @@ export const ItemContentTV: React.FC<ItemContentTVProps> = React.memo(
                   style={{
                     fontSize: typography.heading,
                     fontWeight: "600",
-                    color: "#FFFFFF",
+                    color: Colors.foreground,
                     marginBottom: scaleSize(24),
                   }}
                 >

@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -20,7 +21,7 @@ export const TVPosterPill: React.FC<{ label: string }> = ({ label }) => {
         paddingHorizontal: scaleSize(12),
         paddingVertical: scaleSize(6),
         borderRadius: scaleSize(8),
-        backgroundColor: "rgba(0,0,0,0.75)",
+        backgroundColor: Colors.black60,
       }}
     >
       <Text style={{ fontSize: typography.callout, fontWeight: "600" }}>

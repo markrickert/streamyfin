@@ -3,6 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useWikidataAwards } from "@/hooks/useWikidataAwards";
 import { Badge } from "./Badge";
 
@@ -68,7 +69,7 @@ export const AwardsBadge: React.FC<
         <Ionicons
           name='trophy'
           size={Platform.isTV ? 16 : 13}
-          color='#e0b34a'
+          color={Colors.warning}
         />
       }
     />

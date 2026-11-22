@@ -11,6 +11,7 @@ import {
   TVFocusGuideView,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { tvAccountActionModalAtom } from "@/utils/atoms/tvAccountActionModal";
@@ -58,11 +59,11 @@ const TVAccountActionCard: React.FC<{
           height: 60,
           backgroundColor: focused
             ? isDestructive
-              ? "#ef4444"
-              : "#fff"
+              ? Colors.danger
+              : Colors.white
             : isDestructive
-              ? "rgba(239, 68, 68, 0.2)"
-              : "rgba(255,255,255,0.08)",
+              ? Colors.dangerSubtle
+              : Colors.white10,
           borderRadius: 14,
           justifyContent: "center",
           alignItems: "center",
@@ -76,11 +77,11 @@ const TVAccountActionCard: React.FC<{
           color={
             focused
               ? isDestructive
-                ? "#fff"
-                : "#000"
+                ? Colors.white
+                : Colors.black
               : isDestructive
-                ? "#ef4444"
-                : "#fff"
+                ? Colors.danger
+                : Colors.white
           }
         />
         <Text
@@ -88,11 +89,11 @@ const TVAccountActionCard: React.FC<{
             fontSize: typography.callout,
             color: focused
               ? isDestructive
-                ? "#fff"
-                : "#000"
+                ? Colors.white
+                : Colors.black
               : isDestructive
-                ? "#ef4444"
-                : "#fff",
+                ? Colors.danger
+                : Colors.white,
             fontWeight: "600",
           }}
           numberOfLines={1}
@@ -159,7 +160,7 @@ export default function TVAccountActionModalPage() {
     <Animated.View
       style={{
         flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: Colors.black50,
         justifyContent: "flex-end",
         opacity: overlayOpacity,
       }}
@@ -196,7 +197,7 @@ export default function TVAccountActionModalPage() {
               style={{
                 fontSize: typography.heading,
                 fontWeight: "600",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginBottom: 4,
                 paddingHorizontal: 48,
               }}
@@ -209,7 +210,7 @@ export default function TVAccountActionModalPage() {
               style={{
                 fontSize: typography.callout,
                 fontWeight: "500",
-                color: "rgba(255,255,255,0.6)",
+                color: Colors.foregroundMuted,
                 marginBottom: 16,
                 paddingHorizontal: 48,
               }}

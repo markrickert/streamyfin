@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 
 export type PlaylistSortOption = "SortName" | "DateCreated";
@@ -100,10 +101,10 @@ export const PlaylistSortSheet: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
     >
       <BottomSheetView
@@ -130,7 +131,7 @@ export const PlaylistSortSheet: React.FC<Props> = ({
                   <Ionicons
                     name={option.icon as any}
                     size={22}
-                    color={isSelected ? "#9334E9" : "#fff"}
+                    color={isSelected ? Colors.primary : Colors.foreground}
                   />
                   <Text
                     className={`ml-4 text-base flex-1 ${isSelected ? "text-purple-500 font-medium" : "text-white"}`}
@@ -144,12 +145,12 @@ export const PlaylistSortSheet: React.FC<Props> = ({
                           sortOrder === "Ascending" ? "arrow-up" : "arrow-down"
                         }
                         size={18}
-                        color='#9334E9'
+                        color={Colors.primary}
                       />
                       <Ionicons
                         name='checkmark'
                         size={22}
-                        color='#9334E9'
+                        color={Colors.primary}
                         style={{ marginLeft: 8 }}
                       />
                     </View>
@@ -167,6 +168,6 @@ export const PlaylistSortSheet: React.FC<Props> = ({
 const styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#404040",
+    backgroundColor: Colors.border,
   },
 });

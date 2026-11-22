@@ -182,7 +182,13 @@ function SourceButton({
       <Ionicons
         name={icon}
         size={16}
-        color={selected ? "white" : disabled ? "#666" : "#999"}
+        color={
+          selected
+            ? Colors.foreground
+            : disabled
+              ? Colors.foregroundDisabled
+              : Colors.foregroundMuted
+        }
       />
       <Text
         // As a style: a release build drops text-[10px], which made the

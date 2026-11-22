@@ -197,7 +197,11 @@ const AndroidSearchSortMenu = <T extends string>({
               <View className='bg-purple-600 rounded-full px-2 py-1'>
                 <RNText className='p-1'>
                   {" "}
-                  <Ionicons name='filter' size={14} color='white' />{" "}
+                  <Ionicons
+                    name='filter'
+                    size={14}
+                    color={Colors.foreground}
+                  />{" "}
                 </RNText>
               </View>
             </Pressable>

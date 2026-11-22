@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
@@ -41,7 +42,7 @@ export const MusicAlbumCard: React.FC<Props> = ({ album, width = 130 }) => {
           height: width,
           borderRadius: 8,
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: Colors.surface,
         }}
       >
         {imageUrl ? (

@@ -27,6 +27,7 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { Loader } from "@/components/Loader";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO } from "@/constants/TVDetailLayout";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
@@ -279,7 +280,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
       <View
         style={{
           flex: 1,
-          backgroundColor: "#000000",
+          backgroundColor: Colors.black,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -292,7 +293,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
   if (!item?.Id) return null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       {/* Full-screen backdrop with crossfade - two alternating layers */}
       <View
         style={{
@@ -319,7 +320,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               contentFit='cover'
             />
           ) : (
-            <View style={{ flex: 1, backgroundColor: "#1a1a1a" }} />
+            <View style={{ flex: 1, backgroundColor: Colors.surface }} />
           )}
         </Animated.View>
         {/* Layer 1 */}
@@ -338,12 +339,12 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               contentFit='cover'
             />
           ) : (
-            <View style={{ flex: 1, backgroundColor: "#1a1a1a" }} />
+            <View style={{ flex: 1, backgroundColor: Colors.surface }} />
           )}
         </Animated.View>
         {/* Gradient overlay for readability */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
+          colors={[Colors.black30, Colors.black60, Colors.black80]}
           locations={[0, 0.4, 1]}
           style={{
             position: "absolute",
@@ -380,10 +381,10 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               height: ACTOR_IMAGE_SIZE,
               borderRadius: ACTOR_IMAGE_SIZE / 2,
               overflow: "hidden",
-              backgroundColor: "rgba(255,255,255,0.1)",
+              backgroundColor: Colors.white10,
               marginRight: 50,
               borderWidth: 3,
-              borderColor: "rgba(255,255,255,0.2)",
+              borderColor: Colors.white20,
             }}
           >
             {actorImageUrl ? (
@@ -403,7 +404,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
                 <Ionicons
                   name='person'
                   size={80}
-                  color='rgba(255,255,255,0.4)'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             )}
@@ -416,7 +417,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               style={{
                 fontSize: typography.title,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginBottom: 8,
               }}
               numberOfLines={2}
@@ -429,7 +430,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#9CA3AF",
+                  color: Colors.foregroundMuted,
                   marginBottom: 16,
                 }}
               >
@@ -442,7 +443,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
               <Text
                 style={{
                   fontSize: typography.body,
-                  color: "#D1D5DB",
+                  color: Colors.foreground,
                   lineHeight: typography.body * 1.4,
                   maxWidth: windowWidth * TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO,
                 }}
@@ -474,7 +475,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
                   style={{
                     fontSize: typography.heading,
                     fontWeight: "600",
-                    color: "#FFFFFF",
+                    color: Colors.foreground,
                     marginBottom: 16,
                     marginLeft: SCALE_PADDING,
                   }}
@@ -520,7 +521,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
                   style={{
                     fontSize: typography.heading,
                     fontWeight: "600",
-                    color: "#FFFFFF",
+                    color: Colors.foreground,
                     marginBottom: 16,
                     marginLeft: SCALE_PADDING,
                   }}
@@ -555,7 +556,7 @@ export const TVActorPage: React.FC<TVActorPageProps> = ({ personId }) => {
             series.length === 0 && (
               <Text
                 style={{
-                  color: "#737373",
+                  color: Colors.foregroundDisabled,
                   fontSize: typography.callout,
                   marginLeft: SCALE_PADDING,
                 }}

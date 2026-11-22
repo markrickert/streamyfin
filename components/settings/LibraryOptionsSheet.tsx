@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 
 interface LibraryOptions {
   display: "row" | "list";
@@ -67,9 +68,13 @@ const OptionItem: React.FC<{
     >
       <Text className='flex-1 text-white'>{label}</Text>
       {selected ? (
-        <Ionicons name='checkmark-circle' size={24} color='#9333ea' />
+        <Ionicons name='checkmark-circle' size={24} color={Colors.primary} />
       ) : (
-        <Ionicons name='ellipse-outline' size={24} color='#6b7280' />
+        <Ionicons
+          name='ellipse-outline'
+          size={24}
+          color={Colors.foregroundDisabled}
+        />
       )}
     </TouchableOpacity>
     {!isLast && (
@@ -181,10 +186,10 @@ export const LibraryOptionsSheet: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
       enablePanDownToClose
       enableDismissOnClose

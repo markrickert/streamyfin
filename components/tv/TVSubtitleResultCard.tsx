@@ -10,6 +10,7 @@ import {
   type ViewInstance,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import type { SubtitleSearchResult } from "@/hooks/useRemoteSubtitles";
 import { scaleSize } from "@/utils/scaleSize";
@@ -46,10 +47,8 @@ export const TVSubtitleResultCard = React.forwardRef<
           styles.resultCard,
           animatedStyle,
           {
-            backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.08)",
-            borderColor: focused
-              ? "rgba(255,255,255,0.8)"
-              : "rgba(255,255,255,0.1)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
+            borderColor: focused ? Colors.white80 : Colors.white10,
           },
         ]}
       >
@@ -58,16 +57,14 @@ export const TVSubtitleResultCard = React.forwardRef<
           style={[
             styles.providerBadge,
             {
-              backgroundColor: focused
-                ? "rgba(0,0,0,0.1)"
-                : "rgba(255,255,255,0.1)",
+              backgroundColor: focused ? Colors.black10 : Colors.white10,
             },
           ]}
         >
           <Text
             style={[
               styles.providerText,
-              { color: focused ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)" },
+              { color: focused ? Colors.black60 : Colors.foregroundMuted },
             ]}
           >
             {result.providerName}
@@ -76,7 +73,10 @@ export const TVSubtitleResultCard = React.forwardRef<
 
         {/* Name */}
         <Text
-          style={[styles.resultName, { color: focused ? "#000" : "#fff" }]}
+          style={[
+            styles.resultName,
+            { color: focused ? Colors.black : Colors.foreground },
+          ]}
           numberOfLines={2}
         >
           {result.name}
@@ -88,7 +88,7 @@ export const TVSubtitleResultCard = React.forwardRef<
           <Text
             style={[
               styles.resultMetaText,
-              { color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)" },
+              { color: focused ? Colors.black60 : Colors.foregroundMuted },
             ]}
           >
             {result.format?.toUpperCase()}
@@ -101,15 +101,13 @@ export const TVSubtitleResultCard = React.forwardRef<
                 <Ionicons
                   name='star'
                   size={12}
-                  color={focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)"}
+                  color={focused ? Colors.black60 : Colors.foregroundMuted}
                 />
                 <Text
                   style={[
                     styles.resultMetaText,
                     {
-                      color: focused
-                        ? "rgba(0,0,0,0.6)"
-                        : "rgba(255,255,255,0.5)",
+                      color: focused ? Colors.black60 : Colors.white50,
                     },
                   ]}
                 >
@@ -124,15 +122,13 @@ export const TVSubtitleResultCard = React.forwardRef<
               <Ionicons
                 name='download-outline'
                 size={12}
-                color={focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)"}
+                color={focused ? Colors.black60 : Colors.foregroundMuted}
               />
               <Text
                 style={[
                   styles.resultMetaText,
                   {
-                    color: focused
-                      ? "rgba(0,0,0,0.6)"
-                      : "rgba(255,255,255,0.5)",
+                    color: focused ? Colors.black60 : Colors.white50,
                   },
                 ]}
               >
@@ -150,8 +146,8 @@ export const TVSubtitleResultCard = React.forwardRef<
                 styles.flag,
                 {
                   backgroundColor: focused
-                    ? "rgba(0,150,0,0.2)"
-                    : "rgba(0,200,0,0.2)",
+                    ? Colors.successSubtle
+                    : Colors.successSubtle,
                 },
               ]}
             >
@@ -163,16 +159,14 @@ export const TVSubtitleResultCard = React.forwardRef<
               style={[
                 styles.flag,
                 {
-                  backgroundColor: focused
-                    ? "rgba(0,0,0,0.1)"
-                    : "rgba(255,255,255,0.1)",
+                  backgroundColor: focused ? Colors.black10 : Colors.white10,
                 },
               ]}
             >
               <Ionicons
                 name='ear-outline'
                 size={12}
-                color={focused ? "#000" : "#fff"}
+                color={focused ? Colors.black : Colors.foreground}
               />
             </View>
           )}
@@ -182,8 +176,8 @@ export const TVSubtitleResultCard = React.forwardRef<
                 styles.flag,
                 {
                   backgroundColor: focused
-                    ? "rgba(0,0,150,0.2)"
-                    : "rgba(100,100,255,0.2)",
+                    ? Colors.infoSubtle
+                    : Colors.infoSubtle,
                 },
               ]}
             >
@@ -195,7 +189,7 @@ export const TVSubtitleResultCard = React.forwardRef<
         {/* Loading indicator when downloading */}
         {isDownloading && (
           <View style={styles.downloadingOverlay}>
-            <ActivityIndicator size='small' color='#fff' />
+            <ActivityIndicator size='small' color={Colors.foreground} />
           </View>
         )}
       </Animated.View>
@@ -263,11 +257,11 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
     flagText: {
       fontSize: typography.callout,
       fontWeight: "600",
-      color: "#fff",
+      color: Colors.foreground,
     },
     downloadingOverlay: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: Colors.black50,
       borderRadius: scaleSize(14),
       justifyContent: "center",
       alignItems: "center",

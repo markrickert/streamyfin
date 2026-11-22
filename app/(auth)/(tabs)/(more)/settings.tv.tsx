@@ -35,6 +35,7 @@ import {
   TVSettingsToggle,
   useTVBelowTabBarContentTop,
 } from "@/components/tv";
+import { Colors, SubtitleColors } from "@/constants/Colors";
 import { PERMISSION_ASKED_KEY } from "@/constants/Notifications";
 import { SUBTITLE_PREFETCH_CACHE_DIR } from "@/constants/Playback";
 import {
@@ -363,7 +364,7 @@ export default function SettingsTV() {
   // selector when the respective player is active. All pixel values scaled
   // so the layout holds on 4K TVs (see utils/scaleSize.ts).
   const playerNoteStyle = {
-    color: "#9CA3AF",
+    color: Colors.foregroundMuted,
     fontSize: typography.callout - 2,
     marginTop: scaleSize(4),
     marginBottom: scaleSize(12),
@@ -521,15 +522,30 @@ export default function SettingsTV() {
   const subtitleColorOptions: TVOptionItem<string>[] = useMemo(
     () =>
       [
-        { label: t("home.settings.subtitles.colors.white"), value: "#FFFFFF" },
-        { label: t("home.settings.subtitles.colors.yellow"), value: "#FFFF00" },
-        { label: t("home.settings.subtitles.colors.cyan"), value: "#00FFFF" },
-        { label: t("home.settings.subtitles.colors.green"), value: "#00FF00" },
+        {
+          label: t("home.settings.subtitles.colors.white"),
+          value: SubtitleColors.white,
+        },
+        {
+          label: t("home.settings.subtitles.colors.yellow"),
+          value: SubtitleColors.yellow,
+        },
+        {
+          label: t("home.settings.subtitles.colors.cyan"),
+          value: SubtitleColors.cyan,
+        },
+        {
+          label: t("home.settings.subtitles.colors.green"),
+          value: SubtitleColors.green,
+        },
         {
           label: t("home.settings.subtitles.colors.magenta"),
-          value: "#FF00FF",
+          value: SubtitleColors.magenta,
         },
-        { label: t("home.settings.subtitles.colors.red"), value: "#FF0000" },
+        {
+          label: t("home.settings.subtitles.colors.red"),
+          value: SubtitleColors.red,
+        },
       ].map((color) => ({
         ...color,
         selected: color.value === settings.subtitleColor,
@@ -841,7 +857,7 @@ export default function SettingsTV() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       <TVBelowTabBar>
         <ScrollView
           style={{ flex: 1 }}
@@ -857,7 +873,7 @@ export default function SettingsTV() {
             style={{
               fontSize: typography.title,
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: 8,
             }}
           >
@@ -1314,7 +1330,7 @@ export default function SettingsTV() {
           />
           <Text
             style={{
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               fontSize: typography.callout - 2,
               marginBottom: 16,
               marginLeft: 8,
@@ -1338,7 +1354,7 @@ export default function SettingsTV() {
           />
           <Text
             style={{
-              color: "#6B7280",
+              color: Colors.foregroundDisabled,
               fontSize: typography.callout - 4,
               marginTop: 8,
               marginLeft: 8,

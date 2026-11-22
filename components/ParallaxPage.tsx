@@ -144,7 +144,7 @@ export const ParallaxScrollView: React.FC<PropsWithChildren<Props>> = ({
         >
           <LinearGradient
             // Background Linear Gradient
-            colors={["transparent", "rgba(0,0,0,1)"]}
+            colors={[Colors.transparent, Colors.black]}
             style={{
               position: "absolute",
               left: 0,

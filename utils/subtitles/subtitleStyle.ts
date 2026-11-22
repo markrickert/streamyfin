@@ -3,19 +3,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+import { Colors } from "@/constants/Colors";
 import type {
   NativePlayerSubtitleStyle,
   SubtitleStyleConfig,
 } from "../../modules/mpv-player";
 import type { Settings } from "../atoms/settings";
 
-const normalizedColor = (color?: string) => (color ?? "#FFFFFF").toUpperCase();
+const normalizedColor = (color?: string) =>
+  (color ?? Colors.white).toUpperCase();
 
 export const hasCustomSubtitleStyle = (settings: Settings): boolean =>
   (settings.subtitleBackground ?? false) ||
   Math.abs((settings.subtitleSize ?? 1) - 1) > 0.001 ||
   (settings.subtitleFont ?? "System") !== "System" ||
-  normalizedColor(settings.subtitleColor) !== "#FFFFFF" ||
+  normalizedColor(settings.subtitleColor) !== Colors.white ||
   (settings.subtitleMarginY ?? 25) !== 25 ||
   (settings.subtitleAlignX ?? "center") !== "center" ||
   (settings.subtitleAlignY ?? "bottom") !== "bottom";

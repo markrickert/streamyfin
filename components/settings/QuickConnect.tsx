@@ -25,6 +25,7 @@ import {
   type ViewProps,
 } from "react-native";
 import { DismissKeyboardArea } from "@/components/common/DismissKeyboardArea";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useServerVersion } from "@/hooks/useServerVersion";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -157,7 +158,11 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
         <Text numberOfLines={1} className='flex-1 mr-2'>
           {targetUser?.Name}
         </Text>
-        <Ionicons name='chevron-expand-sharp' size={18} color='#5A5960' />
+        <Ionicons
+          name='chevron-expand-sharp'
+          size={18}
+          color={Colors.foregroundDisabled}
+        />
       </View>
     ),
     [targetUser?.Name],
@@ -309,10 +314,10 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
         ref={bottomSheetModalRef}
         snapPoints={snapPoints}
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
-          backgroundColor: "#171717",
+          backgroundColor: Colors.surface,
         }}
         backdropComponent={renderBackdrop}
         keyboardBehavior={isAndroid ? "fillParent" : "interactive"}
@@ -378,7 +383,11 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
                     onPress={pasteCode}
                     className='flex-row items-center justify-center self-center'
                   >
-                    <Feather name='clipboard' size={15} color='#a3a3a3' />
+                    <Feather
+                      name='clipboard'
+                      size={15}
+                      color={Colors.foregroundMuted}
+                    />
                     <Text className='text-neutral-400 ml-2'>
                       {t("home.settings.quick_connect.paste_code")}
                     </Text>

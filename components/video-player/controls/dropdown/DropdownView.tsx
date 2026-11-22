@@ -25,6 +25,7 @@ import {
   PlatformDropdown,
 } from "@/components/PlatformDropdown";
 import { PLAYBACK_SPEEDS } from "@/components/PlaybackSpeedSelector";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useOfflineMode } from "@/providers/OfflineModeProvider";
 import { useSettings } from "@/utils/atoms/settings";
@@ -86,7 +87,11 @@ const SubtitleScaleControl = ({
               className='h-8 w-8 items-center justify-center'
               accessibilityLabel={t("common.close")}
             >
-              <Ionicons name='close-circle' size={24} color='#d4d4d4' />
+              <Ionicons
+                name='close-circle'
+                size={24}
+                color={Colors.foreground}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -136,9 +141,9 @@ const SubtitleScaleControl = ({
               onValueChange={updateSubtitleScale}
               containerStyle={{ borderRadius: 100 }}
               theme={{
-                minimumTrackTintColor: "#fff",
-                maximumTrackTintColor: "rgba(255,255,255,0.2)",
-                disableMinTrackTintColor: "rgba(255,255,255,0.35)",
+                minimumTrackTintColor: Colors.white,
+                maximumTrackTintColor: Colors.white20,
+                disableMinTrackTintColor: Colors.white30,
               }}
             />
           </View>
@@ -444,7 +449,11 @@ const DropdownView = ({
   const trigger = useMemo(
     () => (
       <View className='aspect-square flex flex-col rounded-xl items-center justify-center p-2'>
-        <Ionicons name='ellipsis-horizontal' size={24} color={"white"} />
+        <Ionicons
+          name='ellipsis-horizontal'
+          size={24}
+          color={Colors.foreground}
+        />
       </View>
     ),
     [],
@@ -471,8 +480,8 @@ const DropdownView = ({
           enablePanDownToClose
           stackBehavior='push'
           backdropComponent={renderSubtitleScaleBackdrop}
-          backgroundStyle={{ backgroundColor: "#171717" }}
-          handleIndicatorStyle={{ backgroundColor: "white" }}
+          backgroundStyle={{ backgroundColor: Colors.surface }}
+          handleIndicatorStyle={{ backgroundColor: Colors.white }}
         >
           <SubtitleScaleControl />
         </BottomSheetModal>
@@ -486,14 +495,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingTop: 64,
-    backgroundColor: "rgba(0,0,0,0.15)",
+    backgroundColor: Colors.black10,
   },
   subtitleScaleOverlay: {
     width: "50%",
     maxWidth: 520,
     minWidth: 360,
     borderRadius: 16,
-    backgroundColor: "rgba(23,23,23,0.94)",
+    backgroundColor: Colors.surfaceTranslucent,
     elevation: 12,
   },
 });

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TVFocusGuideView, View, type ViewStyle } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TV_CAST_KINDS, TV_CAST_TEXT_LIMIT } from "@/constants/CastCrew";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useCastCrew, useCreditLines } from "@/hooks/useCastCrew";
 import { scaleSize } from "@/utils/scaleSize";
@@ -45,7 +46,7 @@ export const TVCastCrewText: React.FC<TVCastCrewTextProps> = React.memo(
 
     const labelStyle = {
       fontSize: typography.callout,
-      color: "#6B7280",
+      color: Colors.foregroundDisabled,
       textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: scaleSize(4),
@@ -90,7 +91,7 @@ export const TVCastCrewText: React.FC<TVCastCrewTextProps> = React.memo(
                       key={name}
                       style={{
                         fontSize: typography.callout,
-                        color: "#FFFFFF",
+                        color: Colors.foreground,
                         paddingVertical: scaleSize(10),
                       }}
                     >
@@ -100,7 +101,9 @@ export const TVCastCrewText: React.FC<TVCastCrewTextProps> = React.memo(
                 )}
               </View>
             ) : (
-              <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+              <Text
+                style={{ fontSize: typography.body, color: Colors.foreground }}
+              >
                 {line.people.map((person) => person.name).join(", ")}
               </Text>
             )}
@@ -117,7 +120,9 @@ export const TVCastCrewText: React.FC<TVCastCrewTextProps> = React.memo(
             }}
           >
             <Text style={labelStyle}>{t("item_card.cast")}</Text>
-            <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+            <Text
+              style={{ fontSize: typography.body, color: Colors.foreground }}
+            >
               {cast.map((person) => person.Name).join(", ")}
             </Text>
           </View>
@@ -131,7 +136,7 @@ export const TVCastCrewText: React.FC<TVCastCrewTextProps> = React.memo(
           style={{
             fontSize: typography.heading,
             fontWeight: "600",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(16),
           }}
         >

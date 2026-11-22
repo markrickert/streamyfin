@@ -2,6 +2,7 @@ import type React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useCustomHeaderRows } from "@/hooks/useCustomHeaderRows";
 import { useTVOptionModal } from "@/hooks/useTVOptionModal";
@@ -74,7 +75,7 @@ export function TVCustomHeaderEditor({
     <View style={{ marginBottom: scaleSize(24), opacity: disabled ? 0.4 : 1 }}>
       <Text
         style={{
-          color: "#FFFFFF",
+          color: Colors.foreground,
           fontSize: typography.body,
           fontWeight: "600",
           marginBottom: scaleSize(8),

@@ -6,6 +6,7 @@ import {
   View,
   type ViewStyle,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import type { ServerUrlResolverState } from "@/hooks/useServerUrlResolver";
 import { Text } from "./Text";
 
@@ -35,7 +36,7 @@ export function ServerUrlStatusText({
   if (state.status === "resolving") {
     return (
       <View style={style} className='flex-row items-center'>
-        <ActivityIndicator size='small' color='#9ca3af' />
+        <ActivityIndicator size='small' color={Colors.foregroundMuted} />
         <Text className='text-xs text-neutral-400 ml-2'>
           {t("server_url.resolving")}
         </Text>

@@ -7,6 +7,7 @@ import {
   type TextInputInstance,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
@@ -57,9 +58,7 @@ export const TVSettingsTextInput: React.FC<TVSettingsTextInputProps> = ({
         style={[
           animatedStyle,
           {
-            backgroundColor: focused
-              ? "rgba(255, 255, 255, 0.15)"
-              : "rgba(255, 255, 255, 0.05)",
+            backgroundColor: focused ? Colors.white10 : Colors.white05,
             borderRadius: scaleSize(12),
             paddingVertical: scaleSize(16),
             paddingHorizontal: scaleSize(24),
@@ -71,7 +70,7 @@ export const TVSettingsTextInput: React.FC<TVSettingsTextInputProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             marginBottom: scaleSize(8),
           }}
         >
@@ -81,7 +80,7 @@ export const TVSettingsTextInput: React.FC<TVSettingsTextInputProps> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#EF4444",
+              color: Colors.danger,
               marginBottom: scaleSize(8),
             }}
           >
@@ -92,7 +91,7 @@ export const TVSettingsTextInput: React.FC<TVSettingsTextInputProps> = ({
           ref={inputRef}
           value={value}
           placeholder={placeholder}
-          placeholderTextColor='#6B7280'
+          placeholderTextColor={Colors.foregroundDisabled}
           onChangeText={onChangeText}
           onBlur={handleInputBlur}
           secureTextEntry={secureTextEntry}
@@ -100,13 +99,13 @@ export const TVSettingsTextInput: React.FC<TVSettingsTextInputProps> = ({
           autoCorrect={false}
           style={{
             fontSize: typography.body,
-            color: "#FFFFFF",
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            color: Colors.foreground,
+            backgroundColor: Colors.white05,
             borderRadius: scaleSize(8),
             paddingVertical: scaleSize(12),
             paddingHorizontal: scaleSize(16),
             borderWidth: focused ? scaleSize(2) : scaleSize(1),
-            borderColor: focused ? "#FFFFFF" : "#4B5563",
+            borderColor: focused ? Colors.white : Colors.border,
           }}
         />
       </Animated.View>

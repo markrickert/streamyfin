@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import type { SyncPlayGroup } from "@/providers/SyncPlayProvider";
 import type { SyncPlaySeed } from "@/utils/syncplay/types";
 import { SyncPlayOptions, SyncPlayPlayback } from "./SyncPlayControls";
@@ -18,8 +19,8 @@ interface Props {
   onQueueDragChange?: (dragging: boolean) => void;
 }
 
-const PLAYING = "#c084fc";
-const SECONDARY = "#9899A1";
+const PLAYING = Colors.accent;
+const SECONDARY = Colors.foregroundMuted;
 
 /**
  * Everything SyncPlay outside the player: the groups to join and a way to
@@ -182,7 +183,7 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
             testID='syncplay-leave'
             icon='log-out-outline'
             title={t("syncplay.leave")}
-            color='#f87171'
+            color={Colors.dangerLight}
             disabled={!connected || busy}
             onPress={() => void sync.leaveGroup().catch(() => {})}
           />
@@ -215,7 +216,7 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
           style={{ gap: 12 }}
         >
           <View className='w-12 h-12 rounded bg-neutral-800 items-center justify-center'>
-            <Ionicons name='chevron-back' size={22} color='white' />
+            <Ionicons name='chevron-back' size={22} color={Colors.foreground} />
           </View>
           <Text className='text-white font-semibold text-base flex-1'>
             {t("syncplay.back_to_group", { name: group.GroupName })}
@@ -232,7 +233,7 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
             style={{ gap: 12, opacity: !available || busy ? 0.5 : 1 }}
           >
             <View className='w-12 h-12 rounded bg-purple-600 items-center justify-center'>
-              <Ionicons name='add' size={26} color='white' />
+              <Ionicons name='add' size={26} color={Colors.foreground} />
             </View>
             <View className='flex-1'>
               <Text className='text-white font-semibold text-base'>

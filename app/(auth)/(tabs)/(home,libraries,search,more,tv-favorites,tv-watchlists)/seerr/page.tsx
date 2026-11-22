@@ -308,7 +308,7 @@ const MobilePage: React.FC = () => {
                 <Ionicons
                   name='image-outline'
                   size={24}
-                  color='white'
+                  color={Colors.foreground}
                   style={{ opacity: 0.4 }}
                 />
               </View>
@@ -382,7 +382,7 @@ const MobilePage: React.FC = () => {
                           <Ionicons
                             name='play-outline'
                             size={20}
-                            color='white'
+                            color={Colors.foreground}
                           />
                         }
                         style={{
@@ -427,7 +427,7 @@ const MobilePage: React.FC = () => {
                         <Ionicons
                           name='warning-outline'
                           size={20}
-                          color='white'
+                          color={Colors.foreground}
                         />
                       </TouchableOpacity>
                     )}
@@ -450,7 +450,11 @@ const MobilePage: React.FC = () => {
                     className='flex flex-row items-center'
                     style={{ gap: 8 }}
                   >
-                    <Ionicons name='person-outline' size={16} color='#9CA3AF' />
+                    <Ionicons
+                      name='person-outline'
+                      size={16}
+                      color={Colors.foregroundMuted}
+                    />
                     <Text className='text-sm text-neutral-400'>
                       {t("seerr.requested_by", {
                         user:
@@ -470,7 +474,7 @@ const MobilePage: React.FC = () => {
                         <Ionicons
                           name='checkmark-outline'
                           size={20}
-                          color='white'
+                          color={Colors.foreground}
                         />
                       }
                       style={{
@@ -488,7 +492,7 @@ const MobilePage: React.FC = () => {
                         <Ionicons
                           name='close-outline'
                           size={20}
-                          color='white'
+                          color={Colors.foreground}
                         />
                       }
                       style={{
@@ -549,7 +553,7 @@ const MobilePage: React.FC = () => {
           ref={bottomSheetModalRef}
           enableDynamicSizing
           handleIndicatorStyle={{
-            backgroundColor: "white",
+            backgroundColor: Colors.white,
           }}
           backgroundStyle={{
             backgroundColor: Colors.surface,
@@ -591,10 +595,10 @@ const MobilePage: React.FC = () => {
                   <BottomSheetTextInput
                     multiline
                     maxLength={254}
-                    style={{ color: "white" }}
+                    style={{ color: Colors.foreground }}
                     clearButtonMode='always'
                     placeholder={t("seerr.issue_details")}
-                    placeholderTextColor='#9CA3AF'
+                    placeholderTextColor={Colors.foregroundMuted}
                     // Issue with multiline + Textinput inside a portal
                     // https://github.com/callstack/react-native-paper/issues/1668
                     defaultValue={issueMessage}

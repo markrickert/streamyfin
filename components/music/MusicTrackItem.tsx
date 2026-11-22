@@ -6,6 +6,7 @@ import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { AnimatedEqualizer } from "@/components/music/AnimatedEqualizer";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import {
@@ -140,7 +141,7 @@ export const MusicTrackItem: React.FC<Props> = ({
             height: 44,
             borderRadius: 4,
             overflow: "hidden",
-            backgroundColor: "#1a1a1a",
+            backgroundColor: Colors.surface,
             marginRight: 12,
           }}
         >
@@ -153,7 +154,11 @@ export const MusicTrackItem: React.FC<Props> = ({
             />
           ) : (
             <View className='flex-1 items-center justify-center bg-neutral-800'>
-              <Ionicons name='musical-note' size={18} color='#737373' />
+              <Ionicons
+                name='musical-note'
+                size={18}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           )}
           {isTrackLoading && (
@@ -164,12 +169,12 @@ export const MusicTrackItem: React.FC<Props> = ({
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                backgroundColor: Colors.black60,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ActivityIndicator size='small' color='white' />
+              <ActivityIndicator size='small' color={Colors.foreground} />
             </View>
           )}
         </View>
@@ -195,7 +200,7 @@ export const MusicTrackItem: React.FC<Props> = ({
       {downloadStatus === "downloading" && (
         <ActivityIndicator
           size={14}
-          color='#9334E9'
+          color={Colors.primary}
           style={{ marginRight: 8 }}
         />
       )}
@@ -203,7 +208,7 @@ export const MusicTrackItem: React.FC<Props> = ({
         <Ionicons
           name='checkmark-circle'
           size={14}
-          color='#22c55e'
+          color={Colors.success}
           style={{ marginRight: 8 }}
         />
       )}
@@ -218,7 +223,11 @@ export const MusicTrackItem: React.FC<Props> = ({
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           className='pl-3 py-1'
         >
-          <Ionicons name='ellipsis-vertical' size={16} color='#737373' />
+          <Ionicons
+            name='ellipsis-vertical'
+            size={16}
+            color={Colors.foregroundDisabled}
+          />
         </TouchableOpacity>
       )}
     </TouchableOpacity>

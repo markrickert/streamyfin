@@ -108,7 +108,7 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
       onPress={() => handleDeleteAccount(account)}
       className='bg-red-600 justify-center items-center px-5'
     >
-      <Ionicons name='trash' size={20} color='white' />
+      <Ionicons name='trash' size={20} color={Colors.foreground} />
     </TouchableOpacity>
   );
 
@@ -120,8 +120,8 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
       onDismiss={handleDismissed}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
-      handleIndicatorStyle={{ backgroundColor: "white" }}
-      backgroundStyle={{ backgroundColor: "#171717" }}
+      handleIndicatorStyle={{ backgroundColor: Colors.white }}
+      backgroundStyle={{ backgroundColor: Colors.surface }}
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView
@@ -164,7 +164,11 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
                 >
                   {/* Avatar */}
                   <View className='w-10 h-10 bg-neutral-700 rounded-full items-center justify-center mr-3'>
-                    <Ionicons name='person' size={20} color='white' />
+                    <Ionicons
+                      name='person'
+                      size={20}
+                      color={Colors.foreground}
+                    />
                   </View>
 
                   {/* Account Info */}
@@ -206,7 +210,7 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
             color='purple'
           >
             <View className='flex-row items-center justify-center'>
-              <Ionicons name='add' size={20} color='white' />
+              <Ionicons name='add' size={20} color={Colors.foreground} />
               <Text className='text-white font-semibold ml-2'>
                 {t("server.add_account")}
               </Text>

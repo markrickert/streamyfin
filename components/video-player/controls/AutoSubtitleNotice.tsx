@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 export type AutoSubtitleNoticeKind = "enabled" | "restart-required" | "none";
@@ -41,7 +42,7 @@ export const AutoSubtitleNotice: FC<{
   const label = (
     <Text
       style={{
-        color: "white",
+        color: Colors.foreground,
         fontSize: Platform.isTV ? typography.callout : 14,
         textAlign: "center",
       }}
@@ -75,7 +76,7 @@ export const AutoSubtitleNotice: FC<{
           style={{
             paddingHorizontal: 16,
             paddingVertical: 10,
-            backgroundColor: "rgba(0,0,0,0.75)",
+            backgroundColor: Colors.black60,
           }}
         >
           {label}

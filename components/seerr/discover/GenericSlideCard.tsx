@@ -4,10 +4,11 @@ import type React from "react";
 import { StyleSheet, View, type ViewProps } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 
 export const textShadowStyle = StyleSheet.create({
   shadow: {
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: {
       width: 1,
       height: 1,
@@ -31,7 +32,7 @@ const GenericSlideCard: React.FC<
   id,
   url,
   title,
-  colors = ["#9333ea", "transparent"],
+  colors = [Colors.primary, Colors.transparent],
   contentFit = "contain",
   ...props
 }) => (

@@ -18,7 +18,7 @@ export const AddToFavorites: FC<Props> = ({ item, ...props }) => {
       <RoundButton size='large' onPress={toggleFavorite}>
         <HeaderIcon
           name={isFavorite ? "favorited" : "favorite"}
-          tintColor={isFavorite ? Colors.primary : "white"}
+          tintColor={isFavorite ? Colors.primary : Colors.foreground}
         />
       </RoundButton>
     </View>

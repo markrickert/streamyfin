@@ -8,6 +8,7 @@ import GoogleCast, {
   useMediaStatus,
   useRemoteMediaClient,
 } from "react-native-google-cast";
+import { Colors } from "@/constants/Colors";
 import { logAndCaptureError } from "@/utils/log";
 import { HeaderButton, type HeaderButtonProps } from "./common/HeaderButton";
 import { HeaderIcon } from "./common/HeaderIcon";
@@ -53,7 +54,7 @@ export function Chromecast(props: Props) {
           grid — hence absolute + transparent rather than a sibling. */}
       {Platform.OS === "android" ? (
         <View style={{ position: "absolute", opacity: 0 }} pointerEvents='none'>
-          <CastButton tintColor='transparent' />
+          <CastButton tintColor={Colors.transparent} />
         </View>
       ) : null}
       <HeaderIcon name='cast' />

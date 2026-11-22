@@ -3,6 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import React from "react";
 import { Platform, View, type ViewStyle } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { scaleSize } from "@/utils/scaleSize";
 
 const isAggregateType = (item: BaseItemDto) =>
@@ -15,7 +16,7 @@ const tvBadgeBase: ViewStyle = {
   right: scaleSize(8),
   height: scaleSize(28),
   borderRadius: scaleSize(14),
-  backgroundColor: "rgba(255,255,255,0.92)",
+  backgroundColor: Colors.white80,
   alignItems: "center",
   justifyContent: "center",
 };
@@ -27,7 +28,7 @@ const mobileBadgeBase: ViewStyle = {
   right: 4,
   height: 20,
   borderRadius: 10,
-  backgroundColor: "#9333ea",
+  backgroundColor: Colors.primary,
   alignItems: "center",
   justifyContent: "center",
 };
@@ -60,7 +61,7 @@ export const UnplayedCountBadge: React.FC<{ item: BaseItemDto }> = React.memo(
             style={{
               fontSize: scaleSize(15),
               fontWeight: "700",
-              color: "black",
+              color: Colors.black,
             }}
           >
             {label}
@@ -71,7 +72,9 @@ export const UnplayedCountBadge: React.FC<{ item: BaseItemDto }> = React.memo(
 
     return (
       <View style={[mobileBadgeBase, { minWidth: 20, paddingHorizontal: 5 }]}>
-        <Text style={{ fontSize: 12, fontWeight: "700", color: "white" }}>
+        <Text
+          style={{ fontSize: 12, fontWeight: "700", color: Colors.foreground }}
+        >
           {label}
         </Text>
       </View>
@@ -89,7 +92,11 @@ export const WatchedIndicator: React.FC<{ item: BaseItemDto }> = ({ item }) => {
     if (isPlayed && (isMovieOrEpisode || isAggregate)) {
       return (
         <View style={[tvBadgeBase, { width: scaleSize(28) }]}>
-          <Ionicons name='checkmark' size={scaleSize(18)} color='black' />
+          <Ionicons
+            name='checkmark'
+            size={scaleSize(18)}
+            color={Colors.black}
+          />
         </View>
       );
     }
@@ -108,7 +115,7 @@ export const WatchedIndicator: React.FC<{ item: BaseItemDto }> = ({ item }) => {
       {/* Fully watched Series/BoxSet → small purple checkmark */}
       {isAggregate && isPlayed && (
         <View style={[mobileBadgeBase, { width: 20 }]}>
-          <Ionicons name='checkmark' size={13} color='white' />
+          <Ionicons name='checkmark' size={13} color={Colors.foreground} />
         </View>
       )}
 

@@ -33,6 +33,7 @@ import { TVSimilarItems } from "@/components/TVSimilarItems";
 import { TVButton } from "@/components/tv/TVButton";
 import { TVCastCrewText } from "@/components/tv/TVCastCrewText";
 import { TVFavoriteButton } from "@/components/tv/TVFavoriteButton";
+import { Colors } from "@/constants/Colors";
 import {
   TV_DETAIL_HEADER_MIN_HEIGHT_RATIO,
   TV_DETAIL_POSTER_WIDTH_RATIO,
@@ -388,7 +389,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
   if (!item) return null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       {/* Full-screen backdrop */}
       <View
         style={{
@@ -406,7 +407,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
         />
         {/* Gradient overlays for readability */}
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
+          colors={[Colors.transparent, Colors.black60, Colors.black80]}
           locations={[0, 0.5, 1]}
           style={{
             position: "absolute",
@@ -417,7 +418,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
           }}
         />
         <LinearGradient
-          colors={["rgba(0,0,0,0.8)", "transparent"]}
+          colors={[Colors.black80, Colors.transparent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.6, y: 0 }}
           style={{
@@ -470,14 +471,14 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
                 <Ionicons
                   name='play'
                   size={scaleSize(28)}
-                  color='#000000'
+                  color={Colors.black}
                   style={{ marginRight: scaleSize(10) }}
                 />
                 <Text
                   style={{
                     fontSize: typography.callout,
                     fontWeight: "bold",
-                    color: "#000000",
+                    color: Colors.black,
                   }}
                 >
                   {playButtonText}
@@ -494,7 +495,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                       marginRight: scaleSize(10),
                     }}
                   >
@@ -503,7 +504,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
                   <Ionicons
                     name='chevron-down'
                     size={scaleSize(28)}
-                    color='#FFFFFF'
+                    color={Colors.foreground}
                   />
                 </TVButton>
               )}
@@ -517,14 +518,14 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
                   <Ionicons
                     name='shuffle'
                     size={scaleSize(28)}
-                    color='#000000'
+                    color={Colors.black}
                     style={{ marginRight: scaleSize(10) }}
                   />
                   <Text
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#000000",
+                      color: Colors.black,
                     }}
                   >
                     {t("player.shuffle")}
@@ -548,7 +549,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
                 aspectRatio: 2 / 3,
                 borderRadius: scaleSize(16),
                 overflow: "hidden",
-                shadowColor: "#000",
+                shadowColor: Colors.black,
                 shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: 0.5,
                 shadowRadius: 20,
@@ -569,7 +570,7 @@ export const TVSeriesPage: React.FC<TVSeriesPageProps> = ({
             style={{
               fontSize: typography.heading,
               fontWeight: "600",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: scaleSize(24),
               marginLeft: SCALE_PADDING,
             }}

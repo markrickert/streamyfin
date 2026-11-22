@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { Slider } from "react-native-awesome-slider";
 import { type SharedValue } from "react-native-reanimated";
 import { Image } from "@/components/common/ServerImage";
+import { Colors } from "@/constants/Colors";
 import { useTrickplay } from "@/hooks/useTrickplay";
 import { formatTimeString, msToTicks, ticksToSeconds } from "@/utils/time";
 
@@ -50,12 +51,12 @@ const SliderScrubber: React.FC<SliderScrubberProps> = ({
     <View className={"flex flex-col w-full shrink"}>
       <Slider
         theme={{
-          maximumTrackTintColor: "rgba(255,255,255,0.2)",
-          minimumTrackTintColor: "#fff",
-          cacheTrackTintColor: "rgba(255,255,255,0.3)",
-          bubbleBackgroundColor: "#fff",
-          bubbleTextColor: "#000",
-          heartbeatColor: "#999",
+          maximumTrackTintColor: Colors.white20,
+          minimumTrackTintColor: Colors.white,
+          cacheTrackTintColor: Colors.white30,
+          bubbleBackgroundColor: Colors.white,
+          bubbleTextColor: Colors.black,
+          heartbeatColor: Colors.foregroundMuted,
         }}
         cache={cacheProgress}
         onSlidingStart={handleSliderStart}
@@ -106,8 +107,8 @@ const SliderScrubber: React.FC<SliderScrubberProps> = ({
                   position: "absolute",
                   bottom: 5,
                   left: 5,
-                  color: "white",
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  color: Colors.foreground,
+                  backgroundColor: Colors.black50,
                   padding: 5,
                   borderRadius: 5,
                 }}

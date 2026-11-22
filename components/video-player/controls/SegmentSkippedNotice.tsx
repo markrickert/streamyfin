@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import type { SegmentType } from "@/hooks/useSegmentSkipper";
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: Platform.isTV ? "transparent" : "rgba(0,0,0,0.6)",
+    backgroundColor: Platform.isTV ? Colors.transparent : Colors.black60,
   },
   blur: {
     paddingHorizontal: 24,
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   label: {
-    color: "#FFFFFF",
+    color: Colors.foreground,
     fontWeight: "500",
   },
 });

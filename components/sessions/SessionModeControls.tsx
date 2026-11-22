@@ -145,7 +145,7 @@ export const SessionModeControls = ({ session }: Props) => {
           <Ionicons
             name='shuffle'
             size={24}
-            color={shuffled ? Colors.primary : "white"}
+            color={shuffled ? Colors.primary : Colors.foreground}
           />
         </TouchableOpacity>
       )}
@@ -159,7 +159,7 @@ export const SessionModeControls = ({ session }: Props) => {
           <Ionicons
             name='repeat'
             size={24}
-            color={repeating ? Colors.primary : "white"}
+            color={repeating ? Colors.primary : Colors.foreground}
           />
           {repeat.mode === RepeatMode.RepeatOne && (
             <View className='absolute -right-2 -top-1 bg-purple-600 rounded-full w-4 h-4 items-center justify-center'>

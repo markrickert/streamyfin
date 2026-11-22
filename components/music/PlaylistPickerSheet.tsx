@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Input } from "@/components/common/Input";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useAddToPlaylist } from "@/hooks/usePlaylistMutations";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -148,10 +149,10 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
     >
       <BottomSheetScrollView
@@ -183,7 +184,7 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
           className='flex-row items-center bg-purple-900/30 rounded-xl px-4 py-3.5 mb-4'
         >
           <View className='w-12 h-12 rounded-lg bg-purple-600 items-center justify-center mr-3'>
-            <Ionicons name='add' size={28} color='white' />
+            <Ionicons name='add' size={28} color={Colors.foreground} />
           </View>
           <Text className='text-purple-400 font-semibold text-base'>
             {t("music.playlists.create_new")}
@@ -192,7 +193,7 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
 
         {isLoading ? (
           <View className='py-8 items-center'>
-            <ActivityIndicator color='#9334E9' />
+            <ActivityIndicator color={Colors.primary} />
           </View>
         ) : filteredPlaylists.length === 0 ? (
           <View className='py-8 items-center'>
@@ -215,7 +216,7 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
                       height: 48,
                       borderRadius: 6,
                       overflow: "hidden",
-                      backgroundColor: "#1a1a1a",
+                      backgroundColor: Colors.surface,
                       marginRight: 12,
                     }}
                   >
@@ -237,7 +238,7 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
                     </Text>
                   </View>
                   {addToPlaylist.isPending && (
-                    <ActivityIndicator size='small' color='#9334E9' />
+                    <ActivityIndicator size='small' color={Colors.primary} />
                   )}
                 </TouchableOpacity>
                 {index < filteredPlaylists.length - 1 && (
@@ -255,6 +256,6 @@ export const PlaylistPickerSheet: React.FC<Props> = ({
 const styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#404040",
+    backgroundColor: Colors.border,
   },
 });

@@ -10,6 +10,7 @@ import {
   type ViewInstance,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { requestTVFocus } from "@/utils/requestTVFocus";
 import { scaleSize } from "@/utils/scaleSize";
@@ -165,7 +166,7 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      backgroundColor: Colors.black50,
       justifyContent: "flex-end",
       zIndex: 1000,
     },
@@ -185,7 +186,7 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
     title: {
       fontSize: typography.callout,
       fontWeight: "500",
-      color: "rgba(255,255,255,0.6)",
+      color: Colors.foregroundMuted,
       marginBottom: scaleSize(16),
       paddingHorizontal: scaleSize(48),
       textTransform: "uppercase",

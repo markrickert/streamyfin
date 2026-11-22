@@ -32,6 +32,7 @@ import {
 } from "@/components/home/TVHomeBackdrop";
 import { useHomeInitialFocus } from "@/components/home/useHomeInitialFocus";
 import { Loader } from "@/components/Loader";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { UPCOMING_HOME_PAGE_SIZE } from "@/constants/Upcoming";
 import useRouter from "@/hooks/useAppRouter";
@@ -507,7 +508,7 @@ export const Home = () => {
             fontSize: typography.heading,
             fontWeight: "bold",
             marginBottom: 8,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {title}
@@ -517,7 +518,7 @@ export const Home = () => {
             textAlign: "center",
             opacity: 0.7,
             fontSize: typography.body,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {subtitle}
@@ -531,12 +532,12 @@ export const Home = () => {
             className='px-4'
             iconRight={
               retryLoading ? null : (
-                <Ionicons name='refresh' size={24} color='white' />
+                <Ionicons name='refresh' size={24} color={Colors.foreground} />
               )
             }
           >
             {retryLoading ? (
-              <ActivityIndicator size='small' color='white' />
+              <ActivityIndicator size='small' color={Colors.foreground} />
             ) : (
               t("home.retry")
             )}
@@ -560,7 +561,7 @@ export const Home = () => {
             fontSize: typography.heading,
             fontWeight: "bold",
             marginBottom: 8,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {t("home.oops")}
@@ -570,7 +571,7 @@ export const Home = () => {
             textAlign: "center",
             opacity: 0.7,
             fontSize: typography.body,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {t("home.error_message")}
@@ -586,7 +587,7 @@ export const Home = () => {
     );
 
   return (
-    <View key={cacheVersion} style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View key={cacheVersion} style={{ flex: 1, backgroundColor: Colors.black }}>
       {/* Dynamic backdrop with crossfade - only shown when hero is disabled */}
       {isBackdropVisible && <TVHomeBackdrop ref={backdropRef} />}
 

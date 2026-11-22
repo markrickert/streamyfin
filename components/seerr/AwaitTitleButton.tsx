@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { AWAITED_TITLE_EVENT } from "@/constants/Notifications";
 import { useAwaitedTitles } from "@/hooks/useAwaitedTitles";
 import { useMyNotifications } from "@/hooks/useMyNotifications";
@@ -80,7 +81,7 @@ export const AwaitTitleButton: React.FC<{
         <Ionicons
           name={waiting ? "notifications" : "notifications-outline"}
           size={20}
-          color='white'
+          color={Colors.foreground}
         />
       }
     >

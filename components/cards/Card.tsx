@@ -62,7 +62,7 @@ const CardComponent: React.FC<CardProps> = ({
         height: 3,
         borderRadius: 2,
         marginTop: 5,
-        backgroundColor: "rgba(255,255,255,0.25)",
+        backgroundColor: Colors.white20,
       }}
     >
       <View
@@ -95,7 +95,7 @@ const CardComponent: React.FC<CardProps> = ({
           <>
             {/* Frosted band, faded in from nothing so the text stays readable. */}
             <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.85)"]}
+              colors={[Colors.transparent, Colors.black80]}
               pointerEvents='none'
               style={{
                 position: "absolute",
@@ -126,7 +126,7 @@ const CardComponent: React.FC<CardProps> = ({
               {Boolean(card.subtitle) && (
                 <Text
                   numberOfLines={1}
-                  style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}
+                  style={{ fontSize: 11, color: Colors.foregroundMuted }}
                 >
                   {card.subtitle}
                 </Text>
@@ -149,7 +149,7 @@ const CardComponent: React.FC<CardProps> = ({
           {Boolean(card.subtitle) && (
             <Text
               numberOfLines={1}
-              style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}
+              style={{ fontSize: 11, color: Colors.foregroundMuted }}
             >
               {card.subtitle}
             </Text>
@@ -157,7 +157,7 @@ const CardComponent: React.FC<CardProps> = ({
           {Boolean(card.detail) && (
             <Text
               numberOfLines={1}
-              style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}
+              style={{ fontSize: 11, color: Colors.foregroundMuted }}
             >
               {card.detail}
             </Text>

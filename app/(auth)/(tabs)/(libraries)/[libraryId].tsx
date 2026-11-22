@@ -56,6 +56,7 @@ import {
 } from "@/components/library/TVLibraryToolbar";
 import { TVFocusablePoster } from "@/components/tv";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { TAB_HEIGHT } from "@/constants/Values";
@@ -834,7 +835,7 @@ const LibraryPage = () => {
                   aspectRatio: 1,
                   borderRadius: 16,
                   overflow: "hidden",
-                  backgroundColor: "#1a1a1a",
+                  backgroundColor: Colors.surface,
                 }}
               >
                 <Image
@@ -850,7 +851,7 @@ const LibraryPage = () => {
                 numberOfLines={1}
                 style={{
                   fontSize: typography.callout,
-                  color: "#FFFFFF",
+                  color: Colors.foreground,
                   textAlign: "center",
                 }}
               >
@@ -1657,7 +1658,12 @@ const LibraryPage = () => {
             paddingTop: 100,
           }}
         >
-          <Text style={{ fontSize: typography.body, color: "#737373" }}>
+          <Text
+            style={{
+              fontSize: typography.body,
+              color: Colors.foregroundDisabled,
+            }}
+          >
             {t("library.no_results")}
           </Text>
         </View>
@@ -1704,7 +1710,12 @@ const LibraryNotFound = () => {
   return (
     <View className='w-full h-full flex items-center justify-center px-8'>
       {Platform.isTV ? (
-        <Text style={{ fontSize: typography.body, color: "#737373" }}>
+        <Text
+          style={{
+            fontSize: typography.body,
+            color: Colors.foregroundDisabled,
+          }}
+        >
           {t("not_found.title")}
         </Text>
       ) : (

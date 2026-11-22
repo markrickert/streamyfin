@@ -27,6 +27,7 @@ import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { TVSeriesPage } from "@/components/series/TVSeriesPage";
 import { useSeriesQueries } from "@/components/series/useSeriesQueries";
 import { SyncPlayButton } from "@/components/syncplay/SyncPlayButton";
+import { Colors } from "@/constants/Colors";
 import { LOGO_HEIGHT } from "@/constants/Images";
 import { useLeaveWhenGone } from "@/hooks/useLeaveWhenGone";
 import { playableQueueItems, useShuffleQueue } from "@/hooks/useShuffleQueue";
@@ -226,7 +227,7 @@ const page: React.FC = () => {
               style={{
                 width: "100%",
                 height: "100%",
-                backgroundColor: "#1a1a1a",
+                backgroundColor: Colors.surface,
               }}
             />
           )

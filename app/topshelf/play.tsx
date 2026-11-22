@@ -6,6 +6,7 @@ import {
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { usePlayMedia } from "@/hooks/usePlayMedia";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -63,5 +64,5 @@ export default function TopShelfPlayRedirect() {
     })();
   }, [api, id, rootNavigationState?.key, router, playMedia, user?.Id]);
 
-  return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  return <View style={{ flex: 1, backgroundColor: Colors.black }} />;
 }

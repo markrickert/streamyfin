@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { Animated, Easing, View } from "react-native";
 import { Image, prefetchServerImage } from "@/components/common/ServerImage";
+import { Colors } from "@/constants/Colors";
 import {
   TV_BACKDROP_CROSSFADE_MS,
   TV_BACKDROP_DEBOUNCE_MS,
@@ -193,7 +194,7 @@ export const TVHomeBackdrop = React.memo(
         </Animated.View>
         {/* Gradient overlays for readability */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
+          colors={[Colors.black30, Colors.black60, Colors.black80]}
           locations={[0, 0.4, 1]}
           style={{
             position: "absolute",

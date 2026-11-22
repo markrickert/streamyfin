@@ -5,6 +5,7 @@ import {
 } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { getTopShelfItemPath } from "@/utils/tvDiscovery/itemPath";
 
@@ -38,5 +39,5 @@ export default function TopShelfItemRedirect() {
     );
   }, [id, rootNavigationState?.key, router, seasonIndex, seriesId, type]);
 
-  return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  return <View style={{ flex: 1, backgroundColor: Colors.black }} />;
 }

@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Platform, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DismissKeyboardArea } from "@/components/common/DismissKeyboardArea";
+import { Colors } from "@/constants/Colors";
 import type { AccountSecurityType } from "@/utils/secureCredentials";
 import { Button } from "./Button";
 import { Text } from "./common/Text";
@@ -147,8 +148,8 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
       ref={bottomSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
-      handleIndicatorStyle={{ backgroundColor: "white" }}
-      backgroundStyle={{ backgroundColor: "#171717" }}
+      handleIndicatorStyle={{ backgroundColor: Colors.white }}
+      backgroundStyle={{ backgroundColor: Colors.surface }}
       backdropComponent={renderBackdrop}
       keyboardBehavior={isAndroid ? "fillParent" : "interactive"}
       keyboardBlurBehavior='restore'
@@ -211,7 +212,11 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
                     }`}
                   >
                     <View className='w-10 h-10 bg-neutral-700 rounded-full items-center justify-center mr-3'>
-                      <Ionicons name={option.icon} size={20} color='white' />
+                      <Ionicons
+                        name={option.icon}
+                        size={20}
+                        color={Colors.foreground}
+                      />
                     </View>
                     <View className='flex-1'>
                       <Text className='text-neutral-100 font-medium'>
@@ -229,7 +234,11 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
                       }`}
                     >
                       {selectedType === option.type && (
-                        <Ionicons name='checkmark' size={14} color='white' />
+                        <Ionicons
+                          name='checkmark'
+                          size={14}
+                          color={Colors.foreground}
+                        />
                       )}
                     </View>
                   </TouchableOpacity>

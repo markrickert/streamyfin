@@ -1,6 +1,7 @@
 import { Slot, Stack } from "expo-router";
 import TopTabs from "expo-router/js-top-tabs";
 import { Platform } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 // Opens on Programs. Expo Router 58 dropped initialRouteName; without an
 // anchor the tabs open on the first route by name, Channels.
@@ -29,11 +30,11 @@ const Layout = () => {
           tabBarItemStyle: {
             width: 100,
           },
-          tabBarStyle: { backgroundColor: "black" },
+          tabBarStyle: { backgroundColor: Colors.black },
           animationEnabled: true,
           lazy: true,
           swipeEnabled: true,
-          tabBarIndicatorStyle: { backgroundColor: "#9334E9" },
+          tabBarIndicatorStyle: { backgroundColor: Colors.primary },
           tabBarScrollEnabled: true,
         }}
       >

@@ -24,6 +24,7 @@ import Animated, {
 import { SheetScrollView } from "@/components/common/SheetContent";
 import { AUTO_BITRATE_VALUE, RECEIVER_MAX_BITRATE } from "@/constants/Bitrate";
 import { RECEIVER_LOAD_TIMEOUT_MS } from "@/constants/Cast";
+import { Colors } from "@/constants/Colors";
 import { useActionSheet } from "@/hooks/useActionSheet";
 import { useHaptic } from "@/hooks/useHaptic";
 import type { ThemeColors } from "@/hooks/useImageColorsReturn";
@@ -538,7 +539,7 @@ export const PlayButton: React.FC<Props> = ({
           {client && (
             <Animated.Text style={animatedTextStyle}>
               <Feather name='cast' size={22} />
-              <CastButton tintColor='transparent' />
+              <CastButton tintColor={Colors.transparent} />
             </Animated.Text>
           )}
           {/* In a group this button plays for everyone in it. Downloads

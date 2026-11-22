@@ -17,6 +17,7 @@ import { ActivityIndicator, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useCreatePlaylist } from "@/hooks/usePlaylistMutations";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 
@@ -92,10 +93,10 @@ export const CreatePlaylistModal: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
       keyboardBehavior='interactive'
       keyboardBlurBehavior='restore'
@@ -117,19 +118,19 @@ export const CreatePlaylistModal: React.FC<Props> = ({
         </Text>
         <BottomSheetTextInput
           placeholder={t("music.playlists.enter_name")}
-          placeholderTextColor='#737373'
+          placeholderTextColor={Colors.foregroundDisabled}
           value={name}
           onChangeText={setName}
           autoFocus
           returnKeyType='done'
           onSubmitEditing={handleCreate}
           style={{
-            backgroundColor: "#262626",
+            backgroundColor: Colors.surfaceRaised,
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 14,
             fontSize: 16,
-            color: "white",
+            color: Colors.foreground,
             marginBottom: 24,
           }}
         />
@@ -140,7 +141,7 @@ export const CreatePlaylistModal: React.FC<Props> = ({
           className={`py-4 rounded-xl ${isValid ? "bg-purple-600" : "bg-neutral-700"}`}
         >
           {createPlaylist.isPending ? (
-            <ActivityIndicator color='white' />
+            <ActivityIndicator color={Colors.foreground} />
           ) : (
             <Text
               className={`text-center font-semibold ${isValid ? "text-white" : "text-neutral-500"}`}

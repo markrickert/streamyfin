@@ -10,6 +10,7 @@ import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
 import { MusicAlbumRowCard } from "@/components/music/MusicAlbumRowCard";
 import { useMusicLibraryId } from "@/components/music/MusicLibraryContext";
+import { Colors } from "@/constants/Colors";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 
 const ITEMS_PER_PAGE = 40;
@@ -96,7 +97,7 @@ export default function AlbumsScreen() {
             onRefresh={() => {
               refetch();
             }}
-            tintColor='#9334E9'
+            tintColor={Colors.primary}
           />
         }
         onEndReached={handleEndReached}

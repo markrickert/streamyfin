@@ -16,6 +16,7 @@ import { useMusicLibraryId } from "@/components/music/MusicLibraryContext";
 import { MusicTrackItem } from "@/components/music/MusicTrackItem";
 import { PlaylistPickerSheet } from "@/components/music/PlaylistPickerSheet";
 import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
+import { Colors } from "@/constants/Colors";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { writeDebugLog } from "@/utils/log";
 
@@ -265,7 +266,7 @@ export default function SuggestionsScreen() {
           <RefreshControl
             refreshing={false}
             onRefresh={handleRefresh}
-            tintColor='#9334E9'
+            tintColor={Colors.primary}
           />
         }
         renderItem={({ item: section }) => (

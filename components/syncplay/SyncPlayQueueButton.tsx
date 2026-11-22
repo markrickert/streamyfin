@@ -3,6 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
+import { Colors } from "@/constants/Colors";
 import { useActionSheet } from "@/hooks/useActionSheet";
 import { useOfflineMode } from "@/providers/OfflineModeProvider";
 import { useSyncPlay } from "@/providers/SyncPlayProvider";
@@ -32,8 +33,8 @@ interface Props {
 export function SyncPlayQueueButton({
   items,
   variant = "round",
-  color = "#262626",
-  iconColor = "white",
+  color = Colors.surfaceRaised,
+  iconColor = Colors.foreground,
   trailingGap = 0,
 }: Props) {
   const { t } = useTranslation();

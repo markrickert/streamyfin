@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { POSTER_IMAGE_TRANSITION } from "@/constants/Values";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
@@ -43,7 +44,7 @@ export const MusicArtistCard: React.FC<Props> = ({ artist }) => {
           height: IMAGE_SIZE,
           borderRadius: IMAGE_SIZE / 2,
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: Colors.surface,
         }}
       >
         {imageUrl ? (

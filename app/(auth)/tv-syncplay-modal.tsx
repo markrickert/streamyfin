@@ -9,6 +9,7 @@ import {
   TVFocusGuideView,
 } from "react-native";
 import { TVSyncPlaySheet } from "@/components/syncplay/TVSyncPlaySheet";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { tvSyncPlayModalAtom } from "@/utils/atoms/tvSyncPlayModal";
@@ -73,7 +74,7 @@ export default function TVSyncPlayModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   blur: {
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     // Android has no blur behind this, only a tint, and three rows of cards
     // over a page of text cannot be read through a tint.
     backgroundColor:
-      Platform.OS === "android" ? "rgba(18, 18, 18, 0.92)" : undefined,
+      Platform.OS === "android" ? Colors.surfaceTranslucent : undefined,
   },
   content: {
     paddingTop: scaleSize(32),

@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -28,7 +29,7 @@ export const TVTechnicalDetails: React.FC<TVTechnicalDetailsProps> = React.memo(
           style={{
             fontSize: typography.heading,
             fontWeight: "600",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(20),
           }}
         >
@@ -40,7 +41,7 @@ export const TVTechnicalDetails: React.FC<TVTechnicalDetailsProps> = React.memo(
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#6B7280",
+                  color: Colors.foregroundDisabled,
                   textTransform: "uppercase",
                   letterSpacing: 1,
                   marginBottom: scaleSize(4),
@@ -48,7 +49,9 @@ export const TVTechnicalDetails: React.FC<TVTechnicalDetailsProps> = React.memo(
               >
                 {t("common.video")}
               </Text>
-              <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+              <Text
+                style={{ fontSize: typography.body, color: Colors.foreground }}
+              >
                 {videoStream.DisplayTitle ||
                   `${videoStream.Codec?.toUpperCase()} ${videoStream.Width}x${videoStream.Height}`}
               </Text>
@@ -59,7 +62,7 @@ export const TVTechnicalDetails: React.FC<TVTechnicalDetailsProps> = React.memo(
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#6B7280",
+                  color: Colors.foregroundDisabled,
                   textTransform: "uppercase",
                   letterSpacing: 1,
                   marginBottom: scaleSize(4),
@@ -67,7 +70,9 @@ export const TVTechnicalDetails: React.FC<TVTechnicalDetailsProps> = React.memo(
               >
                 {t("common.audio")}
               </Text>
-              <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+              <Text
+                style={{ fontSize: typography.body, color: Colors.foreground }}
+              >
                 {audioStream.DisplayTitle ||
                   `${audioStream.Codec?.toUpperCase()} ${audioStream.Channels}ch`}
               </Text>

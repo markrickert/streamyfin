@@ -267,7 +267,11 @@ export const RequestCard: React.FC<{ request: MediaRequest }> = ({
           <View style={{ flex: 1, minWidth: 0, paddingRight: 12, gap: 4 }}>
             <Text
               numberOfLines={1}
-              style={{ fontSize: 18, fontWeight: "bold", color: "white" }}
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: Colors.foreground,
+              }}
             >
               {title}
             </Text>

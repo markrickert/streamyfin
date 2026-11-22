@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { APP_LANGUAGES } from "@/i18n";
 import { useSettings } from "@/utils/atoms/settings";
 import { Text } from "../common/Text";
@@ -60,7 +61,7 @@ export const AppLanguageSelector: React.FC<Props> = () => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }

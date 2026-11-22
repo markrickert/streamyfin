@@ -2,6 +2,7 @@ import { t } from "i18next";
 import React, { useCallback } from "react";
 import { ScrollView, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { scaleSize } from "@/utils/scaleSize";
@@ -65,7 +66,7 @@ export const TVUserSelectionScreen: React.FC<TVUserSelectionScreenProps> = ({
             style={{
               fontSize: typography.title,
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               textAlign: "center",
               marginBottom: scaleSize(8),
             }}
@@ -76,7 +77,7 @@ export const TVUserSelectionScreen: React.FC<TVUserSelectionScreenProps> = ({
             <Text
               style={{
                 fontSize: typography.body,
-                color: "#9CA3AF",
+                color: Colors.foregroundMuted,
                 textAlign: "center",
               }}
             >
@@ -86,7 +87,7 @@ export const TVUserSelectionScreen: React.FC<TVUserSelectionScreenProps> = ({
           <Text
             style={{
               fontSize: typography.body,
-              color: "#6B7280",
+              color: Colors.foregroundDisabled,
               textAlign: "center",
               marginTop: scaleSize(16),
             }}

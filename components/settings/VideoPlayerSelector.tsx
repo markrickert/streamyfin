@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { View, type ViewProps } from "react-native";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
+import { Colors } from "@/constants/Colors";
 import {
   getActiveVideoPlayer,
   isNativePlayerSupported,
@@ -77,7 +78,11 @@ export const VideoPlayerSelector: React.FC<ViewProps> = ({ ...props }) => {
           trigger={
             <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
               <Text className='mr-1 text-[#8E8D91]'>{currentPlayerLabel}</Text>
-              <Ionicons name='chevron-expand-sharp' size={18} color='#5A5960' />
+              <Ionicons
+                name='chevron-expand-sharp'
+                size={18}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           }
           title={t("home.settings.video_player.title")}

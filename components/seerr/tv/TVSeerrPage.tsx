@@ -25,6 +25,7 @@ import { SeerrRequestIcon } from "@/components/seerr/SeerrRequestIcon";
 import { TVSeerrSeasons } from "@/components/seerr/tv/TVSeerrSeasons";
 import { TVButton } from "@/components/tv";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { SEERR_BACKDROP_SIZE } from "@/constants/Seerr";
 import {
   TV_DETAIL_HEADER_MIN_HEIGHT_RATIO,
@@ -95,7 +96,7 @@ const TVCastCard: React.FC<TVCastCardProps> = ({
           {
             width: 140,
             alignItems: "center",
-            shadowColor: "#fff",
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.4 : 0,
             shadowRadius: focused ? 12 : 0,
@@ -108,10 +109,10 @@ const TVCastCard: React.FC<TVCastCardProps> = ({
             height: 120,
             borderRadius: 60,
             overflow: "hidden",
-            backgroundColor: "rgba(255,255,255,0.1)",
+            backgroundColor: Colors.white10,
             marginBottom: 12,
             borderWidth: focused ? 3 : 0,
-            borderColor: "#fff",
+            borderColor: Colors.white,
           }}
         >
           {profileUrl ? (
@@ -129,14 +130,18 @@ const TVCastCard: React.FC<TVCastCardProps> = ({
                 alignItems: "center",
               }}
             >
-              <Ionicons name='person' size={48} color='rgba(255,255,255,0.4)' />
+              <Ionicons
+                name='person'
+                size={48}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           )}
         </View>
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#fff" : "rgba(255,255,255,0.9)",
+            color: focused ? Colors.foreground : Colors.foreground,
             fontWeight: "600",
             textAlign: "center",
           }}
@@ -148,9 +153,7 @@ const TVCastCard: React.FC<TVCastCardProps> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: focused
-                ? "rgba(255,255,255,0.7)"
-                : "rgba(255,255,255,0.5)",
+              color: focused ? Colors.foregroundMuted : Colors.white50,
               textAlign: "center",
               marginTop: 4,
             }}
@@ -431,7 +434,7 @@ export const TVSeerrPage: React.FC = () => {
       <View
         style={{
           flex: 1,
-          backgroundColor: "#000",
+          backgroundColor: Colors.black,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -442,7 +445,7 @@ export const TVSeerrPage: React.FC = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       {/* Full-screen backdrop */}
       <View
         testID={backdropReady ? "seerr-backdrop-ready" : undefined}
@@ -465,11 +468,11 @@ export const TVSeerrPage: React.FC = () => {
             onError={() => setSettledBackdropUrl(backdropUrl)}
           />
         ) : (
-          <View style={{ flex: 1, backgroundColor: "#1a1a1a" }} />
+          <View style={{ flex: 1, backgroundColor: Colors.surface }} />
         )}
         {/* Bottom gradient */}
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
+          colors={[Colors.transparent, Colors.black60, Colors.black80]}
           locations={[0, 0.5, 1]}
           style={{
             position: "absolute",
@@ -481,7 +484,7 @@ export const TVSeerrPage: React.FC = () => {
         />
         {/* Left gradient */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.8)", "transparent"]}
+          colors={[Colors.black80, Colors.transparent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.6, y: 0 }}
           style={{
@@ -523,7 +526,7 @@ export const TVSeerrPage: React.FC = () => {
                 aspectRatio: 2 / 3,
                 borderRadius: 16,
                 overflow: "hidden",
-                shadowColor: "#000",
+                shadowColor: Colors.black,
                 shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: 0.5,
                 shadowRadius: 20,
@@ -540,7 +543,7 @@ export const TVSeerrPage: React.FC = () => {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: "rgba(255,255,255,0.1)",
+                    backgroundColor: Colors.white10,
                     justifyContent: "center",
                     alignItems: "center",
                   }}
@@ -548,7 +551,7 @@ export const TVSeerrPage: React.FC = () => {
                   <Ionicons
                     name='image-outline'
                     size={48}
-                    color='rgba(255,255,255,0.3)'
+                    color={Colors.foregroundDisabled}
                   />
                 </View>
               )}
@@ -571,7 +574,7 @@ export const TVSeerrPage: React.FC = () => {
               style={{
                 fontSize: typography.display,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginTop: 8,
                 marginBottom: 12,
               }}
@@ -584,7 +587,7 @@ export const TVSeerrPage: React.FC = () => {
             <Text
               style={{
                 fontSize: typography.body,
-                color: "rgba(255,255,255,0.7)",
+                color: Colors.foregroundMuted,
                 marginBottom: 16,
               }}
             >
@@ -615,13 +618,13 @@ export const TVSeerrPage: React.FC = () => {
                 <View
                   style={{
                     padding: 16,
-                    backgroundColor: "rgba(0,0,0,0.3)",
+                    backgroundColor: Colors.black30,
                   }}
                 >
                   <Text
                     style={{
                       fontSize: typography.body,
-                      color: "#E5E7EB",
+                      color: Colors.foreground,
                       lineHeight: 32,
                     }}
                     numberOfLines={4}
@@ -650,14 +653,14 @@ export const TVSeerrPage: React.FC = () => {
                   <Ionicons
                     name='play'
                     size={28}
-                    color='#000000'
+                    color={Colors.black}
                     style={{ marginRight: 10 }}
                   />
                   <Text
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#000000",
+                      color: Colors.black,
                     }}
                   >
                     {t("common.play")}
@@ -680,13 +683,13 @@ export const TVSeerrPage: React.FC = () => {
                   scaleAmount={1.01}
                 >
                   <View style={{ marginRight: 8 }}>
-                    <SeerrRequestIcon size={24} color='#FFFFFF' />
+                    <SeerrRequestIcon size={24} color={Colors.foreground} />
                   </View>
                   <Text
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                     }}
                   >
                     {requestMore
@@ -711,14 +714,14 @@ export const TVSeerrPage: React.FC = () => {
                   <Ionicons
                     name='warning-outline'
                     size={24}
-                    color='#FFFFFF'
+                    color={Colors.foreground}
                     style={{ marginRight: 8 }}
                   />
                   <Text
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "bold",
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                     }}
                   >
                     {t("seerr.report_issue_button")}
@@ -737,11 +740,15 @@ export const TVSeerrPage: React.FC = () => {
                     marginBottom: 12,
                   }}
                 >
-                  <Ionicons name='person-outline' size={18} color='#9CA3AF' />
+                  <Ionicons
+                    name='person-outline'
+                    size={18}
+                    color={Colors.foregroundMuted}
+                  />
                   <Text
                     style={{
                       fontSize: typography.callout,
-                      color: "#9CA3AF",
+                      color: Colors.foregroundMuted,
                       marginLeft: 8,
                     }}
                   >
@@ -754,14 +761,14 @@ export const TVSeerrPage: React.FC = () => {
                     <Ionicons
                       name='checkmark'
                       size={22}
-                      color='#FFFFFF'
+                      color={Colors.foreground}
                       style={{ marginRight: 8 }}
                     />
                     <Text
                       style={{
                         fontSize: typography.callout,
                         fontWeight: "600",
-                        color: "#FFFFFF",
+                        color: Colors.foreground,
                       }}
                     >
                       {t("seerr.approve")}
@@ -772,14 +779,14 @@ export const TVSeerrPage: React.FC = () => {
                     <Ionicons
                       name='close'
                       size={22}
-                      color='#FFFFFF'
+                      color={Colors.foreground}
                       style={{ marginRight: 8 }}
                     />
                     <Text
                       style={{
                         fontSize: typography.callout,
                         fontWeight: "600",
-                        color: "#FFFFFF",
+                        color: Colors.foreground,
                       }}
                     >
                       {t("seerr.decline")}
@@ -833,7 +840,7 @@ export const TVSeerrPage: React.FC = () => {
               style={{
                 fontSize: typography.heading,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginBottom: 16,
               }}
             >

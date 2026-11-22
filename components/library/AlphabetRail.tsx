@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { CARD_LAYOUTS } from "@/components/cards/CardData";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import {
   ALPHABET,
   letterAtIndex,
@@ -128,7 +129,10 @@ export const AlphabetRail: React.FC<Props> = ({
                 style={{
                   fontSize,
                   fontWeight: letter === highlighted ? "800" : "500",
-                  color: letter === highlighted ? "#fff" : "#a3a3a3",
+                  color:
+                    letter === highlighted
+                      ? Colors.foreground
+                      : Colors.foregroundMuted,
                 }}
               >
                 {letter}
@@ -146,7 +150,7 @@ export const AlphabetRail: React.FC<Props> = ({
             width: BUBBLE_SIZE,
             height: BUBBLE_SIZE,
             borderRadius: BUBBLE_SIZE / 2,
-            backgroundColor: "rgba(38,38,38,0.95)",
+            backgroundColor: Colors.surfaceTranslucent,
             alignItems: "center",
             justifyContent: "center",
           }}

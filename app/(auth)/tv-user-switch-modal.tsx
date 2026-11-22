@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TVUserCard } from "@/components/tv/TVUserCard";
+import { Colors } from "@/constants/Colors";
 import { TVSheetTiming } from "@/constants/TVSheet";
 import useRouter from "@/hooks/useAppRouter";
 import { tvUserSwitchModalAtom } from "@/utils/atoms/tvUserSwitchModal";
@@ -147,7 +148,7 @@ export default function TVUserSwitchModalPage() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   sheetContainer: {
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: 4,
     paddingHorizontal: 48,
     textTransform: "uppercase",
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.4)",
+    color: Colors.foregroundDisabled,
     marginBottom: 16,
     paddingHorizontal: 48,
   },

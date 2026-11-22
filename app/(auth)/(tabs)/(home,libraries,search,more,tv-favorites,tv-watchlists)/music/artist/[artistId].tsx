@@ -18,6 +18,7 @@ import { MusicAlbumCard } from "@/components/music/MusicAlbumCard";
 import { MusicTrackItem } from "@/components/music/MusicTrackItem";
 import { PlaylistPickerSheet } from "@/components/music/PlaylistPickerSheet";
 import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
+import { Colors } from "@/constants/Colors";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
 import { squareArtworkSide } from "@/utils/artworkSize";
@@ -103,7 +104,7 @@ export default function ArtistDetailScreen() {
     navigation.setOptions({
       title: artist?.Name ?? "",
       headerTransparent: true,
-      headerStyle: { backgroundColor: "transparent" },
+      headerStyle: { backgroundColor: Colors.transparent },
       headerShadowVisible: false,
     });
   }, [artist?.Name, navigation]);
@@ -178,8 +179,8 @@ export default function ArtistDetailScreen() {
               height: artworkSize,
               borderRadius: artworkSize / 2,
               overflow: "hidden",
-              backgroundColor: "#1a1a1a",
-              shadowColor: "#000",
+              backgroundColor: Colors.surface,
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: 0.3,
               shadowRadius: 12,
@@ -195,7 +196,11 @@ export default function ArtistDetailScreen() {
               />
             ) : (
               <View className='flex-1 items-center justify-center bg-neutral-800'>
-                <Ionicons name='person' size={60} color='#666' />
+                <Ionicons
+                  name='person'
+                  size={60}
+                  color={Colors.foregroundDisabled}
+                />
               </View>
             )}
           </View>
@@ -214,7 +219,7 @@ export default function ArtistDetailScreen() {
               onPress={handlePlayAllTracks}
               className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mt-4'
             >
-              <Ionicons name='play' size={20} color='white' />
+              <Ionicons name='play' size={20} color={Colors.foreground} />
               <Text className='text-white font-medium ml-2'>
                 {t("music.play_top_tracks")}
               </Text>

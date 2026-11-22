@@ -3,6 +3,7 @@ import React from "react";
 import { View } from "react-native";
 import { Badge } from "@/components/Badge";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -30,12 +31,12 @@ export const TVMetadataBadges: React.FC<TVMetadataBadgesProps> = React.memo(
         }}
       >
         {year != null && (
-          <Text style={{ color: "white", fontSize: typography.body }}>
+          <Text style={{ color: Colors.foreground, fontSize: typography.body }}>
             {year}
           </Text>
         )}
         {duration && (
-          <Text style={{ color: "white", fontSize: typography.body }}>
+          <Text style={{ color: Colors.foreground, fontSize: typography.body }}>
             {duration}
           </Text>
         )}
@@ -44,7 +45,9 @@ export const TVMetadataBadges: React.FC<TVMetadataBadgesProps> = React.memo(
           <Badge
             text={communityRating.toFixed(1)}
             variant='gray'
-            iconLeft={<Ionicons name='star' size={16} color='gold' />}
+            iconLeft={
+              <Ionicons name='star' size={16} color={Colors.warningLight} />
+            }
           />
         )}
         {trailing}

@@ -1,6 +1,7 @@
 import type React from "react";
 import { FlatList, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_TV_ROW_CARD_GAP,
   SEERR_TV_ROW_GAP,
@@ -34,7 +35,7 @@ export const TVSeerrRow = <T,>({
         style={{
           fontSize: typography.heading,
           fontWeight: "bold",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: scaleSize(SEERR_TV_ROW_TITLE_GAP),
           marginLeft: sizes.padding.horizontal,
         }}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -39,10 +40,10 @@ export const TVFilterButton: React.FC<TVFilterButtonProps> = ({
         <View
           style={{
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : hasActiveFilter
-                ? "rgba(255, 255, 255, 0.25)"
-                : "rgba(255,255,255,0.1)",
+                ? Colors.white20
+                : Colors.white10,
             borderRadius: scaleSize(10),
             paddingVertical: scaleSize(10),
             paddingHorizontal: scaleSize(16),
@@ -50,14 +51,14 @@ export const TVFilterButton: React.FC<TVFilterButtonProps> = ({
             alignItems: "center",
             gap: scaleSize(8),
             borderWidth: hasActiveFilter && !focused ? scaleSize(1) : 0,
-            borderColor: "rgba(255, 255, 255, 0.4)",
+            borderColor: Colors.white30,
           }}
         >
           {label ? (
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? "#444" : "#bbb",
+                color: focused ? Colors.border : Colors.foregroundMuted,
               }}
             >
               {label}
@@ -66,7 +67,7 @@ export const TVFilterButton: React.FC<TVFilterButtonProps> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: focused ? "#000" : "#FFFFFF",
+              color: focused ? Colors.black : Colors.foreground,
               fontWeight: "500",
             }}
             numberOfLines={1}

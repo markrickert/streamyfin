@@ -9,6 +9,7 @@ import {
   type TextInputProps,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface TVPinInputProps
@@ -83,7 +84,7 @@ const TVPinInputComponent = React.forwardRef<TVPinInputRef, TVPinInputProps>(
             styles.container,
             {
               transform: [{ scale }],
-              borderColor: isFocused ? "#6366F1" : "#374151",
+              borderColor: isFocused ? Colors.info : Colors.border,
             },
           ]}
         >
@@ -100,7 +101,7 @@ const TVPinInputComponent = React.forwardRef<TVPinInputRef, TVPinInputProps>(
             maxLength={length}
             secureTextEntry
             placeholder={placeholder || `Enter ${length}-digit PIN`}
-            placeholderTextColor='#6B7280'
+            placeholderTextColor={Colors.foregroundDisabled}
             style={[styles.input, { fontSize: typography.heading }]}
             onFocus={() => {
               setIsFocused(true);
@@ -124,7 +125,7 @@ export const TVPinInput = TVPinInputComponent;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#1F2937",
+    backgroundColor: Colors.surfaceRaised,
     borderRadius: 12,
     borderWidth: 2,
     paddingHorizontal: 20,
@@ -132,12 +133,12 @@ const styles = StyleSheet.create({
     minWidth: 280,
   },
   label: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: 4,
     marginTop: 8,
   },
   input: {
-    color: "#fff",
+    color: Colors.foreground,
     fontWeight: "500",
     textAlign: "center",
     minHeight: 56,

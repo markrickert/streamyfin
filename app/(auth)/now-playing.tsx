@@ -37,6 +37,7 @@ import { Text } from "@/components/common/Text";
 import { CreatePlaylistModal } from "@/components/music/CreatePlaylistModal";
 import { PlaylistPickerSheet } from "@/components/music/PlaylistPickerSheet";
 import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useFavorite } from "@/hooks/useFavorite";
 import { useMusicCast } from "@/hooks/useMusicCast";
@@ -250,7 +251,7 @@ export default function NowPlayingScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             className='p-2'
           >
-            <Ionicons name='chevron-down' size={28} color='white' />
+            <Ionicons name='chevron-down' size={28} color={Colors.foreground} />
           </TouchableOpacity>
 
           <View className='flex-row'>
@@ -440,8 +441,8 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           height: artworkSize,
           borderRadius: 12,
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
-          shadowColor: "#000",
+          backgroundColor: Colors.surface,
+          shadowColor: Colors.black,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.4,
           shadowRadius: 16,
@@ -457,7 +458,11 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           />
         ) : (
           <View className='flex-1 items-center justify-center bg-neutral-800'>
-            <Ionicons name='musical-note' size={80} color='#666' />
+            <Ionicons
+              name='musical-note'
+              size={80}
+              color={Colors.foregroundDisabled}
+            />
           </View>
         )}
       </View>
@@ -467,7 +472,11 @@ const PlayerView: React.FC<PlayerViewProps> = ({
         <View className='flex-row items-start justify-between'>
           <View className='flex-1 mr-4'>
             <TextTicker
-              style={{ color: "white", fontSize: 24, fontWeight: "bold" }}
+              style={{
+                color: Colors.foreground,
+                fontSize: 24,
+                fontWeight: "bold",
+              }}
               duration={Math.max(4000, (currentTrack.Name?.length || 0) * 250)}
               loop
               bounce={false}
@@ -480,7 +489,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
               {currentTrack.Name}
             </TextTicker>
             <TextTicker
-              style={{ color: "#a3a3a3", fontSize: 18 }}
+              style={{ color: Colors.foregroundMuted, fontSize: 18 }}
               duration={Math.max(
                 4000,
                 (
@@ -509,11 +518,15 @@ const PlayerView: React.FC<PlayerViewProps> = ({
             <Ionicons
               name={isFavorite ? "heart" : "heart-outline"}
               size={24}
-              color={isFavorite ? "#ec4899" : "white"}
+              color={isFavorite ? Colors.favorite : Colors.foreground}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={onOptionsPress} className='p-2'>
-            <Ionicons name='ellipsis-horizontal' size={24} color='white' />
+            <Ionicons
+              name='ellipsis-horizontal'
+              size={24}
+              color={Colors.foreground}
+            />
           </TouchableOpacity>
         </View>
 
@@ -529,7 +542,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
                 <Ionicons
                   name={isTranscoding ? "swap-horizontal" : "play"}
                   size={12}
-                  color='white'
+                  color={Colors.foreground}
                 />
               }
             />
@@ -545,10 +558,10 @@ const PlayerView: React.FC<PlayerViewProps> = ({
       <View className='mb-4'>
         <Slider
           theme={{
-            maximumTrackTintColor: "rgba(255,255,255,0.2)",
-            minimumTrackTintColor: "#fff",
-            bubbleBackgroundColor: "#fff",
-            bubbleTextColor: "#666",
+            maximumTrackTintColor: Colors.white20,
+            minimumTrackTintColor: Colors.white,
+            bubbleBackgroundColor: Colors.white,
+            bubbleTextColor: Colors.foregroundDisabled,
           }}
           progress={sliderProgress}
           minimumValue={sliderMin}
@@ -571,7 +584,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           <Ionicons
             name='shuffle'
             size={24}
-            color={shuffleEnabled ? "#9334E9" : "#666"}
+            color={shuffleEnabled ? Colors.primary : Colors.foregroundDisabled}
           />
         </TouchableOpacity>
 
@@ -581,7 +594,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           className='p-4'
           style={{ opacity: canGoPrevious && !isLoading ? 1 : 0.3 }}
         >
-          <Ionicons name='play-skip-back' size={32} color='white' />
+          <Ionicons name='play-skip-back' size={32} color={Colors.foreground} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -590,12 +603,12 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           className='mx-4 bg-white rounded-full p-4'
         >
           {isLoading ? (
-            <ActivityIndicator size={36} color='#121212' />
+            <ActivityIndicator size={36} color={Colors.surface} />
           ) : (
             <Ionicons
               name={isPlaying ? "pause" : "play"}
               size={36}
-              color='#121212'
+              color={Colors.surface}
               style={isPlaying ? {} : { marginLeft: 4 }}
             />
           )}
@@ -607,14 +620,20 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           className='p-4'
           style={{ opacity: canGoNext && !isLoading ? 1 : 0.3 }}
         >
-          <Ionicons name='play-skip-forward' size={32} color='white' />
+          <Ionicons
+            name='play-skip-forward'
+            size={32}
+            color={Colors.foreground}
+          />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={onCycleRepeat} className='p-3 relative'>
           <Ionicons
             name={getRepeatIcon() as any}
             size={24}
-            color={repeatMode !== "off" ? "#9334E9" : "#666"}
+            color={
+              repeatMode !== "off" ? Colors.primary : Colors.foregroundDisabled
+            }
           />
           {repeatMode === "one" && (
             <View className='absolute right-0 top-1 bg-purple-600 rounded-full w-4 h-4 items-center justify-center'>
@@ -627,12 +646,16 @@ const PlayerView: React.FC<PlayerViewProps> = ({
       {/* Volume Slider */}
       {!isTv && isSystemVolumeAvailable() && (
         <View className='flex-row items-center mb-6'>
-          <Ionicons name='volume-low' size={20} color='#666' />
+          <Ionicons
+            name='volume-low'
+            size={20}
+            color={Colors.foregroundDisabled}
+          />
           <View className='flex-1 mx-3'>
             <Slider
               theme={{
-                maximumTrackTintColor: "rgba(255,255,255,0.2)",
-                minimumTrackTintColor: "#fff",
+                maximumTrackTintColor: Colors.white20,
+                minimumTrackTintColor: Colors.white,
               }}
               progress={volumeProgress}
               minimumValue={volumeMin}
@@ -644,7 +667,11 @@ const PlayerView: React.FC<PlayerViewProps> = ({
               renderBubble={() => null}
             />
           </View>
-          <Ionicons name='volume-high' size={20} color='#666' />
+          <Ionicons
+            name='volume-high'
+            size={20}
+            color={Colors.foregroundDisabled}
+          />
         </View>
       )}
 
@@ -664,8 +691,8 @@ const PlayerView: React.FC<PlayerViewProps> = ({
             <View style={{ transform: [{ scale: 2.8 }] }}>
               <ExpoAvRoutePickerView
                 style={{ width: 24, height: 24 }}
-                tintColor='#666666'
-                activeTintColor='#9334E9'
+                tintColor={Colors.foregroundDisabled}
+                activeTintColor={Colors.primary}
               />
             </View>
           )}
@@ -674,7 +701,9 @@ const PlayerView: React.FC<PlayerViewProps> = ({
             style={{
               width: 24,
               height: 24,
-              tintColor: isCastConnected ? "#9334E9" : "#666",
+              tintColor: isCastConnected
+                ? Colors.primary
+                : Colors.foregroundDisabled,
               transform: [{ translateY: 1 }],
             }}
           />

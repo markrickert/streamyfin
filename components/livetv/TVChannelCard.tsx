@@ -4,6 +4,7 @@ import React from "react";
 import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
 
@@ -53,8 +54,8 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
         style={[
           styles.container,
           {
-            backgroundColor: focused ? "#FFFFFF" : "rgba(255, 255, 255, 0.08)",
-            borderColor: focused ? "#FFFFFF" : "rgba(255, 255, 255, 0.1)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
+            borderColor: focused ? Colors.white : Colors.white10,
           },
           animatedStyle,
           focused && styles.focusedShadow,
@@ -73,9 +74,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
               style={[
                 styles.numberFallback,
                 {
-                  backgroundColor: focused
-                    ? "#E5E5E5"
-                    : "rgba(255, 255, 255, 0.15)",
+                  backgroundColor: focused ? Colors.foreground : Colors.white10,
                 },
               ]}
             >
@@ -84,7 +83,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
                   styles.numberText,
                   {
                     fontSize: typography.title,
-                    color: focused ? "#000000" : "#FFFFFF",
+                    color: focused ? Colors.black : Colors.foreground,
                   },
                 ]}
               >
@@ -101,7 +100,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
             styles.channelName,
             {
               fontSize: typography.callout,
-              color: focused ? "#000000" : "#FFFFFF",
+              color: focused ? Colors.black : Colors.foreground,
             },
           ]}
         >
@@ -116,9 +115,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
               styles.channelNumber,
               {
                 fontSize: typography.callout,
-                color: focused
-                  ? "rgba(0, 0, 0, 0.6)"
-                  : "rgba(255, 255, 255, 0.5)",
+                color: focused ? Colors.black60 : Colors.white50,
               },
             ]}
           >
@@ -144,7 +141,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   focusedShadow: {
-    shadowColor: "#FFFFFF",
+    shadowColor: Colors.white,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 12,

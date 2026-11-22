@@ -9,6 +9,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { Colors } from "@/constants/Colors";
 
 interface Props {
   color?: string;
@@ -67,7 +68,7 @@ const Bar: React.FC<{
 };
 
 export const AnimatedEqualizer: React.FC<Props> = ({
-  color = "#9334E9",
+  color = Colors.primary,
   barWidth = 3,
   barCount = 3,
   height = 12,

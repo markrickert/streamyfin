@@ -3,6 +3,7 @@ import type { ErrorBoundaryProps } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, Pressable, Text, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 /**
  * Fallback UI for render-phase crashes, exported as `ErrorBoundary` from
@@ -23,7 +24,7 @@ export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
     <View
       style={{
         flex: 1,
-        backgroundColor: "black",
+        backgroundColor: Colors.black,
         alignItems: "center",
         justifyContent: "center",
         padding: 32,
@@ -33,7 +34,7 @@ export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       <Text
         allowFontScaling={false}
         style={{
-          color: "white",
+          color: Colors.foreground,
           fontSize: Platform.isTV ? 32 : 18,
           fontWeight: "600",
         }}
@@ -45,7 +46,7 @@ export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           allowFontScaling={false}
           numberOfLines={4}
           style={{
-            color: "#9ca3af",
+            color: Colors.foregroundMuted,
             fontSize: Platform.isTV ? 22 : 13,
             textAlign: "center",
             maxWidth: 600,
@@ -64,14 +65,14 @@ export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           paddingHorizontal: Platform.isTV ? 40 : 28,
           paddingVertical: Platform.isTV ? 16 : 12,
           borderRadius: 999,
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
           opacity: pressed ? 0.7 : focused || !Platform.isTV ? 1 : 0.8,
         })}
       >
         <Text
           allowFontScaling={false}
           style={{
-            color: "black",
+            color: Colors.black,
             fontSize: Platform.isTV ? 24 : 15,
             fontWeight: "600",
           }}

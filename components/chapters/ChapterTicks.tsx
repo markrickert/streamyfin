@@ -6,6 +6,7 @@
 
 import { memo, useState } from "react";
 import { type LayoutChangeEvent, PixelRatio, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import type { ChapterMarker } from "@/utils/chapters";
 
 interface ChapterTicksProps {
@@ -24,7 +25,7 @@ function ChapterTicksComponent({
   // Semi-transparent black contrasts against both the filled progress
   // (#fff) and the unfilled track (rgba(255,255,255,0.2)) so the ticks
   // stay visible across the whole bar as playback advances.
-  color = "rgba(0,0,0,0.55)",
+  color = Colors.black60,
   height = 14,
   width = 2,
 }: ChapterTicksProps) {

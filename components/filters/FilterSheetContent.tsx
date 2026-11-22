@@ -7,6 +7,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Input } from "@/components/common/Input";
 import { useSheetContentPadding } from "@/components/common/SheetContent";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { FILTER_SINGLE_CHOICE_CLOSE_DELAY_MS } from "@/constants/Values";
 
 interface Props<T> {
@@ -129,7 +130,7 @@ export const FilterSheetContent = <T,>({
             <Ionicons
               name={selected ? "radio-button-on" : "radio-button-off"}
               size={24}
-              color='white'
+              color={Colors.foreground}
             />
           </TouchableOpacity>
         );

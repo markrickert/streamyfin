@@ -1,11 +1,12 @@
 import { Platform, Text as RNText, type TextProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 export function Text(props: TextProps) {
   const { style, ...otherProps } = props;
   if (Platform.isTV)
     return (
       <RNText
         allowFontScaling={false}
-        style={[{ color: "white" }, style]}
+        style={[{ color: Colors.foreground }, style]}
         {...otherProps}
       />
     );
@@ -13,7 +14,7 @@ export function Text(props: TextProps) {
   return (
     <RNText
       allowFontScaling={false}
-      style={[{ color: "white" }, style]}
+      style={[{ color: Colors.foreground }, style]}
       {...otherProps}
     />
   );

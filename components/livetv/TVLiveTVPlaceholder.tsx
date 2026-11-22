@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface TVLiveTVPlaceholderProps {
@@ -27,7 +28,7 @@ export const TVLiveTVPlaceholder: React.FC<TVLiveTVPlaceholderProps> = ({
         style={{
           fontSize: typography.title,
           fontWeight: "700",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 12,
         }}
       >
@@ -36,7 +37,7 @@ export const TVLiveTVPlaceholder: React.FC<TVLiveTVPlaceholderProps> = ({
       <Text
         style={{
           fontSize: typography.body,
-          color: "rgba(255, 255, 255, 0.6)",
+          color: Colors.foregroundMuted,
         }}
       >
         {t("live_tv.coming_soon")}

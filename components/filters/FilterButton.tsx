@@ -2,6 +2,7 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { TouchableOpacity, View, type ViewProps } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useGlobalModal } from "@/providers/GlobalModalProvider";
 import { FilterSheetContent } from "./FilterSheetContent";
 
@@ -89,14 +90,14 @@ export const FilterButton = <T,>({
           <Ionicons
             name='filter'
             size={14}
-            color='white'
+            color={Colors.foreground}
             style={{ opacity: 0.5 }}
           />
         ) : (
           <FontAwesome
             name='sort'
             size={14}
-            color='white'
+            color={Colors.foreground}
             style={{ opacity: 0.5 }}
           />
         )}

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { useTranslation } from "react-i18next";
 import { HeaderButton } from "@/components/common/HeaderButton";
+import { Colors } from "@/constants/Colors";
 import { useSyncPlaySheet } from "@/hooks/useSyncPlaySheet";
 import { useSyncPlay } from "@/providers/SyncPlayProvider";
 import { syncPlayQueueIds } from "@/utils/syncplay/queueItems";
@@ -37,7 +38,7 @@ export function SyncPlayButton({ items, title }: Props) {
       <Ionicons
         name={group ? "people" : "people-outline"}
         size={24}
-        color={group ? "#c084fc" : "white"}
+        color={group ? Colors.accent : Colors.foreground}
       />
     </HeaderButton>
   );

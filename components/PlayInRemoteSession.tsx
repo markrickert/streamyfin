@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useAllSessions, type useSessionsProps } from "@/hooks/useSessions";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { HeaderIcon } from "./common/HeaderIcon";
@@ -73,7 +74,7 @@ export const PlayInRemoteSessionButton: React.FC<Props> = ({
                 {t("home.sessions.select_session")}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name='close' size={24} color='white' />
+                <Ionicons name='close' size={24} color={Colors.foreground} />
               </TouchableOpacity>
             </View>
 
@@ -112,7 +113,11 @@ export const PlayInRemoteSessionButton: React.FC<Props> = ({
                           </Text>
                         )}
                       </View>
-                      <Ionicons name='play-sharp' size={20} color='#888' />
+                      <Ionicons
+                        name='play-sharp'
+                        size={20}
+                        color={Colors.foregroundDisabled}
+                      />
                     </TouchableOpacity>
                   )}
                   contentContainerStyle={styles.listContent}
@@ -131,12 +136,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: Colors.black60,
   },
   modalView: {
     width: "90%",
     maxHeight: "80%",
-    backgroundColor: "#1c1c1c",
+    backgroundColor: Colors.surface,
     borderRadius: 20,
     overflow: "hidden",
     display: "flex",
@@ -149,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#333",
+    borderBottomColor: Colors.border,
   },
   modalContent: {
     flex: 1,
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
   noSessionsText: {
     padding: 40,
     textAlign: "center",
-    color: "#888",
+    color: Colors.foregroundDisabled,
   },
   listContent: {
     paddingVertical: 8,
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#333",
+    borderBottomColor: Colors.border,
   },
   sessionInfo: {
     flex: 1,

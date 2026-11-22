@@ -15,6 +15,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { TVButton } from "@/components/tv";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { SEERR_BLOCKED_OPACITY, SEERR_STATUS_COLORS } from "@/constants/Seerr";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -73,14 +74,12 @@ const TVSeasonToggleCard: React.FC<{
           styles.seasonCard,
           {
             backgroundColor: focused
-              ? "#FFFFFF"
+              ? Colors.white
               : selected
-                ? "rgba(255,255,255,0.2)"
-                : "rgba(255,255,255,0.08)",
+                ? Colors.white20
+                : Colors.white10,
             borderWidth: focused ? 0 : 1,
-            borderColor: selected
-              ? "rgba(255,255,255,0.4)"
-              : "rgba(255,255,255,0.1)",
+            borderColor: selected ? Colors.white30 : Colors.white10,
             opacity: blocked ? SEERR_BLOCKED_OPACITY : 1,
           },
         ]}
@@ -90,20 +89,23 @@ const TVSeasonToggleCard: React.FC<{
             <Ionicons
               name='checkmark-circle'
               size={24}
-              color={focused ? "#22c55e" : "#FFFFFF"}
+              color={focused ? Colors.success : Colors.foreground}
             />
           )}
           {badge && (
             <View
               style={[
                 styles.statusBadge,
-                { backgroundColor: STATUS_COLORS[status] ?? "#6b7280" },
+                {
+                  backgroundColor:
+                    STATUS_COLORS[status] ?? Colors.foregroundDisabled,
+                },
               ]}
             >
               <MaterialCommunityIcons
                 name={badge.icon}
                 size={14}
-                color='#FFFFFF'
+                color={Colors.foreground}
               />
             </View>
           )}
@@ -111,7 +113,7 @@ const TVSeasonToggleCard: React.FC<{
         <Text
           style={[
             styles.seasonTitle,
-            { color: focused ? "#000000" : "#FFFFFF" },
+            { color: focused ? Colors.black : Colors.foreground },
           ]}
           numberOfLines={1}
         >
@@ -122,7 +124,7 @@ const TVSeasonToggleCard: React.FC<{
         <Text
           style={[
             styles.episodeCount,
-            { color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" },
+            { color: focused ? Colors.black60 : Colors.foregroundMuted },
           ]}
         >
           {t("seerr.number_episodes", {
@@ -307,7 +309,9 @@ export default function TVSeasonSelectModalPage() {
                     styles.note,
                     {
                       fontSize: typography.callout,
-                      color: spent ? SEERR_STATUS_COLORS.pending : "#FFFFFF",
+                      color: spent
+                        ? SEERR_STATUS_COLORS.pending
+                        : Colors.foreground,
                     },
                   ]}
                 >
@@ -399,7 +403,7 @@ export default function TVSeasonSelectModalPage() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   sheetContainer: {
@@ -418,15 +422,15 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: Colors.foreground,
     marginBottom: 8,
   },
   subtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: 16,
   },
   note: {
-    color: "rgba(255,255,255,0.8)",
+    color: Colors.foreground,
     marginBottom: 8,
   },
   quota: {
@@ -446,7 +450,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
-    shadowColor: "#fff",
+    shadowColor: Colors.white,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -478,6 +482,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: Colors.foreground,
   },
 });

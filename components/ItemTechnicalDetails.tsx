@@ -13,6 +13,7 @@ import type React from "react";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { formatBitrate } from "@/utils/bitrate";
 import { getStreamFrameRate } from "@/utils/jellyfin/media/getStreamFrameRate";
 import { Badge } from "./Badge";
@@ -39,10 +40,10 @@ export const ItemTechnicalDetails: React.FC<Props> = ({ source }) => {
         ref={bottomSheetModalRef}
         snapPoints={["80%"]}
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
-          backgroundColor: "#171717",
+          backgroundColor: Colors.surface,
         }}
         backdropComponent={(props: BottomSheetBackdropProps) => (
           <BottomSheetBackdrop
@@ -111,7 +112,11 @@ const SubtitleStreamInfo = ({
             <Badge
               variant='gray'
               iconLeft={
-                <Ionicons name='language-outline' size={16} color='white' />
+                <Ionicons
+                  name='language-outline'
+                  size={16}
+                  color={Colors.foreground}
+                />
               }
               text={stream.Language}
             />
@@ -119,7 +124,11 @@ const SubtitleStreamInfo = ({
               variant='gray'
               text={stream.Codec}
               iconLeft={
-                <Ionicons name='layers-outline' size={16} color='white' />
+                <Ionicons
+                  name='layers-outline'
+                  size={16}
+                  color={Colors.foreground}
+                />
               }
             />
           </View>
@@ -141,7 +150,11 @@ const AudioStreamInfo = ({ audioStreams }: { audioStreams: MediaStream[] }) => {
             <Badge
               variant='gray'
               iconLeft={
-                <Ionicons name='language-outline' size={16} color='white' />
+                <Ionicons
+                  name='language-outline'
+                  size={16}
+                  color={Colors.foreground}
+                />
               }
               text={audioStreams.Language}
             />
@@ -151,20 +164,30 @@ const AudioStreamInfo = ({ audioStreams }: { audioStreams: MediaStream[] }) => {
                 <Ionicons
                   name='musical-notes-outline'
                   size={16}
-                  color='white'
+                  color={Colors.foreground}
                 />
               }
               text={audioStreams.Codec}
             />
             <Badge
               variant='gray'
-              iconLeft={<Ionicons name='mic-outline' size={16} color='white' />}
+              iconLeft={
+                <Ionicons
+                  name='mic-outline'
+                  size={16}
+                  color={Colors.foreground}
+                />
+              }
               text={audioStreams.ChannelLayout}
             />
             <Badge
               variant='gray'
               iconLeft={
-                <Ionicons name='speedometer-outline' size={16} color='white' />
+                <Ionicons
+                  name='speedometer-outline'
+                  size={16}
+                  color={Colors.foreground}
+                />
               }
               text={formatBitrate(audioStreams.BitRate)}
             />
@@ -196,19 +219,27 @@ const VideoStreamInfo = ({ source }: { source?: MediaSourceInfo }) => {
     <View className='flex-row flex-wrap gap-2'>
       <Badge
         variant='gray'
-        iconLeft={<Ionicons name='film-outline' size={16} color='white' />}
+        iconLeft={
+          <Ionicons name='film-outline' size={16} color={Colors.foreground} />
+        }
         text={formatFileSize(source.Size)}
       />
       <Badge
         variant='gray'
-        iconLeft={<Ionicons name='film-outline' size={16} color='white' />}
+        iconLeft={
+          <Ionicons name='film-outline' size={16} color={Colors.foreground} />
+        }
         text={`${videoStream.Width}x${videoStream.Height}`}
       />
       {isDolbyVision && (
         <Badge
           variant='gray'
           iconLeft={
-            <Ionicons name='sparkles-outline' size={16} color='white' />
+            <Ionicons
+              name='sparkles-outline'
+              size={16}
+              color={Colors.foreground}
+            />
           }
           text={"DV"}
         />
@@ -216,27 +247,41 @@ const VideoStreamInfo = ({ source }: { source?: MediaSourceInfo }) => {
       <Badge
         variant='gray'
         iconLeft={
-          <Ionicons name='color-palette-outline' size={16} color='white' />
+          <Ionicons
+            name='color-palette-outline'
+            size={16}
+            color={Colors.foreground}
+          />
         }
         text={videoStream.VideoRange}
       />
       <Badge
         variant='gray'
         iconLeft={
-          <Ionicons name='code-working-outline' size={16} color='white' />
+          <Ionicons
+            name='code-working-outline'
+            size={16}
+            color={Colors.foreground}
+          />
         }
         text={videoStream.Codec}
       />
       <Badge
         variant='gray'
         iconLeft={
-          <Ionicons name='speedometer-outline' size={16} color='white' />
+          <Ionicons
+            name='speedometer-outline'
+            size={16}
+            color={Colors.foreground}
+          />
         }
         text={formatBitrate(videoStream.BitRate)}
       />
       <Badge
         variant='gray'
-        iconLeft={<Ionicons name='play-outline' size={16} color='white' />}
+        iconLeft={
+          <Ionicons name='play-outline' size={16} color={Colors.foreground} />
+        }
         text={frameRate != null ? `${frameRate.toFixed(0)} fps` : ""}
       />
     </View>

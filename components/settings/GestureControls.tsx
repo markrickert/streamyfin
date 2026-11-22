@@ -7,6 +7,7 @@ import { SettingSwitch } from "@/components/common/SettingSwitch";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
 import { PLAYBACK_SPEEDS } from "@/components/PlaybackSpeedSelector";
 import DisabledSetting from "@/components/settings/DisabledSetting";
+import { Colors } from "@/constants/Colors";
 import {
   getActiveVideoPlayer,
   useSettings,
@@ -163,7 +164,7 @@ export const GestureControls: React.FC<Props> = ({ ...props }) => {
                     <Ionicons
                       name='chevron-expand-sharp'
                       size={18}
-                      color='#5A5960'
+                      color={Colors.foregroundDisabled}
                     />
                   </View>
                 }

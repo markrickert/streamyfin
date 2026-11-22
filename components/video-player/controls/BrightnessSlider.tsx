@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { Slider } from "react-native-awesome-slider";
 import { useSharedValue } from "react-native-reanimated";
+import { Colors } from "@/constants/Colors";
 
 // import * as Brightness from "expo-brightness";
 const Brightness = !Platform.isTV ? require("expo-brightness") : null;
@@ -94,14 +95,14 @@ const BrightnessSlider = () => {
           borderRadius: 50,
         }}
         theme={{
-          minimumTrackTintColor: "#FDFDFD",
-          maximumTrackTintColor: "#5A5A5A",
+          minimumTrackTintColor: Colors.foreground,
+          maximumTrackTintColor: Colors.foregroundDisabled,
         }}
       />
       <Ionicons
         name='sunny'
         size={20}
-        color='#FDFDFD'
+        color={Colors.foreground}
         style={{
           marginLeft: 8,
         }}

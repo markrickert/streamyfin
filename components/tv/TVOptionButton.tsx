@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import React from "react";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -34,7 +35,7 @@ export const TVOptionButton = React.forwardRef<
         {focused ? (
           <View
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: Colors.white,
               borderRadius: scaleSize(8),
               borderWidth: 0,
               paddingVertical: scaleSize(10),
@@ -46,7 +47,7 @@ export const TVOptionButton = React.forwardRef<
               // tvOS-only centered glow — on Android, elevation draws an
               // offset shadow outside the pill, so the focus signal there
               // is the white fill itself plus the scale animation.
-              shadowColor: "#fff",
+              shadowColor: Colors.white,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.5,
               shadowRadius: scaleSize(12),
@@ -55,7 +56,7 @@ export const TVOptionButton = React.forwardRef<
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "#444",
+                color: Colors.border,
                 flexShrink: 0,
               }}
             >
@@ -64,7 +65,7 @@ export const TVOptionButton = React.forwardRef<
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "#000",
+                color: Colors.black,
                 fontWeight: "500",
                 flexShrink: 1,
               }}
@@ -85,7 +86,7 @@ export const TVOptionButton = React.forwardRef<
           >
             <View
               style={{
-                backgroundColor: "rgba(0,0,0,0.3)",
+                backgroundColor: Colors.black30,
                 paddingVertical: scaleSize(10),
                 paddingHorizontal: scaleSize(16),
                 flexDirection: "row",
@@ -96,7 +97,7 @@ export const TVOptionButton = React.forwardRef<
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#bbb",
+                  color: Colors.foregroundMuted,
                   flexShrink: 0,
                 }}
               >
@@ -105,7 +106,7 @@ export const TVOptionButton = React.forwardRef<
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#E5E7EB",
+                  color: Colors.foreground,
                   fontWeight: "500",
                   flexShrink: 1,
                 }}

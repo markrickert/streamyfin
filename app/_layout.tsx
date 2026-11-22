@@ -20,6 +20,7 @@ import { OfflineProgressSync } from "@/components/OfflineProgressSync";
 import { PendingAccountSaveModal } from "@/components/PendingAccountSaveModal";
 import { SeerrAutoLogin } from "@/components/seerr/SeerrAutoLogin";
 import { SyncPlayPlaybackBridge } from "@/components/syncplay/SyncPlayPlaybackBridge";
+import { Colors } from "@/constants/Colors";
 import { ActionSheetInsets } from "@/hooks/useActionSheet";
 import { enableTVMenuKeyInterception } from "@/hooks/useTVBackHandler";
 import i18n from "@/i18n";
@@ -477,12 +478,13 @@ function Layout() {
                                         duration={4000}
                                         toastOptions={{
                                           style: {
-                                            backgroundColor: "#262626",
-                                            borderColor: "#363639",
+                                            backgroundColor:
+                                              Colors.surfaceRaised,
+                                            borderColor: Colors.border,
                                             borderWidth: 1,
                                           },
                                           titleStyle: {
-                                            color: "white",
+                                            color: Colors.foreground,
                                           },
                                         }}
                                         closeButton

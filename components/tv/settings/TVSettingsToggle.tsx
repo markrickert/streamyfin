@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
@@ -44,9 +45,7 @@ export const TVSettingsToggle: React.FC<TVSettingsToggleProps> = ({
         style={[
           animatedStyle,
           {
-            backgroundColor: focused
-              ? "rgba(255, 255, 255, 0.15)"
-              : "rgba(255, 255, 255, 0.05)",
+            backgroundColor: focused ? Colors.white10 : Colors.white05,
             borderRadius: scaleSize(12),
             paddingVertical: scaleSize(16),
             paddingHorizontal: scaleSize(24),
@@ -59,14 +58,14 @@ export const TVSettingsToggle: React.FC<TVSettingsToggleProps> = ({
         ]}
       >
         <View>
-          <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+          <Text style={{ fontSize: typography.body, color: Colors.foreground }}>
             {label}
           </Text>
           {disabledByAdmin && (
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "#EF4444",
+                color: Colors.danger,
                 marginTop: scaleSize(2),
               }}
             >
@@ -79,7 +78,7 @@ export const TVSettingsToggle: React.FC<TVSettingsToggleProps> = ({
             width: scaleSize(56),
             height: scaleSize(32),
             borderRadius: scaleSize(16),
-            backgroundColor: value ? "#FFFFFF" : "#4B5563",
+            backgroundColor: value ? Colors.white : Colors.border,
             justifyContent: "center",
             paddingHorizontal: scaleSize(2),
           }}
@@ -89,7 +88,7 @@ export const TVSettingsToggle: React.FC<TVSettingsToggleProps> = ({
               width: scaleSize(28),
               height: scaleSize(28),
               borderRadius: scaleSize(14),
-              backgroundColor: value ? "#000000" : "#FFFFFF",
+              backgroundColor: value ? Colors.black : Colors.white,
               alignSelf: value ? "flex-end" : "flex-start",
             }}
           />

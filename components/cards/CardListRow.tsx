@@ -1,5 +1,6 @@
 import { TouchableOpacity, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { CardArtwork } from "./CardArtwork";
 import {
   CARD_LAYOUTS,
@@ -57,7 +58,7 @@ export const CardListRow: React.FC<Props> = ({
           {Boolean(card.subtitle) && (
             <Text
               numberOfLines={1}
-              style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}
+              style={{ fontSize: 12, color: Colors.foregroundMuted }}
             >
               {card.subtitle}
             </Text>
@@ -65,7 +66,7 @@ export const CardListRow: React.FC<Props> = ({
           {Boolean(card.detail) && (
             <Text
               numberOfLines={1}
-              style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}
+              style={{ fontSize: 12, color: Colors.foregroundMuted }}
             >
               {card.detail}
             </Text>

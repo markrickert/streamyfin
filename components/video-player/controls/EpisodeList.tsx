@@ -13,6 +13,7 @@ import {
   SeasonDropdown,
   type SeasonIndexState,
 } from "@/components/series/SeasonDropdown";
+import { Colors } from "@/constants/Colors";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import { useDownload } from "@/providers/DownloadProvider";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -170,7 +171,7 @@ export const EpisodeList: React.FC<Props> = ({ item, close, goToItem }) => {
               justifyContent: "center",
             }}
           >
-            <Ionicons name='play-circle' size={40} color='white' />
+            <Ionicons name='play-circle' size={40} color={Colors.foreground} />
           </View>
         ),
       footer: (card: CardData) => {
@@ -212,7 +213,7 @@ export const EpisodeList: React.FC<Props> = ({ item, close, goToItem }) => {
     <View
       style={{
         position: "absolute",
-        backgroundColor: "black",
+        backgroundColor: Colors.black,
         height: "100%",
         width: "100%",
         paddingTop: insets.top,
@@ -243,7 +244,11 @@ export const EpisodeList: React.FC<Props> = ({ item, close, goToItem }) => {
           }}
           className='aspect-square flex flex-col rounded-xl items-center justify-center p-2 ml-auto'
         >
-          <Ionicons name='close' size={ICON_SIZES.HEADER} color='white' />
+          <Ionicons
+            name='close'
+            size={ICON_SIZES.HEADER}
+            color={Colors.foreground}
+          />
         </TouchableOpacity>
       </View>
 

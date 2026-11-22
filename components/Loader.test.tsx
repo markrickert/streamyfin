@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react-native";
 import { Loader } from "@/components/Loader";
+import { Colors } from "@/constants/Colors";
 import { stubReactNative } from "@/test-utils/reactNative";
 
 // The TV pages loaded under a small purple spinner, hard to see from the sofa and
@@ -11,7 +12,7 @@ test("draws a large white spinner on TV", async () => {
   await render(<Loader testID='spinner' />);
 
   const spinner = screen.getByTestId("spinner");
-  expect(spinner.props.color).toBe("white");
+  expect(spinner.props.color).toBe(Colors.foreground);
   expect(spinner.props.size).toBe("large");
 });
 
@@ -21,6 +22,6 @@ test("keeps the small purple spinner on an Android phone", async () => {
   await render(<Loader testID='spinner' />);
 
   const spinner = screen.getByTestId("spinner");
-  expect(spinner.props.color).toBe("#9333ea");
+  expect(spinner.props.color).toBe(Colors.primary);
   expect(spinner.props.size).toBe("small");
 });

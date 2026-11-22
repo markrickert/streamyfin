@@ -9,6 +9,7 @@ import {
   useSheetContentPadding,
 } from "@/components/common/SheetContent";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import {
   type CustomHeader,
   HEADER_PRESETS,
@@ -108,7 +109,11 @@ export function CustomHeaderSheet({
               onPress={() => setShowPresets(false)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name='chevron-back' size={22} color='white' />
+              <Ionicons
+                name='chevron-back'
+                size={22}
+                color={Colors.foreground}
+              />
             </TouchableOpacity>
             <Text className='text-lg font-bold'>
               {t("custom_headers.presets_title")}
@@ -127,7 +132,7 @@ export function CustomHeaderSheet({
                   {preset.description}
                 </Text>
               </View>
-              <Ionicons name='add-circle' size={22} color='#9333EA' />
+              <Ionicons name='add-circle' size={22} color={Colors.primary} />
             </TouchableOpacity>
           ))}
         </>

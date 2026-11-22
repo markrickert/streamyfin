@@ -4,6 +4,7 @@ import { View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { Text } from "@/components/common/Text";
 import { TVButton } from "@/components/tv/TVButton";
+import { Colors } from "@/constants/Colors";
 import { QUICK_CONNECT_CODE_LIFETIME_MS } from "@/constants/QuickConnect";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import type { QuickConnectStatus } from "@/hooks/useQuickConnect";
@@ -98,14 +99,14 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
             paddingVertical: sectionPadding,
             paddingHorizontal: cardPadding,
             borderRadius: scaleSize(16),
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            backgroundColor: Colors.white05,
           }}
         >
           <Text
             style={{
               fontSize: typography.heading,
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: Colors.foreground,
               marginBottom: scaleSize(8),
             }}
           >
@@ -117,7 +118,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#9CA3AF",
+                  color: Colors.foregroundMuted,
                   marginVertical: scaleSize(16),
                   textAlign: "center",
                 }}
@@ -134,7 +135,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "600",
-                      color: "#000000",
+                      color: Colors.black,
                     }}
                   >
                     {t("common.back")}
@@ -147,7 +148,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#9CA3AF",
+                  color: Colors.foregroundMuted,
                   marginVertical: scaleSize(16),
                   textAlign: "center",
                 }}
@@ -161,7 +162,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
                     fontWeight: "600",
                     // The default TV button turns white when focused, and this
                     // one is focused from the start.
-                    color: "#000000",
+                    color: Colors.black,
                   }}
                 >
                   {t("pairing.get_new_code")}
@@ -174,14 +175,14 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
                 style={{
                   padding: cardPadding,
                   borderRadius: scaleSize(12),
-                  backgroundColor: "#FFFFFF",
+                  backgroundColor: Colors.white,
                 }}
               >
                 <QRCode
                   value={qrData}
                   size={qrSize}
-                  color='#000000'
-                  backgroundColor='#FFFFFF'
+                  color={Colors.black}
+                  backgroundColor={Colors.white}
                 />
               </View>
 
@@ -189,7 +190,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
                 style={{
                   fontSize: typography.heading,
                   fontWeight: "bold",
-                  color: "#FFFFFF",
+                  color: Colors.foreground,
                   letterSpacing: scaleSize(8),
                   marginTop: scaleSize(16),
                 }}
@@ -200,7 +201,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#9CA3AF",
+                  color: Colors.foregroundMuted,
                   marginTop: scaleSize(8),
                   textAlign: "center",
                 }}
@@ -215,7 +216,7 @@ export const TVQRCodeDisplay: React.FC<TVQRCodeDisplayProps> = ({
               <Text
                 style={{
                   fontSize: typography.callout,
-                  color: "#9CA3AF",
+                  color: Colors.foregroundMuted,
                   marginTop: scaleSize(4),
                   textAlign: "center",
                 }}

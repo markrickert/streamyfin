@@ -141,9 +141,9 @@ export default function TabLayout() {
       <SystemBars hidden={false} style='light' />
       <NativeTabs
         sidebarAdaptable={false}
-        backgroundColor='#121212'
-        tintColor={Platform.isTV ? "#FFFFFF" : Colors.primary}
-        indicatorColor='#392c3b'
+        backgroundColor={Colors.surface}
+        tintColor={Platform.isTV ? Colors.foreground : Colors.primary}
+        indicatorColor={Colors.primarySubtle}
       >
         <NativeTabs.Trigger
           name='(home)'

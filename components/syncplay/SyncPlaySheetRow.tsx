@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Children, Fragment, isValidElement, type ReactNode } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 
 /**
  * The option group of the app's sheets: the lighter panel the music track
@@ -43,7 +44,7 @@ export function SyncPlaySheetRow({
   title,
   value,
   children,
-  color = "white",
+  color = Colors.foreground,
   disabled = false,
   onPress,
 }: RowProps) {
@@ -87,6 +88,6 @@ export function SyncPlaySheetRow({
 const styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#404040",
+    backgroundColor: Colors.border,
   },
 });
