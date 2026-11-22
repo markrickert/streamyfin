@@ -1,0 +1,101 @@
+/**
+ * Writes the palette of `constants/Colors.ts` as Kotlin and Swift, one copy
+ * per native module that cannot import another's files. Run
+ * `bun scripts/native-palette.ts` after changing a color.
+ * `native-palette.test.ts` fails when a copy on disk drifts from this output.
+ * See docs/conventions/colors.md.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { Colors } from "../constants/Colors";
+
+const ROOT = path.resolve(__dirname, "..");
+const HEADER =
+  "Generated from constants/Colors.ts by scripts/native-palette.ts. Do not edit.";
+
+type Rgba = { r: number; g: number; b: number; a: number };
+
+const parse = (value: string): Rgba | null => {
+  if (value === "transparent") return null;
+  if (value.startsWith("#")) {
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      Number.parseInt(value.slice(i, i + 2), 16),
+    );
+    return { r, g, b, a: 1 };
+  }
+  const match = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/.exec(value);
+  if (!match) throw new Error(`Unsupported color "${value}"`);
+  return {
+    r: Number(match[1]),
+    g: Number(match[2]),
+    b: Number(match[3]),
+    a: Number(match[4]),
+  };
+};
+
+const byte = (n: number) => n.toString(16).toUpperCase().padStart(2, "0");
+
+const tokens = Object.entries(Colors).map(([name, value]) => ({
+  name,
+  rgba: parse(value),
+}));
+
+export const renderKotlinPalette = (packageName: string) => {
+  const lines = tokens.map(({ name, rgba }) => {
+    if (!rgba) return `  val ${name} = Color.Transparent`;
+    const alpha = byte(Math.round(rgba.a * 255));
+    return `  val ${name} = Color(0x${alpha}${byte(rgba.r)}${byte(rgba.g)}${byte(rgba.b)})`;
+  });
+  return `// ${HEADER}
+package ${packageName}
+
+import androidx.compose.ui.graphics.Color
+
+internal object Colors {
+${lines.join("\n")}
+}
+`;
+};
+
+export const renderSwiftPalette = () => {
+  const lines = tokens.map(({ name, rgba }) =>
+    rgba
+      ? `  static let ${name} = Color(.sRGB, red: ${rgba.r} / 255, green: ${rgba.g} / 255, blue: ${rgba.b} / 255, opacity: ${rgba.a})`
+      : `  static let ${name} = Color.clear`,
+  );
+  return `// ${HEADER}
+import SwiftUI
+
+enum Colors {
+${lines.join("\n")}
+}
+`;
+};
+
+const KOTLIN_ROOT = "src/main/java/expo/modules";
+
+export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
+  ...[
+    ["mpv-player", "mpvplayer"],
+    ["hero-carousel", "herocarousel"],
+    ["exoplayer-player", "exoplayerplayer"],
+  ].map(([module, pkg]) => ({
+    path: `modules/${module}/android/${KOTLIN_ROOT}/${pkg}/Colors.kt`,
+    content: renderKotlinPalette(`expo.modules.${pkg}`),
+  })),
+  ...[
+    "modules/mpv-player/ios",
+    "modules/hero-carousel/ios",
+    "modules/glass-poster/ios",
+    "targets/StreamyfinDownloadActivity",
+  ].map((dir) => ({
+    path: `${dir}/Colors.swift`,
+    content: renderSwiftPalette(),
+  })),
+];
+
+if (require.main === module) {
+  for (const { path: file, content } of NATIVE_PALETTE_TARGETS) {
+    fs.writeFileSync(path.join(ROOT, file), content);
+  }
+}
