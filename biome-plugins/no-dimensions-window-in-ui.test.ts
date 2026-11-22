@@ -31,6 +31,8 @@ const lines = pluginLines(
       content: DIMENSIONS_CASES,
     },
     { dir: "hooks", name: "useWindowProbe.ts", content: DIMENSIONS_CASES },
+    { dir: "utils", name: "utilsProbe.ts", content: DIMENSIONS_CASES },
+    { dir: "services", name: "servicesProbe.ts", content: DIMENSIONS_CASES },
     {
       dir: "providers",
       name: "WindowProbeProvider.tsx",
@@ -91,8 +93,13 @@ describe("no-dimensions-window-in-ui", () => {
     expect(lines["useOrientation.ts"]).toEqual([]);
   });
 
+  it("covers non-UI code too, utils and services among it", () => {
+    expect(lines["utilsProbe.ts"]).toEqual(DIMENSIONS_FLAGGED);
+    expect(lines["servicesProbe.ts"]).toEqual(DIMENSIONS_FLAGGED);
+  });
+
   // Read from the config, since a probe cannot go there.
-  it("covers app/ too", () => {
+  it("covers app/ and leaves out only the scaleSize.ts exception", () => {
     const config = JSON.parse(
       fs.readFileSync(path.join(ROOT, "biome.json"), "utf8"),
     );
@@ -100,7 +107,8 @@ describe("no-dimensions-window-in-ui", () => {
       entry.plugins?.includes(PLUGIN),
     );
     expect(override.includes).toEqual(
-      expect.arrayContaining(["app/**/*.ts", "app/**/*.tsx"]),
+      expect.arrayContaining(["**/*.ts", "**/*.tsx", "!utils/scaleSize.ts"]),
     );
+    expect(override.includes).not.toContain("!app/**");
   });
 });
