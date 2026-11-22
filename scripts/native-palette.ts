@@ -35,10 +35,13 @@ const parse = (value: string): Rgba | null => {
 
 const byte = (n: number) => n.toString(16).toUpperCase().padStart(2, "0");
 
-const tokens = Object.entries(Colors).map(([name, value]) => ({
-  name,
-  rgba: parse(value),
-}));
+type Palette = Record<string, string>;
+
+const tokensOf = (palette: Palette) =>
+  Object.entries(palette).map(([name, value]) => ({
+    name,
+    rgba: parse(value),
+  }));
 
 const argb = ({ r, g, b, a }: Rgba) =>
   `0x${byte(Math.round(a * 255))}${byte(r)}${byte(g)}${byte(b)}`;
@@ -47,8 +50,12 @@ const argb = ({ r, g, b, a }: Rgba) =>
  * `compose: false` is for a module with no Compose dependency, whose views
  * take `android.graphics.Color` Ints.
  */
-export const renderKotlinPalette = (packageName: string, compose = true) => {
-  const lines = tokens.map(({ name, rgba }) => {
+export const renderKotlinPalette = (
+  packageName: string,
+  compose = true,
+  palette: Palette = Colors,
+) => {
+  const lines = tokensOf(palette).map(({ name, rgba }) => {
     if (!compose) {
       return rgba
         ? `  const val ${name} = ${argb(rgba)}.toInt()`
@@ -67,8 +74,8 @@ ${lines.join("\n")}
 `;
 };
 
-export const renderSwiftPalette = () => {
-  const lines = tokens.map(({ name, rgba }) =>
+export const renderSwiftPalette = (palette: Palette = Colors) => {
+  const lines = tokensOf(palette).map(({ name, rgba }) =>
     rgba
       ? `  static let ${name} = Color(.sRGB, red: ${rgba.r} / 255, green: ${rgba.g} / 255, blue: ${rgba.b} / 255, opacity: ${rgba.a})`
       : `  static let ${name} = Color.clear`,
@@ -84,14 +91,16 @@ ${lines.join("\n")}
 
 const KOTLIN_ROOT = "src/main/java/expo/modules";
 
-export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
+export const nativePaletteTargets = (
+  palette: Palette = Colors,
+): { path: string; content: string }[] => [
   ...[
     { module: "mpv-player", pkg: "mpvplayer", compose: true },
     { module: "hero-carousel", pkg: "herocarousel", compose: true },
     { module: "exoplayer-player", pkg: "exoplayerplayer", compose: false },
   ].map(({ module, pkg, compose }) => ({
     path: `modules/${module}/android/${KOTLIN_ROOT}/${pkg}/Colors.kt`,
-    content: renderKotlinPalette(`expo.modules.${pkg}`, compose),
+    content: renderKotlinPalette(`expo.modules.${pkg}`, compose, palette),
   })),
   ...[
     "modules/mpv-player/ios",
@@ -101,12 +110,18 @@ export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
     "targets/StreamyfinDownloadActivity",
   ].map((dir) => ({
     path: `${dir}/Colors.swift`,
-    content: renderSwiftPalette(),
+    content: renderSwiftPalette(palette),
   })),
 ];
 
+export const NATIVE_PALETTE_TARGETS = nativePaletteTargets();
+
 if (require.main === module) {
   for (const { path: file, content } of NATIVE_PALETTE_TARGETS) {
-    fs.writeFileSync(path.join(ROOT, file), content);
+    const target = path.join(ROOT, file);
+    if (fs.existsSync(target) && fs.readFileSync(target, "utf8") === content) {
+      continue;
+    }
+    fs.writeFileSync(target, content);
   }
 }

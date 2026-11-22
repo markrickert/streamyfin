@@ -3,6 +3,7 @@ import path from "node:path";
 import { Colors } from "../constants/Colors";
 import {
   NATIVE_PALETTE_TARGETS,
+  nativePaletteTargets,
   renderKotlinPalette,
   renderSwiftPalette,
 } from "./native-palette";
@@ -82,4 +83,23 @@ describe("NATIVE_PALETTE_TARGETS", () => {
       expect(fs.readFileSync(path.join(ROOT, file), "utf8")).toBe(content);
     },
   );
+});
+
+describe("nativePaletteTargets", () => {
+  const palette = { ...Colors, brandNew: "#123456" };
+  const { transparent: _removed, ...withoutTransparent } = Colors;
+
+  it("carries an added token into every target", () => {
+    const targets = nativePaletteTargets(palette);
+    expect(targets).toHaveLength(NATIVE_PALETTE_TARGETS.length);
+    for (const { content } of targets) {
+      expect(content).toMatch(/brandNew = /);
+    }
+  });
+
+  it("drops a deleted token from every target", () => {
+    for (const { content } of nativePaletteTargets(withoutTransparent)) {
+      expect(content).not.toMatch(/transparent = /);
+    }
+  });
 });
