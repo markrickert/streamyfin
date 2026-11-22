@@ -21,8 +21,11 @@ import { Colors } from "@/constants/Colors";
 Kotlin and Swift read the same palette. `scripts/native-palette.ts` writes it as a
 `Colors` object (`Colors.kt`, `Colors.swift`) into every native module that cannot
 import another's files. Its `NATIVE_PALETTE_TARGETS` is the list. After changing a
-color in `constants/Colors.ts`, run `bun scripts/native-palette.ts`. Never edit a
-generated file: `scripts/native-palette.test.ts` fails when one drifts. A module
+color in `constants/Colors.ts`, run `bun scripts/native-palette.ts`. `postinstall`
+and `bun run prebuild` (`clean`) run it too, so CI and EAS builds regenerate the
+files from `Colors.ts` and never ship a stale, missing or extra token. The files
+stay committed. Never edit a generated file: `scripts/native-palette.test.ts` fails
+when one drifts. A module
 with no Compose dependency gets ARGB `Int` constants instead of Compose `Color`s.
 
 `scripts/check-native-colors.ts` runs in `bun run check` and fails on a hex number,
