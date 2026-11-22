@@ -6,6 +6,7 @@ import { Text } from "@/components/common/Text";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
 
 export interface TVSettingsStepperProps {
@@ -104,7 +105,7 @@ export const TVSettingsStepper: React.FC<TVSettingsStepperProps> = ({
             <Ionicons
               name='remove'
               size={scaleSize(24)}
-              color={minusAnim.focused ? Colors.black : Colors.foreground}
+              color={tvFocusedTextColor(minusAnim.focused)}
             />
           </Animated.View>
         </Pressable>
@@ -144,7 +145,7 @@ export const TVSettingsStepper: React.FC<TVSettingsStepperProps> = ({
             <Ionicons
               name='add'
               size={scaleSize(24)}
-              color={plusAnim.focused ? Colors.black : Colors.foreground}
+              color={tvFocusedTextColor(plusAnim.focused)}
             />
           </Animated.View>
         </Pressable>

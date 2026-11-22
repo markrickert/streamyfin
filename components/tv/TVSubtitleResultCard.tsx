@@ -14,6 +14,7 @@ import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import type { SubtitleSearchResult } from "@/hooks/useRemoteSubtitles";
 import { scaleSize } from "@/utils/scaleSize";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
 export interface TVSubtitleResultCardProps {
@@ -73,10 +74,7 @@ export const TVSubtitleResultCard = React.forwardRef<
 
         {/* Name */}
         <Text
-          style={[
-            styles.resultName,
-            { color: focused ? Colors.black : Colors.foreground },
-          ]}
+          style={[styles.resultName, { color: tvFocusedTextColor(focused) }]}
           numberOfLines={2}
         >
           {result.name}
@@ -166,7 +164,7 @@ export const TVSubtitleResultCard = React.forwardRef<
               <Ionicons
                 name='ear-outline'
                 size={12}
-                color={focused ? Colors.black : Colors.foreground}
+                color={tvFocusedTextColor(focused)}
               />
             </View>
           )}

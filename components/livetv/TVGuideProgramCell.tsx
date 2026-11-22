@@ -12,6 +12,7 @@ import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
 import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVGuideProgramCellProps {
   program: BaseItemDto;
@@ -89,7 +90,7 @@ export const TVGuideProgramCell: React.FC<TVGuideProgramCellProps> = ({
             styles.programName,
             {
               fontSize: typography.callout,
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
             },
           ]}
         >

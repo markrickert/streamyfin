@@ -17,6 +17,7 @@ import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { verifyAccountPIN } from "@/utils/secureCredentials";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVPINEntryModalProps {
   visible: boolean;
@@ -76,7 +77,7 @@ const NumberPadButton: React.FC<{
           <Ionicons
             name='backspace-outline'
             size={28}
-            color={focused ? Colors.black : Colors.foreground}
+            color={tvFocusedTextColor(focused)}
           />
         ) : (
           <Text
@@ -84,7 +85,7 @@ const NumberPadButton: React.FC<{
               styles.numberText,
               {
                 fontSize: typography.body,
-                color: focused ? Colors.black : Colors.foreground,
+                color: tvFocusedTextColor(focused),
               },
             ]}
           >

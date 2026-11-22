@@ -6,7 +6,7 @@ import { Colors } from "@/constants/Colors";
 
 /**
  * The option group of the app's sheets: the lighter panel the music track
- * options use. The Settings screen's rows are the sheet's own colour and
+ * options use. The Settings screen's rows are the sheet's own color and
  * would not read as a group here.
  */
 export function SyncPlaySheetGroup({ children }: { children: ReactNode }) {
@@ -29,7 +29,7 @@ interface RowProps {
   testID?: string;
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  /** Shown at the trailing edge, in the app's secondary colour. */
+  /** Shown at the trailing edge, in the app's secondary color. */
   value?: string;
   /** A control at the trailing edge, such as a switch. */
   children?: ReactNode;

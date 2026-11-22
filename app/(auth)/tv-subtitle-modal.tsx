@@ -40,6 +40,7 @@ import { COMMON_SUBTITLE_LANGUAGES } from "@/utils/opensubtitles/api";
 import { scaleSize } from "@/utils/scaleSize";
 import { store } from "@/utils/store";
 import { createSubmission } from "@/utils/submission";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 type TabType = "tracks" | "download" | "settings";
 
@@ -82,7 +83,7 @@ const TVTrackCard = React.forwardRef<
           style={[
             styles.trackCardText,
             {
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
               fontSize: scaleSize(16),
             },
             (focused || selected) && { fontWeight: "600" },
@@ -158,7 +159,7 @@ const LanguageCard = React.forwardRef<
           style={[
             styles.languageCardText,
             {
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
               fontSize: scaleSize(15),
             },
             (focused || selected) && { fontWeight: "600" },
@@ -256,7 +257,7 @@ const SubtitleResultCard = React.forwardRef<
           style={[
             styles.resultName,
             {
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
               fontSize: scaleSize(14),
             },
           ]}
@@ -356,7 +357,7 @@ const SubtitleResultCard = React.forwardRef<
               <Ionicons
                 name='ear-outline'
                 size={scaleSize(12)}
-                color={focused ? Colors.black : Colors.foreground}
+                color={tvFocusedTextColor(focused)}
               />
             </View>
           )}
@@ -526,7 +527,7 @@ const TVAlignmentCard: React.FC<{
           style={[
             styles.alignmentCardText,
             {
-              color: focused ? Colors.black : Colors.foreground,
+              color: tvFocusedTextColor(focused),
               fontSize: scaleSize(15),
             },
             (focused || selected) && { fontWeight: "600" },

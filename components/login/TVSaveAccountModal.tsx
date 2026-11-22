@@ -20,6 +20,7 @@ import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import type { AccountSecurityType } from "@/utils/secureCredentials";
+import { tvFocusedTextColor } from "@/utils/tvFocusColors";
 
 interface TVSaveAccountModalProps {
   visible: boolean;
@@ -103,12 +104,12 @@ const TVSaveButton: React.FC<{
         <Ionicons
           name='checkmark'
           size={scaleSize(20)}
-          color={focused ? Colors.black : Colors.foreground}
+          color={tvFocusedTextColor(focused)}
         />
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? Colors.black : Colors.foreground,
+            color: tvFocusedTextColor(focused),
             fontWeight: "600",
           }}
         >
@@ -153,12 +154,12 @@ const TVBackButton: React.FC<{
         <Ionicons
           name='chevron-back'
           size={scaleSize(20)}
-          color={focused ? Colors.black : Colors.foreground}
+          color={tvFocusedTextColor(focused)}
         />
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? Colors.black : Colors.foreground,
+            color: tvFocusedTextColor(focused),
             fontWeight: "500",
           }}
         >
