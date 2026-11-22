@@ -1,0 +1,45 @@
+// Generated from constants/Colors.ts by scripts/native-palette.ts. Do not edit.
+package expo.modules.mpvplayer
+
+import androidx.compose.ui.graphics.Color
+
+internal object Colors {
+  val primary = Color(0xFF9334E9)
+  val primaryDark = Color(0xFF7E22CE)
+  val accent = Color(0xFFC084FC)
+  val foreground = Color(0xFFECEDEE)
+  val foregroundMuted = Color(0xFF9CA3AF)
+  val foregroundDisabled = Color(0xFF737373)
+  val surface = Color(0xFF171717)
+  val surfaceRaised = Color(0xFF262626)
+  val border = Color(0xFF404040)
+  val white = Color(0xFFFFFFFF)
+  val black = Color(0xFF000000)
+  val transparent = Color.Transparent
+  val danger = Color(0xFFEF4444)
+  val dangerLight = Color(0xFFF87171)
+  val success = Color(0xFF22C55E)
+  val successLight = Color(0xFF4ADE80)
+  val warning = Color(0xFFF59E0B)
+  val warningLight = Color(0xFFFBBF24)
+  val info = Color(0xFF3B82F6)
+  val infoLight = Color(0xFF60A5FA)
+  val favorite = Color(0xFFEC4899)
+  val white05 = Color(0x0DFFFFFF)
+  val white10 = Color(0x1AFFFFFF)
+  val white20 = Color(0x33FFFFFF)
+  val white30 = Color(0x4DFFFFFF)
+  val white50 = Color(0x80FFFFFF)
+  val white80 = Color(0xCCFFFFFF)
+  val black10 = Color(0x1A000000)
+  val black30 = Color(0x4D000000)
+  val black50 = Color(0x80000000)
+  val black60 = Color(0x99000000)
+  val black80 = Color(0xCC000000)
+  val primarySubtle = Color(0x339334E9)
+  val dangerSubtle = Color(0x33EF4444)
+  val successSubtle = Color(0x3322C55E)
+  val warningSubtle = Color(0x33F59E0B)
+  val infoSubtle = Color(0x333B82F6)
+  val surfaceTranslucent = Color(0xE6171717)
+}
