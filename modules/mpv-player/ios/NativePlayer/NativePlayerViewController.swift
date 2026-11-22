@@ -108,7 +108,7 @@ final class NativePlayerViewController: UIViewController {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		view.backgroundColor = .black
+		view.backgroundColor = UIColor(Colors.black)
 
 		#if os(iOS)
 		viewModel.onRotateRequested = { [weak self] in
@@ -116,7 +116,7 @@ final class NativePlayerViewController: UIViewController {
 		}
 		#endif
 
-		videoContainerView.backgroundColor = .black
+		videoContainerView.backgroundColor = UIColor(Colors.black)
 		videoContainerView.clipsToBounds = true
 		view.addSubview(videoContainerView)
 

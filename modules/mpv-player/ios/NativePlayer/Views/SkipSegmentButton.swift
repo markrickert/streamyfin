@@ -17,11 +17,11 @@ struct SkipSegmentButton: View {
 				Image(systemName: "forward.fill")
 					.font(.system(size: 12, weight: .semibold))
 			}
-			.foregroundStyle(.white)
+			.foregroundStyle(Colors.white)
 			.padding(.horizontal, 18)
 			.padding(.vertical, 10)
 			.background(.ultraThinMaterial, in: Capsule())
-			.overlay(Capsule().stroke(.white.opacity(0.25), lineWidth: 1))
+			.overlay(Capsule().stroke(Colors.white30, lineWidth: 1))
 		}
 	}
 

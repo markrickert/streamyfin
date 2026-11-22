@@ -61,7 +61,7 @@ struct TVSyncPlayPanel: View {
 		ZStack {
 			// A modal moment, as the subtitle search: dim the video so the
 			// panel reads as the only interactive surface.
-			Color.black.opacity(0.6).ignoresSafeArea()
+			Colors.black60.ignoresSafeArea()
 			if let state = viewModel.syncPlay {
 				VStack(alignment: .leading, spacing: 28) {
 					header(state)
@@ -96,15 +96,15 @@ struct TVSyncPlayPanel: View {
 		VStack(alignment: .leading, spacing: 6) {
 			Text(state.groupName)
 				.font(.title3.weight(.semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.lineLimit(1)
 			Text(state.connected ? state.status : text("reconnecting", "Reconnecting"))
 				.font(.callout)
-				.foregroundStyle(.white.opacity(0.7))
+				.foregroundStyle(Colors.white80)
 			if let error = state.error {
 				Text(error)
 					.font(.callout)
-					.foregroundStyle(.orange)
+					.foregroundStyle(Colors.warning)
 					.lineLimit(2)
 			}
 		}
@@ -118,7 +118,7 @@ struct TVSyncPlayPanel: View {
 			if state.playlist.isEmpty {
 				Text(text("empty_queue", "The queue is empty"))
 					.font(.system(size: 24))
-					.foregroundStyle(.white.opacity(0.7))
+					.foregroundStyle(Colors.white80)
 					.frame(maxWidth: .infinity, maxHeight: .infinity)
 			} else {
 				ScrollView {
@@ -212,11 +212,11 @@ struct TVSyncPlayPanel: View {
 	private func poster(_ item: SyncPlayPlaylistItemRecord) -> some View {
 		if let imageUrl = item.imageUrl, let url = URL(string: imageUrl) {
 			RemoteImage(url: url, headers: viewModel.imageHeaders) {
-				Color.white.opacity(0.1)
+				Colors.white10
 			}
 		} else {
 			ZStack {
-				Color.white.opacity(0.1)
+				Colors.white10
 				Image(systemName: "film").opacity(0.6)
 			}
 		}
@@ -297,7 +297,7 @@ struct TVSyncPlayPanel: View {
 	private func sectionTitle(_ title: String) -> some View {
 		Text(title)
 			.font(.system(size: 22, weight: .semibold))
-			.foregroundStyle(.white.opacity(0.6))
+			.foregroundStyle(Colors.white50)
 			.padding(.horizontal, 8)
 	}
 

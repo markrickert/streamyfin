@@ -77,13 +77,13 @@ struct TVChromeLayerView: View {
 	private var scrims: some View {
 		VStack(spacing: 0) {
 			LinearGradient(
-				colors: [Color.black.opacity(0.55), Color.black.opacity(0)],
+				colors: [Colors.black60, Colors.transparent],
 				startPoint: .top, endPoint: .bottom
 			)
 			.frame(height: 240)
 			Spacer()
 			LinearGradient(
-				colors: [Color.black.opacity(0), Color.black.opacity(0.55)],
+				colors: [Colors.transparent, Colors.black60],
 				startPoint: .top, endPoint: .bottom
 			)
 			.frame(height: 280)
@@ -105,18 +105,18 @@ private struct TVMetadataHeader: View {
 				if let title = viewModel.metadata?.title {
 					Text(title)
 						.font(.title3.weight(.semibold))
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 						.lineLimit(1)
 				}
 				if let subtitle = viewModel.metadata?.subtitle {
 					Text(subtitle)
 						.font(.callout)
-						.foregroundStyle(.white.opacity(0.7))
+						.foregroundStyle(Colors.white80)
 						.lineLimit(1)
 				}
 				if let group = viewModel.syncPlay {
 					Text("\(group.groupName) · \(group.connected ? group.status : viewModel.syncStr("reconnecting", "Reconnecting"))")
-						.font(.callout).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+						.font(.callout).foregroundStyle(Colors.white80).lineLimit(1)
 				}
 			}
 			Spacer()
@@ -182,7 +182,7 @@ private struct TVTransportBar: View {
 				HStack(spacing: 20) {
 					Image(systemName: glyphName)
 						.font(.system(size: 24, weight: .semibold))
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 
 					progressBar(position: position, duration: duration)
 						.frame(height: barHeight)
@@ -219,7 +219,7 @@ private struct TVTransportBar: View {
 					if let chapterName = viewModel.chapterName(at: position) {
 						Text(chapterName)
 							.font(.system(size: 20))
-							.foregroundStyle(.white.opacity(0.55))
+							.foregroundStyle(Colors.white50)
 							.lineLimit(1)
 					}
 				}
@@ -229,12 +229,12 @@ private struct TVTransportBar: View {
 					if duration > 0 {
 						Text(endsAtLabel(remaining: remaining))
 							.font(.system(size: 20).monospacedDigit())
-							.foregroundStyle(.white.opacity(0.55))
+							.foregroundStyle(Colors.white50)
 					}
 				}
 			}
 			.font(.system(size: 26).monospacedDigit())
-			.foregroundStyle(.white.opacity(0.85))
+			.foregroundStyle(Colors.white80)
 			.padding(.leading, 44)
 		}
 		.animation(
@@ -298,17 +298,17 @@ private struct TVTransportBar: View {
 				// a painted-on tint.
 				Color.clear.glassEffect(.regular, in: Capsule())
 				Capsule()
-					.fill(.white.opacity(0.35))
+					.fill(Colors.white30)
 					.frame(width: width * bufferedFraction)
 				Capsule()
-					.fill(.white)
+					.fill(Colors.white)
 					.frame(width: width * playedFraction)
 
 				// Chapter ticks (skip the implicit chapter at 0)
 				ForEach(Array(viewModel.chapters.enumerated()), id: \.offset) { _, chapter in
 					if chapter.startSec > 0, duration > 0 {
 						RoundedRectangle(cornerRadius: 1)
-							.fill(.black.opacity(0.55))
+							.fill(Colors.black60)
 							.frame(width: 3, height: geometry.size.height - 2)
 							.offset(
 								x: width * CGFloat(min(max(chapter.startSec / duration, 0), 1)) - 1.5)

@@ -81,11 +81,11 @@ class MpvPlayerView: ExpoView {
 
 	private func setupView() {
 		clipsToBounds = true
-		backgroundColor = .black
+		backgroundColor = UIColor(Colors.black)
 
 		videoContainer = UIView()
 		videoContainer.translatesAutoresizingMaskIntoConstraints = false
-		videoContainer.backgroundColor = .black
+		videoContainer.backgroundColor = UIColor(Colors.black)
 		videoContainer.clipsToBounds = true
 		addSubview(videoContainer)
 

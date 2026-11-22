@@ -23,10 +23,10 @@ struct TechnicalInfoOverlay: View {
 			}
 		}
 		.font(.caption2.monospaced())
-		.foregroundStyle(.white)
+		.foregroundStyle(Colors.white)
 		.padding(10)
 		.frame(maxWidth: 340, alignment: .leading)
-		.background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 10))
+		.background(Colors.black80, in: RoundedRectangle(cornerRadius: 10))
 		.onTapGesture { viewModel.showTechnicalInfo = false }
 		.onAppear { refresh() }
 		.onReceive(timer) { _ in refresh() }
@@ -42,7 +42,7 @@ struct TechnicalInfoOverlay: View {
 	private func line(_ key: String, _ value: String) -> some View {
 		HStack(alignment: .top, spacing: 6) {
 			Text(key + ":")
-				.foregroundStyle(.white.opacity(0.6))
+				.foregroundStyle(Colors.white50)
 			Text(value)
 				.lineLimit(2)
 		}

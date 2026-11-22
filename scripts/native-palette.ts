@@ -97,6 +97,7 @@ export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
     "modules/mpv-player/ios",
     "modules/hero-carousel/ios",
     "modules/glass-poster/ios",
+    "modules/tv-search/ios",
     "targets/StreamyfinDownloadActivity",
   ].map((dir) => ({
     path: `${dir}/Colors.swift`,

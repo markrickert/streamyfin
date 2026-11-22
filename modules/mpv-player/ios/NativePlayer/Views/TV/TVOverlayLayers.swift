@@ -22,7 +22,7 @@ struct TVStatusLayerView: View {
 			if viewModel.isBuffering && viewModel.errorMessage == nil {
 				ProgressView()
 					.progressViewStyle(.circular)
-					.tint(.white)
+					.tint(Colors.white)
 					.scaleEffect(1.6)
 			}
 
@@ -166,19 +166,19 @@ struct TVErrorLayerView: View {
 				VStack(spacing: 20) {
 					Image(systemName: "exclamationmark.triangle.fill")
 						.font(.system(size: 56))
-						.foregroundStyle(.yellow)
+						.foregroundStyle(Colors.warningLight)
 					Text(viewModel.str("playbackError", "Playback error"))
 						.font(.title3)
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 					Text(message)
 						.font(.body)
-						.foregroundStyle(.white.opacity(0.8))
+						.foregroundStyle(Colors.white80)
 						.multilineTextAlignment(.center)
 						.lineLimit(4)
 				}
 				.padding(48)
 				.frame(maxWidth: 720)
-				.background(.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 24))
+				.background(Colors.black80, in: RoundedRectangle(cornerRadius: 24))
 			}
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)

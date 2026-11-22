@@ -16,7 +16,7 @@ private let RCTTVEnableGestureHandlersCancelTouchesNotification = Notification.N
   class TvSearchViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var placeholder: String = "Search..."
-    @Published var accentColor: Color = .white
+    @Published var accentColor: Color = Colors.white
     var onSearch: ((String) -> Void)?
   }
 

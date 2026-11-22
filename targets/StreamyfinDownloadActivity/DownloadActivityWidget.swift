@@ -2,8 +2,6 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-private let brandTint = Color(red: 0.576, green: 0.200, blue: 0.918)  // #9333EA
-
 /// Live Activity for the active download.
 ///
 /// Text is deliberately kept to values that need no translation — byte counts are formatted by
@@ -17,8 +15,8 @@ struct DownloadActivityWidget: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: DownloadActivityAttributes.self) { context in
       LockScreenView(context: context)
-        .activityBackgroundTint(Color.black.opacity(0.55))
-        .activitySystemActionForegroundColor(.white)
+        .activityBackgroundTint(Colors.black60)
+        .activitySystemActionForegroundColor(Colors.white)
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
@@ -45,14 +43,14 @@ struct DownloadActivityWidget: Widget {
         }
       } compactLeading: {
         Image(systemName: leadingSymbol(for: context))
-          .foregroundStyle(isProgressStale(context) ? Color.secondary : brandTint)
+          .foregroundStyle(isProgressStale(context) ? Color.secondary : Colors.primary)
       } compactTrailing: {
         CompactTrailing(context: context)
       } minimal: {
         Image(systemName: leadingSymbol(for: context))
-          .foregroundStyle(isProgressStale(context) ? Color.secondary : brandTint)
+          .foregroundStyle(isProgressStale(context) ? Color.secondary : Colors.primary)
       }
-      .keylineTint(brandTint)
+      .keylineTint(Colors.primary)
     }
   }
 }
@@ -74,7 +72,7 @@ private struct LockScreenView: View {
           Spacer(minLength: 8)
           Text(context.attributes.label(for: context.state.state))
             .font(.caption2.weight(.semibold))
-            .foregroundStyle(context.state.state == .failed ? .red : .secondary)
+            .foregroundStyle(context.state.state == .failed ? Colors.danger : .secondary)
             .lineLimit(1)
         }
 
@@ -148,7 +146,7 @@ private struct PercentLabel: View {
           .font(.caption.weight(.semibold))
           .monospacedDigit()
           .contentTransition(.numericText())
-          .foregroundStyle(isProgressStale(context) ? Color.secondary : brandTint)
+          .foregroundStyle(isProgressStale(context) ? Color.secondary : Colors.primary)
       }
     }
   }
@@ -181,7 +179,7 @@ private struct CompactTrailing: View {
     Text(percentText(for: context))
       .monospacedDigit()
       .contentTransition(.numericText())
-      .foregroundStyle(isProgressStale(context) ? Color.secondary : brandTint)
+      .foregroundStyle(isProgressStale(context) ? Color.secondary : Colors.primary)
   }
 }
 
@@ -197,10 +195,10 @@ private struct PosterView: View {
           .aspectRatio(contentMode: .fill)
       } else {
         ZStack {
-          Color.white.opacity(0.12)
+          Colors.white10
           Image(systemName: "arrow.down.circle.fill")
             .font(.system(size: size * 0.4))
-            .foregroundStyle(brandTint)
+            .foregroundStyle(Colors.primary)
         }
       }
     }
@@ -228,8 +226,8 @@ private func isProgressStale(_ context: ActivityViewContext<DownloadActivityAttr
 }
 
 private func progressTint(for context: ActivityViewContext<DownloadActivityAttributes>) -> Color {
-  if context.state.state == .failed { return .red }
-  return isProgressStale(context) ? brandTint.opacity(0.4) : brandTint
+  if context.state.state == .failed { return Colors.danger }
+  return isProgressStale(context) ? Colors.foregroundDisabled : Colors.primary
 }
 
 /// Interval driving the self-advancing bar and countdown, when the last update carried a

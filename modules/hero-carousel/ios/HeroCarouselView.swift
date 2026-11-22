@@ -115,10 +115,10 @@ private struct HeroFilterMenu: View {
     } label: {
       Image(systemName: "line.3.horizontal.decrease")
         .font(.system(size: 13, weight: .semibold))
-        .foregroundStyle(.white.opacity(0.95))
+        .foregroundStyle(Colors.white)
         .frame(width: 32, height: 32)
         .background(.ultraThinMaterial, in: Circle())
-        .overlay(Circle().strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5))
+        .overlay(Circle().strokeBorder(Colors.white20, lineWidth: 0.5))
     }
     .accessibilityLabel(filter.label)
   }
@@ -156,12 +156,12 @@ struct HeroSkeletonView: View {
       RoundedRectangle(
         cornerRadius: HeroLayout.cardCornerRadius, style: .continuous
       )
-      .fill(Color.white.opacity(0.06))
+      .fill(Colors.white05)
       .overlay(
         RoundedRectangle(
           cornerRadius: HeroLayout.cardCornerRadius, style: .continuous
         )
-        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+        .strokeBorder(Colors.white10, lineWidth: 1)
       )
       .padding(.horizontal, HeroLayout.pageMargin)
       .frame(height: max(proxy.size.height - HeroLayout.dotsArea, 0))
@@ -465,10 +465,10 @@ private struct HeroCardView: View {
           // Scrim so the glass panel and label stay legible on bright art.
           LinearGradient(
             stops: [
-              .init(color: .black.opacity(0.25), location: 0),
+              .init(color: Colors.black30, location: 0),
               .init(color: .clear, location: 0.3),
               .init(color: .clear, location: 0.45),
-              .init(color: .black.opacity(0.65), location: 1),
+              .init(color: Colors.black60, location: 1),
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -488,11 +488,11 @@ private struct HeroCardView: View {
         }
         .frame(width: geo.size.width, height: geo.size.height)
         .clipShape(shape)
-        .overlay(shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+        .overlay(shape.strokeBorder(Colors.white10, lineWidth: 1))
         .contentShape(shape)
       }
       .buttonStyle(HeroCardPressStyle())
-      .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 10)
+      .shadow(color: Colors.black30, radius: 16, x: 0, y: 10)
     }
   }
 
@@ -506,11 +506,11 @@ private struct HeroCardView: View {
         .font(.system(size: 10, weight: .heavy))
         .kerning(0.8)
     }
-    .foregroundStyle(.white.opacity(0.95))
+    .foregroundStyle(Colors.white)
     .padding(.horizontal, 10)
     .padding(.vertical, 6)
     .background(.ultraThinMaterial, in: Capsule())
-    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5))
+    .overlay(Capsule().strokeBorder(Colors.white20, lineWidth: 0.5))
   }
 
   private var infoPanel: some View {
@@ -522,7 +522,7 @@ private struct HeroCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
               RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+                .strokeBorder(Colors.white20, lineWidth: 0.5)
             )
         }
 
@@ -536,14 +536,14 @@ private struct HeroCardView: View {
           if let subtitle = item.subtitle, !subtitle.isEmpty {
             Text(subtitle)
               .font(.caption.weight(.semibold))
-              .foregroundStyle(.white.opacity(0.9))
+              .foregroundStyle(Colors.white)
               .lineLimit(1)
           }
 
           if !item.overview.isEmpty {
             Text(item.overview)
               .font(.caption)
-              .foregroundStyle(.white.opacity(0.75))
+              .foregroundStyle(Colors.white80)
               .lineLimit(2)
               .multilineTextAlignment(.leading)
           }
@@ -566,7 +566,7 @@ private struct HeroCardView: View {
     )
     .overlay(
       RoundedRectangle(cornerRadius: 20, style: .continuous)
-        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+        .strokeBorder(Colors.white10, lineWidth: 1)
     )
   }
 
@@ -576,10 +576,10 @@ private struct HeroCardView: View {
         HStack(spacing: 3) {
           Image(systemName: "star.fill")
             .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(.yellow)
+            .foregroundStyle(Colors.warningLight)
           Text(String(format: "%.1f", rating))
             .font(.caption2.weight(.semibold))
-            .foregroundStyle(.white.opacity(0.9))
+            .foregroundStyle(Colors.white)
         }
         .fixedSize()
         .heroBadgeChip()
@@ -588,7 +588,7 @@ private struct HeroCardView: View {
       ForEach(Array(item.badges.enumerated()), id: \.offset) { _, badge in
         Text(badge)
           .font(.caption2.weight(.semibold))
-          .foregroundStyle(.white.opacity(0.9))
+          .foregroundStyle(Colors.white)
           .fixedSize()
           .heroBadgeChip()
       }
@@ -604,9 +604,9 @@ private struct HeroCardView: View {
     GeometryReader { geo in
       ZStack(alignment: .leading) {
         Capsule()
-          .fill(Color.white.opacity(0.2))
+          .fill(Colors.white20)
         Capsule()
-          .fill(Color.white.opacity(0.9))
+          .fill(Colors.white)
           .frame(width: max(geo.size.width * min(max(progress, 0), 1), 4))
       }
     }
@@ -640,7 +640,7 @@ private struct HeroPageDots: View {
     HStack(spacing: 6) {
       ForEach(0..<count, id: \.self) { index in
         Capsule()
-          .fill(Color.white.opacity(index == activeIndex ? 0.9 : 0.3))
+          .fill(index == activeIndex ? Colors.white : Colors.white30)
           .frame(width: index == activeIndex ? 18 : 6, height: 6)
       }
     }
@@ -698,7 +698,7 @@ private struct HeroLogoView: View {
       } else {
         Text(title)
           .font(.system(size: 17, weight: .bold))
-          .foregroundStyle(.white)
+          .foregroundStyle(Colors.white)
           .lineLimit(1)
       }
     }
@@ -763,7 +763,7 @@ extension View {
   fileprivate func heroBadgeChip() -> some View {
     padding(.horizontal, 8)
       .padding(.vertical, 4)
-      .background(Color.white.opacity(0.14), in: Capsule())
+      .background(Colors.white10, in: Capsule())
   }
 }
 
@@ -822,7 +822,7 @@ private struct RemoteHeroImage: View {
   var body: some View {
     ZStack {
       LinearGradient(
-        colors: [Color(white: 0.16), Color(white: 0.10)],
+        colors: [Colors.surfaceRaised, Colors.surface],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
       )

@@ -22,9 +22,9 @@ struct VerticalSliderPill: View {
 				let height = geometry.size.height
 				ZStack(alignment: .bottom) {
 					Capsule()
-						.fill(.white.opacity(0.3))
+						.fill(Colors.white30)
 					Capsule()
-						.fill(.white)
+						.fill(Colors.white)
 						.frame(height: max(Self.trackWidth, height * value))
 				}
 				.frame(width: Self.trackWidth)
@@ -50,7 +50,7 @@ struct VerticalSliderPill: View {
 
 			Image(systemName: systemImage)
 				.font(.system(size: 14, weight: .semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 		}
 	}
 }

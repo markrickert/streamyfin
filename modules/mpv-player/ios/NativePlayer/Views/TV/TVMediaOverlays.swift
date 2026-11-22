@@ -26,7 +26,7 @@ struct TVPosterScrim: View {
 	var body: some View {
 		ZStack {
 			LinearGradient(
-				colors: [.black.opacity(0), .black.opacity(0.55)],
+				colors: [Colors.transparent, Colors.black60],
 				startPoint: .top, endPoint: .bottom
 			)
 			Rectangle()
@@ -35,8 +35,8 @@ struct TVPosterScrim: View {
 					LinearGradient(
 						stops: [
 							.init(color: .clear, location: 0),
-							.init(color: .black.opacity(0.65), location: 0.5),
-							.init(color: .black, location: 1),
+							.init(color: Colors.black60, location: 0.5),
+							.init(color: Colors.black, location: 1),
 						],
 						startPoint: .top, endPoint: .bottom
 					)
@@ -59,7 +59,7 @@ struct TVSkipPill: View {
 	var body: some View {
 		Text(viewModel.skipLabel(for: segment.type))
 		.font(.callout.weight(.semibold))
-		.foregroundStyle(.white)
+		.foregroundStyle(Colors.white)
 		.padding(.horizontal, 28)
 		.padding(.vertical, 14)
 		// Liquid Glass, matching the .glass button style of the controls row —
@@ -81,7 +81,7 @@ struct TVCountdownCard: View {
 		HStack(spacing: 18) {
 			if let imageUrl = next.imageUrl, let url = URL(string: imageUrl) {
 				RemoteImage(url: url, headers: viewModel.imageHeaders) {
-					Color.black.opacity(0.4)
+					Colors.black50
 				}
 				.frame(width: 168, height: 94)
 				.clipShape(RoundedRectangle(cornerRadius: 10))
@@ -89,15 +89,15 @@ struct TVCountdownCard: View {
 			VStack(alignment: .leading, spacing: 6) {
 				Text("\(viewModel.str("nextEpisode", "Next episode")) · \(Int(remaining))s")
 					.font(.caption)
-					.foregroundStyle(.white.opacity(0.7))
+					.foregroundStyle(Colors.white80)
 				Text(next.title)
 					.font(.callout.weight(.semibold))
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.lineLimit(1)
 				if let subtitle = next.subtitle {
 					Text(subtitle)
 						.font(.caption)
-						.foregroundStyle(.white.opacity(0.7))
+						.foregroundStyle(Colors.white80)
 						.lineLimit(1)
 				}
 			}
@@ -123,7 +123,7 @@ struct TVStillWatchingCard: View {
 		VStack(spacing: 28) {
 			Text(viewModel.str("stillWatching", "Are you still watching?"))
 				.font(.title3.weight(.semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 			HStack(spacing: 20) {
 				Button(viewModel.str("continueWatching", "Continue watching")) {
 					viewModel.continueWatchingTapped()
@@ -170,7 +170,7 @@ struct TVEpisodeShelf: View {
 		VStack(alignment: .leading, spacing: 16) {
 			Text(viewModel.str("episodes", "Episodes"))
 				.font(.title3.weight(.semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.padding(.horizontal, TVChromeMetrics.insetH)
 			ScrollView(.horizontal, showsIndicators: false) {
 				HStack(spacing: 28) {
@@ -196,9 +196,9 @@ struct TVEpisodeShelf: View {
 			// the cards sit on solid ground; only the top edge stays a fade.
 			LinearGradient(
 				stops: [
-					.init(color: .black.opacity(0), location: 0),
-					.init(color: .black.opacity(0.75), location: 0.35),
-					.init(color: .black.opacity(0.95), location: 1),
+					.init(color: Colors.transparent, location: 0),
+					.init(color: Colors.black80, location: 0.35),
+					.init(color: Colors.black, location: 1),
 				],
 				startPoint: .top, endPoint: .bottom
 			)
@@ -236,10 +236,10 @@ struct TVEpisodeShelf: View {
 			ZStack(alignment: .bottomLeading) {
 				if let imageUrl = episode.imageUrl, let url = URL(string: imageUrl) {
 					RemoteImage(url: url, headers: viewModel.imageHeaders) {
-						Color.white.opacity(0.1)
+						Colors.white10
 					}
 				} else {
-					Color.white.opacity(0.1)
+					Colors.white10
 				}
 				TVPosterScrim()
 				VStack(alignment: .leading, spacing: 8) {
@@ -247,13 +247,13 @@ struct TVEpisodeShelf: View {
 						episode.indexNumber.map { "\($0). \(episode.title)" } ?? episode.title
 					)
 					.font(.system(size: 20, weight: .medium))
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.lineLimit(1)
 					if episode.progressPercent > 0 {
 						GeometryReader { geometry in
-							Capsule().fill(.white.opacity(0.3))
+							Capsule().fill(Colors.white30)
 								.overlay(alignment: .leading) {
-									Capsule().fill(.white)
+									Capsule().fill(Colors.white)
 										.frame(
 											width: geometry.size.width
 												* CGFloat(min(max(episode.progressPercent / 100, 0), 1)))
@@ -278,10 +278,10 @@ struct TVEpisodeShelf: View {
 						Text(viewModel.str("nowPlaying", "Now Playing"))
 							.font(.system(size: 15, weight: .bold))
 					}
-					.foregroundStyle(.black)
+					.foregroundStyle(Colors.black)
 					.padding(.horizontal, 10)
 					.padding(.vertical, 6)
-					.background(.white, in: RoundedRectangle(cornerRadius: 8))
+					.background(Colors.white, in: RoundedRectangle(cornerRadius: 8))
 					.padding(10)
 				}
 			}
