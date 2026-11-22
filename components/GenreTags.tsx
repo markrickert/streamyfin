@@ -76,7 +76,7 @@ export const Tag: React.FC<
   }
 
   return (
-    <View className='bg-neutral-800 rounded-full px-2 py-1' {...props}>
+    <View className='bg-surface-raised rounded-full px-2 py-1' {...props}>
       <Text className={textClass} style={textStyle}>
         {text}
       </Text>

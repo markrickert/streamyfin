@@ -14,7 +14,7 @@ export function SyncPlaySheetGroup({ children }: { children: ReactNode }) {
   // ones that are there.
   const rows = Children.toArray(children);
   return (
-    <View className='flex-col rounded-xl overflow-hidden bg-neutral-800'>
+    <View className='flex-col rounded-xl overflow-hidden bg-surface-raised'>
       {rows.map((row, index) => (
         <Fragment key={isValidElement(row) ? row.key : index}>
           {index > 0 && <View style={styles.separator} />}
@@ -54,7 +54,9 @@ export function SyncPlaySheetRow({
       <Text className='ml-4 text-base flex-1' style={{ color }}>
         {title}
       </Text>
-      {!!value && <Text className='text-[#9899A1] text-base'>{value}</Text>}
+      {!!value && (
+        <Text className='text-foreground-muted text-base'>{value}</Text>
+      )}
       {/* In a box of its own: the iOS Switch aligns itself to the top of its
           parent, whatever the row asks for. */}
       {!!children && <View>{children}</View>}

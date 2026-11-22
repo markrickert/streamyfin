@@ -33,7 +33,7 @@ export const ItemCredits: React.FC<Props> = ({ people, ...props }) => {
               longer translated label pushes its names over instead of
               breaking mid-word. */}
           <Text
-            className='text-neutral-400 mr-2'
+            className='text-foreground-muted mr-2'
             style={{ minWidth: LABEL_MIN_WIDTH }}
           >
             {t(`item_card.credits.${line.kind}`, {
@@ -49,7 +49,7 @@ export const ItemCredits: React.FC<Props> = ({ people, ...props }) => {
                 {id && !isOffline ? (
                   <Text
                     accessibilityRole='link'
-                    className='text-purple-600'
+                    className='text-primary'
                     onPress={() =>
                       router.push({
                         pathname: "/persons/[personId]",

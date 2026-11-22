@@ -48,7 +48,7 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
   const notices = (
     <>
       {!available && (
-        <Text testID='syncplay-unavailable' className='text-amber-200'>
+        <Text testID='syncplay-unavailable' className='text-foreground'>
           {sync.supported
             ? t("syncplay.disconnected")
             : t("syncplay.unavailable")}
@@ -57,10 +57,10 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
       {error && (
         <SyncPlaySheetGroup>
           <View testID='syncplay-error' className='px-4 py-3'>
-            <Text className='text-red-400 font-semibold'>
+            <Text className='text-danger-light font-semibold'>
               {t("syncplay.error")}
             </Text>
-            <Text className='text-[#9899A1] mt-0.5'>{error}</Text>
+            <Text className='text-foreground-muted mt-0.5'>{error}</Text>
           </View>
           <SyncPlaySheetRow
             testID='syncplay-retry'
@@ -76,11 +76,11 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
 
   const groupList = (
     <View>
-      <Text className='ml-4 mb-1 uppercase text-[#8E8D91] text-xs'>
+      <Text className='ml-4 mb-1 uppercase text-foreground-muted text-xs'>
         {t("syncplay.groups_on_server")}
       </Text>
       {others.length === 0 && (
-        <Text testID='syncplay-empty' className='ml-4 text-[#9899A1]'>
+        <Text testID='syncplay-empty' className='ml-4 text-foreground-muted'>
           {t("syncplay.no_groups")}
         </Text>
       )}
@@ -90,11 +90,11 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
           className='flex-row items-center py-2.5'
           style={{ gap: 12 }}
         >
-          <View className='w-12 h-12 rounded bg-neutral-800 items-center justify-center'>
+          <View className='w-12 h-12 rounded bg-surface-raised items-center justify-center'>
             <Ionicons name='people' size={22} color={SECONDARY} />
           </View>
           <View className='flex-1'>
-            <Text numberOfLines={1} className='text-white text-base'>
+            <Text numberOfLines={1} className='text-foreground text-base'>
               {entry.GroupName}
             </Text>
             <Text
@@ -112,10 +112,12 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
             accessibilityRole='button'
             disabled={!available || busy}
             onPress={() => join(entry)}
-            className='h-11 px-5 rounded-full border-2 border-purple-600 items-center justify-center'
+            className='h-11 px-5 rounded-full border-2 border-primary items-center justify-center'
             style={{ opacity: !available || busy ? 0.5 : 1 }}
           >
-            <Text className='text-white font-bold'>{t("syncplay.join")}</Text>
+            <Text className='text-foreground font-bold'>
+              {t("syncplay.join")}
+            </Text>
           </TouchableOpacity>
         </View>
       ))}
@@ -126,14 +128,14 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
     return (
       <View testID='syncplay-panel' style={{ gap: 14 }}>
         <View className='flex-row items-center' style={{ gap: 12 }}>
-          <View className='w-12 h-12 rounded-[10px] bg-neutral-800 items-center justify-center'>
+          <View className='w-12 h-12 rounded-[10px] bg-surface-raised items-center justify-center'>
             <Ionicons name='people' size={24} color={PLAYING} />
           </View>
           <View className='flex-1'>
             <Text
               testID='syncplay-current-group'
               numberOfLines={1}
-              className='text-white font-semibold text-lg'
+              className='text-foreground font-semibold text-lg'
             >
               {group.GroupName}
             </Text>
@@ -200,7 +202,7 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
           </Text>
           {busy && <ActivityIndicator testID='syncplay-loading' />}
         </View>
-        <Text className='text-[#9899A1] mt-0.5'>
+        <Text className='text-foreground-muted mt-0.5'>
           {t("syncplay.description")}
         </Text>
       </View>
@@ -215,10 +217,10 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
           className='flex-row items-center py-2.5'
           style={{ gap: 12 }}
         >
-          <View className='w-12 h-12 rounded bg-neutral-800 items-center justify-center'>
+          <View className='w-12 h-12 rounded bg-surface-raised items-center justify-center'>
             <Ionicons name='chevron-back' size={22} color={Colors.foreground} />
           </View>
-          <Text className='text-white font-semibold text-base flex-1'>
+          <Text className='text-foreground font-semibold text-base flex-1'>
             {t("syncplay.back_to_group", { name: group.GroupName })}
           </Text>
         </TouchableOpacity>
@@ -232,17 +234,17 @@ export function SyncPlayPanel({ seed, onClose, onQueueDragChange }: Props) {
             className='flex-row items-center py-2.5'
             style={{ gap: 12, opacity: !available || busy ? 0.5 : 1 }}
           >
-            <View className='w-12 h-12 rounded bg-purple-600 items-center justify-center'>
+            <View className='w-12 h-12 rounded bg-primary items-center justify-center'>
               <Ionicons name='add' size={26} color={Colors.foreground} />
             </View>
             <View className='flex-1'>
-              <Text className='text-white font-semibold text-base'>
+              <Text className='text-foreground font-semibold text-base'>
                 {t("syncplay.new_group")}
               </Text>
               <Text
                 testID='syncplay-how'
                 numberOfLines={2}
-                className='text-[#9899A1] text-sm'
+                className='text-foreground-muted text-sm'
               >
                 {panel.seedLine ?? t("syncplay.how_to_play")}
               </Text>

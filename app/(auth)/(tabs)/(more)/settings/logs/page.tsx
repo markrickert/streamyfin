@@ -144,7 +144,7 @@ export default function Page() {
       </View>
       <View className='flex flex-col space-y-2 px-4'>
         {filteredLogs?.map((log, index) => (
-          <View className='bg-neutral-900 rounded-xl p-3' key={index}>
+          <View className='bg-surface rounded-xl p-3' key={index}>
             <TouchableOpacity
               disabled={!log.data}
               onPress={() =>
@@ -157,9 +157,9 @@ export default function Page() {
               <View className='flex flex-row justify-between'>
                 <Text
                   className={`mb-1
-                      ${log.level === "INFO" && "text-blue-500"}
-                      ${log.level === "ERROR" && "text-red-500"}
-                      ${log.level === "DEBUG" && "text-purple-500"}
+                      ${log.level === "INFO" && "text-info"}
+                      ${log.level === "ERROR" && "text-danger"}
+                      ${log.level === "DEBUG" && "text-primary"}
                     `}
                 >
                   {log.level}

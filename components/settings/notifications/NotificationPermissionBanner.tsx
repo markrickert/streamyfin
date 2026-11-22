@@ -34,18 +34,18 @@ export const NotificationPermissionBanner: React.FC = () => {
   if (!blocked) return null;
 
   return (
-    <View className='mb-4 rounded-xl border border-red-900 bg-red-950 p-3'>
+    <View className='mb-4 rounded-xl border border-danger bg-danger-subtle p-3'>
       <Text className='font-semibold'>
         {t("home.settings.notifications.blocked.title")}
       </Text>
-      <Text className='mt-1 text-xs text-neutral-400'>
+      <Text className='mt-1 text-xs text-foreground-muted'>
         {t("home.settings.notifications.blocked.body")}
       </Text>
       <TouchableOpacity
         onPress={() => void openNotificationSettings()}
         className='mt-2'
       >
-        <Text className='font-semibold text-purple-500'>
+        <Text className='font-semibold text-primary'>
           {t("home.settings.notifications.blocked.open")}
         </Text>
       </TouchableOpacity>

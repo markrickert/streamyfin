@@ -156,7 +156,7 @@ export const GestureControls: React.FC<Props> = ({ ...props }) => {
                 groups={holdToSpeedRateOptions}
                 trigger={
                   <View className='flex flex-row items-center justify-between pl-3 py-1.5'>
-                    <Text className='mr-1 text-[#8E8D91]'>
+                    <Text className='mr-1 text-foreground-muted'>
                       {PLAYBACK_SPEEDS.find(
                         (s) => s.value === settings.holdToSpeedRate,
                       )?.label ?? "2x"}

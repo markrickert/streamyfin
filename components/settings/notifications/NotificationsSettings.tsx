@@ -24,7 +24,7 @@ import { NotificationPermissionBanner } from "./NotificationPermissionBanner";
 
 /** The small print under a group. */
 const footer = (text: string) => (
-  <Text className='text-xs text-neutral-500'>{text}</Text>
+  <Text className='text-xs text-foreground-disabled'>{text}</Text>
 );
 
 /**
@@ -51,7 +51,7 @@ export const NotificationsSettings: React.FC = () => {
 
   if (!supported) {
     return (
-      <Text className='px-4 text-neutral-500'>
+      <Text className='px-4 text-foreground-disabled'>
         {t("home.settings.notifications.unsupported")}
       </Text>
     );
@@ -62,7 +62,7 @@ export const NotificationsSettings: React.FC = () => {
     if (!isError) return null;
     return (
       <View>
-        <Text className='mb-4 px-4 text-neutral-500'>
+        <Text className='mb-4 px-4 text-foreground-disabled'>
           {t("home.settings.notifications.load_failed")}
         </Text>
         <ListGroup>
@@ -199,7 +199,7 @@ export const NotificationsSettings: React.FC = () => {
                 title={show.name}
                 onPress={() => unmute(show.id)}
               >
-                <Text className='text-purple-500'>
+                <Text className='text-primary'>
                   {t("home.settings.notifications.muted.turn_back_on")}
                 </Text>
               </ListItem>
@@ -230,7 +230,7 @@ export const NotificationsSettings: React.FC = () => {
                 }
                 onPress={() => awaited.remove(title.mediaType, title.tmdbId)}
               >
-                <Text className='text-purple-500'>
+                <Text className='text-primary'>
                   {t("home.settings.notifications.awaited.stop")}
                 </Text>
               </ListItem>
@@ -260,7 +260,7 @@ export const NotificationsSettings: React.FC = () => {
         </View>
       )}
 
-      <Text className='px-4 text-xs text-neutral-500'>
+      <Text className='px-4 text-xs text-foreground-disabled'>
         {t("home.settings.notifications.account_footer")}
       </Text>
     </View>

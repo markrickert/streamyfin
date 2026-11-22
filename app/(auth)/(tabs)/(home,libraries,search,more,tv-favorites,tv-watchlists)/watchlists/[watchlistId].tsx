@@ -195,9 +195,9 @@ export default function WatchlistDetailScreen() {
   const ListHeader = useMemo(
     () =>
       watchlist ? (
-        <View className='px-4 pt-4 pb-6 mb-4 border-b border-neutral-800'>
+        <View className='px-4 pt-4 pb-6 mb-4 border-b border-surface-raised'>
           {watchlist.description && (
-            <Text className='text-neutral-400 mb-2'>
+            <Text className='text-foreground-muted mb-2'>
               {watchlist.description}
             </Text>
           )}
@@ -208,7 +208,7 @@ export default function WatchlistDetailScreen() {
                 size={14}
                 color={Colors.foregroundMuted}
               />
-              <Text className='text-neutral-400 text-sm'>
+              <Text className='text-foreground-muted text-sm'>
                 {t("watchlists.item_count", { count: items?.length ?? 0 })}
               </Text>
             </View>
@@ -220,14 +220,14 @@ export default function WatchlistDetailScreen() {
                 size={14}
                 color={Colors.foregroundMuted}
               />
-              <Text className='text-neutral-400 text-sm'>
+              <Text className='text-foreground-muted text-sm'>
                 {watchlist.isPublic
                   ? t("watchlists.public")
                   : t("watchlists.private")}
               </Text>
             </View>
             {!isOwner && (
-              <Text className='text-neutral-500 text-sm'>
+              <Text className='text-foreground-disabled text-sm'>
                 {t("watchlists.by_owner")}
               </Text>
             )}
@@ -241,11 +241,11 @@ export default function WatchlistDetailScreen() {
     () => (
       <View className='flex-1 items-center justify-center px-8 py-16'>
         <Ionicons name='film-outline' size={48} color={Colors.border} />
-        <Text className='text-neutral-400 text-center mt-4'>
+        <Text className='text-foreground-muted text-center mt-4'>
           {t("watchlists.empty_watchlist")}
         </Text>
         {isOwner && (
-          <Text className='text-neutral-500 text-center mt-2 text-sm'>
+          <Text className='text-foreground-disabled text-center mt-2 text-sm'>
             {t("watchlists.empty_watchlist_hint")}
           </Text>
         )}
@@ -265,7 +265,7 @@ export default function WatchlistDetailScreen() {
   if (!watchlist) {
     return (
       <View className='flex-1 items-center justify-center px-8'>
-        <Text className='text-lg text-neutral-400'>
+        <Text className='text-lg text-foreground-muted'>
           {t("watchlists.not_found")}
         </Text>
       </View>

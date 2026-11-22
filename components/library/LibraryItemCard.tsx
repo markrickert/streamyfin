@@ -129,11 +129,11 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
             size={22}
             color={Colors.foreground}
           />
-          <Text className='text-start px-4 text-neutral-200'>
+          <Text className='text-start px-4 text-foreground'>
             {library.Name}
           </Text>
           {settings?.libraryOptions?.showStats && (
-            <Text className='font-bold text-xs text-neutral-500 text-start ml-auto'>
+            <Text className='font-bold text-xs text-foreground-disabled text-start ml-auto'>
               {itemsCount} {itemTypeName}
             </Text>
           )}
@@ -145,7 +145,7 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
   if (settings?.libraryOptions?.imageStyle === "cover") {
     return (
       <TouchableItemRouter item={library} className='w-full'>
-        <View className='flex justify-center rounded-xl w-full relative border border-neutral-900 h-20 '>
+        <View className='flex justify-center rounded-xl w-full relative border border-surface h-20 '>
           <View
             style={{
               width: "100%",
@@ -193,13 +193,13 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
 
   return (
     <TouchableItemRouter item={library} {...props}>
-      <View className='flex flex-row items-center justify-between rounded-xl w-full relative border bg-neutral-900 border-neutral-900 h-20'>
+      <View className='flex flex-row items-center justify-between rounded-xl w-full relative border bg-surface border-surface h-20'>
         <View className='flex flex-col'>
           <Text className='font-bold text-lg text-start px-4'>
             {library.Name}
           </Text>
           {settings?.libraryOptions?.showStats && (
-            <Text className='font-bold text-xs text-neutral-500 text-start px-4'>
+            <Text className='font-bold text-xs text-foreground-disabled text-start px-4'>
               {itemsCount} {itemTypeName}
             </Text>
           )}

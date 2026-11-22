@@ -79,7 +79,7 @@ export function SyncPlayQueue({
 
   return (
     <View>
-      <Text className='ml-4 mb-1 uppercase text-[#8E8D91] text-xs'>
+      <Text className='ml-4 mb-1 uppercase text-foreground-muted text-xs'>
         {t("syncplay.queue")}
       </Text>
       <View className='rounded-xl overflow-hidden'>

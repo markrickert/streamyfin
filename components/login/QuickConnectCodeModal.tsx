@@ -122,17 +122,17 @@ export const QuickConnectCodeModal: React.FC<Props> = ({
         }}
       >
         <View className='flex-1'>
-          <Text className='font-bold text-2xl text-neutral-100'>
+          <Text className='font-bold text-2xl text-foreground'>
             {t("login.quick_connect")}
           </Text>
           {showCode ? (
             <>
               <TouchableOpacity
-                className='mt-6 p-6 border border-neutral-800 rounded-xl bg-neutral-900 flex flex-row items-center justify-center'
+                className='mt-6 p-6 border border-surface-raised rounded-xl bg-surface flex flex-row items-center justify-center'
                 onPress={copyCode}
               >
                 <Text
-                  className='text-center font-bold text-5xl text-neutral-100'
+                  className='text-center font-bold text-5xl text-foreground'
                   style={{ letterSpacing: 10 }}
                 >
                   {code ?? lastCodeRef.current}
@@ -144,15 +144,15 @@ export const QuickConnectCodeModal: React.FC<Props> = ({
                   style={{ opacity: 0.4, marginLeft: 16 }}
                 />
               </TouchableOpacity>
-              <Text className='mt-2 text-neutral-500 text-center text-xs'>
+              <Text className='mt-2 text-foreground-disabled text-center text-xs'>
                 {t("login.tap_code_to_copy")}
               </Text>
-              <Text className='mt-3 mb-5 text-neutral-400 text-center px-4'>
+              <Text className='mt-3 mb-5 text-foreground-muted text-center px-4'>
                 {t("login.quick_connect_instructions")}
               </Text>
             </>
           ) : (
-            <Text className='mt-6 mb-5 text-neutral-400 text-center px-4'>
+            <Text className='mt-6 mb-5 text-foreground-muted text-center px-4'>
               {disabled
                 ? t("companion_login.error_quick_connect_disabled", {
                     server: serverName,

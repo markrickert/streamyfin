@@ -162,8 +162,8 @@ export const SessionModeControls = ({ session }: Props) => {
             color={repeating ? Colors.primary : Colors.foreground}
           />
           {repeat.mode === RepeatMode.RepeatOne && (
-            <View className='absolute -right-2 -top-1 bg-purple-600 rounded-full w-4 h-4 items-center justify-center'>
-              <Text className='text-white text-[10px] font-bold'>1</Text>
+            <View className='absolute -right-2 -top-1 bg-primary rounded-full w-4 h-4 items-center justify-center'>
+              <Text className='text-foreground text-[10px] font-bold'>1</Text>
             </View>
           )}
         </TouchableOpacity>

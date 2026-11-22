@@ -66,7 +66,7 @@ export const StorageSettings = () => {
         <View className='flex flex-row items-center justify-between'>
           <Text className=''>{t("home.settings.storage.storage_title")}</Text>
           {size && (
-            <Text className='text-neutral-500'>
+            <Text className='text-foreground-disabled'>
               {t("home.settings.storage.size_used", {
                 used: Number(size.total - size.remaining).bytesToReadable(),
                 total: size.total?.bytesToReadable(),
@@ -74,7 +74,7 @@ export const StorageSettings = () => {
             </Text>
           )}
         </View>
-        <View className='h-3 w-full bg-gray-100/10 rounded-md overflow-hidden flex flex-row'>
+        <View className='h-3 w-full bg-white/10 rounded-md overflow-hidden flex flex-row'>
           {size && (
             <View className='flex flex-row'>
               <View
@@ -96,16 +96,16 @@ export const StorageSettings = () => {
           {size && (
             <View className='flex flex-row gap-x-2'>
               <View className='flex flex-row items-center'>
-                <View className='w-3 h-3 rounded-full bg-purple-600 mr-1' />
-                <Text className='text-white text-xs'>
+                <View className='w-3 h-3 rounded-full bg-primary mr-1' />
+                <Text className='text-foreground text-xs'>
                   {t("home.settings.storage.app_usage", {
                     usedSpace: calculatePercentage(size.appSize, size.total),
                   })}
                 </Text>
               </View>
               <View className='flex flex-row items-center'>
-                <View className='w-3 h-3 rounded-full bg-purple-400 mr-1' />
-                <Text className='text-white text-xs'>
+                <View className='w-3 h-3 rounded-full bg-accent mr-1' />
+                <Text className='text-foreground text-xs'>
                   {t("home.settings.storage.device_usage", {
                     availableSpace: calculatePercentage(
                       size.total - size.remaining - size.appSize,

@@ -84,7 +84,7 @@ export default function CreateWatchlistScreen() {
       >
         {/* Name */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.name_label")} *
           </Text>
           <TextInput
@@ -92,14 +92,14 @@ export default function CreateWatchlistScreen() {
             onChangeText={setName}
             placeholder={t("watchlists.name_placeholder")}
             placeholderTextColor={Colors.foregroundDisabled}
-            className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
+            className='bg-surface-raised text-foreground px-4 py-3 rounded-lg text-base'
             autoFocus
           />
         </View>
 
         {/* Description */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.description_label")}
           </Text>
           <TextInput
@@ -107,7 +107,7 @@ export default function CreateWatchlistScreen() {
             onChangeText={setDescription}
             placeholder={t("watchlists.description_placeholder")}
             placeholderTextColor={Colors.foregroundDisabled}
-            className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
+            className='bg-surface-raised text-foreground px-4 py-3 rounded-lg text-base'
             multiline
             numberOfLines={3}
             textAlignVertical='top'
@@ -118,10 +118,10 @@ export default function CreateWatchlistScreen() {
         {/* Public Toggle */}
         <View className='px-4 py-4 flex-row items-center justify-between'>
           <View className='flex-1 mr-4'>
-            <Text className='text-base font-medium text-white'>
+            <Text className='text-base font-medium text-foreground'>
               {t("watchlists.is_public_label")}
             </Text>
-            <Text className='text-sm text-neutral-400 mt-1'>
+            <Text className='text-sm text-foreground-muted mt-1'>
               {t("watchlists.is_public_description")}
             </Text>
           </View>
@@ -135,7 +135,7 @@ export default function CreateWatchlistScreen() {
 
         {/* Content Type */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.allowed_type_label")}
           </Text>
           <View className='flex-row flex-wrap gap-2'>
@@ -143,13 +143,13 @@ export default function CreateWatchlistScreen() {
               <TouchableOpacity
                 key={type.value ?? "all"}
                 onPress={() => setAllowedItemType(type.value)}
-                className={`px-4 py-2 rounded-lg ${allowedItemType === type.value ? "bg-purple-600" : "bg-neutral-800"}`}
+                className={`px-4 py-2 rounded-lg ${allowedItemType === type.value ? "bg-primary" : "bg-surface-raised"}`}
               >
                 <Text
                   className={
                     allowedItemType === type.value
-                      ? "text-white font-medium"
-                      : "text-neutral-300"
+                      ? "text-foreground font-medium"
+                      : "text-foreground"
                   }
                 >
                   {type.label}
@@ -161,7 +161,7 @@ export default function CreateWatchlistScreen() {
 
         {/* Sort Order */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.sort_order_label")}
           </Text>
           <View className='flex-row flex-wrap gap-2'>
@@ -169,13 +169,13 @@ export default function CreateWatchlistScreen() {
               <TouchableOpacity
                 key={sort.value}
                 onPress={() => setDefaultSortOrder(sort.value)}
-                className={`px-4 py-2 rounded-lg ${defaultSortOrder === sort.value ? "bg-purple-600" : "bg-neutral-800"}`}
+                className={`px-4 py-2 rounded-lg ${defaultSortOrder === sort.value ? "bg-primary" : "bg-surface-raised"}`}
               >
                 <Text
                   className={
                     defaultSortOrder === sort.value
-                      ? "text-white font-medium"
-                      : "text-neutral-300"
+                      ? "text-foreground font-medium"
+                      : "text-foreground"
                   }
                 >
                   {sort.label}
@@ -197,7 +197,7 @@ export default function CreateWatchlistScreen() {
             ) : (
               <View className='flex-row items-center'>
                 <Ionicons name='add' size={20} color={Colors.foreground} />
-                <Text className='text-white font-semibold text-base'>
+                <Text className='text-foreground font-semibold text-base'>
                   {t("watchlists.create_button")}
                 </Text>
               </View>

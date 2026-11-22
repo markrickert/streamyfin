@@ -181,7 +181,9 @@ export default function AlbumDetailScreen() {
   if (!album) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>{t("music.album_not_found")}</Text>
+        <Text className='text-foreground-disabled'>
+          {t("music.album_not_found")}
+        </Text>
       </View>
     );
   }
@@ -220,7 +222,7 @@ export default function AlbumDetailScreen() {
                 cachePolicy='memory-disk'
               />
             ) : (
-              <View className='flex-1 items-center justify-center bg-neutral-800'>
+              <View className='flex-1 items-center justify-center bg-surface-raised'>
                 <Ionicons
                   name='disc'
                   size={60}
@@ -231,13 +233,13 @@ export default function AlbumDetailScreen() {
           </View>
 
           {/* Album info */}
-          <Text className='text-white text-xl font-bold mt-4 text-center'>
+          <Text className='text-foreground text-xl font-bold mt-4 text-center'>
             {album.Name}
           </Text>
-          <Text className='text-purple-400 text-base mt-1'>
+          <Text className='text-accent text-base mt-1'>
             {album.AlbumArtist || album.Artists?.join(", ")}
           </Text>
-          <Text className='text-neutral-500 text-sm mt-1'>
+          <Text className='text-foreground-disabled text-sm mt-1'>
             {album.ProductionYear && `${album.ProductionYear} • `}
             {tracks?.length} tracks • {totalDuration}
           </Text>
@@ -246,26 +248,26 @@ export default function AlbumDetailScreen() {
           <View className='flex flex-row mt-4 items-center'>
             <TouchableOpacity
               onPress={handlePlayAll}
-              className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mr-3'
+              className='flex flex-row items-center bg-primary px-6 py-3 rounded-full mr-3'
             >
               <Ionicons name='play' size={20} color={Colors.foreground} />
-              <Text className='text-white font-medium ml-2'>
+              <Text className='text-foreground font-medium ml-2'>
                 {t("music.play")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleShuffle}
-              className='flex flex-row items-center bg-neutral-800 px-6 py-3 rounded-full mr-3'
+              className='flex flex-row items-center bg-surface-raised px-6 py-3 rounded-full mr-3'
             >
               <Ionicons name='shuffle' size={20} color={Colors.foreground} />
-              <Text className='text-white font-medium ml-2'>
+              <Text className='text-foreground font-medium ml-2'>
                 {t("music.shuffle")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleDownloadAlbum}
               disabled={allTracksDownloaded || isDownloading}
-              className='flex items-center justify-center bg-neutral-800 p-3 rounded-full'
+              className='flex items-center justify-center bg-surface-raised p-3 rounded-full'
             >
               {isDownloading ? (
                 <ActivityIndicator size={20} color={Colors.foreground} />

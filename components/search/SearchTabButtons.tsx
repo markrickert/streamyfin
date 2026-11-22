@@ -67,14 +67,14 @@ export const SearchTabButtons: React.FC<SearchTabButtonsProps> = ({
         <Tag
           text={t("search.library")}
           textClass='p-1'
-          className={searchType === "Library" ? "bg-purple-600" : undefined}
+          className={searchType === "Library" ? "bg-primary" : undefined}
         />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => setSearchType("Discover")}>
         <Tag
           text={t("search.discover")}
           textClass='p-1'
-          className={searchType === "Discover" ? "bg-purple-600" : undefined}
+          className={searchType === "Discover" ? "bg-primary" : undefined}
         />
       </TouchableOpacity>
     </View>

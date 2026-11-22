@@ -56,16 +56,22 @@ export const MusicAlbumRowCard: React.FC<Props> = ({ album }) => {
             cachePolicy='memory-disk'
           />
         ) : (
-          <View className='flex-1 items-center justify-center bg-neutral-800'>
+          <View className='flex-1 items-center justify-center bg-surface-raised'>
             <Text className='text-2xl'>🎵</Text>
           </View>
         )}
       </View>
       <View className='flex-1 ml-3'>
-        <Text numberOfLines={1} className='text-white text-base font-medium'>
+        <Text
+          numberOfLines={1}
+          className='text-foreground text-base font-medium'
+        >
           {album.Name}
         </Text>
-        <Text numberOfLines={1} className='text-neutral-400 text-sm mt-0.5'>
+        <Text
+          numberOfLines={1}
+          className='text-foreground-muted text-sm mt-0.5'
+        >
           {album.AlbumArtist || album.Artists?.join(", ")}
         </Text>
       </View>

@@ -18,12 +18,13 @@ interface Props {
 // Seerr's colours for each tone (StatusBadgeMini); a season row lays its own
 // background over the request "+" through className.
 const TONE_CLASSES: Record<SeerrStatusTone, string> = {
-  processing: "bg-indigo-500 border-indigo-400 ring-indigo-400 text-indigo-100",
-  available: "bg-purple-500 border-green-400 ring-green-400 text-green-100",
-  pending: "bg-yellow-500 border-yellow-400 ring-yellow-400 text-yellow-100",
-  blocklisted: "bg-red-500 border-white-400 ring-white-400 text-white",
-  partial: "bg-green-500 border-green-400 ring-green-400 text-green-100",
-  request: "bg-green-600",
+  processing: "bg-info border-info-light ring-info-light text-foreground",
+  available:
+    "bg-primary border-success-light ring-success-light text-foreground",
+  pending: "bg-warning border-warning-light ring-warning-light text-foreground",
+  blocklisted: "bg-danger border-white-400 ring-white-400 text-foreground",
+  partial: "bg-success border-success-light ring-success-light text-foreground",
+  request: "bg-success",
 };
 
 const SeerrStatusIcon: React.FC<Props & ViewProps> = ({

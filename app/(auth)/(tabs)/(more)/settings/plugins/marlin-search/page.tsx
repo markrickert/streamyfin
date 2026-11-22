@@ -62,7 +62,7 @@ export default function MarlinSearchPage() {
       navigation.setOptions({
         headerRight: () => (
           <HeaderButton variant='text' onPress={() => onSave(value)}>
-            <Text className='text-blue-500'>
+            <Text className='text-info'>
               {t("home.settings.plugins.marlin_search.save_button")}
             </Text>
           </HeaderButton>
@@ -116,7 +116,7 @@ export default function MarlinSearchPage() {
           >
             <TextInput
               editable={!marlinUrlLocked && settings.searchEngine === "Marlin"}
-              className='text-white text-right flex-1'
+              className='text-foreground text-right flex-1'
               placeholder={t(
                 "home.settings.plugins.marlin_search.server_url_placeholder",
               )}
@@ -143,9 +143,9 @@ export default function MarlinSearchPage() {
         </ListGroup>
         <ServerUrlStatusText state={urlResolver} className='mt-1 px-4' />
 
-        <Text className='px-4 text-xs text-neutral-500 mt-1'>
+        <Text className='px-4 text-xs text-foreground-disabled mt-1'>
           {t("home.settings.plugins.marlin_search.marlin_search_hint")}{" "}
-          <Text className='text-blue-500' onPress={handleOpenLink}>
+          <Text className='text-info' onPress={handleOpenLink}>
             {t("home.settings.plugins.marlin_search.read_more_about_marlin")}
           </Text>
         </Text>

@@ -224,7 +224,10 @@ export const SeasonPicker: React.FC<Props> = ({ item, initialSeasonIndex }) => {
         const overview = episodeById.get(card.id)?.Overview;
         if (!overview) return null;
         return (
-          <Text numberOfLines={3} className='text-xs text-neutral-500 mt-2'>
+          <Text
+            numberOfLines={3}
+            className='text-xs text-foreground-disabled mt-2'
+          >
             {overview}
           </Text>
         );
@@ -294,7 +297,7 @@ export const SeasonPicker: React.FC<Props> = ({ item, initialSeasonIndex }) => {
         )}
         {episodeRow !== "loading" && (episodes?.length || 0) === 0 ? (
           <View className='flex flex-col'>
-            <Text className='text-neutral-500'>
+            <Text className='text-foreground-disabled'>
               {episodeRow === "failed"
                 ? t("item_card.episodes_load_failed")
                 : t("item_card.no_episodes_for_this_season")}

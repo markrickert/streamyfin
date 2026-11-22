@@ -167,17 +167,17 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
         <DismissKeyboardArea style={{ flex: 1 }}>
           {/* Header */}
           <View className='mb-4'>
-            <Text className='font-bold text-2xl text-neutral-100'>
+            <Text className='font-bold text-2xl text-foreground'>
               {t("save_account.title")}
             </Text>
-            <Text className='text-neutral-400 mt-1'>{username}</Text>
+            <Text className='text-foreground-muted mt-1'>{username}</Text>
           </View>
 
           {/* PIN Entry Step */}
           {selectedType === "pin" ? (
             <View className='flex-1'>
-              <View className='p-4 border border-neutral-800 rounded-xl bg-neutral-900 mb-4'>
-                <Text className='text-neutral-100 text-center text-lg mb-4'>
+              <View className='p-4 border border-surface-raised rounded-xl bg-surface mb-4'>
+                <Text className='text-foreground text-center text-lg mb-4'>
                   {t("pin.setup_pin")}
                 </Text>
                 <PinInput
@@ -188,7 +188,7 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
                   autoFocus
                 />
                 {pinError && (
-                  <Text className='text-red-500 text-center mt-3'>
+                  <Text className='text-danger text-center mt-3'>
                     {pinError}
                   </Text>
                 )}
@@ -197,21 +197,21 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
           ) : (
             /* Security Options */
             <View className='flex-1'>
-              <Text className='text-neutral-400 mb-3'>
+              <Text className='text-foreground-muted mb-3'>
                 {t("save_account.security_option")}
               </Text>
-              <View className='bg-neutral-800 rounded-xl overflow-hidden'>
+              <View className='bg-surface-raised rounded-xl overflow-hidden'>
                 {SECURITY_OPTIONS.map((option, index) => (
                   <TouchableOpacity
                     key={option.type}
                     onPress={() => handleOptionSelect(option.type)}
                     className={`flex-row items-center p-4 ${
                       index < SECURITY_OPTIONS.length - 1
-                        ? "border-b border-neutral-700"
+                        ? "border-b border-border"
                         : ""
                     }`}
                   >
-                    <View className='w-10 h-10 bg-neutral-700 rounded-full items-center justify-center mr-3'>
+                    <View className='w-10 h-10 bg-border rounded-full items-center justify-center mr-3'>
                       <Ionicons
                         name={option.icon}
                         size={20}
@@ -219,18 +219,18 @@ export const SaveAccountModal: React.FC<SaveAccountModalProps> = ({
                       />
                     </View>
                     <View className='flex-1'>
-                      <Text className='text-neutral-100 font-medium'>
+                      <Text className='text-foreground font-medium'>
                         {t(option.titleKey)}
                       </Text>
-                      <Text className='text-neutral-400 text-sm'>
+                      <Text className='text-foreground-muted text-sm'>
                         {t(option.descriptionKey)}
                       </Text>
                     </View>
                     <View
                       className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
                         selectedType === option.type
-                          ? "border-purple-500 bg-purple-500"
-                          : "border-neutral-500"
+                          ? "border-primary bg-primary"
+                          : "border-foreground-disabled"
                       }`}
                     >
                       {selectedType === option.type && (

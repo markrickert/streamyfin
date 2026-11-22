@@ -14,8 +14,8 @@ const SeerrMediaIcon: React.FC<
   const style = useMemo(
     () =>
       mediaType === MediaType.MOVIE
-        ? "bg-blue-600/90 border-blue-400/40"
-        : "bg-purple-600/90 border-purple-400/40",
+        ? "bg-info border-info-subtle"
+        : "bg-primary border-primary-subtle",
     [mediaType],
   );
   return (

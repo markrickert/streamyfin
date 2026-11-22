@@ -183,10 +183,10 @@ export const Favorites = () => {
             contentFit='contain'
             source={heart}
           />
-          <Text className='text-xl font-semibold text-white mb-2'>
+          <Text className='text-xl font-semibold text-foreground mb-2'>
             {t("favorites.noDataTitle")}
           </Text>
-          <Text className='text-base text-white/70 text-center max-w-xs px-4'>
+          <Text className='text-base text-foreground-muted text-center max-w-xs px-4'>
             {t("favorites.noData")}
           </Text>
         </View>

@@ -53,15 +53,18 @@ export const MusicAlbumCard: React.FC<Props> = ({ album, width = 130 }) => {
             cachePolicy='memory-disk'
           />
         ) : (
-          <View className='flex-1 items-center justify-center bg-neutral-800'>
+          <View className='flex-1 items-center justify-center bg-surface-raised'>
             <Text className='text-4xl'>🎵</Text>
           </View>
         )}
       </View>
-      <Text numberOfLines={1} className='text-white text-sm font-medium mt-2'>
+      <Text
+        numberOfLines={1}
+        className='text-foreground text-sm font-medium mt-2'
+      >
         {album.Name}
       </Text>
-      <Text numberOfLines={1} className='text-neutral-400 text-xs'>
+      <Text numberOfLines={1} className='text-foreground-muted text-xs'>
         {album.AlbumArtist || album.Artists?.join(", ")}
       </Text>
     </TouchableOpacity>

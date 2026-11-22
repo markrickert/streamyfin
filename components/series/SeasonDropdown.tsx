@@ -132,7 +132,7 @@ export const SeasonDropdown: React.FC<Props> = ({
       onOpenChange={setOpen}
       trigger={
         <TouchableOpacity onPress={() => setOpen(true)}>
-          <View className='bg-neutral-900 rounded-2xl border-neutral-900 border px-3 py-2 flex flex-row items-center justify-between'>
+          <View className='bg-surface rounded-2xl border-surface border px-3 py-2 flex flex-row items-center justify-between'>
             {/* Named as in the list, from one whole-sentence key: nothing
                 until a season is on screen. */}
             <Text>

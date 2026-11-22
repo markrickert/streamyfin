@@ -77,12 +77,14 @@ export function CustomHeaderSelector({
   return (
     <View className='mt-4'>
       {title ? (
-        <Text className='text-sm font-semibold text-neutral-300 mb-2'>
+        <Text className='text-sm font-semibold text-foreground mb-2'>
           {title}
         </Text>
       ) : null}
       {description ? (
-        <Text className='text-xs text-neutral-500 mb-3'>{description}</Text>
+        <Text className='text-xs text-foreground-disabled mb-3'>
+          {description}
+        </Text>
       ) : null}
 
       {/* As a style: a release build drops the gap-2 class, and the three
@@ -110,12 +112,12 @@ export function CustomHeaderSelector({
       </View>
 
       {config.source === "jellyfin" ? (
-        <View className='bg-neutral-900 rounded-xl p-3'>
-          <Text className='text-xs text-neutral-500 mb-2'>
+        <View className='bg-surface rounded-xl p-3'>
+          <Text className='text-xs text-foreground-disabled mb-2'>
             {t("custom_headers.using_jellyfin_headers")}
           </Text>
           {jellyfinHeaderNames.length === 0 ? (
-            <Text className='text-xs text-neutral-400 italic'>
+            <Text className='text-xs text-foreground-muted italic'>
               {t("custom_headers.no_jellyfin_headers")}
             </Text>
           ) : (
@@ -126,7 +128,7 @@ export function CustomHeaderSelector({
                   size={14}
                   color={Colors.primary}
                 />
-                <Text className='text-xs text-neutral-300'>{name}</Text>
+                <Text className='text-xs text-foreground'>{name}</Text>
               </View>
             ))
           )}
@@ -142,8 +144,8 @@ export function CustomHeaderSelector({
       ) : null}
 
       {config.source === "none" ? (
-        <View className='bg-neutral-900 rounded-xl p-3'>
-          <Text className='text-xs text-neutral-500'>
+        <View className='bg-surface rounded-xl p-3'>
+          <Text className='text-xs text-foreground-disabled'>
             {t("custom_headers.integration_none")}
           </Text>
         </View>
@@ -173,10 +175,10 @@ function SourceButton({
       disabled={disabled}
       className={`flex-1 rounded-lg py-2 px-1 items-center justify-center ${
         selected
-          ? "bg-purple-600"
+          ? "bg-primary"
           : disabled
-            ? "bg-neutral-800 opacity-50"
-            : "bg-neutral-800"
+            ? "bg-surface-raised opacity-50"
+            : "bg-surface-raised"
       }`}
     >
       <Ionicons
@@ -196,10 +198,10 @@ function SourceButton({
         style={{ fontSize: 10 }}
         className={`mt-0.5 ${
           selected
-            ? "text-white"
+            ? "text-foreground"
             : disabled
-              ? "text-neutral-500"
-              : "text-neutral-400"
+              ? "text-foreground-disabled"
+              : "text-foreground-muted"
         }`}
       >
         {label}

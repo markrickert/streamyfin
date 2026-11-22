@@ -323,7 +323,7 @@ const ItemContentMobile: React.FC<ItemContentProps> = ({
                 )}
               </View>
             ) : (
-              <Text className='mb-2 text-neutral-400'>
+              <Text className='mb-2 text-foreground-muted'>
                 {t("player.unsupported_item_type")}
               </Text>
             )}

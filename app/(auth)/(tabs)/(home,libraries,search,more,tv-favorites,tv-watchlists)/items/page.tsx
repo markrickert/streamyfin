@@ -92,18 +92,18 @@ const Page: React.FC = () => {
                   }}
                   className='bg-transparent rounded-lg mb-4 w-full'
                 />
-                <View className='h-6 bg-neutral-900 rounded mb-4 w-14' />
-                <View className='h-10 bg-neutral-900 rounded-lg mb-2 w-1/2' />
-                <View className='h-3 bg-neutral-900 rounded mb-3 w-8' />
+                <View className='h-6 bg-surface rounded mb-4 w-14' />
+                <View className='h-10 bg-surface rounded-lg mb-2 w-1/2' />
+                <View className='h-3 bg-surface rounded mb-3 w-8' />
                 <View className='flex flex-row space-x-1 mb-8'>
-                  <View className='h-6 bg-neutral-900 rounded mb-3 w-14' />
-                  <View className='h-6 bg-neutral-900 rounded mb-3 w-14' />
-                  <View className='h-6 bg-neutral-900 rounded mb-3 w-14' />
+                  <View className='h-6 bg-surface rounded mb-3 w-14' />
+                  <View className='h-6 bg-surface rounded mb-3 w-14' />
+                  <View className='h-6 bg-surface rounded mb-3 w-14' />
                 </View>
-                <View className='h-3 bg-neutral-900 rounded w-2/3 mb-1' />
-                <View className='h-10 bg-neutral-900 rounded-lg w-full mb-2' />
-                <View className='h-12 bg-neutral-900 rounded-lg w-full mb-2' />
-                <View className='h-24 bg-neutral-900 rounded-lg mb-1 w-full' />
+                <View className='h-3 bg-surface rounded w-2/3 mb-1' />
+                <View className='h-10 bg-surface rounded-lg w-full mb-2' />
+                <View className='h-12 bg-surface rounded-lg w-full mb-2' />
+                <View className='h-24 bg-surface rounded-lg mb-1 w-full' />
               </View>
             )}
           </Animated.View>

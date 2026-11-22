@@ -244,7 +244,7 @@ export const SeerrSettings = () => {
                 className='mt-4'
                 title={t("home.settings.plugins.seerr.auto_login_title")}
                 description={
-                  <Text className='text-xs text-neutral-500'>
+                  <Text className='text-xs text-foreground-disabled'>
                     {t("home.settings.plugins.seerr.auto_login_description")}
                   </Text>
                 }
@@ -279,7 +279,7 @@ export const SeerrSettings = () => {
             </View>
           </>
         ) : (
-          <View className='flex flex-col rounded-xl overflow-hidden p-4 bg-neutral-900'>
+          <View className='flex flex-col rounded-xl overflow-hidden p-4 bg-surface'>
             <View style={{ opacity: urlLocked ? 0.5 : 1 }}>
               <View className='mb-2'>
                 <ServerUrlField
@@ -304,7 +304,7 @@ export const SeerrSettings = () => {
                   resolveOptions={resolveOptions}
                 />
                 {urlLocked && (
-                  <Text className='text-xs text-red-600 mt-1'>
+                  <Text className='text-xs text-danger mt-1'>
                     {t("home.settings.disabled_by_admin")}
                   </Text>
                 )}
@@ -331,7 +331,7 @@ export const SeerrSettings = () => {
                         {t("home.settings.plugins.seerr.password")}
                       </Text>
                       <Input
-                        className='border border-neutral-800'
+                        className='border border-surface-raised'
                         autoFocus={true}
                         focusable={true}
                         placeholder={t(
@@ -362,7 +362,7 @@ export const SeerrSettings = () => {
                         {t("home.settings.plugins.seerr.api_key_hint")}
                       </Text>
                       <Input
-                        className='border border-neutral-800'
+                        className='border border-surface-raised'
                         placeholder={t(
                           "home.settings.plugins.seerr.api_key_placeholder",
                         )}

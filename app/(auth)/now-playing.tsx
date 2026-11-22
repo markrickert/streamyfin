@@ -196,13 +196,13 @@ export default function NowPlayingScreen() {
     return (
       <BottomSheetModalProvider>
         <View
-          className='flex-1 bg-[#121212] items-center justify-center'
+          className='flex-1 bg-surface items-center justify-center'
           style={{
             paddingTop: Platform.OS === "android" ? insets.top : 0,
             paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
           }}
         >
-          <Text className='text-neutral-500'>
+          <Text className='text-foreground-disabled'>
             {t("music.no_track_playing")}
           </Text>
         </View>
@@ -213,7 +213,7 @@ export default function NowPlayingScreen() {
   return (
     <BottomSheetModalProvider>
       <View
-        className='flex-1 bg-[#121212]'
+        className='flex-1 bg-surface'
         style={{
           paddingTop: Platform.OS === "android" ? insets.top : 0,
           paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
@@ -237,8 +237,8 @@ export default function NowPlayingScreen() {
               <Text
                 className={
                   viewMode === "player"
-                    ? "text-white font-semibold"
-                    : "text-neutral-500"
+                    ? "text-foreground font-semibold"
+                    : "text-foreground-disabled"
                 }
               >
                 {t("music.now_playing")}
@@ -251,8 +251,8 @@ export default function NowPlayingScreen() {
               <Text
                 className={
                   viewMode === "queue"
-                    ? "text-white font-semibold"
-                    : "text-neutral-500"
+                    ? "text-foreground font-semibold"
+                    : "text-foreground-disabled"
                 }
               >
                 Queue ({queue.length})
@@ -437,7 +437,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
             cachePolicy='memory-disk'
           />
         ) : (
-          <View className='flex-1 items-center justify-center bg-neutral-800'>
+          <View className='flex-1 items-center justify-center bg-surface-raised'>
             <Ionicons
               name='musical-note'
               size={80}
@@ -553,8 +553,12 @@ const PlayerView: React.FC<PlayerViewProps> = ({
           renderBubble={() => null}
         />
         <View className='flex flex-row justify-between mt-2'>
-          <Text className='text-neutral-500 text-xs'>{progressText}</Text>
-          <Text className='text-neutral-500 text-xs'>{remainingText}</Text>
+          <Text className='text-foreground-disabled text-xs'>
+            {progressText}
+          </Text>
+          <Text className='text-foreground-disabled text-xs'>
+            {remainingText}
+          </Text>
         </View>
       </View>
 
@@ -621,8 +625,8 @@ const PlayerView: React.FC<PlayerViewProps> = ({
             }
           />
           {repeatMode === "one" && (
-            <View className='absolute right-0 top-1 bg-purple-600 rounded-full w-4 h-4 items-center justify-center'>
-              <Text className='text-white text-[10px] font-bold'>1</Text>
+            <View className='absolute right-0 top-1 bg-primary rounded-full w-4 h-4 items-center justify-center'>
+              <Text className='text-foreground text-[10px] font-bold'>1</Text>
             </View>
           )}
         </TouchableOpacity>

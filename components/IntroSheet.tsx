@@ -188,7 +188,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
                       );
                     }}
                   >
-                    <Text className='text-xs text-purple-600 underline'>
+                    <Text className='text-xs text-primary underline'>
                       {t("home.intro.read_more")}
                     </Text>
                   </TouchableOpacity>
@@ -243,7 +243,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
               </View>
             </TouchableOpacity>
             {sentryLocked && (
-              <Text className='text-xs text-red-500 mt-1'>
+              <Text className='text-xs text-danger mt-1'>
                 {t("home.settings.disabled_by_admin")}
               </Text>
             )}
@@ -254,7 +254,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
               {t("home.intro.done_button")}
             </Button>
             <TouchableOpacity onPress={handleGoToSettings} className='mt-4'>
-              <Text className='text-purple-600 text-center'>
+              <Text className='text-primary text-center'>
                 {t("home.intro.go_to_settings_button")}
               </Text>
             </TouchableOpacity>

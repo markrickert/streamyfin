@@ -37,7 +37,7 @@ export function ServerUrlStatusText({
     return (
       <View style={style} className='flex-row items-center'>
         <ActivityIndicator size='small' color={Colors.foregroundMuted} />
-        <Text className='text-xs text-neutral-400 ml-2'>
+        <Text className='text-xs text-foreground-muted ml-2'>
           {t("server_url.resolving")}
         </Text>
       </View>
@@ -46,7 +46,7 @@ export function ServerUrlStatusText({
 
   if (state.status === "ok") {
     return (
-      <Text style={style} className='text-xs text-green-500'>
+      <Text style={style} className='text-xs text-success'>
         {t("server_url.resolved", { url: state.resolvedUrl })}
       </Text>
     );
@@ -60,7 +60,7 @@ export function ServerUrlStatusText({
         : t("server_url.unreachable");
 
   return (
-    <Text style={style} className='text-xs text-red-500'>
+    <Text style={style} className='text-xs text-danger'>
       {message}
     </Text>
   );

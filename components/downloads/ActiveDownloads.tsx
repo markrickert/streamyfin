@@ -15,7 +15,7 @@ export default function ActiveDownloads({ ...props }: ActiveDownloadsProps) {
 
   if (validProcesses.length === 0)
     return (
-      <View {...props} className='bg-neutral-900 p-4 rounded-2xl'>
+      <View {...props} className='bg-surface p-4 rounded-2xl'>
         <Text className='text-lg font-bold'>
           {t("home.downloads.active_download")}
         </Text>
@@ -26,7 +26,7 @@ export default function ActiveDownloads({ ...props }: ActiveDownloadsProps) {
     );
 
   return (
-    <View {...props} className='bg-neutral-900 p-4 rounded-2xl'>
+    <View {...props} className='bg-surface p-4 rounded-2xl'>
       <Text className='text-lg font-bold mb-2'>
         {t("home.downloads.active_downloads")}
       </Text>

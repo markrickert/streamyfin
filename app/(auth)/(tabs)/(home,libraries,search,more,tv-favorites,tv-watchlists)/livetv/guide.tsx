@@ -136,7 +136,7 @@ export default function LiveTvGuidePage() {
             style={{
               height: HOUR_HEIGHT,
             }}
-            className='bg-neutral-800'
+            className='bg-surface-raised'
           />
           {channels?.Items?.map((c, i) => (
             <View className='h-16 w-16 mr-4 rounded-lg overflow-hidden' key={i}>
@@ -194,7 +194,7 @@ const PageButtons: React.FC<PageButtonsProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <View className='flex flex-row justify-between items-center bg-neutral-800 w-full px-4 py-2'>
+    <View className='flex flex-row justify-between items-center bg-surface-raised w-full px-4 py-2'>
       <TouchableOpacity
         onPress={onPrevPage}
         disabled={currentPage === 1}
@@ -209,20 +209,20 @@ const PageButtons: React.FC<PageButtonsProps> = ({
         />
         <Text
           className={`ml-1 ${
-            currentPage === 1 ? "text-gray-500" : "text-white"
+            currentPage === 1 ? "text-foreground-disabled" : "text-foreground"
           }`}
         >
           {t("live_tv.previous")}
         </Text>
       </TouchableOpacity>
-      <Text className='text-white'>Page {currentPage}</Text>
+      <Text className='text-foreground'>Page {currentPage}</Text>
       <TouchableOpacity
         onPress={onNextPage}
         disabled={isNextDisabled}
         className='flex flex-row items-center'
       >
         <Text
-          className={`mr-1 ${isNextDisabled ? "text-gray-500" : "text-white"}`}
+          className={`mr-1 ${isNextDisabled ? "text-foreground-disabled" : "text-foreground"}`}
         >
           {t("live_tv.next")}
         </Text>

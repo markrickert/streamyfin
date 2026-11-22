@@ -130,7 +130,7 @@ export const MusicTrackItem: React.FC<Props> = ({
       onLongPress={handleLongPress}
       delayLongPress={300}
       disabled={isUnavailableOffline}
-      className={`flex-row items-center py-1.5 pl-4 pr-3 ${isCurrentTrack ? "bg-purple-900/20" : ""}`}
+      className={`flex-row items-center py-1.5 pl-4 pr-3 ${isCurrentTrack ? "bg-primary-subtle" : ""}`}
       style={isUnavailableOffline ? { opacity: 0.5 } : undefined}
     >
       {/* Album artwork */}
@@ -153,7 +153,7 @@ export const MusicTrackItem: React.FC<Props> = ({
               cachePolicy='memory-disk'
             />
           ) : (
-            <View className='flex-1 items-center justify-center bg-neutral-800'>
+            <View className='flex-1 items-center justify-center bg-surface-raised'>
               <Ionicons
                 name='musical-note'
                 size={18}
@@ -186,12 +186,15 @@ export const MusicTrackItem: React.FC<Props> = ({
           {isCurrentTrack && isPlaying && <AnimatedEqualizer />}
           <Text
             numberOfLines={1}
-            className={`flex-1 text-sm ${isCurrentTrack ? "text-purple-400 font-medium" : "text-white"}`}
+            className={`flex-1 text-sm ${isCurrentTrack ? "text-accent font-medium" : "text-foreground"}`}
           >
             {track.Name}
           </Text>
         </View>
-        <Text numberOfLines={1} className='text-neutral-500 text-xs mt-0.5'>
+        <Text
+          numberOfLines={1}
+          className='text-foreground-disabled text-xs mt-0.5'
+        >
           {track.Artists?.join(", ") || track.AlbumArtist}
         </Text>
       </View>
@@ -214,7 +217,7 @@ export const MusicTrackItem: React.FC<Props> = ({
       )}
 
       {/* Duration */}
-      <Text className='text-neutral-500 text-xs'>{duration}</Text>
+      <Text className='text-foreground-disabled text-xs'>{duration}</Text>
 
       {/* Options button */}
       {onOptionsPress && (

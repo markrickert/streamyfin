@@ -1758,7 +1758,7 @@ export default function DirectPlayerPage() {
   if (itemStatus.isError || streamStatus.isError) {
     return (
       <View className='w-screen h-screen flex flex-col items-center justify-center bg-black'>
-        <Text className='text-white'>{t("player.error")}</Text>
+        <Text className='text-foreground'>{t("player.error")}</Text>
       </View>
     );
   }
@@ -1776,7 +1776,7 @@ export default function DirectPlayerPage() {
   if (itemStatus.isError || streamStatus.isError)
     return (
       <View className='w-screen h-screen flex flex-col items-center justify-center bg-black'>
-        <Text className='text-white'>{t("player.error")}</Text>
+        <Text className='text-foreground'>{t("player.error")}</Text>
       </View>
     );
 

@@ -197,7 +197,7 @@ export const DraggableQueueList: React.FC<Props> = ({
               className={`flex-1 flex-row items-center py-3 pr-4 ${editable ? "" : "pl-4"}`}
             >
               <View
-                className={`rounded overflow-hidden bg-neutral-800 mr-3 ${
+                className={`rounded overflow-hidden bg-surface-raised mr-3 ${
                   artwork === "poster" ? "w-10 h-[60px]" : "w-12 h-12"
                 }`}
               >
@@ -223,12 +223,15 @@ export const DraggableQueueList: React.FC<Props> = ({
               <View className='flex-1 mr-2'>
                 <Text
                   numberOfLines={1}
-                  className={`text-base ${isCurrent ? "text-purple-400 font-semibold" : "text-white"}`}
+                  className={`text-base ${isCurrent ? "text-accent font-semibold" : "text-foreground"}`}
                 >
                   {item.title}
                 </Text>
                 {!!item.subtitle && (
-                  <Text numberOfLines={1} className='text-neutral-500 text-sm'>
+                  <Text
+                    numberOfLines={1}
+                    className='text-foreground-disabled text-sm'
+                  >
                     {item.subtitle}
                   </Text>
                 )}
@@ -275,7 +278,7 @@ export const DraggableQueueList: React.FC<Props> = ({
 
   const headerView = header ? (
     <View className='px-4 py-2'>
-      <Text className='text-neutral-400 text-xs uppercase tracking-wider'>
+      <Text className='text-foreground-muted text-xs uppercase tracking-wider'>
         {header}
       </Text>
     </View>
@@ -284,7 +287,7 @@ export const DraggableQueueList: React.FC<Props> = ({
     <View
       className={`items-center justify-center ${scrollable ? "flex-1 py-20" : "py-8"}`}
     >
-      <Text className='text-neutral-500'>{emptyText}</Text>
+      <Text className='text-foreground-disabled'>{emptyText}</Text>
     </View>
   );
 

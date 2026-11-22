@@ -185,10 +185,10 @@ export const PINEntryModal: React.FC<PINEntryModalProps> = ({
         <DismissKeyboardArea style={{ flex: 1 }}>
           {/* Header */}
           <View className='mb-6'>
-            <Text className='font-bold text-2xl text-neutral-100'>
+            <Text className='font-bold text-2xl text-foreground'>
               {t("pin.enter_pin")}
             </Text>
-            <Text className='text-neutral-400 mt-1'>
+            <Text className='text-foreground-muted mt-1'>
               {t("pin.enter_pin_for", { username })}
             </Text>
           </View>
@@ -196,7 +196,7 @@ export const PINEntryModal: React.FC<PINEntryModalProps> = ({
           {/* PIN Input */}
           <Animated.View
             style={{ transform: [{ translateX: shakeAnimation }] }}
-            className='p-4 border border-neutral-800 rounded-xl bg-neutral-900 mb-4'
+            className='p-4 border border-surface-raised rounded-xl bg-surface mb-4'
           >
             <PinInput
               value={pinCode}
@@ -206,10 +206,10 @@ export const PINEntryModal: React.FC<PINEntryModalProps> = ({
               autoFocus
             />
             {error && (
-              <Text className='text-red-500 text-center mt-3'>{error}</Text>
+              <Text className='text-danger text-center mt-3'>{error}</Text>
             )}
             {isVerifying && (
-              <Text className='text-neutral-400 text-center mt-3'>
+              <Text className='text-foreground-muted text-center mt-3'>
                 {t("common.verifying") || "Verifying..."}
               </Text>
             )}
@@ -217,7 +217,7 @@ export const PINEntryModal: React.FC<PINEntryModalProps> = ({
 
           {/* Forgot PIN */}
           <TouchableOpacity onPress={handleForgotPIN} className='mb-4'>
-            <Text className='text-purple-400 text-center'>
+            <Text className='text-accent text-center'>
               {t("pin.forgot_pin")}
             </Text>
           </TouchableOpacity>

@@ -18,7 +18,7 @@ const SkipButton: React.FC<SkipButtonProps> = ({
     <View className={showButton ? "flex" : "hidden"} {...props}>
       <TouchableOpacity
         onPress={onPress}
-        className='bg-black/60 rounded-md px-3 py-2 border border-neutral-900'
+        className='bg-black/60 rounded-md px-3 py-2 border border-surface'
       >
         <Text className='text-sm font-bold'>{buttonText}</Text>
       </TouchableOpacity>

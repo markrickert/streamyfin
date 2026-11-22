@@ -118,17 +118,17 @@ export const PasswordEntryModal: React.FC<PasswordEntryModalProps> = ({
         <View className='flex-1'>
           {/* Header */}
           <View className='mb-6'>
-            <Text className='font-bold text-2xl text-neutral-100'>
+            <Text className='font-bold text-2xl text-foreground'>
               {t("password.enter_password")}
             </Text>
-            <Text className='text-neutral-400 mt-1'>
+            <Text className='text-foreground-muted mt-1'>
               {t("password.enter_password_for", { username })}
             </Text>
           </View>
 
           {/* Password Input */}
-          <View className='p-4 border border-neutral-800 rounded-xl bg-neutral-900 mb-4'>
-            <Text className='text-neutral-400 text-sm mb-2'>
+          <View className='p-4 border border-surface-raised rounded-xl bg-surface mb-4'>
+            <Text className='text-foreground-muted text-sm mb-2'>
               {t("login.password_placeholder")}
             </Text>
             <BottomSheetTextInput
@@ -153,7 +153,7 @@ export const PasswordEntryModal: React.FC<PasswordEntryModalProps> = ({
               onSubmitEditing={handleSubmit}
               returnKeyType='done'
             />
-            {error && <Text className='text-red-500 mt-2'>{error}</Text>}
+            {error && <Text className='text-danger mt-2'>{error}</Text>}
           </View>
 
           {/* Buttons */}

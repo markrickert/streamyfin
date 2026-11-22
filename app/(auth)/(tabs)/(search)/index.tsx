@@ -921,7 +921,7 @@ export default function SearchPage() {
                           contentFit='cover'
                         />
                       ) : (
-                        <View className='flex-1 items-center justify-center bg-neutral-800'>
+                        <View className='flex-1 items-center justify-center bg-surface-raised'>
                           <Text className='text-xl'>👤</Text>
                         </View>
                       )}
@@ -960,7 +960,7 @@ export default function SearchPage() {
                           contentFit='cover'
                         />
                       ) : (
-                        <View className='flex-1 items-center justify-center bg-neutral-800'>
+                        <View className='flex-1 items-center justify-center bg-surface-raised'>
                           <Text className='text-4xl'>🎵</Text>
                         </View>
                       )}
@@ -1002,7 +1002,7 @@ export default function SearchPage() {
                           contentFit='cover'
                         />
                       ) : (
-                        <View className='flex-1 items-center justify-center bg-neutral-800'>
+                        <View className='flex-1 items-center justify-center bg-surface-raised'>
                           <Text className='text-4xl'>🎵</Text>
                         </View>
                       )}
@@ -1044,7 +1044,7 @@ export default function SearchPage() {
                           contentFit='cover'
                         />
                       ) : (
-                        <View className='flex-1 items-center justify-center bg-neutral-800'>
+                        <View className='flex-1 items-center justify-center bg-surface-raised'>
                           <Text className='text-4xl'>🎶</Text>
                         </View>
                       )}
@@ -1074,7 +1074,7 @@ export default function SearchPage() {
               <Text className='text-center text-lg font-bold mt-4'>
                 {t("search.no_results_found_for")}
               </Text>
-              <Text className='text-xs text-purple-600 text-center'>
+              <Text className='text-xs text-primary text-center'>
                 "{debouncedSearch}"
               </Text>
             </View>
@@ -1089,7 +1089,7 @@ export default function SearchPage() {
                   key={e}
                   className='mb-2'
                 >
-                  <Text className='text-purple-600'>{e}</Text>
+                  <Text className='text-primary'>{e}</Text>
                 </TouchableOpacity>
               ))}
             </View>

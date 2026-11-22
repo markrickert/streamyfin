@@ -22,7 +22,7 @@ export const SectionHeader: React.FC<Props> = ({
 
   return (
     <View className='px-4 flex flex-row items-center justify-between mb-2'>
-      <Text className='text-lg font-bold text-neutral-100'>{title}</Text>
+      <Text className='text-lg font-bold text-foreground'>{title}</Text>
       {accessory}
       {shouldShowAction && (
         <TouchableOpacity

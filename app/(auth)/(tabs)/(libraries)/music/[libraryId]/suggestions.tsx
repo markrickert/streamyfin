@@ -210,7 +210,7 @@ export default function SuggestionsScreen() {
   if (!libraryId) {
     return (
       <View className='flex-1 justify-center items-center bg-black px-6'>
-        <Text className='text-neutral-500 text-center'>
+        <Text className='text-foreground-disabled text-center'>
           {t("music.missing_library_id")}
         </Text>
       </View>
@@ -239,7 +239,7 @@ export default function SuggestionsScreen() {
       "Unknown error";
     return (
       <View className='flex-1 justify-center items-center bg-black px-6'>
-        <Text className='text-neutral-500 text-center'>
+        <Text className='text-foreground-disabled text-center'>
           Failed to load music: {msg}
         </Text>
       </View>
@@ -249,7 +249,9 @@ export default function SuggestionsScreen() {
   if (sections.length === 0) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>{t("music.no_suggestions")}</Text>
+        <Text className='text-foreground-disabled'>
+          {t("music.no_suggestions")}
+        </Text>
       </View>
     );
   }

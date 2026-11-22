@@ -25,7 +25,7 @@ export const Badge: React.FC<Props> = ({
       <Text
         className={`
           text-xs
-          ${variant === "purple" && "text-white"}
+          ${variant === "purple" && "text-foreground"}
       `}
       >
         {text}

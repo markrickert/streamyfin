@@ -60,7 +60,7 @@ export function SyncPlayPlayback({ items, onClose }: Props) {
         {t("syncplay.play_for_everyone")}
       </Button>
     ) : (
-      <Text testID='syncplay-how' className='text-[#9899A1]'>
+      <Text testID='syncplay-how' className='text-foreground-muted'>
         {t("syncplay.how_to_play")}
       </Text>
     );
@@ -86,9 +86,9 @@ export function SyncPlayPlayback({ items, onClose }: Props) {
   );
 
   return (
-    <View className='rounded-xl bg-neutral-800 p-3' style={{ gap: 12 }}>
+    <View className='rounded-xl bg-surface-raised p-3' style={{ gap: 12 }}>
       <View className='flex-row items-center'>
-        <View className='w-11 h-[66px] rounded overflow-hidden bg-neutral-700 mr-3 items-center justify-center'>
+        <View className='w-11 h-[66px] rounded overflow-hidden bg-border mr-3 items-center justify-center'>
           {poster ? (
             <Image
               source={{ uri: poster }}
@@ -101,14 +101,17 @@ export function SyncPlayPlayback({ items, onClose }: Props) {
           )}
         </View>
         <View className='flex-1'>
-          <Text className='text-[#9899A1] text-sm'>
+          <Text className='text-foreground-muted text-sm'>
             {t("syncplay.now_playing")}
           </Text>
-          <Text numberOfLines={1} className='text-white font-semibold text-lg'>
+          <Text
+            numberOfLines={1}
+            className='text-foreground font-semibold text-lg'
+          >
             {item?.Name || t("syncplay.unavailable_video")}
           </Text>
           {!!item && !!syncPlayQueueSubtitle(item) && (
-            <Text numberOfLines={1} className='text-[#9899A1] text-sm'>
+            <Text numberOfLines={1} className='text-foreground-muted text-sm'>
               {syncPlayQueueSubtitle(item)}
             </Text>
           )}

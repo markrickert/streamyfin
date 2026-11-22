@@ -42,9 +42,9 @@ export default function PluginsPage() {
             so it lives on the plugins index rather than inside Streamystats. */}
         <TouchableOpacity
           onPress={handleRefreshFromServer}
-          className='py-3 rounded-xl bg-neutral-800'
+          className='py-3 rounded-xl bg-surface-raised'
         >
-          <Text className='text-center text-blue-500'>
+          <Text className='text-center text-info'>
             {t("home.settings.plugins.streamystats.refresh_from_server")}
           </Text>
         </TouchableOpacity>

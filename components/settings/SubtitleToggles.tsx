@@ -298,12 +298,12 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
         className='mb-4'
         title={t("home.settings.subtitles.language_behavior_title")}
         description={
-          <Text className='text-[#8E8D91] text-xs'>
+          <Text className='text-foreground-muted text-xs'>
             {t("home.settings.subtitles.language_behavior_hint")}
           </Text>
         }
       >
-        <Text className='px-4 pt-3 pb-1 text-[#8E8D91] text-xs uppercase'>
+        <Text className='px-4 pt-3 pb-1 text-foreground-muted text-xs uppercase'>
           {t("home.settings.audio.audio_title")}
         </Text>
 
@@ -316,7 +316,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={pluginSettings?.defaultAudioLanguage?.locked || !isReady}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {settings?.defaultAudioLanguage
                     ?.ThreeLetterISOLanguageName === ORIGINAL_LANGUAGE
                     ? t("home.settings.audio.original_language")
@@ -370,7 +370,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={isAudioTranscodeModeLocked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {
                     audioTranscodeModeLabels[
                       settings?.audioTranscodeMode || AudioTranscodeMode.Auto
@@ -388,7 +388,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
           />
         </ListItem>
 
-        <Text className='px-4 pt-3 pb-1 text-[#8E8D91] text-xs uppercase'>
+        <Text className='px-4 pt-3 pb-1 text-foreground-muted text-xs uppercase'>
           {t("home.settings.subtitles.subtitle_title")}
         </Text>
 
@@ -401,7 +401,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={pluginSettings?.defaultSubtitleLanguage?.locked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {settings?.defaultSubtitleLanguage?.DisplayName ||
                     t("home.settings.subtitles.none")}
                 </Text>
@@ -425,7 +425,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={isSubtitleModeLocked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {t(
                     subtitleModeKeys[settings?.subtitleMode] ??
                       "home.settings.subtitles.modes.Default",
@@ -492,7 +492,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
         className='mb-4'
         title={t("home.settings.subtitles.subtitle_appearance_title")}
         description={
-          <Text className='text-[#8E8D91] text-xs'>
+          <Text className='text-foreground-muted text-xs'>
             {t("home.settings.subtitles.subtitle_appearance_hint")}
           </Text>
         }
@@ -508,7 +508,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={pluginSettings?.subtitleFont?.locked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {fontOptions.find((f) => f.value === settings?.subtitleFont)
                     ?.label ?? t("home.settings.subtitles.fonts.system")}
                 </Text>
@@ -605,7 +605,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={pluginSettings?.subtitleAlignX?.locked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {t(
                     `home.settings.subtitles.align.${settings?.subtitleAlignX ?? "center"}`,
                   )}
@@ -630,7 +630,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             disabled={pluginSettings?.subtitleAlignY?.locked}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {t(
                     `home.settings.subtitles.align.${settings?.subtitleAlignY ?? "bottom"}`,
                   )}
@@ -701,17 +701,17 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
       <ListGroup
         title={t("home.settings.subtitles.opensubtitles_title")}
         description={
-          <Text className='text-[#8E8D91] text-xs'>
+          <Text className='text-foreground-muted text-xs'>
             {t("home.settings.subtitles.opensubtitles_hint")}
           </Text>
         }
       >
         <View className='p-4'>
-          <Text className='text-xs text-gray-400 mb-2'>
+          <Text className='text-xs text-foreground-muted mb-2'>
             {t("home.settings.subtitles.opensubtitles_api_key")}
           </Text>
           <Input
-            className='border border-neutral-800'
+            className='border border-surface-raised'
             placeholder={t(
               "home.settings.subtitles.opensubtitles_api_key_placeholder",
             )}
@@ -724,7 +724,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
             autoCorrect={false}
             secureTextEntry
           />
-          <Text className='text-xs text-gray-500 mt-2'>
+          <Text className='text-xs text-foreground-disabled mt-2'>
             {t("home.settings.subtitles.opensubtitles_get_key")}
           </Text>
         </View>

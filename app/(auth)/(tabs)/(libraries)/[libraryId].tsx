@@ -1478,7 +1478,7 @@ const LibraryPage = () => {
               {isLoading ? (
                 <Loader />
               ) : (
-                <Text className='font-bold text-xl text-neutral-500'>
+                <Text className='font-bold text-xl text-foreground-disabled'>
                   {t("library.no_results")}
                 </Text>
               )}
@@ -1719,7 +1719,7 @@ const LibraryNotFound = () => {
           {t("not_found.title")}
         </Text>
       ) : (
-        <Text className='font-bold text-xl text-neutral-500 text-center'>
+        <Text className='font-bold text-xl text-foreground-disabled text-center'>
           {t("not_found.title")}
         </Text>
       )}

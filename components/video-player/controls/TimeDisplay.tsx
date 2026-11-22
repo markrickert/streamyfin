@@ -33,14 +33,14 @@ export const TimeDisplay: FC<TimeDisplayProps> = ({
 
   return (
     <View className='flex flex-row items-center justify-between mt-2'>
-      <Text className='text-[12px] text-neutral-400'>
+      <Text className='text-[12px] text-foreground-muted'>
         {formatTimeString(currentTime, "ms")}
       </Text>
       <View className='flex flex-col items-end'>
-        <Text className='text-[12px] text-neutral-400'>
+        <Text className='text-[12px] text-foreground-muted'>
           -{formatTimeString(remainingTime, "ms")}
         </Text>
-        <Text className='text-[10px] text-neutral-500 opacity-70'>
+        <Text className='text-[10px] text-foreground-disabled opacity-70'>
           {t("player.ends_at", { time: getFinishTime() })}
         </Text>
       </View>

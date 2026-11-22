@@ -63,7 +63,7 @@ export default function HideLibrariesPage() {
           </ListItem>
         ))}
       </ListGroup>
-      <Text className='px-4 text-xs text-neutral-500 mt-1'>
+      <Text className='px-4 text-xs text-foreground-disabled mt-1'>
         {t("home.settings.other.select_libraries_you_want_to_hide")}
       </Text>
     </DisabledSetting>

@@ -31,7 +31,7 @@ export const DownloadSize: React.FC<DownloadSizeProps> = ({
   }, [idsKey, downloadedItems, getDownloadedItemSize]);
 
   return (
-    <Text className='text-xs text-neutral-500' {...props}>
+    <Text className='text-xs text-foreground-disabled' {...props}>
       {size ?? "..."}
     </Text>
   );

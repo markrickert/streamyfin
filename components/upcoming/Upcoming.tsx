@@ -69,7 +69,7 @@ export const Upcoming: React.FC<Props> = ({ parentId }) => {
       onEndReached={loadMore}
       onEndReachedThreshold={1}
       ListEmptyComponent={
-        <Text className='px-4 text-neutral-500'>
+        <Text className='px-4 text-foreground-disabled'>
           {isError
             ? t("common.something_went_wrong")
             : t("upcoming.no_episodes")}

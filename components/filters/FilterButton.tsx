@@ -72,8 +72,8 @@ export const FilterButton = <T,>({
           px-3 py-1.5 rounded-full flex flex-row items-center space-x-1
           ${
             values.length > 0
-              ? "bg-purple-600  border border-purple-700"
-              : "bg-neutral-900 border border-neutral-900"
+              ? "bg-primary  border border-primary-dark"
+              : "bg-surface border border-surface"
           }
           ${filters?.length === 0 ? "opacity-50" : ""}
         `}
@@ -81,7 +81,7 @@ export const FilterButton = <T,>({
       >
         <Text
           className={`
-            ${values.length > 0 ? "text-purple-100" : "text-neutral-100"}
+            ${values.length > 0 ? "text-foreground" : "text-foreground"}
             text-xs font-semibold`}
         >
           {title}

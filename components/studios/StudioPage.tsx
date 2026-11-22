@@ -41,7 +41,7 @@ export const StudioPage: React.FC<{ studioId: string }> = ({ studioId }) => {
       <FlashList
         ListEmptyComponent={
           <View className='flex flex-col items-center justify-center h-full'>
-            <Text className='font-bold text-xl text-neutral-500'>
+            <Text className='font-bold text-xl text-foreground-disabled'>
               {t("search.no_results")}
             </Text>
           </View>

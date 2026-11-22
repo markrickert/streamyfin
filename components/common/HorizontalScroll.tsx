@@ -59,8 +59,8 @@ export const HorizontalScroll = <T,>(
   if (!data || loading) {
     return (
       <View className='px-4'>
-        <View className='bg-neutral-950 h-24 w-full rounded-md mb-2' />
-        <View className='bg-neutral-950 h-10 w-full rounded-md mb-1' />
+        <View className='bg-surface h-24 w-full rounded-md mb-2' />
+        <View className='bg-surface h-10 w-full rounded-md mb-1' />
       </View>
     );
   }
@@ -81,7 +81,7 @@ export const HorizontalScroll = <T,>(
         keyExtractor={keyExtractor}
         ListEmptyComponent={() => (
           <View className='flex-1 justify-center items-center'>
-            <Text className='text-center text-gray-500'>
+            <Text className='text-center text-foreground-disabled'>
               {noItemsText || "No data available"}
             </Text>
           </View>

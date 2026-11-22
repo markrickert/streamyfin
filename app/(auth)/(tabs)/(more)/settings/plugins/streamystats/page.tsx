@@ -112,7 +112,7 @@ export default function StreamystatsPage() {
     navigation.setOptions({
       headerRight: () => (
         <HeaderButton variant='text' onPress={onSave}>
-          <Text className='text-blue-500 font-medium'>
+          <Text className='text-info font-medium'>
             {t("home.settings.plugins.streamystats.save")}
           </Text>
         </HeaderButton>
@@ -162,7 +162,7 @@ export default function StreamystatsPage() {
           >
             <TextInput
               editable={!isUrlLocked}
-              className='text-white text-right flex-1'
+              className='text-foreground text-right flex-1'
               placeholder={t(
                 "home.settings.plugins.streamystats.server_url_placeholder",
               )}
@@ -191,9 +191,9 @@ export default function StreamystatsPage() {
           <ServerUrlStatusText state={urlResolver} />
         </View>
 
-        <Text className='px-4 text-xs text-neutral-500 mt-1'>
+        <Text className='px-4 text-xs text-foreground-disabled mt-1'>
           {t("home.settings.plugins.streamystats.streamystats_search_hint")}{" "}
-          <Text className='text-blue-500' onPress={handleOpenLink}>
+          <Text className='text-info' onPress={handleOpenLink}>
             {t(
               "home.settings.plugins.streamystats.read_more_about_streamystats",
             )}
@@ -290,7 +290,7 @@ export default function StreamystatsPage() {
             />
           </ListItem>
         </ListGroup>
-        <Text className='px-4 text-xs text-neutral-500 mt-1'>
+        <Text className='px-4 text-xs text-foreground-disabled mt-1'>
           {t("home.settings.plugins.streamystats.home_sections_hint")}
         </Text>
 
@@ -298,9 +298,9 @@ export default function StreamystatsPage() {
         {!isUrlLocked && isStreamystatsEnabled && (
           <TouchableOpacity
             onPress={handleClearStreamystats}
-            className='mt-3 mb-4 py-3 rounded-xl bg-neutral-800'
+            className='mt-3 mb-4 py-3 rounded-xl bg-surface-raised'
           >
-            <Text className='text-center text-red-500'>
+            <Text className='text-center text-danger'>
               {t("home.settings.plugins.streamystats.disable_streamystats")}
             </Text>
           </TouchableOpacity>

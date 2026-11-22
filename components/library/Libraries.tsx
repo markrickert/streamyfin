@@ -72,7 +72,7 @@ export const Libraries: React.FC = () => {
   if (!libraries)
     return (
       <View className='h-full w-full flex justify-center items-center'>
-        <Text className='text-lg text-neutral-500'>
+        <Text className='text-lg text-foreground-disabled'>
           {t("library.no_libraries_found")}
         </Text>
       </View>
@@ -98,7 +98,7 @@ export const Libraries: React.FC = () => {
             style={{
               height: StyleSheet.hairlineWidth,
             }}
-            className='bg-neutral-800 mx-2 my-4'
+            className='bg-surface-raised mx-2 my-4'
           />
         ) : (
           <View className='h-4' />

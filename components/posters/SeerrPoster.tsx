@@ -70,7 +70,7 @@ const SeerrPoster: React.FC<Props> = ({ item, horizontal }) => {
     >
       <View className={"flex flex-col mr-2 h-auto"}>
         <View
-          className={`relative rounded-lg overflow-hidden border border-neutral-900 ${size} aspect-[${ratio}]`}
+          className={`relative rounded-lg overflow-hidden border border-surface ${size} aspect-[${ratio}]`}
         >
           <Animated.View style={imageAnimatedStyle}>
             <Image
