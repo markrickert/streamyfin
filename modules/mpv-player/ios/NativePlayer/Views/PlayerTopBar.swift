@@ -25,18 +25,18 @@ struct PlayerTopBar: View {
 				if let title = viewModel.metadata?.title {
 					Text(title)
 						.font(.subheadline.weight(.semibold))
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 						.lineLimit(1)
 				}
 				if let subtitle = viewModel.metadata?.subtitle {
 					Text(subtitle)
 						.font(.caption)
-						.foregroundStyle(.white.opacity(0.7))
+						.foregroundStyle(Colors.white80)
 						.lineLimit(1)
 				}
 				if let group = viewModel.syncPlay {
 					Text("\(group.groupName) · \(group.connected ? group.status : viewModel.syncStr("reconnecting", "Reconnecting"))")
-						.font(.caption).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+						.font(.caption).foregroundStyle(Colors.white80).lineLimit(1)
 				}
 			}
 			.padding(.leading, 8)
@@ -382,7 +382,7 @@ struct PlayerTopBar: View {
 	private func barIcon(systemName: String) -> some View {
 		Image(systemName: systemName)
 			.font(.system(size: 17, weight: .semibold))
-			.foregroundStyle(.white)
+			.foregroundStyle(Colors.white)
 			.frame(width: buttonSize, height: buttonSize)
 			.contentShape(Rectangle())
 	}

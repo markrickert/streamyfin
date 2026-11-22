@@ -21,24 +21,24 @@ struct ScrubberView: View {
 			ZStack(alignment: .leading) {
 				// Track
 				Capsule()
-					.fill(.white.opacity(0.25))
+					.fill(Colors.white30)
 					.frame(height: trackHeight)
 
 				// Buffered
 				Capsule()
-					.fill(.white.opacity(0.4))
+					.fill(Colors.white50)
 					.frame(width: max(trackHeight, width * bufferedFraction), height: trackHeight)
 
 				// Elapsed
 				Capsule()
-					.fill(.white)
+					.fill(Colors.white)
 					.frame(width: max(trackHeight, width * progressFraction), height: trackHeight)
 
 				// Chapter ticks (skip the implicit chapter at 0)
 				ForEach(Array(viewModel.chapters.enumerated()), id: \.offset) { _, chapter in
 					if chapter.startSec > 0 {
 						RoundedRectangle(cornerRadius: 1)
-							.fill(.black.opacity(0.55))
+							.fill(Colors.black60)
 							.frame(width: 2, height: trackHeight - 2)
 							.offset(x: width * fraction(of: chapter.startSec) - 1)
 					}

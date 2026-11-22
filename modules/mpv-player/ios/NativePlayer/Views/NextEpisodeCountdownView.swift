@@ -17,12 +17,12 @@ struct NextEpisodeCountdownView: View {
 				if let subtitle = next.subtitle {
 					Text(subtitle)
 						.font(.caption2)
-						.foregroundStyle(.white.opacity(0.7))
+						.foregroundStyle(Colors.white80)
 						.lineLimit(1)
 				}
 				Text(next.title)
 					.font(.footnote.weight(.semibold))
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.lineLimit(2)
 			}
 			.frame(maxWidth: 160, alignment: .leading)
@@ -32,15 +32,15 @@ struct NextEpisodeCountdownView: View {
 			} label: {
 				ZStack {
 					Circle()
-						.stroke(.white.opacity(0.3), lineWidth: 3)
+						.stroke(Colors.white30, lineWidth: 3)
 					Circle()
 						.trim(from: 0, to: countdownFraction)
-						.stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+						.stroke(Colors.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
 						.rotationEffect(.degrees(-90))
 						.animation(.linear(duration: 1), value: remaining)
 					Image(systemName: "play.fill")
 						.font(.system(size: 16, weight: .bold))
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 				}
 				.frame(width: 44, height: 44)
 			}
@@ -51,7 +51,7 @@ struct NextEpisodeCountdownView: View {
 			} label: {
 				Image(systemName: "xmark")
 					.font(.system(size: 14, weight: .semibold))
-					.foregroundStyle(.white.opacity(0.8))
+					.foregroundStyle(Colors.white80)
 					.frame(width: 36, height: 36)
 					.contentShape(Rectangle())
 			}
@@ -59,7 +59,7 @@ struct NextEpisodeCountdownView: View {
 		}
 		.padding(12)
 		.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-		.overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.2), lineWidth: 1))
+		.overlay(RoundedRectangle(cornerRadius: 16).stroke(Colors.white20, lineWidth: 1))
 	}
 
 	private var countdownFraction: CGFloat {
@@ -71,7 +71,7 @@ struct NextEpisodeCountdownView: View {
 	private var thumbnail: some View {
 		if let imageUrl = next.imageUrl, let url = URL(string: imageUrl) {
 			RemoteImage(url: url, headers: viewModel.imageHeaders) {
-				Color.black.opacity(0.4)
+				Colors.black50
 			}
 			.frame(width: 92, height: 52)
 			.clipShape(RoundedRectangle(cornerRadius: 8))

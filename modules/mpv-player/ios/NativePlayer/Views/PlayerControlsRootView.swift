@@ -78,7 +78,7 @@ struct PlayerControlsRootView: View {
 			if viewModel.isBuffering && !viewModel.isScrubbing && viewModel.errorMessage == nil {
 				ProgressView()
 					.controlSize(.large)
-					.tint(.white)
+					.tint(Colors.white)
 			}
 
 			adaptivePlaybackChrome(bottomSafeAreaInset: bottomSafeAreaInset)
@@ -99,10 +99,10 @@ struct PlayerControlsRootView: View {
 						Image(systemName: "forward.fill")
 							.font(.system(size: 11, weight: .semibold))
 					}
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.padding(.horizontal, 14)
 					.padding(.vertical, 8)
-					.background(.black.opacity(0.55), in: Capsule())
+					.background(Colors.black60, in: Capsule())
 					Spacer()
 				}
 				.padding(.top, 24)
@@ -122,9 +122,9 @@ struct PlayerControlsRootView: View {
 						seconds: forward ? viewModel.seekForwardSec : viewModel.seekBackwardSec,
 						size: 28
 					)
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.padding(18)
-					.background(.black.opacity(0.55), in: Circle())
+					.background(Colors.black60, in: Circle())
 					if !forward { Spacer() }
 				}
 				.id(forward)
@@ -145,10 +145,10 @@ struct PlayerControlsRootView: View {
 							Text(viewModel.str("unlock", "Unlock"))
 								.font(.footnote.weight(.semibold))
 						}
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 						.padding(.horizontal, 14)
 						.padding(.vertical, 9)
-						.background(.black.opacity(0.55), in: Capsule())
+						.background(Colors.black60, in: Capsule())
 					}
 					Spacer()
 				}
@@ -426,13 +426,13 @@ struct PlayerControlsRootView: View {
 	private var scrims: some View {
 		VStack(spacing: 0) {
 			LinearGradient(
-				colors: [Color.black.opacity(0.6), Color.black.opacity(0)],
+				colors: [Colors.black60, Colors.transparent],
 				startPoint: .top, endPoint: .bottom
 			)
 			.frame(height: 140)
 			Spacer()
 			LinearGradient(
-				colors: [Color.black.opacity(0), Color.black.opacity(0.6)],
+				colors: [Colors.transparent, Colors.black60],
 				startPoint: .top, endPoint: .bottom
 			)
 			.frame(height: 160)
@@ -528,11 +528,11 @@ struct PlayerControlsRootView: View {
 				if let notice = viewModel.skippedSegmentNotice {
 					Text(notice)
 						.font(.subheadline.weight(.medium))
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 						.padding(.horizontal, 16)
 						.padding(.vertical, 10)
 						.background(.ultraThinMaterial, in: Capsule())
-						.overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+						.overlay(Capsule().stroke(Colors.white20, lineWidth: 1))
 						.anchorPreference(
 							key: PlayerChromeAnchorPreferenceKey.self,
 							value: .bounds
@@ -591,13 +591,13 @@ struct PlayerControlsRootView: View {
 		VStack(spacing: 16) {
 			Image(systemName: "exclamationmark.triangle.fill")
 				.font(.system(size: 40))
-				.foregroundStyle(.yellow)
+				.foregroundStyle(Colors.warningLight)
 			Text(viewModel.str("playbackError", "Playback error"))
 				.font(.headline)
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 			Text(message)
 				.font(.footnote)
-				.foregroundStyle(.white.opacity(0.8))
+				.foregroundStyle(Colors.white80)
 				.multilineTextAlignment(.center)
 				.lineLimit(4)
 			Button {
@@ -607,13 +607,13 @@ struct PlayerControlsRootView: View {
 					.font(.headline)
 					.padding(.horizontal, 28)
 					.padding(.vertical, 10)
-					.background(.white.opacity(0.2), in: Capsule())
-					.foregroundStyle(.white)
+					.background(Colors.white20, in: Capsule())
+					.foregroundStyle(Colors.white)
 			}
 		}
 		.padding(32)
 		.frame(maxWidth: 420)
-		.background(.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 20))
+		.background(Colors.black80, in: RoundedRectangle(cornerRadius: 20))
 	}
 }
 
@@ -660,7 +660,7 @@ private struct CurrentChapterLabel: View {
 		if let chapterName = viewModel.chapterName(at: time.displayPosition) {
 			Text(chapterName)
 				.font(.caption)
-				.foregroundStyle(.white.opacity(0.7))
+				.foregroundStyle(Colors.white80)
 				.lineLimit(1)
 		}
 	}
@@ -682,7 +682,7 @@ private struct SubtitleScaleOverlay: View {
 			materialContent
 			#endif
 		}
-		.shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+		.shadow(color: Colors.black30, radius: 12, y: 4)
 	}
 
 	private var content: some View {
@@ -693,11 +693,11 @@ private struct SubtitleScaleOverlay: View {
 				Spacer()
 				Text(String(format: "%.1f×", viewModel.subtitleScale))
 					.font(.subheadline.monospacedDigit())
-					.foregroundStyle(.white.opacity(0.75))
+					.foregroundStyle(Colors.white80)
 				Button(action: onClose) {
 					Image(systemName: "xmark.circle.fill")
 						.font(.title3)
-						.foregroundStyle(.white.opacity(0.75))
+						.foregroundStyle(Colors.white80)
 						.frame(width: 32, height: 32)
 				}
 				.buttonStyle(.plain)
@@ -715,11 +715,11 @@ private struct SubtitleScaleOverlay: View {
 				minimumValueLabel: { Text("A").font(.caption2) },
 				maximumValueLabel: { Text("A").font(.title3) }
 			)
-			.tint(.white)
+			.tint(Colors.white)
 			.disabled(viewModel.subtitleScaleLocked)
 			.accessibilityValue(Text(String(format: "%.1f×", viewModel.subtitleScale)))
 		}
-		.foregroundStyle(.white)
+		.foregroundStyle(Colors.white)
 		.padding(16)
 	}
 
@@ -763,7 +763,7 @@ struct PlayerBottomBar: View {
 					if viewModel.duration > 0 {
 						Text(endsAtLabel(remaining: remaining))
 							.font(.system(size: 10).monospacedDigit())
-							.foregroundStyle(.white.opacity(0.55))
+							.foregroundStyle(Colors.white50)
 					}
 					if viewModel.sleepTimerMinutes != nil, let end = viewModel.sleepTimerEndDate {
 						// TimelineView ticks the label on its own — the
@@ -776,13 +776,13 @@ struct PlayerBottomBar: View {
 								Text(formatTime(max(0, end.timeIntervalSince(context.date))))
 									.font(.system(size: 10).monospacedDigit())
 							}
-							.foregroundStyle(.white.opacity(0.55))
+							.foregroundStyle(Colors.white50)
 						}
 					}
 				}
 			}
 			.font(.footnote.monospacedDigit())
-			.foregroundStyle(.white.opacity(0.85))
+			.foregroundStyle(Colors.white80)
 		}
 		.padding(.bottom, 8)
 	}

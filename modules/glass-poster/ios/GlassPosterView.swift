@@ -66,7 +66,7 @@ struct GlassPosterView: View {
 
       // White border on focus
       RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        .stroke(Color.white, lineWidth: isCurrentlyFocused ? 4 : 0)
+        .stroke(Colors.white, lineWidth: isCurrentlyFocused ? 4 : 0)
 
       // Progress bar overlay
       if progress > 0 {
@@ -96,7 +96,7 @@ struct GlassPosterView: View {
 
       // White border on focus
       RoundedRectangle(cornerRadius: cornerRadius)
-        .stroke(Color.white, lineWidth: isFocused ? 4 : 0)
+        .stroke(Colors.white, lineWidth: isFocused ? 4 : 0)
 
       // Progress bar overlay
       if progress > 0 {
@@ -142,7 +142,7 @@ struct GlassPosterView: View {
 
   private var placeholderView: some View {
     Rectangle()
-      .fill(Color.gray.opacity(0.3))
+      .fill(Colors.surfaceRaised)
   }
 
   private var progressOverlay: some View {
@@ -152,12 +152,12 @@ struct GlassPosterView: View {
         ZStack(alignment: .leading) {
           // Background track
           Rectangle()
-            .fill(Color.white.opacity(0.3))
+            .fill(Colors.white30)
             .frame(height: 4)
 
           // Progress fill
           Rectangle()
-            .fill(Color.white)
+            .fill(Colors.white)
             .frame(width: geometry.size.width * CGFloat(progress / 100), height: 4)
         }
       }
@@ -172,12 +172,12 @@ struct GlassPosterView: View {
         Spacer()
         ZStack {
           Circle()
-            .fill(Color.white.opacity(0.9))
+            .fill(Colors.white)
             .frame(width: 28, height: 28)
 
           Image(systemName: "checkmark")
             .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.black)
+            .foregroundColor(Colors.black)
         }
         .padding(8)
       }
@@ -213,7 +213,7 @@ struct GlassPosterView_Previews: PreviewProvider {
       )
     }
     .padding()
-    .background(Color.black)
+    .background(Colors.black)
   }
 }
 #endif

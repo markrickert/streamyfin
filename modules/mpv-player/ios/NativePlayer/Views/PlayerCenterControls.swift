@@ -101,7 +101,7 @@ struct PlayerCenterControls: View {
 			} label: {
 				Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
 					.font(.system(size: m.playIconSize, weight: .bold))
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.frame(width: m.playButton, height: m.playButton)
 					.contentShape(Rectangle())
 			}
@@ -138,7 +138,7 @@ struct PlayerCenterControls: View {
 	) -> some View {
 		Button(action: action) {
 			SeekGlyph(prefix: prefix, seconds: seconds, size: iconSize)
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.frame(width: frame, height: frame)
 				.contentShape(Rectangle())
 		}
@@ -153,7 +153,7 @@ struct PlayerCenterControls: View {
 		Button(action: action) {
 			Image(systemName: systemName)
 				.font(.system(size: iconSize, weight: .semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.frame(width: frame, height: frame)
 				.contentShape(Rectangle())
 		}

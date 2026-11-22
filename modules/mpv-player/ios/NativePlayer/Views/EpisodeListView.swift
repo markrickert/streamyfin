@@ -16,7 +16,7 @@ struct EpisodeListView: View {
 					} label: {
 						row(for: episode)
 					}
-					.listRowBackground(episode.isCurrent ? Color.white.opacity(0.1) : Color.clear)
+					.listRowBackground(episode.isCurrent ? Colors.white10 : Color.clear)
 					.id(episode.itemId)
 				}
 				.listStyle(.plain)
@@ -50,7 +50,7 @@ struct EpisodeListView: View {
 				if episode.progressPercent > 0 {
 					GeometryReader { geometry in
 						Rectangle()
-							.fill(.white.opacity(0.9))
+							.fill(Colors.white)
 							.frame(width: geometry.size.width * episode.progressPercent / 100, height: 3)
 							.frame(maxHeight: .infinity, alignment: .bottom)
 					}
@@ -86,10 +86,10 @@ struct EpisodeListView: View {
 	private func thumbnail(for episode: EpisodeListItemRecord) -> some View {
 		if let imageUrl = episode.imageUrl, let url = URL(string: imageUrl) {
 			RemoteImage(url: url, headers: viewModel.imageHeaders) {
-				Color.gray.opacity(0.3)
+				Colors.surfaceRaised
 			}
 		} else {
-			Color.gray.opacity(0.3)
+			Colors.surfaceRaised
 		}
 	}
 }

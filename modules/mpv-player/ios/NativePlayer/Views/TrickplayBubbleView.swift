@@ -20,7 +20,7 @@ struct TrickplayBubbleView: View {
 		VStack(spacing: 4) {
 			ZStack {
 				RoundedRectangle(cornerRadius: 8)
-					.fill(.black.opacity(0.8))
+					.fill(Colors.black80)
 				if let image {
 					Image(uiImage: image)
 						.resizable()
@@ -31,23 +31,23 @@ struct TrickplayBubbleView: View {
 			.frame(width: Self.height * provider.aspectRatio, height: Self.height)
 			.overlay(
 				RoundedRectangle(cornerRadius: 8)
-					.stroke(.white.opacity(0.3), lineWidth: 1)
+					.stroke(Colors.white30, lineWidth: 1)
 			)
 
 			if let chapterName {
 				Text(chapterName)
 					.font(.caption2)
-					.foregroundStyle(.white.opacity(0.9))
+					.foregroundStyle(Colors.white)
 					.lineLimit(1)
 					.frame(maxWidth: Self.height * provider.aspectRatio)
 			}
 
 			Text(formatTime(positionSec))
 				.font(.caption.monospacedDigit())
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.padding(.horizontal, 6)
 				.padding(.vertical, 2)
-				.background(.black.opacity(0.6), in: Capsule())
+				.background(Colors.black60, in: Capsule())
 		}
 		.task(id: provider.tileIndex(forSeconds: positionSec)) {
 			image = await provider.thumbnail(forSeconds: positionSec)

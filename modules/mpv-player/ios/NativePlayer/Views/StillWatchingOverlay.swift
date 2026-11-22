@@ -10,14 +10,14 @@ struct StillWatchingOverlay: View {
 
 	var body: some View {
 		ZStack {
-			Color.black.opacity(0.75)
+			Colors.black80
 				.ignoresSafeArea()
 				.onTapGesture {}
 
 			VStack(spacing: 14) {
 				Text(viewModel.str("stillWatching", "Are you still watching?"))
 					.font(.title2.weight(.bold))
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 					.multilineTextAlignment(.center)
 					.padding(.bottom, 10)
 
@@ -26,10 +26,10 @@ struct StillWatchingOverlay: View {
 				} label: {
 					Text(viewModel.str("continueWatching", "Continue watching"))
 						.font(.headline)
-						.foregroundStyle(.black)
+						.foregroundStyle(Colors.black)
 						.frame(maxWidth: .infinity)
 						.padding(.vertical, 13)
-						.background(.white, in: Capsule())
+						.background(Colors.white, in: Capsule())
 				}
 
 				Button {
@@ -37,7 +37,7 @@ struct StillWatchingOverlay: View {
 				} label: {
 					Text(viewModel.str("goBack", "Go back"))
 						.font(.headline)
-						.foregroundStyle(.white.opacity(0.85))
+						.foregroundStyle(Colors.white80)
 						.frame(maxWidth: .infinity)
 						.padding(.vertical, 13)
 				}

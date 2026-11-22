@@ -68,7 +68,7 @@ final class MPVPlayerEngine: NSObject, PlayerEngine {
 			displayLayer.wantsExtendedDynamicRangeContent = true
 		}
 		#endif
-		displayLayer.backgroundColor = UIColor.black.cgColor
+		displayLayer.backgroundColor = UIColor(Colors.black).cgColor
 
 		renderer = MPVLayerRenderer(displayLayer: displayLayer)
 		renderer?.delegate = self

@@ -32,7 +32,7 @@ struct TVTrickplayCard: View {
 			// The shelf cards use white 10% here, but they sit on their own
 			// dark gradient. This one floats over the picture, where a 10%
 			// white fill is just a smudge of the video showing through.
-			Color.black.opacity(0.6)
+			Colors.black60
 
 			if let image {
 				Image(uiImage: image)
@@ -44,7 +44,7 @@ struct TVTrickplayCard: View {
 
 			Text(formatTime(positionSec))
 				.font(.system(size: 20, weight: .medium).monospacedDigit())
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 				.padding(.horizontal, TVPoster.textInsetH)
 				.padding(.bottom, TVPoster.textInsetV)
 		}

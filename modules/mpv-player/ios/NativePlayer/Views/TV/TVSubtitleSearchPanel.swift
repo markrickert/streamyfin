@@ -25,7 +25,7 @@ struct TVSubtitleSearchPanel: View {
 		ZStack {
 			// Unlike the shelf, this is a modal moment: dim the video fully so
 			// the panel reads as the only interactive surface.
-			Color.black.opacity(0.6).ignoresSafeArea()
+			Colors.black60.ignoresSafeArea()
 			VStack(spacing: 28) {
 				header
 				content
@@ -58,7 +58,7 @@ struct TVSubtitleSearchPanel: View {
 		HStack {
 			Text(viewModel.str("searchSubtitles", "Search subtitles"))
 				.font(.title3.weight(.semibold))
-				.foregroundStyle(.white)
+				.foregroundStyle(Colors.white)
 			Spacer()
 			languageMenu
 		}
@@ -70,20 +70,20 @@ struct TVSubtitleSearchPanel: View {
 		case "searching":
 			ProgressView()
 				.progressViewStyle(.circular)
-				.tint(.white)
+				.tint(Colors.white)
 				.scaleEffect(1.4)
 		case "error":
 			VStack(spacing: 16) {
 				Image(systemName: "exclamationmark.triangle")
 					.font(.system(size: 48))
-					.foregroundStyle(.white.opacity(0.6))
+					.foregroundStyle(Colors.white50)
 				Text(viewModel.str("searchFailed", "Search failed"))
 					.font(.headline)
-					.foregroundStyle(.white)
+					.foregroundStyle(Colors.white)
 				if let message = viewModel.subtitleSearchError {
 					Text(message)
 						.font(.callout)
-						.foregroundStyle(.white.opacity(0.7))
+						.foregroundStyle(Colors.white80)
 						.multilineTextAlignment(.center)
 						.lineLimit(4)
 						.frame(maxWidth: 800)
@@ -94,10 +94,10 @@ struct TVSubtitleSearchPanel: View {
 				VStack(spacing: 16) {
 					Image(systemName: "captions.bubble")
 						.font(.system(size: 48))
-						.foregroundStyle(.white.opacity(0.6))
+						.foregroundStyle(Colors.white50)
 					Text(viewModel.str("noSubtitlesFound", "No subtitles found"))
 						.font(.headline)
-						.foregroundStyle(.white)
+						.foregroundStyle(Colors.white)
 				}
 			} else {
 				resultsList
@@ -113,7 +113,7 @@ struct TVSubtitleSearchPanel: View {
 			if let message = viewModel.subtitleSearchError {
 				Text(message)
 					.font(.callout)
-					.foregroundStyle(.orange)
+					.foregroundStyle(Colors.warning)
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.padding(.horizontal, 12)
 			}
@@ -149,7 +149,7 @@ struct TVSubtitleSearchPanel: View {
 							.font(.system(size: 20, weight: .semibold))
 							.padding(.horizontal, 8)
 							.padding(.vertical, 2)
-							.background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
+							.background(Colors.white10, in: RoundedRectangle(cornerRadius: 5))
 						if let format = result.format, !format.isEmpty {
 							Text(format.uppercased())
 						}

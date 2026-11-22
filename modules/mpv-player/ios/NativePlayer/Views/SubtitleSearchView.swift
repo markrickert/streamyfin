@@ -90,7 +90,7 @@ struct SubtitleSearchView: View {
 			if let message = viewModel.subtitleSearchError {
 				Text(message)
 					.font(.footnote)
-					.foregroundStyle(.orange)
+					.foregroundStyle(Colors.warning)
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.padding(.horizontal, 20)
 					.padding(.vertical, 8)
@@ -125,7 +125,7 @@ struct SubtitleSearchView: View {
 						.font(.caption2.weight(.semibold))
 						.padding(.horizontal, 6)
 						.padding(.vertical, 2)
-						.background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
+						.background(Colors.white10, in: RoundedRectangle(cornerRadius: 4))
 					if let format = result.format, !format.isEmpty {
 						Text(format.uppercased())
 					}

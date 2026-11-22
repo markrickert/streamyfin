@@ -28,7 +28,7 @@ struct SyncPlayQueueView: View {
 						Text(state.groupName).font(.headline)
 						Text(state.connected ? state.status : text("reconnecting", "Reconnecting"))
 							.foregroundStyle(.secondary)
-						if let error = state.error { Text(error).foregroundStyle(.red) }
+						if let error = state.error { Text(error).foregroundStyle(Colors.danger) }
 						HStack {
 							Button { requestAction("previous") } label: {
 								Label(text("previous", "Previous"), systemImage: "backward.end.fill")
@@ -146,14 +146,14 @@ struct SyncPlayQueueView: View {
 				Text(item.title)
 					.lineLimit(1)
 					.fontWeight(current ? .semibold : .regular)
-					.foregroundStyle(current ? Color.purple : Color.primary)
+					.foregroundStyle(current ? Colors.primary : Color.primary)
 				if let subtitle = item.subtitle, !subtitle.isEmpty {
 					Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
 				}
 			}
 			Spacer(minLength: 0)
 			if current {
-				Image(systemName: "film").foregroundStyle(Color.purple)
+				Image(systemName: "film").foregroundStyle(Colors.primary)
 					.accessibilityLabel(text("now_playing", "Now playing"))
 			}
 		}
@@ -163,10 +163,10 @@ struct SyncPlayQueueView: View {
 	@ViewBuilder
 	private func poster(_ item: SyncPlayPlaylistItemRecord) -> some View {
 		if let imageUrl = item.imageUrl, let url = URL(string: imageUrl) {
-			RemoteImage(url: url, headers: viewModel.imageHeaders) { Color.gray.opacity(0.3) }
+			RemoteImage(url: url, headers: viewModel.imageHeaders) { Colors.surfaceRaised }
 		} else {
 			ZStack {
-				Color.gray.opacity(0.3)
+				Colors.surfaceRaised
 				Image(systemName: "film").foregroundStyle(.secondary)
 			}
 		}
