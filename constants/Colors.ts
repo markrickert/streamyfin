@@ -1,8 +1,8 @@
 /**
  * The palette. Every color of the app is one of these, and
- * `tailwind.config.js` holds the same values under kebab-case names
- * (`foregroundMuted` is `foreground-muted`). `constants/Colors.test.ts` fails
- * when the two drift apart. See docs/conventions/colors.md.
+ * `tailwind.config.js` is generated from it under kebab-case names
+ * (`foregroundMuted` is `foreground-muted`) by `bun scripts/native-palette.ts`.
+ * See docs/conventions/colors.md.
  */
 export const Colors = {
   /** Brand color: primary buttons, selection, progress. */
