@@ -89,13 +89,13 @@ export const FilterSheetContent = <T,>({
       ListHeaderComponent={
         <>
           <Text className='font-bold text-2xl'>{title}</Text>
-          <Text className='mb-2 text-neutral-500'>
+          <Text className='mb-2 text-foreground-disabled'>
             {t("search.x_items", { count: data.length })}
           </Text>
           {showSearch && (
             <Input
               placeholder={t("search.search")}
-              className='my-2 border-neutral-800 border'
+              className='my-2 border-surface-raised border'
               value={search}
               onChangeText={setSearch}
               returnKeyType='done'
@@ -106,7 +106,7 @@ export const FilterSheetContent = <T,>({
       ItemSeparatorComponent={() => (
         <View
           style={{ height: StyleSheet.hairlineWidth }}
-          className='bg-neutral-700'
+          className='bg-border'
         />
       )}
       renderItem={({ item, index }) => {
@@ -124,7 +124,7 @@ export const FilterSheetContent = <T,>({
               borderBottomLeftRadius: isLast ? ROW_RADIUS : 0,
               borderBottomRightRadius: isLast ? ROW_RADIUS : 0,
             }}
-            className='bg-neutral-800 px-4 py-3 flex flex-row items-center justify-between'
+            className='bg-surface-raised px-4 py-3 flex flex-row items-center justify-between'
           >
             <Text className='flex shrink'>{renderItemLabel(item)}</Text>
             <Ionicons

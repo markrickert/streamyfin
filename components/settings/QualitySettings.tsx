@@ -44,7 +44,7 @@ const choices = <T extends number>(
 
 const Trigger: React.FC<{ label: string }> = ({ label }) => (
   <View className='flex flex-row items-center justify-between pl-3 py-1.5 '>
-    <Text className='mr-1 text-[#8E8D91]'>{label}</Text>
+    <Text className='mr-1 text-foreground-muted'>{label}</Text>
     <Ionicons
       name='chevron-expand-sharp'
       size={18}
@@ -77,7 +77,7 @@ export const QualitySettings: React.FC = () => {
     <ListGroup
       title={t("home.settings.quality.title")}
       description={
-        <Text className='text-[#8E8D91] text-xs'>
+        <Text className='text-foreground-muted text-xs'>
           {t("home.settings.quality.description")}
         </Text>
       }

@@ -194,7 +194,7 @@ const AndroidSearchSortMenu = <T extends string>({
                   icon sits in a line of their text, and the spaces around it
                   give that line their font's height, so the three share one
                   height. Purple, as the old Sort by and Sort order buttons. */}
-              <View className='bg-purple-600 rounded-full px-2 py-1'>
+              <View className='bg-primary rounded-full px-2 py-1'>
                 <RNText className='p-1'>
                   {" "}
                   <Ionicons

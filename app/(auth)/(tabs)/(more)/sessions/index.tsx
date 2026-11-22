@@ -38,7 +38,7 @@ export default function SessionsPage() {
   if (!sessions || sessions.length === 0)
     return (
       <View className='h-full w-full flex justify-center items-center'>
-        <Text className='text-lg text-neutral-500'>
+        <Text className='text-lg text-foreground-disabled'>
           {t("home.sessions.no_active_sessions")}
         </Text>
       </View>
@@ -171,7 +171,7 @@ const SessionCard = ({ session }: SessionCardProps) => {
   useInterval(tick, 1000);
 
   return (
-    <View className='flex flex-col shadow-md bg-neutral-900 rounded-2xl mb-4'>
+    <View className='flex flex-col shadow-md bg-surface rounded-2xl mb-4'>
       <View className='flex flex-row p-4'>
         <View className='w-20 pr-4'>
           <Poster
@@ -229,9 +229,9 @@ const SessionCard = ({ session }: SessionCardProps) => {
                 {formatTimeString(remainingTicks, "tick")} left
               </Text>
             </View>
-            <View className='align-bottom bg-gray-800 h-1'>
+            <View className='align-bottom bg-surface-raised h-1'>
               <View
-                className={"bg-purple-600 h-full"}
+                className={"bg-primary h-full"}
                 style={{
                   width: `${getProgressPercentage()}%`,
                 }}
@@ -524,7 +524,7 @@ const TranscodingView = ({ session }: SessionCardProps) => {
   };
 
   return (
-    <View className='flex flex-col bg-neutral-800 rounded-b-2xl p-4 pt-2'>
+    <View className='flex flex-col bg-surface-raised rounded-b-2xl p-4 pt-2'>
       <TranscodingStreamView
         title={t("common.video")}
         properties={{

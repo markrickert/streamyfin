@@ -42,7 +42,7 @@ export function CustomHeadersSettings(): React.ReactElement | null {
       <ListGroup
         title={t("custom_headers.title")}
         description={
-          <Text className='text-[#8E8D91] text-xs'>
+          <Text className='text-foreground-muted text-xs'>
             {t("custom_headers.description")}
           </Text>
         }
@@ -56,8 +56,8 @@ export function CustomHeadersSettings(): React.ReactElement | null {
         </View>
       </ListGroup>
 
-      <View className='px-4 py-2 bg-neutral-900 rounded-xl mt-2'>
-        <Text className='text-neutral-400 text-xs'>
+      <View className='px-4 py-2 bg-surface rounded-xl mt-2'>
+        <Text className='text-foreground-muted text-xs'>
           {t("custom_headers.security_note")}
         </Text>
       </View>

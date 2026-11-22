@@ -35,7 +35,7 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className='bg-neutral-900 rounded-xl p-4 mx-4 mb-3'
+      className='bg-surface rounded-xl p-4 mx-4 mb-3'
       activeOpacity={0.7}
     >
       <View className='flex-row items-center justify-between mb-2'>
@@ -44,10 +44,8 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
         </Text>
         <View className='flex-row items-center gap-2'>
           {isOwner && (
-            <View className='bg-purple-600/20 px-2 py-1 rounded'>
-              <Text className='text-purple-400 text-xs'>
-                {t("watchlists.you")}
-              </Text>
+            <View className='bg-primary-subtle px-2 py-1 rounded'>
+              <Text className='text-accent text-xs'>{t("watchlists.you")}</Text>
             </View>
           )}
           <Ionicons
@@ -59,7 +57,7 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
       </View>
 
       {watchlist.description && (
-        <Text className='text-neutral-400 text-sm mb-2' numberOfLines={2}>
+        <Text className='text-foreground-muted text-sm mb-2' numberOfLines={2}>
           {watchlist.description}
         </Text>
       )}
@@ -71,13 +69,13 @@ const WatchlistCard: React.FC<WatchlistCardProps> = ({
             size={14}
             color={Colors.foregroundMuted}
           />
-          <Text className='text-neutral-400 text-sm'>
+          <Text className='text-foreground-muted text-sm'>
             {t("watchlists.item_count", { count: watchlist.itemCount ?? 0 })}
           </Text>
         </View>
         {watchlist.allowedItemType && (
-          <View className='bg-neutral-800 px-2 py-0.5 rounded'>
-            <Text className='text-neutral-400 text-xs'>
+          <View className='bg-surface-raised px-2 py-0.5 rounded'>
+            <Text className='text-foreground-muted text-xs'>
               {watchlistTypeLabel(t, watchlist.allowedItemType)}
             </Text>
           </View>
@@ -98,7 +96,7 @@ const EmptyState: React.FC<{ onCreatePress: () => void }> = ({
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.empty_title")}
       </Text>
-      <Text className='text-neutral-400 text-center mt-2 mb-6'>
+      <Text className='text-foreground-muted text-center mt-2 mb-6'>
         {t("watchlists.empty_description")}
       </Text>
     </View>
@@ -115,7 +113,7 @@ const NotConfiguredState: React.FC = () => {
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.not_configured_title")}
       </Text>
-      <Text className='text-neutral-400 text-center mt-2 mb-6'>
+      <Text className='text-foreground-muted text-center mt-2 mb-6'>
         {t("watchlists.not_configured_description")}
       </Text>
       <Button
@@ -148,7 +146,7 @@ const LoadFailedState: React.FC<{
         {t("watchlists.load_failed_title")}
       </Text>
       <Text
-        className='text-neutral-400 text-center mt-2 mb-6'
+        className='text-foreground-muted text-center mt-2 mb-6'
         style={isTV ? { fontSize: typography.body } : undefined}
       >
         {t("watchlists.load_failed_description")}

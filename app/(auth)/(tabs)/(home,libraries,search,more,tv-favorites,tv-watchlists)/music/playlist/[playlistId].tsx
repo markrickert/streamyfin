@@ -178,7 +178,7 @@ export default function PlaylistDetailScreen() {
   if (!playlist) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>
+        <Text className='text-foreground-disabled'>
           {t("music.playlist_not_found")}
         </Text>
       </View>
@@ -219,7 +219,7 @@ export default function PlaylistDetailScreen() {
                 cachePolicy='memory-disk'
               />
             ) : (
-              <View className='flex-1 items-center justify-center bg-neutral-800'>
+              <View className='flex-1 items-center justify-center bg-surface-raised'>
                 <Ionicons
                   name='list'
                   size={60}
@@ -230,10 +230,10 @@ export default function PlaylistDetailScreen() {
           </View>
 
           {/* Playlist info */}
-          <Text className='text-white text-xl font-bold mt-4 text-center'>
+          <Text className='text-foreground text-xl font-bold mt-4 text-center'>
             {playlist.Name}
           </Text>
-          <Text className='text-neutral-500 text-sm mt-1'>
+          <Text className='text-foreground-disabled text-sm mt-1'>
             {tracks?.length} tracks • {totalDuration}
           </Text>
 
@@ -241,26 +241,26 @@ export default function PlaylistDetailScreen() {
           <View className='flex flex-row mt-4 items-center'>
             <TouchableOpacity
               onPress={handlePlayAll}
-              className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mr-3'
+              className='flex flex-row items-center bg-primary px-6 py-3 rounded-full mr-3'
             >
               <Ionicons name='play' size={20} color={Colors.foreground} />
-              <Text className='text-white font-medium ml-2'>
+              <Text className='text-foreground font-medium ml-2'>
                 {t("music.play")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleShuffle}
-              className='flex flex-row items-center bg-neutral-800 px-6 py-3 rounded-full mr-3'
+              className='flex flex-row items-center bg-surface-raised px-6 py-3 rounded-full mr-3'
             >
               <Ionicons name='shuffle' size={20} color={Colors.foreground} />
-              <Text className='text-white font-medium ml-2'>
+              <Text className='text-foreground font-medium ml-2'>
                 {t("music.shuffle")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleDownloadPlaylist}
               disabled={allTracksDownloaded || isDownloading}
-              className='flex items-center justify-center bg-neutral-800 p-3 rounded-full'
+              className='flex items-center justify-center bg-surface-raised p-3 rounded-full'
             >
               {isDownloading ? (
                 <ActivityIndicator size={20} color={Colors.foreground} />

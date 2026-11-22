@@ -134,7 +134,9 @@ export default function ArtistDetailScreen() {
   if (!artist) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>{t("music.artist_not_found")}</Text>
+        <Text className='text-foreground-disabled'>
+          {t("music.artist_not_found")}
+        </Text>
       </View>
     );
   }
@@ -195,7 +197,7 @@ export default function ArtistDetailScreen() {
                 cachePolicy='memory-disk'
               />
             ) : (
-              <View className='flex-1 items-center justify-center bg-neutral-800'>
+              <View className='flex-1 items-center justify-center bg-surface-raised'>
                 <Ionicons
                   name='person'
                   size={60}
@@ -206,10 +208,10 @@ export default function ArtistDetailScreen() {
           </View>
 
           {/* Artist info */}
-          <Text className='text-white text-2xl font-bold mt-4 text-center'>
+          <Text className='text-foreground text-2xl font-bold mt-4 text-center'>
             {artist.Name}
           </Text>
-          <Text className='text-neutral-500 text-sm mt-1'>
+          <Text className='text-foreground-disabled text-sm mt-1'>
             {albums?.length || 0} {t("music.tabs.albums").toLowerCase()}
           </Text>
 
@@ -217,10 +219,10 @@ export default function ArtistDetailScreen() {
           {topTracks && topTracks.length > 0 && (
             <TouchableOpacity
               onPress={handlePlayAllTracks}
-              className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mt-4'
+              className='flex flex-row items-center bg-primary px-6 py-3 rounded-full mt-4'
             >
               <Ionicons name='play' size={20} color={Colors.foreground} />
-              <Text className='text-white font-medium ml-2'>
+              <Text className='text-foreground font-medium ml-2'>
                 {t("music.play_top_tracks")}
               </Text>
             </TouchableOpacity>

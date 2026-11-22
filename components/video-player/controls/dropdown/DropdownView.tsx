@@ -77,7 +77,7 @@ const SubtitleScaleControl = ({
         </Text>
         <View className='flex-row items-center gap-3'>
           {Platform.OS === "android" && (
-            <Text className='text-base text-neutral-300'>
+            <Text className='text-base text-foreground'>
               {settings.subtitleSize.toFixed(1)}×
             </Text>
           )}

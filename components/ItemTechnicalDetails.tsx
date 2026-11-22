@@ -34,7 +34,7 @@ export const ItemTechnicalDetails: React.FC<Props> = ({ source }) => {
         <View className='flex flex-row space-x-2'>
           <VideoStreamInfo source={source} />
         </View>
-        <Text className='text-purple-600'>{t("item_card.more_details")}</Text>
+        <Text className='text-primary'>{t("item_card.more_details")}</Text>
       </TouchableOpacity>
       <BottomSheetModal
         ref={bottomSheetModalRef}
@@ -105,7 +105,7 @@ const SubtitleStreamInfo = ({
     <View className='flex flex-col'>
       {subtitleStreams.map((stream, _index) => (
         <View key={stream.Index} className='flex flex-col'>
-          <Text className='text-xs mb-3 text-neutral-400'>
+          <Text className='text-xs mb-3 text-foreground-muted'>
             {stream.DisplayTitle}
           </Text>
           <View className='flex flex-row flex-wrap gap-2'>
@@ -143,7 +143,7 @@ const AudioStreamInfo = ({ audioStreams }: { audioStreams: MediaStream[] }) => {
     <View className='flex flex-col'>
       {audioStreams.map((audioStreams, index) => (
         <View key={index} className='flex flex-col'>
-          <Text className='mb-3 text-neutral-400 text-xs'>
+          <Text className='mb-3 text-foreground-muted text-xs'>
             {audioStreams.DisplayTitle}
           </Text>
           <View className='flex-row flex-wrap gap-2'>

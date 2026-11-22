@@ -138,7 +138,7 @@ export function Input(props: InputProps) {
   return (
     <TextInput
       ref={inputRef}
-      className={`p-4 rounded-xl bg-neutral-900 ${extraClassName}`}
+      className={`p-4 rounded-xl bg-surface ${extraClassName}`}
       allowFontScaling={false}
       style={[{ color: Colors.foreground }, style]}
       placeholderTextColor={Colors.foregroundMuted}

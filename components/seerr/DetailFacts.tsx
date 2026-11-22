@@ -134,7 +134,7 @@ const DetailFacts: React.FC<
       <View className='px-4'>
         <Text className='text-lg font-bold mb-2'>{t("seerr.details")}</Text>
         <View
-          className={`${className} flex flex-col justify-center divide-y-2 divide-neutral-800`}
+          className={`${className} flex flex-col justify-center divide-y-2 divide-surface-raised`}
           {...props}
         >
           <Fact title={t("seerr.status")} fact={details?.status} />

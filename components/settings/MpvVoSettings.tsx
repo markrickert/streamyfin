@@ -64,7 +64,7 @@ export const MpvVoSettings: React.FC = () => {
           groups={voDriverOptions}
           trigger={
             <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-              <Text className='mr-1 text-[#8E8D91]'>
+              <Text className='mr-1 text-foreground-muted'>
                 {currentVoDriverLabel}
               </Text>
               <Ionicons

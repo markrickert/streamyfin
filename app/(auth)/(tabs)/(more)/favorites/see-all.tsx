@@ -139,7 +139,9 @@ export default function FavoritesSeeAllScreen() {
       />
       {!itemType ? (
         <View className='flex-1 items-center justify-center px-6'>
-          <Text className='text-neutral-500'>{t("favorites.noData")}</Text>
+          <Text className='text-foreground-disabled'>
+            {t("favorites.noData")}
+          </Text>
         </View>
       ) : isLoading ? (
         <View className='justify-center items-center h-full'>
@@ -164,7 +166,7 @@ export default function FavoritesSeeAllScreen() {
           )}
           ListEmptyComponent={
             <View className='flex flex-col items-center justify-center h-full py-12'>
-              <Text className='font-bold text-xl text-neutral-500'>
+              <Text className='font-bold text-xl text-foreground-disabled'>
                 {t("home.no_items")}
               </Text>
             </View>

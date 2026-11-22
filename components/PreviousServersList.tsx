@@ -250,7 +250,7 @@ export const PreviousServersList: React.FC<PreviousServersListProps> = ({
             swipeableRef.current?.close();
             handleEditHeaders(serverUrl);
           }}
-          className='bg-neutral-700 justify-center items-center px-5'
+          className='bg-border justify-center items-center px-5'
           accessibilityLabel={t("custom_headers.title")}
         >
           <Ionicons name='key' size={20} color={Colors.foreground} />
@@ -260,7 +260,7 @@ export const PreviousServersList: React.FC<PreviousServersListProps> = ({
             swipeableRef.current?.close();
             handleRemoveServer(serverUrl);
           }}
-          className='bg-red-600 justify-center items-center px-5'
+          className='bg-danger justify-center items-center px-5'
           accessibilityLabel={t("server.remove_server")}
         >
           <Ionicons name='trash' size={20} color={Colors.foreground} />
@@ -328,7 +328,7 @@ export const PreviousServersList: React.FC<PreviousServersListProps> = ({
           textColor='red'
         />
       </ListGroup>
-      <Text className='text-xs text-neutral-500 mt-2 ml-4'>
+      <Text className='text-xs text-foreground-disabled mt-2 ml-4'>
         {t("server.swipe_for_options")}
       </Text>
 

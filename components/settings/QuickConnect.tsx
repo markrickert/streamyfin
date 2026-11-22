@@ -154,7 +154,7 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
 
   const userPickerTrigger = useMemo(
     () => (
-      <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+      <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
         <Text numberOfLines={1} className='flex-1 mr-2'>
           {targetUser?.Name}
         </Text>
@@ -329,7 +329,7 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
           <DismissKeyboardArea>
             <View className='flex flex-col space-y-4 px-4 pb-8 pt-2'>
               <View>
-                <Text className='font-bold text-2xl text-neutral-100'>
+                <Text className='font-bold text-2xl text-foreground'>
                   {t("home.settings.quick_connect.quick_connect_title")}
                 </Text>
               </View>
@@ -355,8 +355,8 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
                     />
                   </View>
                 )}
-                <View className='p-4 border border-neutral-800 rounded-xl bg-neutral-900 w-full space-y-4'>
-                  <Text className='text-neutral-400 text-center'>
+                <View className='p-4 border border-surface-raised rounded-xl bg-surface w-full space-y-4'>
+                  <Text className='text-foreground-muted text-center'>
                     {t(
                       "home.settings.quick_connect.enter_the_quick_connect_code",
                     )}
@@ -373,7 +373,7 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
                   />
                   {error && (
                     <Text
-                      className='text-red-500 text-center'
+                      className='text-danger text-center'
                       accessibilityLiveRegion='polite'
                     >
                       {error}
@@ -388,7 +388,7 @@ export const QuickConnect: React.FC<Props> = ({ ...props }) => {
                       size={15}
                       color={Colors.foregroundMuted}
                     />
-                    <Text className='text-neutral-400 ml-2'>
+                    <Text className='text-foreground-muted ml-2'>
                       {t("home.settings.quick_connect.paste_code")}
                     </Text>
                   </Pressable>

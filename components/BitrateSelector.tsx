@@ -68,7 +68,7 @@ export const BitrateSelector: React.FC<Props> = ({
     <View className='flex flex-col' {...props}>
       <Text className='opacity-50 mb-1 text-xs'>{t("item_card.quality")}</Text>
       <TouchableOpacity
-        className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'
+        className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'
         onPress={() => setOpen(true)}
       >
         <Text numberOfLines={1}>

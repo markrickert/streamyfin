@@ -28,24 +28,24 @@ const getColorClasses = (
     switch (color) {
       case "purple":
         return focused
-          ? "bg-transparent border-2 border-purple-400"
-          : "bg-transparent border-2 border-purple-600";
+          ? "bg-transparent border-2 border-accent"
+          : "bg-transparent border-2 border-primary";
       case "red":
         return focused
-          ? "bg-transparent border-2 border-red-400"
-          : "bg-transparent border-2 border-red-600";
+          ? "bg-transparent border-2 border-danger-light"
+          : "bg-transparent border-2 border-danger";
       case "black":
         return focused
-          ? "bg-transparent border-2 border-neutral-700"
-          : "bg-transparent border-2 border-neutral-900";
+          ? "bg-transparent border-2 border-border"
+          : "bg-transparent border-2 border-surface";
       case "white":
         return focused
-          ? "bg-transparent border-2 border-gray-100"
+          ? "bg-transparent border-2 border-foreground"
           : "bg-transparent border-2 border-white";
       case "transparent":
         return focused
-          ? "bg-transparent border-2 border-gray-400"
-          : "bg-transparent border-2 border-gray-600";
+          ? "bg-transparent border-2 border-foreground-muted"
+          : "bg-transparent border-2 border-border";
       default:
         return "";
     }
@@ -53,16 +53,16 @@ const getColorClasses = (
     switch (color) {
       case "purple":
         return focused
-          ? "bg-purple-500 border-2 border-white"
-          : "bg-purple-600 border border-purple-700";
+          ? "bg-primary border-2 border-white"
+          : "bg-primary border border-primary-dark";
       case "red":
-        return "bg-red-600";
+        return "bg-danger";
       case "black":
-        return "bg-neutral-900";
+        return "bg-surface";
       case "white":
         return focused
-          ? "bg-gray-100 border-2 border-gray-300"
-          : "bg-white border border-gray-200";
+          ? "bg-foreground border-2 border-foreground-muted"
+          : "bg-white border border-foreground";
       case "transparent":
         return "bg-transparent";
       default:
@@ -116,7 +116,7 @@ export const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
   const lightHapticFeedback = useHaptic("light");
 
   const textColorClass =
-    color === "white" && variant === "solid" ? "text-black" : "text-white";
+    color === "white" && variant === "solid" ? "text-black" : "text-foreground";
 
   return Platform.isTV ? (
     <Pressable
@@ -200,7 +200,7 @@ export const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
           <Text
             className={`
           ${textColorClass} font-bold text-base
-          ${disabled ? "text-gray-300" : ""}
+          ${disabled ? "text-foreground" : ""}
           ${textClassName}
           ${iconRight ? "mr-2" : ""}
           ${iconLeft ? "ml-2" : ""}

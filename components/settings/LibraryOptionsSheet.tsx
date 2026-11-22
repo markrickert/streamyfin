@@ -38,13 +38,13 @@ const OptionGroup: React.FC<{ title: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <View className='mb-6'>
-    <Text className='text-lg font-semibold mb-3 text-neutral-300'>{title}</Text>
+    <Text className='text-lg font-semibold mb-3 text-foreground'>{title}</Text>
     <View
       style={{
         borderRadius: 12,
         overflow: "hidden",
       }}
-      className='bg-neutral-800 rounded-xl overflow-hidden'
+      className='bg-surface-raised rounded-xl overflow-hidden'
     >
       {children}
     </View>
@@ -66,7 +66,7 @@ const OptionItem: React.FC<{
         itemDisabled ? "opacity-50" : ""
       }`}
     >
-      <Text className='flex-1 text-white'>{label}</Text>
+      <Text className='flex-1 text-foreground'>{label}</Text>
       {selected ? (
         <Ionicons name='checkmark-circle' size={24} color={Colors.primary} />
       ) : (
@@ -82,7 +82,7 @@ const OptionItem: React.FC<{
         style={{
           height: StyleSheet.hairlineWidth,
         }}
-        className='bg-neutral-700 mx-4'
+        className='bg-border mx-4'
       />
     )}
   </>
@@ -103,9 +103,9 @@ const ToggleItem: React.FC<{
         itemDisabled ? "opacity-50" : ""
       }`}
     >
-      <Text className='flex-1 text-white'>{label}</Text>
+      <Text className='flex-1 text-foreground'>{label}</Text>
       <View
-        className={`w-12 h-7 rounded-full ${value ? "bg-purple-600" : "bg-neutral-600"} flex-row items-center`}
+        className={`w-12 h-7 rounded-full ${value ? "bg-primary" : "bg-border"} flex-row items-center`}
       >
         <View
           className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
@@ -119,7 +119,7 @@ const ToggleItem: React.FC<{
         style={{
           height: StyleSheet.hairlineWidth,
         }}
-        className='bg-neutral-700 mx-4'
+        className='bg-border mx-4'
       />
     )}
   </>

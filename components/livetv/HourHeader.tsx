@@ -33,9 +33,9 @@ export const HourHeader = ({
 const HourCell = ({ hour }: { hour: Date }) => (
   <View
     style={{ width: LIVE_TV_GUIDE_HOUR_WIDTH }}
-    className='flex items-center justify-center bg-neutral-800'
+    className='flex items-center justify-center bg-surface-raised'
   >
-    <Text className='text-xs text-gray-600'>
+    <Text className='text-xs text-foreground-disabled'>
       {hour.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",

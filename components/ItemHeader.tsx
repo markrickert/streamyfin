@@ -18,10 +18,10 @@ export const ItemHeader: React.FC<Props> = ({ item, ...props }) => {
         className='flex flex-col space-y-1.5 w-full items-start h-32'
         {...props}
       >
-        <View className='w-1/3 h-6 bg-neutral-900 rounded' />
-        <View className='w-2/3 h-8 bg-neutral-900 rounded' />
-        <View className='w-2/3 h-4 bg-neutral-900 rounded' />
-        <View className='w-1/4 h-4 bg-neutral-900 rounded' />
+        <View className='w-1/3 h-6 bg-surface rounded' />
+        <View className='w-2/3 h-8 bg-surface rounded' />
+        <View className='w-2/3 h-4 bg-surface rounded' />
+        <View className='w-1/4 h-4 bg-surface rounded' />
       </View>
     );
 

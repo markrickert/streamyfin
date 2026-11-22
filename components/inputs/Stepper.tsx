@@ -38,12 +38,12 @@ export const Stepper: React.FC<StepperProps> = ({
         onPress={() => {
           if (!isDisabled) onUpdate(Math.max(min, value - step));
         }}
-        className='w-8 h-8 bg-neutral-800 rounded-l-lg flex items-center justify-center'
+        className='w-8 h-8 bg-surface-raised rounded-l-lg flex items-center justify-center'
       >
         <Text>-</Text>
       </TouchableOpacity>
       <Text
-        className={`w-auto h-8 bg-neutral-800 py-2 px-1 flex items-center justify-center${appendValue ? "first-letter:px-2" : ""}`}
+        className={`w-auto h-8 bg-surface-raised py-2 px-1 flex items-center justify-center${appendValue ? "first-letter:px-2" : ""}`}
       >
         {formatValue ? formatValue(value) : value}
         {appendValue}
@@ -51,7 +51,7 @@ export const Stepper: React.FC<StepperProps> = ({
       <TouchableOpacity
         disabled={isDisabled}
         accessibilityState={{ disabled: isDisabled }}
-        className='w-8 h-8 bg-neutral-800 rounded-r-lg flex items-center justify-center'
+        className='w-8 h-8 bg-surface-raised rounded-r-lg flex items-center justify-center'
         onPress={() => {
           if (!isDisabled) onUpdate(Math.min(max, value + step));
         }}

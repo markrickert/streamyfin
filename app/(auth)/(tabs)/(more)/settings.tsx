@@ -44,7 +44,7 @@ function SettingsMobile() {
             logout();
           }}
         >
-          <Text className='text-red-600'>
+          <Text className='text-danger'>
             {t("home.settings.log_out_button")}
           </Text>
         </HeaderButton>

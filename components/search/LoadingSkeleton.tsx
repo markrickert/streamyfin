@@ -35,14 +35,14 @@ export const LoadingSkeleton: React.FC<Props> = ({ isLoading }) => {
     <Animated.View style={animatedStyle} className='mt-2 absolute w-full'>
       {[1, 2, 3].map((s) => (
         <View className='px-4 mb-4' key={s}>
-          <View className='w-1/2 bg-neutral-900 h-6 mb-2 rounded-lg' />
+          <View className='w-1/2 bg-surface h-6 mb-2 rounded-lg' />
           <View className='flex flex-row gap-2'>
             {[1, 2, 3].map((i) => (
               <View className='w-28' key={i}>
-                <View className='bg-neutral-900 h-40 w-full rounded-md mb-1' />
+                <View className='bg-surface h-40 w-full rounded-md mb-1' />
                 <View className='rounded-md overflow-hidden mb-1 self-start'>
                   <Text
-                    className='text-neutral-900 bg-neutral-900 rounded-md'
+                    className='text-surface bg-surface rounded-md'
                     numberOfLines={1}
                   >
                     Nisi mollit voluptate amet.
@@ -50,7 +50,7 @@ export const LoadingSkeleton: React.FC<Props> = ({ isLoading }) => {
                 </View>
                 <View className='rounded-md overflow-hidden self-start mb-1'>
                   <Text
-                    className='text-neutral-900 bg-neutral-900 text-xs rounded-md'
+                    className='text-surface bg-surface text-xs rounded-md'
                     numberOfLines={1}
                   >
                     Lorem ipsum

@@ -77,7 +77,7 @@ export default function AlbumsScreen() {
   if (albums.length === 0) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>{t("music.no_albums")}</Text>
+        <Text className='text-foreground-disabled'>{t("music.no_albums")}</Text>
       </View>
     );
   }

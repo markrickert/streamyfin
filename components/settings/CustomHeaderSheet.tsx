@@ -124,11 +124,11 @@ export function CustomHeaderSheet({
             <TouchableOpacity
               key={preset.id}
               onPress={() => applyPreset(preset)}
-              className='bg-neutral-900 border border-neutral-700 rounded-xl p-4 flex-row items-center justify-between'
+              className='bg-surface border border-border rounded-xl p-4 flex-row items-center justify-between'
             >
               <View className='flex-1 pr-3'>
                 <Text className='font-semibold'>{preset.label}</Text>
-                <Text className='text-xs text-neutral-400 mt-0.5'>
+                <Text className='text-xs text-foreground-muted mt-0.5'>
                   {preset.description}
                 </Text>
               </View>
@@ -139,7 +139,7 @@ export function CustomHeaderSheet({
       ) : (
         <>
           <Text className='text-lg font-bold'>{t("custom_headers.title")}</Text>
-          <Text className='text-xs text-neutral-400 -mt-2'>
+          <Text className='text-xs text-foreground-muted -mt-2'>
             {t("custom_headers.description")}
           </Text>
 
@@ -150,7 +150,7 @@ export function CustomHeaderSheet({
             onAddPreset={() => setShowPresets(true)}
           />
 
-          <Text className='text-xs text-neutral-500'>
+          <Text className='text-xs text-foreground-disabled'>
             {t("custom_headers.security_note")}
           </Text>
 

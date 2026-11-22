@@ -83,7 +83,7 @@ export default function ArtistsScreen() {
   if (!libraryId) {
     return (
       <View className='flex-1 justify-center items-center bg-black px-6'>
-        <Text className='text-neutral-500 text-center'>
+        <Text className='text-foreground-disabled text-center'>
           {t("music.missing_library_id")}
         </Text>
       </View>
@@ -104,7 +104,7 @@ export default function ArtistsScreen() {
   if (isError && artists.length === 0) {
     return (
       <View className='flex-1 justify-center items-center bg-black px-6'>
-        <Text className='text-neutral-500 text-center'>
+        <Text className='text-foreground-disabled text-center'>
           Failed to load artists: {(error as Error)?.message || "Unknown error"}
         </Text>
       </View>
@@ -114,7 +114,9 @@ export default function ArtistsScreen() {
   if (artists.length === 0) {
     return (
       <View className='flex-1 justify-center items-center bg-black'>
-        <Text className='text-neutral-500'>{t("music.no_artists")}</Text>
+        <Text className='text-foreground-disabled'>
+          {t("music.no_artists")}
+        </Text>
       </View>
     );
   }

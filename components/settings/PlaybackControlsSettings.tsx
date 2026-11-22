@@ -115,7 +115,7 @@ export const PlaybackControlsSettings: React.FC = () => {
             groups={orientationOptions}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {t(
                     orientationTranslations[
                       settings.defaultVideoOrientation as keyof typeof orientationTranslations
@@ -154,7 +154,7 @@ export const PlaybackControlsSettings: React.FC = () => {
             groups={playbackSpeedOptions}
             trigger={
               <View className='flex flex-row items-center justify-between pl-3 py-1.5'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {PLAYBACK_SPEEDS.find(
                     (s) => s.value === settings.defaultPlaybackSpeed,
                   )?.label ?? "1x"}
@@ -221,7 +221,7 @@ export const PlaybackControlsSettings: React.FC = () => {
             groups={stillWatchingOptions}
             trigger={
               <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                <Text className='mr-1 text-[#8E8D91]'>
+                <Text className='mr-1 text-foreground-muted'>
                   {stillWatchingPresetLabel(t, settings.stillWatchingPreset)}
                 </Text>
                 <Ionicons

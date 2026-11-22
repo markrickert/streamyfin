@@ -13,7 +13,7 @@ const Poster: React.FC<PosterProps> = ({ id, url, blurhash }) => {
   if (!id && !url)
     return (
       <View
-        className='border border-neutral-900'
+        className='border border-surface'
         style={{
           aspectRatio: "10/15",
         }}
@@ -21,7 +21,7 @@ const Poster: React.FC<PosterProps> = ({ id, url, blurhash }) => {
     );
 
   return (
-    <View className='rounded-lg overflow-hidden border border-neutral-900'>
+    <View className='rounded-lg overflow-hidden border border-surface'>
       <Image
         placeholder={
           blurhash

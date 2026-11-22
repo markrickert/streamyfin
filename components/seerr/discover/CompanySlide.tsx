@@ -35,7 +35,7 @@ const CompanySlide: React.FC<
       renderItem={(item, _index) => (
         <TouchableOpacity className='mr-2' onPress={() => navigate(item)}>
           <GenericSlideCard
-            className='w-28 rounded-lg overflow-hidden border border-neutral-900 p-4'
+            className='w-28 rounded-lg overflow-hidden border border-surface p-4'
             id={item.id.toString()}
             url={seerrApi?.imageProxy(item.image, COMPANY_LOGO_IMAGE_FILTER)}
           />

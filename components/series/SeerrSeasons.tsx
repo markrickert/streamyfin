@@ -375,7 +375,7 @@ const SeerrSeasons: React.FC<{
             </View>
             <SeerrStatusIcon
               onPress={() => requestSeason(canRequest, season.seasonNumber)}
-              className={canRequest ? "bg-gray-700/40" : undefined}
+              className={canRequest ? "bg-border" : undefined}
               mediaStatus={season.status}
               showRequestIcon={canRequest}
             />

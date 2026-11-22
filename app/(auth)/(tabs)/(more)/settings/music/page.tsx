@@ -150,7 +150,7 @@ export default function MusicSettingsPage() {
         <ListGroup
           title={t("home.settings.music.playback_title")}
           description={
-            <Text className='text-[#8E8D91] text-xs'>
+            <Text className='text-foreground-muted text-xs'>
               {t("home.settings.music.playback_description")}
             </Text>
           }
@@ -179,7 +179,7 @@ export default function MusicSettingsPage() {
               groups={normalizationOptions}
               trigger={
                 <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                  <Text className='mr-1 text-[#8E8D91]'>
+                  <Text className='mr-1 text-foreground-muted'>
                     {t(currentNormalizationLabelKey)}
                   </Text>
                   <Ionicons
@@ -198,7 +198,7 @@ export default function MusicSettingsPage() {
           <ListGroup
             title={t("home.settings.music.caching_title")}
             description={
-              <Text className='text-[#8E8D91] text-xs'>
+              <Text className='text-foreground-muted text-xs'>
                 {t("home.settings.music.caching_description")}
               </Text>
             }
@@ -226,7 +226,7 @@ export default function MusicSettingsPage() {
                 groups={lookaheadCountOptions}
                 trigger={
                   <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                    <Text className='mr-1 text-[#8E8D91]'>
+                    <Text className='mr-1 text-foreground-muted'>
                       {currentLookaheadLabel}
                     </Text>
                     <Ionicons
@@ -247,7 +247,7 @@ export default function MusicSettingsPage() {
                 groups={cacheSizeOptions}
                 trigger={
                   <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
-                    <Text className='mr-1 text-[#8E8D91]'>
+                    <Text className='mr-1 text-foreground-muted'>
                       {currentCacheSizeLabel}
                     </Text>
                     <Ionicons
@@ -268,7 +268,7 @@ export default function MusicSettingsPage() {
             <ListGroup
               title={t("home.settings.storage.music_cache_title")}
               description={
-                <Text className='text-[#8E8D91] text-xs'>
+                <Text className='text-foreground-muted text-xs'>
                   {t("home.settings.storage.music_cache_description")}
                 </Text>
               }

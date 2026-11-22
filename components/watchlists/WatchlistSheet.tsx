@@ -62,7 +62,7 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
     <TouchableOpacity
       onPress={onToggle}
       disabled={disabled || isLoading}
-      className={`bg-neutral-800 px-4 py-3 flex-row items-center justify-between ${disabled ? "opacity-40" : ""}`}
+      className={`bg-surface-raised px-4 py-3 flex-row items-center justify-between ${disabled ? "opacity-40" : ""}`}
       activeOpacity={0.7}
     >
       <View className='flex-1 mr-4'>
@@ -71,19 +71,22 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
             {watchlist.name}
           </Text>
           {watchlist.allowedItemType && (
-            <View className='bg-neutral-700 px-1.5 py-0.5 rounded'>
-              <Text className='text-xs text-neutral-400'>
+            <View className='bg-border px-1.5 py-0.5 rounded'>
+              <Text className='text-xs text-foreground-muted'>
                 {watchlistTypeLabel(t, watchlist.allowedItemType)}
               </Text>
             </View>
           )}
         </View>
         {watchlist.description && (
-          <Text className='text-sm text-neutral-400 mt-0.5' numberOfLines={2}>
+          <Text
+            className='text-sm text-foreground-muted mt-0.5'
+            numberOfLines={2}
+          >
             {watchlist.description}
           </Text>
         )}
-        <Text className='text-xs text-neutral-500 mt-1'>
+        <Text className='text-xs text-foreground-disabled mt-1'>
           {t("watchlists.item_count", { count: watchlist.itemCount ?? 0 })}
         </Text>
       </View>
@@ -193,7 +196,9 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
     return (
       <View className='py-12 items-center justify-center'>
         <ActivityIndicator size='large' color={Colors.accent} />
-        <Text className='text-neutral-400 mt-4'>{t("watchlists.loading")}</Text>
+        <Text className='text-foreground-muted mt-4'>
+          {t("watchlists.loading")}
+        </Text>
       </View>
     );
   }
@@ -211,7 +216,7 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
         <Text className='font-bold text-2xl'>
           {t("watchlists.select_watchlist")}
         </Text>
-        <Text className='text-neutral-400 mt-1' numberOfLines={1}>
+        <Text className='text-foreground-muted mt-1' numberOfLines={1}>
           {item.Name}
         </Text>
       </View>
@@ -220,10 +225,10 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
       {sortedWatchlists.length === 0 ? (
         <View className='py-8 items-center'>
           <Ionicons name='list-outline' size={48} color={Colors.border} />
-          <Text className='text-neutral-400 text-center mt-4'>
+          <Text className='text-foreground-muted text-center mt-4'>
             {t("watchlists.empty_title")}
           </Text>
-          <Text className='text-neutral-500 text-center text-sm mt-1'>
+          <Text className='text-foreground-disabled text-center text-sm mt-1'>
             {t("watchlists.empty_description")}
           </Text>
         </View>
@@ -245,7 +250,7 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
               {index < sortedWatchlists.length - 1 && (
                 <View
                   style={{ height: StyleSheet.hairlineWidth }}
-                  className='bg-neutral-700'
+                  className='bg-border'
                 />
               )}
             </React.Fragment>
@@ -256,11 +261,11 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
       {/* Create New Button */}
       <TouchableOpacity
         onPress={handleCreateNew}
-        className='flex-row items-center justify-center py-4 bg-neutral-800 rounded-xl'
+        className='flex-row items-center justify-center py-4 bg-surface-raised rounded-xl'
         activeOpacity={0.7}
       >
         <Ionicons name='add' size={20} color={Colors.accent} />
-        <Text className='text-purple-400 font-medium'>
+        <Text className='text-accent font-medium'>
           {t("watchlists.create_new")}
         </Text>
       </TouchableOpacity>

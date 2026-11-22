@@ -77,7 +77,7 @@ export const NotificationPauseRow: React.FC<Props> = ({
           trigger={
             <View className='flex flex-row items-center justify-between py-1.5 pl-3'>
               <Text
-                className={`mr-1 ${paused ? "text-purple-500" : "text-[#8E8D91]"}`}
+                className={`mr-1 ${paused ? "text-primary" : "text-foreground-muted"}`}
               >
                 {current}
               </Text>

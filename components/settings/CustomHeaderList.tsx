@@ -129,7 +129,7 @@ export function CustomHeaderList({
         autoComplete='off'
         importantForAutofill='no'
         textContentType='none'
-        extraClassName='pr-12 border border-neutral-700'
+        extraClassName='pr-12 border border-border'
         clearButtonMode='never'
       />
       <TouchableOpacity
@@ -158,7 +158,7 @@ export function CustomHeaderList({
    * doesn't say what it toggles. Both address the whole group.
    */
   const groupFooter = (group: HeaderGroup) => (
-    <View className='flex-row items-center justify-between border-t border-neutral-800 pt-3'>
+    <View className='flex-row items-center justify-between border-t border-surface-raised pt-3'>
       <View className='flex-row items-center gap-x-2'>
         <SettingSwitch
           value={group.indices.every((index) => headers[index].enabled)}
@@ -167,7 +167,7 @@ export function CustomHeaderList({
             updateRows(group.indices, { enabled }, true)
           }
         />
-        <Text className='text-xs text-neutral-400'>
+        <Text className='text-xs text-foreground-muted'>
           {t("custom_headers.enabled")}
         </Text>
       </View>
@@ -178,7 +178,7 @@ export function CustomHeaderList({
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <Ionicons name='trash-outline' size={15} color={Colors.dangerLight} />
-        <Text className='text-xs text-red-400'>{t("common.remove")}</Text>
+        <Text className='text-xs text-danger-light'>{t("common.remove")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -186,8 +186,8 @@ export function CustomHeaderList({
   return (
     <View className='gap-y-2'>
       {headers.length === 0 ? (
-        <View className='bg-neutral-900 border border-neutral-800 rounded-xl p-4'>
-          <Text className='text-neutral-400 text-sm text-center'>
+        <View className='bg-surface border border-surface-raised rounded-xl p-4'>
+          <Text className='text-foreground-muted text-sm text-center'>
             {t("custom_headers.no_headers")}
           </Text>
         </View>
@@ -198,7 +198,7 @@ export function CustomHeaderList({
             // Spacing is explicit rather than `gap-y-*`: that utility lands as
             // a leading margin on every child here, so a nested one indents the
             // whole card away from its own top padding.
-            className='bg-neutral-900 border border-neutral-800 rounded-xl p-4'
+            className='bg-surface border border-surface-raised rounded-xl p-4'
           >
             {group.preset ? (
               <>
@@ -207,7 +207,7 @@ export function CustomHeaderList({
                 <Text className='font-semibold mb-4'>{group.preset.label}</Text>
                 {group.indices.map((index) => (
                   <View key={rowIds[index]} className='mb-4'>
-                    <Text className='text-xs text-neutral-400 mb-2'>
+                    <Text className='text-xs text-foreground-muted mb-2'>
                       {headers[index].key}
                     </Text>
                     {valueField(index)}
@@ -219,7 +219,7 @@ export function CustomHeaderList({
               // that the name is the user's to write here.
               <>
                 <View className='mb-4'>
-                  <Text className='text-xs text-neutral-400 mb-2'>
+                  <Text className='text-xs text-foreground-muted mb-2'>
                     {t("custom_headers.header_key")}
                   </Text>
                   <Input
@@ -232,11 +232,11 @@ export function CustomHeaderList({
                     autoCorrect={false}
                     autoComplete='off'
                     importantForAutofill='no'
-                    extraClassName='border border-neutral-700'
+                    extraClassName='border border-border'
                   />
                 </View>
                 <View className='mb-4'>
-                  <Text className='text-xs text-neutral-400 mb-2'>
+                  <Text className='text-xs text-foreground-muted mb-2'>
                     {t("custom_headers.header_value")}
                   </Text>
                   {valueField(group.indices[0])}
@@ -251,7 +251,7 @@ export function CustomHeaderList({
 
       <View className='flex-row gap-x-2'>
         <Button
-          className='flex-1 border border-neutral-700'
+          className='flex-1 border border-border'
           disabled={disabled}
           onPress={addPreset}
           color='black'
@@ -259,7 +259,7 @@ export function CustomHeaderList({
           {t("custom_headers.add_preset")}
         </Button>
         <Button
-          className='flex-1 border border-neutral-700'
+          className='flex-1 border border-border'
           disabled={disabled}
           onPress={() => appendRows([{ key: "", value: "", enabled: true }])}
           color='black'

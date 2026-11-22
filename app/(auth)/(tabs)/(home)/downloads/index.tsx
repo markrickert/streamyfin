@@ -204,7 +204,7 @@ export default function DownloadsPage() {
 
   const countPill = useCallback(
     (count: number) => (
-      <View className='bg-purple-600 rounded-full h-6 w-6 flex items-center justify-center'>
+      <View className='bg-primary rounded-full h-6 w-6 flex items-center justify-center'>
         <Text className='text-xs font-bold'>{count}</Text>
       </View>
     ),

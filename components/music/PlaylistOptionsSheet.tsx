@@ -104,13 +104,13 @@ export const PlaylistOptionsSheet: React.FC<Props> = ({
           paddingBottom: insets.bottom,
         }}
       >
-        <View className='flex-col rounded-xl overflow-hidden bg-neutral-800'>
+        <View className='flex-col rounded-xl overflow-hidden bg-surface-raised'>
           <TouchableOpacity
             onPress={handleDeletePlaylist}
             className='flex-row items-center px-4 py-3.5'
           >
             <Ionicons name='trash-outline' size={22} color={Colors.danger} />
-            <Text className='text-red-500 ml-4 text-base'>
+            <Text className='text-danger ml-4 text-base'>
               {t("music.playlists.delete_playlist")}
             </Text>
           </TouchableOpacity>

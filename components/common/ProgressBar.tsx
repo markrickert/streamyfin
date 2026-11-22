@@ -39,9 +39,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ item }) => {
   return (
     <>
       <View
-        className={
-          "absolute bottom-0 left-0 h-1 bg-neutral-700 opacity-80 w-full"
-        }
+        className={"absolute bottom-0 left-0 h-1 bg-border opacity-80 w-full"}
       />
       <View
         style={
@@ -49,7 +47,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ item }) => {
             ? { width: `${progress}%`, backgroundColor: Colors.white }
             : { width: `${progress}%` }
         }
-        className={`absolute bottom-0 left-0 h-1 ${Platform.isTV ? "" : "bg-purple-600"}`}
+        className={`absolute bottom-0 left-0 h-1 ${Platform.isTV ? "" : "bg-primary"}`}
       />
     </>
   );

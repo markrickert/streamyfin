@@ -178,7 +178,10 @@ export const EpisodeList: React.FC<Props> = ({ item, close, goToItem }) => {
         const overview = episodeById.get(card.id)?.Overview;
         if (!overview) return null;
         return (
-          <Text numberOfLines={7} className='text-xs text-neutral-500 mt-1'>
+          <Text
+            numberOfLines={7}
+            className='text-xs text-foreground-disabled mt-1'
+          >
             {overview}
           </Text>
         );

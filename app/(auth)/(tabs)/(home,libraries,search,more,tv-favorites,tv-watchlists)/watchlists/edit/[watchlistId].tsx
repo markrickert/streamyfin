@@ -116,7 +116,7 @@ export default function EditWatchlistScreen() {
         className='flex-1 items-center justify-center px-8'
         style={{ backgroundColor: Colors.surface }}
       >
-        <Text className='text-lg text-neutral-400'>
+        <Text className='text-lg text-foreground-muted'>
           {t("watchlists.not_found")}
         </Text>
       </View>
@@ -138,7 +138,7 @@ export default function EditWatchlistScreen() {
       >
         {/* Name */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.name_label")} *
           </Text>
           <TextInput
@@ -146,13 +146,13 @@ export default function EditWatchlistScreen() {
             onChangeText={setName}
             placeholder={t("watchlists.name_placeholder")}
             placeholderTextColor={Colors.foregroundDisabled}
-            className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
+            className='bg-surface-raised text-foreground px-4 py-3 rounded-lg text-base'
           />
         </View>
 
         {/* Description */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.description_label")}
           </Text>
           <TextInput
@@ -160,7 +160,7 @@ export default function EditWatchlistScreen() {
             onChangeText={setDescription}
             placeholder={t("watchlists.description_placeholder")}
             placeholderTextColor={Colors.foregroundDisabled}
-            className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
+            className='bg-surface-raised text-foreground px-4 py-3 rounded-lg text-base'
             multiline
             numberOfLines={3}
             textAlignVertical='top'
@@ -171,10 +171,10 @@ export default function EditWatchlistScreen() {
         {/* Public Toggle */}
         <View className='px-4 py-4 flex-row items-center justify-between'>
           <View className='flex-1 mr-4'>
-            <Text className='text-base font-medium text-white'>
+            <Text className='text-base font-medium text-foreground'>
               {t("watchlists.is_public_label")}
             </Text>
-            <Text className='text-sm text-neutral-400 mt-1'>
+            <Text className='text-sm text-foreground-muted mt-1'>
               {t("watchlists.is_public_description")}
             </Text>
           </View>
@@ -188,7 +188,7 @@ export default function EditWatchlistScreen() {
 
         {/* Content Type */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.allowed_type_label")}
           </Text>
           <View className='flex-row flex-wrap gap-2'>
@@ -196,13 +196,13 @@ export default function EditWatchlistScreen() {
               <TouchableOpacity
                 key={type.value ?? "all"}
                 onPress={() => setAllowedItemType(type.value)}
-                className={`px-4 py-2 rounded-lg ${allowedItemType === type.value ? "bg-purple-600" : "bg-neutral-800"}`}
+                className={`px-4 py-2 rounded-lg ${allowedItemType === type.value ? "bg-primary" : "bg-surface-raised"}`}
               >
                 <Text
                   className={
                     allowedItemType === type.value
-                      ? "text-white font-medium"
-                      : "text-neutral-300"
+                      ? "text-foreground font-medium"
+                      : "text-foreground"
                   }
                 >
                   {type.label}
@@ -214,7 +214,7 @@ export default function EditWatchlistScreen() {
 
         {/* Sort Order */}
         <View className='px-4 py-4'>
-          <Text className='text-sm font-medium text-neutral-400 mb-2'>
+          <Text className='text-sm font-medium text-foreground-muted mb-2'>
             {t("watchlists.sort_order_label")}
           </Text>
           <View className='flex-row flex-wrap gap-2'>
@@ -222,13 +222,13 @@ export default function EditWatchlistScreen() {
               <TouchableOpacity
                 key={sort.value}
                 onPress={() => setDefaultSortOrder(sort.value)}
-                className={`px-4 py-2 rounded-lg ${defaultSortOrder === sort.value ? "bg-purple-600" : "bg-neutral-800"}`}
+                className={`px-4 py-2 rounded-lg ${defaultSortOrder === sort.value ? "bg-primary" : "bg-surface-raised"}`}
               >
                 <Text
                   className={
                     defaultSortOrder === sort.value
-                      ? "text-white font-medium"
-                      : "text-neutral-300"
+                      ? "text-foreground font-medium"
+                      : "text-foreground"
                   }
                 >
                   {sort.label}
@@ -254,7 +254,7 @@ export default function EditWatchlistScreen() {
                   size={20}
                   color={Colors.foreground}
                 />
-                <Text className='text-white font-semibold text-base'>
+                <Text className='text-foreground font-semibold text-base'>
                   {t("watchlists.save_button")}
                 </Text>
               </View>

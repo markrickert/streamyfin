@@ -61,7 +61,7 @@ export const LibraryTabs: React.FC<Props> = ({ tabs, activeTab, onSelect }) => {
   return (
     <View
       accessibilityRole='tablist'
-      className='flex flex-row mx-4 mt-4 p-1 rounded-xl bg-neutral-900'
+      className='flex flex-row mx-4 mt-4 p-1 rounded-xl bg-surface'
     >
       {tabs.map((tab) => {
         const selected = tab === activeTab;
@@ -72,7 +72,7 @@ export const LibraryTabs: React.FC<Props> = ({ tabs, activeTab, onSelect }) => {
             accessibilityState={{ selected }}
             onPress={() => onSelect(tab)}
             className={`flex-1 items-center py-1.5 rounded-lg ${
-              selected ? "bg-neutral-700" : ""
+              selected ? "bg-border" : ""
             }`}
           >
             <Text
@@ -82,7 +82,7 @@ export const LibraryTabs: React.FC<Props> = ({ tabs, activeTab, onSelect }) => {
               adjustsFontSizeToFit
               minimumFontScale={0.75}
               className={`text-sm font-semibold ${
-                selected ? "text-white" : "text-neutral-400"
+                selected ? "text-foreground" : "text-foreground-muted"
               }`}
             >
               {t(LIBRARY_TAB_LABEL_KEYS[tab])}

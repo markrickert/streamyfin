@@ -49,7 +49,7 @@ export const ListItem: React.FC<PropsWithChildren<Props>> = ({
       <TouchableOpacity
         disabled={isDisabled}
         onPress={onPress}
-        className={`flex flex-row items-center justify-between bg-neutral-900 ${rowSizing} pr-4 pl-4 ${isDisabled ? "opacity-50" : ""}`}
+        className={`flex flex-row items-center justify-between bg-surface ${rowSizing} pr-4 pl-4 ${isDisabled ? "opacity-50" : ""}`}
         {...(viewProps as any)}
       >
         <ListItemContent
@@ -68,7 +68,7 @@ export const ListItem: React.FC<PropsWithChildren<Props>> = ({
     );
   return (
     <View
-      className={`flex flex-row items-center justify-between bg-neutral-900 ${rowSizing} pr-4 pl-4 ${isDisabled ? "opacity-50" : ""}`}
+      className={`flex flex-row items-center justify-between bg-surface ${rowSizing} pr-4 pl-4 ${isDisabled ? "opacity-50" : ""}`}
       {...viewProps}
     >
       <ListItemContent
@@ -116,17 +116,17 @@ const ListItemContent = ({
           <Text
             className={
               textColor === "blue"
-                ? "text-[#0584FE]"
+                ? "text-info"
                 : textColor === "red"
-                  ? "text-red-600"
-                  : "text-white"
+                  ? "text-danger"
+                  : "text-foreground"
             }
           >
             {title}
           </Text>
           {subtitle && (
             <Text
-              className={`text-[12px] mt-0.5 ${subtitleColor === "red" ? "text-red-600" : "text-[#9899A1]"}`}
+              className={`text-[12px] mt-0.5 ${subtitleColor === "red" ? "text-danger" : "text-foreground-muted"}`}
             >
               {subtitle}
             </Text>
@@ -137,7 +137,7 @@ const ListItemContent = ({
           // that are only useful in full, so wrap rather than truncate. The row
           // has a min height, not a fixed one, so it grows to fit.
           <View className='flex-1 items-end pl-3'>
-            <Text selectable className='text-right text-[#9899A1]'>
+            <Text selectable className='text-right text-foreground-muted'>
               {value}
             </Text>
           </View>

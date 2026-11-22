@@ -159,7 +159,7 @@ const NextEpisodeCountDownButton: React.FC<NextEpisodeCountDownButtonProps> = ({
 
   return (
     <TouchableOpacity
-      className='w-32 overflow-hidden rounded-md bg-black/60 border border-neutral-900'
+      className='w-32 overflow-hidden rounded-md bg-black/60 border border-surface'
       {...props}
       onPress={handlePress}
     >

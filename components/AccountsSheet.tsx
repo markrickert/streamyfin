@@ -106,7 +106,7 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
   const renderRightActions = (account: SavedServerAccount) => (
     <TouchableOpacity
       onPress={() => handleDeleteAccount(account)}
-      className='bg-red-600 justify-center items-center px-5'
+      className='bg-danger justify-center items-center px-5'
     >
       <Ionicons name='trash' size={20} color={Colors.foreground} />
     </TouchableOpacity>
@@ -135,16 +135,16 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
         <View className='flex-1'>
           {/* Header */}
           <View className='mb-4'>
-            <Text className='font-bold text-2xl text-neutral-100'>
+            <Text className='font-bold text-2xl text-foreground'>
               {t("server.select_account")}
             </Text>
-            <Text className='text-neutral-400 mt-1'>
+            <Text className='text-foreground-muted mt-1'>
               {server.name || server.address}
             </Text>
           </View>
 
           {/* Account List */}
-          <View className='bg-neutral-800 rounded-xl overflow-hidden mb-4'>
+          <View className='bg-surface-raised rounded-xl overflow-hidden mb-4'>
             {server.accounts.map((account, index) => (
               <ReanimatedSwipeable
                 key={account.userId}
@@ -156,14 +156,14 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
                     setOpen(false);
                     onAccountSelect(account);
                   }}
-                  className={`flex-row items-center p-4 bg-neutral-800 ${
+                  className={`flex-row items-center p-4 bg-surface-raised ${
                     index < server.accounts.length - 1
-                      ? "border-b border-neutral-700"
+                      ? "border-b border-border"
                       : ""
                   }`}
                 >
                   {/* Avatar */}
-                  <View className='w-10 h-10 bg-neutral-700 rounded-full items-center justify-center mr-3'>
+                  <View className='w-10 h-10 bg-border rounded-full items-center justify-center mr-3'>
                     <Ionicons
                       name='person'
                       size={20}
@@ -173,10 +173,10 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
 
                   {/* Account Info */}
                   <View className='flex-1'>
-                    <Text className='text-neutral-100 font-medium'>
+                    <Text className='text-foreground font-medium'>
                       {account.username}
                     </Text>
-                    <Text className='text-neutral-500 text-sm'>
+                    <Text className='text-foreground-disabled text-sm'>
                       {account.securityType === "none"
                         ? t("save_account.no_protection")
                         : account.securityType === "pin"
@@ -197,7 +197,7 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
           </View>
 
           {/* Hint */}
-          <Text className='text-xs text-neutral-500 mb-4 ml-1'>
+          <Text className='text-xs text-foreground-disabled mb-4 ml-1'>
             {t("server.swipe_to_remove")}
           </Text>
 
@@ -211,7 +211,7 @@ export const AccountsSheet: React.FC<AccountsSheetProps> = ({
           >
             <View className='flex-row items-center justify-center'>
               <Ionicons name='add' size={20} color={Colors.foreground} />
-              <Text className='text-white font-semibold ml-2'>
+              <Text className='text-foreground font-semibold ml-2'>
                 {t("server.add_account")}
               </Text>
             </View>

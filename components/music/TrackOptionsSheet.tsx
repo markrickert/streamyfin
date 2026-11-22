@@ -271,7 +271,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                 cachePolicy='memory-disk'
               />
             ) : (
-              <View className='flex-1 items-center justify-center bg-neutral-800'>
+              <View className='flex-1 items-center justify-center bg-surface-raised'>
                 <Ionicons
                   name='musical-note'
                   size={24}
@@ -283,24 +283,27 @@ export const TrackOptionsSheet: React.FC<Props> = ({
           <View className='flex-1'>
             <Text
               numberOfLines={1}
-              className='text-white font-semibold text-base'
+              className='text-foreground font-semibold text-base'
             >
               {track.Name}
             </Text>
-            <Text numberOfLines={1} className='text-neutral-400 text-sm mt-0.5'>
+            <Text
+              numberOfLines={1}
+              className='text-foreground-muted text-sm mt-0.5'
+            >
               {track.Artists?.join(", ") || track.AlbumArtist}
             </Text>
           </View>
         </View>
 
         {/* Playback Options */}
-        <View className='flex-col rounded-xl overflow-hidden bg-neutral-800'>
+        <View className='flex-col rounded-xl overflow-hidden bg-surface-raised'>
           <TouchableOpacity
             onPress={handlePlayNext}
             className='flex-row items-center px-4 py-3.5'
           >
             <Ionicons name='play-forward' size={22} color={Colors.foreground} />
-            <Text className='text-white ml-4 text-base'>
+            <Text className='text-foreground ml-4 text-base'>
               {t("music.track_options.play_next")}
             </Text>
           </TouchableOpacity>
@@ -312,14 +315,14 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             className='flex-row items-center px-4 py-3.5'
           >
             <Ionicons name='list' size={22} color={Colors.foreground} />
-            <Text className='text-white ml-4 text-base'>
+            <Text className='text-foreground ml-4 text-base'>
               {t("music.track_options.add_to_queue")}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Library Options */}
-        <View className='flex-col rounded-xl overflow-hidden bg-neutral-800 mt-3'>
+        <View className='flex-col rounded-xl overflow-hidden bg-surface-raised mt-3'>
           <TouchableOpacity
             onPress={handleToggleFavorite}
             className='flex-row items-center px-4 py-3.5'
@@ -329,7 +332,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               size={22}
               color={isFavorite ? Colors.favorite : Colors.foreground}
             />
-            <Text className='text-white ml-4 text-base'>
+            <Text className='text-foreground ml-4 text-base'>
               {isFavorite
                 ? t("music.track_options.remove_from_favorites")
                 : t("music.track_options.add_to_favorites")}
@@ -347,7 +350,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               size={22}
               color={Colors.foreground}
             />
-            <Text className='text-white ml-4 text-base'>
+            <Text className='text-foreground ml-4 text-base'>
               {t("music.track_options.add_to_playlist")}
             </Text>
           </TouchableOpacity>
@@ -364,7 +367,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                   size={22}
                   color={Colors.danger}
                 />
-                <Text className='text-red-500 ml-4 text-base'>
+                <Text className='text-danger ml-4 text-base'>
                   {t("music.track_options.remove_from_playlist")}
                 </Text>
               </TouchableOpacity>
@@ -394,7 +397,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               />
             )}
             <Text
-              className={`ml-4 text-base ${isAlreadyDownloaded ? "text-green-500" : "text-white"}`}
+              className={`ml-4 text-base ${isAlreadyDownloaded ? "text-success" : "text-foreground"}`}
             >
               {isCurrentlyDownloading || isDownloadingTrack
                 ? t("music.track_options.downloading")
@@ -413,7 +416,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                   size={22}
                   color={Colors.foregroundDisabled}
                 />
-                <Text className='text-neutral-500 ml-4 text-base'>
+                <Text className='text-foreground-disabled ml-4 text-base'>
                   {t("music.track_options.cached")}
                 </Text>
               </View>
@@ -432,7 +435,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                   size={22}
                   color={Colors.danger}
                 />
-                <Text className='text-red-500 ml-4 text-base'>
+                <Text className='text-danger ml-4 text-base'>
                   {isAlreadyDownloaded
                     ? t("music.track_options.delete_download")
                     : t("music.track_options.delete_cache")}
@@ -444,7 +447,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
 
         {/* Navigation Options */}
         {(hasArtist || hasAlbum) && (
-          <View className='flex-col rounded-xl overflow-hidden bg-neutral-800 mt-3'>
+          <View className='flex-col rounded-xl overflow-hidden bg-surface-raised mt-3'>
             {hasArtist && (
               <>
                 <TouchableOpacity
@@ -456,7 +459,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                     size={22}
                     color={Colors.foreground}
                   />
-                  <Text className='text-white ml-4 text-base'>
+                  <Text className='text-foreground ml-4 text-base'>
                     {t("music.track_options.go_to_artist")}
                   </Text>
                 </TouchableOpacity>
@@ -474,7 +477,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                   size={22}
                   color={Colors.foreground}
                 />
-                <Text className='text-white ml-4 text-base'>
+                <Text className='text-foreground ml-4 text-base'>
                   {t("music.track_options.go_to_album")}
                 </Text>
               </TouchableOpacity>

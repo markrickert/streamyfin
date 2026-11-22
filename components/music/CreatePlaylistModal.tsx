@@ -113,7 +113,7 @@ export const CreatePlaylistModal: React.FC<Props> = ({
           {t("music.playlists.create_playlist")}
         </Text>
 
-        <Text className='text-neutral-400 mb-2 text-sm'>
+        <Text className='text-foreground-muted mb-2 text-sm'>
           {t("music.playlists.playlist_name")}
         </Text>
         <BottomSheetTextInput
@@ -138,13 +138,13 @@ export const CreatePlaylistModal: React.FC<Props> = ({
         <Button
           onPress={handleCreate}
           disabled={!isValid || createPlaylist.isPending}
-          className={`py-4 rounded-xl ${isValid ? "bg-purple-600" : "bg-neutral-700"}`}
+          className={`py-4 rounded-xl ${isValid ? "bg-primary" : "bg-border"}`}
         >
           {createPlaylist.isPending ? (
             <ActivityIndicator color={Colors.foreground} />
           ) : (
             <Text
-              className={`text-center font-semibold ${isValid ? "text-white" : "text-neutral-500"}`}
+              className={`text-center font-semibold ${isValid ? "text-foreground" : "text-foreground-disabled"}`}
             >
               {t("music.playlists.create")}
             </Text>

@@ -19,7 +19,7 @@ export const ResetFiltersButton: React.FC<Props> = ({
 
   return (
     <TouchableOpacity
-      className='bg-purple-600 rounded-full w-[30px] h-[30px] flex items-center justify-center mr-1'
+      className='bg-primary rounded-full w-[30px] h-[30px] flex items-center justify-center mr-1'
       {...props}
       // After the spread so a forwarded onPress can't disable the reset.
       onPress={resetAllFilters}

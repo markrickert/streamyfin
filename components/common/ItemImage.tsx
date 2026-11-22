@@ -64,7 +64,7 @@ export const ItemImage: FC<Props> = ({
     return (
       <View
         {...(props as ViewProps)}
-        className='flex flex-col items-center justify-center border border-neutral-800 bg-neutral-900'
+        className='flex flex-col items-center justify-center border border-surface-raised bg-surface'
       >
         <Ionicons
           name='image-outline'

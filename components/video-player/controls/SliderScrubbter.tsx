@@ -85,7 +85,7 @@ const SliderScrubber: React.FC<SliderScrubberProps> = ({
                 marginTop: -tileHeight / 4 - 60,
                 zIndex: 10,
               }}
-              className=' bg-neutral-800 overflow-hidden'
+              className=' bg-surface-raised overflow-hidden'
             >
               <Image
                 cachePolicy={"memory-disk"}
@@ -127,10 +127,10 @@ const SliderScrubber: React.FC<SliderScrubberProps> = ({
         maximumValue={max}
       />
       <View className='flex flex-row items-center justify-between mt-0.5'>
-        <Text className='text-[12px] text-neutral-400'>
+        <Text className='text-[12px] text-foreground-muted'>
           {formatTimeString(currentTime, "ms")}
         </Text>
-        <Text className='text-[12px] text-neutral-400'>
+        <Text className='text-[12px] text-foreground-muted'>
           -{formatTimeString(remainingTime, "ms")}
         </Text>
       </View>

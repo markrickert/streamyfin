@@ -178,7 +178,7 @@ export const Login: React.FC = () => {
             style={{ flexDirection: "row", gap: 4 }}
           >
             <HeaderIcon name='back' tintColor={Colors.primary} size={18} />
-            <Text className='text-purple-600'>{t("login.change_server")}</Text>
+            <Text className='text-primary'>{t("login.change_server")}</Text>
           </HeaderButton>
         ) : null,
     });
@@ -331,13 +331,15 @@ export const Login: React.FC = () => {
                   {serverName ? (
                     <>
                       {`${t("login.login_to_title")} `}
-                      <Text className='text-purple-600'>{serverName}</Text>
+                      <Text className='text-primary'>{serverName}</Text>
                     </>
                   ) : (
                     t("login.login_title")
                   )}
                 </Text>
-                <Text className='text-xs text-neutral-400'>{api.basePath}</Text>
+                <Text className='text-xs text-foreground-muted'>
+                  {api.basePath}
+                </Text>
                 <Input
                   placeholder={t("login.username_placeholder")}
                   onChangeText={(text) =>
@@ -396,7 +398,7 @@ export const Login: React.FC = () => {
                     trackColor={{ false: Colors.border, true: Colors.primary }}
                     thumbColor={Colors.white}
                   />
-                  <Text className='ml-3 text-neutral-300'>
+                  <Text className='ml-3 text-foreground'>
                     {t("save_account.save_for_later")}
                   </Text>
                 </TouchableOpacity>
@@ -411,7 +413,7 @@ export const Login: React.FC = () => {
                   </Button>
                   <TouchableOpacity
                     onPress={handleQuickConnect}
-                    className='p-2 bg-neutral-900 rounded-xl h-12 w-12 flex items-center justify-center'
+                    className='p-2 bg-surface rounded-xl h-12 w-12 flex items-center justify-center'
                   >
                     <MaterialCommunityIcons
                       name='cellphone-lock'
@@ -438,7 +440,7 @@ export const Login: React.FC = () => {
                 source={require("@/assets/images/icon-ios-plain.png")}
               />
               <Text className='text-3xl font-bold'>Streamyfin</Text>
-              <Text className='text-neutral-500'>
+              <Text className='text-foreground-disabled'>
                 {t("server.enter_url_to_jellyfin_server")}
               </Text>
               <Input
@@ -472,11 +474,11 @@ export const Login: React.FC = () => {
                 className='flex flex-row items-center justify-between py-3'
                 activeOpacity={0.7}
               >
-                <Text className='text-purple-600'>
+                <Text className='text-primary'>
                   {t("custom_headers.advanced_title")}
                 </Text>
                 <View className='flex flex-row items-center'>
-                  <Text className='text-xs text-neutral-400 mr-1'>
+                  <Text className='text-xs text-foreground-muted mr-1'>
                     {usableHeaders.length > 0
                       ? t("custom_headers.header_count", {
                           count: usableHeaders.length,

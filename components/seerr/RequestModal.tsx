@@ -417,16 +417,16 @@ const RequestModal = forwardRef<
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text className='font-bold text-2xl text-neutral-100'>
+                <Text className='font-bold text-2xl text-foreground'>
                   {isSeries ? t("seerr.request_series") : t("seerr.advanced")}
                 </Text>
                 {isSeries ? (
-                  <Text className='text-neutral-300' style={{ marginTop: 2 }}>
+                  <Text className='text-foreground' style={{ marginTop: 2 }}>
                     {title}
                   </Text>
                 ) : (
                   seasonTitle && (
-                    <Text className='text-neutral-300'>{seasonTitle}</Text>
+                    <Text className='text-foreground'>{seasonTitle}</Text>
                   )
                 )}
               </View>
@@ -454,8 +454,8 @@ const RequestModal = forwardRef<
               )}
             </View>
             {approvedAutomatically && (
-              <View className='rounded-xl border border-indigo-500/40 bg-indigo-500/20 px-3 py-2'>
-                <Text className='text-sm text-neutral-100'>
+              <View className='rounded-xl border border-info bg-info-subtle px-3 py-2'>
+                <Text className='text-sm text-foreground'>
                   {t("seerr.request_approved_automatically")}
                 </Text>
               </View>
@@ -478,7 +478,7 @@ const RequestModal = forwardRef<
             {isSeries && (
               <>
                 {!partial && (
-                  <Text className='text-sm text-neutral-400'>
+                  <Text className='text-sm text-foreground-muted'>
                     {t("seerr.whole_series_only")}
                   </Text>
                 )}
@@ -502,7 +502,7 @@ const RequestModal = forwardRef<
                     <PlatformDropdown
                       groups={qualityProfileOptions}
                       trigger={
-                        <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+                        <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
                           <Text numberOfLines={1}>
                             {defaultServiceDetails.profiles.find(
                               (p) =>
@@ -526,7 +526,7 @@ const RequestModal = forwardRef<
                     <PlatformDropdown
                       groups={rootFolderOptions}
                       trigger={
-                        <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+                        <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
                           <Text numberOfLines={1}>
                             {selectedFolder
                               ? pathTitleExtractor(selectedFolder)
@@ -547,7 +547,7 @@ const RequestModal = forwardRef<
                     <PlatformDropdown
                       groups={tagsOptions}
                       trigger={
-                        <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+                        <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
                           <Text numberOfLines={1}>
                             {requestTagsLabel(
                               defaultServiceDetails.tags,
@@ -570,7 +570,7 @@ const RequestModal = forwardRef<
                       <PlatformDropdown
                         groups={usersOptions}
                         trigger={
-                          <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+                          <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
                             <Text numberOfLines={1}>
                               {users.find(
                                 (u) =>

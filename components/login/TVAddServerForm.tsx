@@ -122,7 +122,7 @@ export const TVAddServerForm: React.FC<TVAddServerFormProps> = ({
           <Button
             onPress={() => setShowAdvanced(!showAdvanced)}
             disabled={isDisabled}
-            className='bg-neutral-800 border border-neutral-700'
+            className='bg-surface-raised border border-border'
           >
             {`${showAdvanced ? "▼" : "▶"} ${t("custom_headers.advanced_title")}`}
           </Button>

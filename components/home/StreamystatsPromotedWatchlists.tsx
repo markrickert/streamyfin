@@ -178,14 +178,14 @@ export const StreamystatsPromotedWatchlists: React.FC<
   if (isLoading) {
     return (
       <View {...props}>
-        <View className='h-4 w-32 bg-neutral-900 rounded ml-4 mb-2' />
+        <View className='h-4 w-32 bg-surface rounded ml-4 mb-2' />
         <View className='flex flex-row gap-2 px-4'>
           {[1, 2, 3].map((i) => (
             <View className='w-28' key={i}>
-              <View className='bg-neutral-900 aspect-[2/3] w-full rounded-md mb-1' />
+              <View className='bg-surface aspect-[2/3] w-full rounded-md mb-1' />
               <View className='rounded-md overflow-hidden mb-1 self-start'>
                 <Text
-                  className='text-neutral-900 bg-neutral-900 rounded-md'
+                  className='text-surface bg-surface rounded-md'
                   numberOfLines={1}
                 >
                   Loading...

@@ -176,7 +176,7 @@ export const TVAddUserForm: React.FC<TVAddUserFormProps> = ({
         <Button
           onPress={() => onQuickConnect(saveAccount)}
           color='black'
-          className='bg-neutral-800 border border-neutral-700'
+          className='bg-surface-raised border border-border'
         >
           {t("login.quick_connect")}
         </Button>

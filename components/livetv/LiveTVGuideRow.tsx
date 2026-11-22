@@ -88,7 +88,7 @@ export const LiveTVGuideRow = ({
                 ? Colors.white10
                 : "transparent",
             }}
-            className='flex flex-col items-center justify-center border border-neutral-800 overflow-hidden'
+            className='flex flex-col items-center justify-center border border-surface-raised overflow-hidden'
           >
             {(() => {
               return (

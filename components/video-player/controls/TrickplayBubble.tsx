@@ -81,7 +81,7 @@ export const TrickplayBubble: FC<TrickplayBubbleProps> = ({
           transform: [{ scale: finalScale }],
           borderRadius: 5,
         }}
-        className='bg-neutral-800 overflow-hidden'
+        className='bg-surface-raised overflow-hidden'
       >
         <Image
           cachePolicy='memory-disk'

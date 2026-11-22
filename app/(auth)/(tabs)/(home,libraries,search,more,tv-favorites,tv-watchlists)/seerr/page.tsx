@@ -303,7 +303,7 @@ const MobilePage: React.FC = () => {
                   width: "100%",
                   height: "100%",
                 }}
-                className='flex flex-col items-center justify-center border border-neutral-800 bg-neutral-900'
+                className='flex flex-col items-center justify-center border border-surface-raised bg-surface'
               >
                 <Ionicons
                   name='image-outline'
@@ -338,7 +338,7 @@ const MobilePage: React.FC = () => {
                   <Text className='opacity-50'>{releaseYear}</Text>
                 </View>
                 <Image
-                  className='absolute bottom-1 right-1 rounded-lg w-28 border-2 border-neutral-800/50 drop-shadow-2xl'
+                  className='absolute bottom-1 right-1 rounded-lg w-28 border-2 border-black/50 drop-shadow-2xl'
                   // As a style: a release build drops the aspect-[10/15] class
                   // from an image, and the poster came out as a thin bar.
                   style={{ aspectRatio: POSTER_ASPECT_RATIO }}
@@ -368,7 +368,7 @@ const MobilePage: React.FC = () => {
                   <View className='flex flex-row mt-4' style={{ gap: 8 }}>
                     {jellyfinMediaId && (
                       <Button
-                        className='flex-1 bg-purple-600/50 border-purple-400 ring-purple-400 text-purple-100'
+                        className='flex-1 bg-primary-subtle border-accent ring-accent text-foreground'
                         onPress={() => {
                           router.push({
                             pathname:
@@ -455,7 +455,7 @@ const MobilePage: React.FC = () => {
                       size={16}
                       color={Colors.foregroundMuted}
                     />
-                    <Text className='text-sm text-neutral-400'>
+                    <Text className='text-sm text-foreground-muted'>
                       {t("seerr.requested_by", {
                         user:
                           pendingRequest.requestedBy?.displayName ||
@@ -467,7 +467,7 @@ const MobilePage: React.FC = () => {
                   </View>
                   <View className='flex flex-row' style={{ gap: 8 }}>
                     <Button
-                      className='flex-1 bg-green-600/50 border-green-400 ring-green-400 text-green-100'
+                      className='flex-1 bg-success-subtle border-success-light ring-success-light text-foreground'
                       color='transparent'
                       onPress={handleApproveRequest}
                       iconLeft={
@@ -485,7 +485,7 @@ const MobilePage: React.FC = () => {
                       <Text className='text-sm'>{t("seerr.approve")}</Text>
                     </Button>
                     <Button
-                      className='flex-1 bg-red-600/50 border-red-400 ring-red-400 text-red-100'
+                      className='flex-1 bg-danger-subtle border-danger-light ring-danger-light text-foreground'
                       color='transparent'
                       onPress={handleDeclineRequest}
                       iconLeft={
@@ -522,7 +522,7 @@ const MobilePage: React.FC = () => {
             )}
             <DetailFacts
               // The rows give the vertical rhythm, the box only the sides.
-              className='px-3 border border-neutral-800 bg-neutral-900 rounded-xl'
+              className='px-3 border border-surface-raised bg-surface rounded-xl'
               details={details}
             />
             <Cast details={details} />
@@ -565,7 +565,7 @@ const MobilePage: React.FC = () => {
           <BottomSheetView>
             <View className='flex flex-col px-4 pb-8 pt-2' style={{ gap: 16 }}>
               <View>
-                <Text className='font-bold text-2xl text-neutral-100'>
+                <Text className='font-bold text-2xl text-foreground'>
                   {t("seerr.whats_wrong")}
                 </Text>
               </View>
@@ -577,7 +577,7 @@ const MobilePage: React.FC = () => {
                   <PlatformDropdown
                     groups={issueTypeOptionGroups}
                     trigger={
-                      <View className='bg-neutral-900 h-10 rounded-xl border-neutral-800 border px-3 py-2 flex flex-row items-center justify-between'>
+                      <View className='bg-surface h-10 rounded-xl border-surface-raised border px-3 py-2 flex flex-row items-center justify-between'>
                         <Text numberOfLines={1}>
                           {issueType
                             ? IssueTypeName[issueType]
@@ -591,7 +591,7 @@ const MobilePage: React.FC = () => {
                   />
                 </View>
 
-                <View className='p-4 border border-neutral-800 rounded-xl bg-neutral-900 w-full'>
+                <View className='p-4 border border-surface-raised rounded-xl bg-surface w-full'>
                   <BottomSheetTextInput
                     multiline
                     maxLength={254}

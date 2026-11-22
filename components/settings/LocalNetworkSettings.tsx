@@ -54,26 +54,26 @@ function StatusDisplay({
   const urlType = isUsingLocalUrl
     ? t("home.settings.network.local")
     : t("home.settings.network.remote");
-  const urlTypeColor = isUsingLocalUrl ? "text-green-500" : "text-blue-500";
+  const urlTypeColor = isUsingLocalUrl ? "text-success" : "text-info";
 
   return (
-    <View className='px-4 py-2 bg-neutral-900 rounded-xl mt-4'>
+    <View className='px-4 py-2 bg-surface rounded-xl mt-4'>
       <View className='flex-row justify-between items-center py-1'>
-        <Text className='text-neutral-400'>
+        <Text className='text-foreground-muted'>
           {t("home.settings.network.current_wifi")}
         </Text>
         <Text>{wifiStatus}</Text>
       </View>
       <View className='flex-row justify-between items-center py-1'>
-        <Text className='text-neutral-400'>
+        <Text className='text-foreground-muted'>
           {t("home.settings.network.using_url")}
         </Text>
         <Text className={urlTypeColor}>{urlType}</Text>
       </View>
 
       {locationBlocked && (
-        <View className='mt-2 pt-2 border-t border-neutral-800'>
-          <Text className='text-xs text-amber-400'>
+        <View className='mt-2 pt-2 border-t border-surface-raised'>
+          <Text className='text-xs text-warning-light'>
             {t("home.settings.network.location_off_description")}
           </Text>
           <TouchableOpacity
@@ -81,7 +81,7 @@ function StatusDisplay({
             className='mt-2 self-start'
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text className='text-xs text-blue-400 font-semibold'>
+            <Text className='text-xs text-info-light font-semibold'>
               {t("home.settings.network.open_location_settings")}
             </Text>
           </TouchableOpacity>
@@ -248,7 +248,7 @@ export function LocalNetworkSettings(): React.ReactElement | null {
               and the field's status line and the warning below belong under
               the box, next to the hint, not inside it. */}
           <View>
-            <Text className='ml-4 mb-1 uppercase text-[#8E8D91] text-xs'>
+            <Text className='ml-4 mb-1 uppercase text-foreground-muted text-xs'>
               {t("home.settings.network.local_url")}
             </Text>
             <ServerUrlField
@@ -259,11 +259,11 @@ export function LocalNetworkSettings(): React.ReactElement | null {
               placeholder={t("home.settings.network.local_url_placeholder")}
             />
             {localUrlUnusable && (
-              <Text className='text-xs text-amber-400 mt-2 px-4'>
+              <Text className='text-xs text-warning-light mt-2 px-4'>
                 {t("home.settings.network.local_url_unusable")}
               </Text>
             )}
-            <Text className='text-[#8E8D91] text-xs mt-2 px-4'>
+            <Text className='text-foreground-muted text-xs mt-2 px-4'>
               {t("home.settings.network.local_url_hint")}
             </Text>
           </View>
@@ -318,7 +318,7 @@ export function LocalNetworkSettings(): React.ReactElement | null {
 
       {permissionStatus === "denied" && (
         <View className='py-2'>
-          <Text className='text-xs text-red-500'>
+          <Text className='text-xs text-danger'>
             {t("home.settings.network.permission_denied_explanation")}
           </Text>
         </View>

@@ -227,16 +227,16 @@ export const CompanionLoginScreen: React.FC = () => {
     return (
       <View className='flex-1 bg-black'>
         <View className='flex-1 items-center justify-center p-8'>
-          <Text className='mb-3 text-center text-3xl font-bold text-white'>
+          <Text className='mb-3 text-center text-3xl font-bold text-foreground'>
             {t("companion_login.error_permission_denied")}
           </Text>
 
           {Platform.OS === "ios" && (
             <TouchableOpacity
               onPress={() => Linking.openSettings()}
-              className='mt-4 rounded-lg bg-purple-600 px-6 py-3'
+              className='mt-4 rounded-lg bg-primary px-6 py-3'
             >
-              <Text className='text-base font-semibold text-white'>
+              <Text className='text-base font-semibold text-foreground'>
                 {t("companion_login.open_settings")}
               </Text>
             </TouchableOpacity>
@@ -268,11 +268,11 @@ export const CompanionLoginScreen: React.FC = () => {
     return (
       <View className='flex-1 bg-black'>
         <View className='flex-1 items-center justify-center p-8'>
-          <Text className='mb-3 text-center text-3xl font-bold text-white'>
+          <Text className='mb-3 text-center text-3xl font-bold text-foreground'>
             {t("companion_login.success_title")}
           </Text>
 
-          <Text className='mb-8 text-center text-base text-gray-400'>
+          <Text className='mb-8 text-center text-base text-foreground-muted'>
             {t("companion_login.pairing_tv_connecting")}
           </Text>
 
@@ -292,11 +292,11 @@ export const CompanionLoginScreen: React.FC = () => {
     return (
       <View className='flex-1 bg-black'>
         <View className='flex-1 items-center justify-center p-8'>
-          <Text className='mb-3 text-center text-3xl font-bold text-white'>
+          <Text className='mb-3 text-center text-3xl font-bold text-foreground'>
             {t("companion_login.error_title")}
           </Text>
 
-          <Text className='mb-8 text-center text-base text-gray-400'>
+          <Text className='mb-8 text-center text-base text-foreground-muted'>
             {errorMessage}
           </Text>
 
@@ -326,7 +326,7 @@ export const CompanionLoginScreen: React.FC = () => {
     return (
       <View className='flex-1 bg-black'>
         <View className='flex-1 items-center justify-center p-8'>
-          <Text className='text-xl text-white'>
+          <Text className='text-xl text-foreground'>
             {t("companion_login.authorizing")}
           </Text>
         </View>
@@ -354,16 +354,16 @@ export const CompanionLoginScreen: React.FC = () => {
           }}
           keyboardShouldPersistTaps='handled'
         >
-          <Text className='mb-2 text-center text-2xl font-bold text-white'>
+          <Text className='mb-2 text-center text-2xl font-bold text-foreground'>
             {t("companion_login.login_as", { username: user?.Name ?? "" })}
           </Text>
 
-          <Text className='mb-6 text-center text-base text-gray-400'>
+          <Text className='mb-6 text-center text-base text-foreground-muted'>
             {t("companion_login.on_server", { server })}
           </Text>
 
           <View className='mb-6 items-center'>
-            <Text className='mb-2 text-sm text-gray-400'>
+            <Text className='mb-2 text-sm text-foreground-muted'>
               {t("companion_login.pairing_code_label")}
             </Text>
 
@@ -380,7 +380,7 @@ export const CompanionLoginScreen: React.FC = () => {
                 autoFocus
               />
             ) : (
-              <Text className='text-center text-4xl font-bold tracking-[6px] text-white'>
+              <Text className='text-center text-4xl font-bold tracking-[6px] text-foreground'>
                 {code}
               </Text>
             )}
@@ -398,7 +398,7 @@ export const CompanionLoginScreen: React.FC = () => {
           {ExpoCamera && (
             <View className='mt-3 items-center'>
               <TouchableOpacity onPress={handleScanAgain} className='py-2'>
-                <Text className='text-sm text-gray-500 underline'>
+                <Text className='text-sm text-foreground-disabled underline'>
                   {t("companion_login.scan_again")}
                 </Text>
               </TouchableOpacity>
@@ -449,7 +449,7 @@ export const CompanionLoginScreen: React.FC = () => {
       <View className='items-center'>
         <View className='h-[250px] w-[250px] rounded-2xl border-2 border-white/80' />
 
-        <Text className='mt-6 text-center text-base text-white'>
+        <Text className='mt-6 text-center text-base text-foreground'>
           {t("companion_login.align_qr")}
         </Text>
 
@@ -457,7 +457,7 @@ export const CompanionLoginScreen: React.FC = () => {
           onPress={handleEnterCodeManually}
           className='mt-4 px-5 py-2'
         >
-          <Text className='text-sm text-gray-400 underline'>
+          <Text className='text-sm text-foreground-muted underline'>
             {t("companion_login.enter_code_manually")}
           </Text>
         </TouchableOpacity>

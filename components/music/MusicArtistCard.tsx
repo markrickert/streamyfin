@@ -57,14 +57,14 @@ export const MusicArtistCard: React.FC<Props> = ({ artist }) => {
             cachePolicy='memory-disk'
           />
         ) : (
-          <View className='flex-1 items-center justify-center bg-neutral-800'>
+          <View className='flex-1 items-center justify-center bg-surface-raised'>
             <Text className='text-xl'>👤</Text>
           </View>
         )}
       </View>
       <Text
         numberOfLines={1}
-        className='text-white text-base font-medium ml-3 flex-1'
+        className='text-foreground text-base font-medium ml-3 flex-1'
       >
         {artist.Name}
       </Text>

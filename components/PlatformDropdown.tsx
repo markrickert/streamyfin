@@ -78,7 +78,7 @@ interface PlatformDropdownProps {
 
 const ToggleSwitch: React.FC<{ value: boolean }> = ({ value }) => (
   <View
-    className={`w-12 h-7 rounded-full ${value ? "bg-purple-600" : "bg-neutral-600"} flex-row items-center`}
+    className={`w-12 h-7 rounded-full ${value ? "bg-primary" : "bg-border"} flex-row items-center`}
   >
     <View
       className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${value ? "translate-x-6" : "translate-x-1"}`}
@@ -103,7 +103,7 @@ const OptionItem: React.FC<{ option: Option; isLast?: boolean }> = ({
         disabled={option.disabled}
         className={`px-4 py-3 flex flex-row items-center justify-between ${option.disabled ? "opacity-50" : ""}`}
       >
-        <Text className='flex-1 text-white'>{option.label}</Text>
+        <Text className='flex-1 text-foreground'>{option.label}</Text>
         {isToggle ? (
           <ToggleSwitch value={option.value} />
         ) : isAction ? null : (option as RadioOption).selected ? (
@@ -121,7 +121,7 @@ const OptionItem: React.FC<{ option: Option; isLast?: boolean }> = ({
           style={{
             height: StyleSheet.hairlineWidth,
           }}
-          className='bg-neutral-700 mx-4'
+          className='bg-border mx-4'
         />
       )}
     </>
@@ -131,7 +131,7 @@ const OptionItem: React.FC<{ option: Option; isLast?: boolean }> = ({
 const OptionGroupComponent: React.FC<{ group: OptionGroup }> = ({ group }) => (
   <View className='mb-6'>
     {group.title && (
-      <Text className='text-lg font-semibold mb-3 text-neutral-300'>
+      <Text className='text-lg font-semibold mb-3 text-foreground'>
         {group.title}
       </Text>
     )}
@@ -140,7 +140,7 @@ const OptionGroupComponent: React.FC<{ group: OptionGroup }> = ({ group }) => (
         borderRadius: 12,
         overflow: "hidden",
       }}
-      className='bg-neutral-800 rounded-xl overflow-hidden'
+      className='bg-surface-raised rounded-xl overflow-hidden'
     >
       {group.options.map((option, index) => (
         <OptionItem
@@ -405,7 +405,9 @@ const PlatformDropdownComponent = ({
       activeOpacity={0.7}
       disabled={isDisabled}
     >
-      {trigger || <Text className='text-white'>{t("common.open_menu")}</Text>}
+      {trigger || (
+        <Text className='text-foreground'>{t("common.open_menu")}</Text>
+      )}
     </TouchableOpacity>
   );
 };

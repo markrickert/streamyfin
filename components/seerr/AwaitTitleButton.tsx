@@ -59,7 +59,7 @@ export const AwaitTitleButton: React.FC<{
   );
   return (
     <Button
-      className={`bg-purple-600/50 border-purple-400 ring-purple-400 text-purple-100 ${className}`}
+      className={`bg-primary-subtle border-accent ring-accent text-foreground ${className}`}
       style={[{ borderWidth: 1, borderStyle: "solid" }, style]}
       accessibilityLabel={label}
       accessibilityHint={waiting ? t("seerr.awaited.stop_hint") : undefined}
