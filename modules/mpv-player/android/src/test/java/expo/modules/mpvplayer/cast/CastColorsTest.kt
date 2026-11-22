@@ -10,14 +10,14 @@ import org.junit.Test
 class CastColorsTest {
     @Test
     fun shortAndLongHexFormsGiveOpaqueColours() {
-        assertEquals(0xFF666666.toInt(), CastColors.parseCssColor("#666"))
-        assertEquals(0xFF9334E9.toInt(), CastColors.parseCssColor("#9334E9"))
-        assertEquals(0xFF9334E9.toInt(), CastColors.parseCssColor(" #9334e9 "))
+        assertEquals(0xFF666666.toInt(), CastColors.parseCssColor("#666")) // color-literal-ok: parser fixture
+        assertEquals(0xFF9334E9.toInt(), CastColors.parseCssColor("#9334E9")) // color-literal-ok: parser fixture
+        assertEquals(0xFF9334E9.toInt(), CastColors.parseCssColor(" #9334e9 ")) // color-literal-ok: parser fixture
     }
 
     @Test
     fun eightDigitsCarryTheAlphaLast() {
-        assertEquals(0x809334E9.toInt(), CastColors.parseCssColor("#9334E980"))
+        assertEquals(0x809334E9.toInt(), CastColors.parseCssColor("#9334E980")) // color-literal-ok: parser fixture
     }
 
     @Test
@@ -29,7 +29,7 @@ class CastColorsTest {
     @Test
     fun anythingElseIsIgnored() {
         assertNull(CastColors.parseCssColor("red"))
-        assertNull(CastColors.parseCssColor("#12345"))
+        assertNull(CastColors.parseCssColor("#12345")) // color-literal-ok: parser fixture
         assertNull(CastColors.parseCssColor("#GGGGGG"))
         assertNull(CastColors.parseCssColor(""))
     }

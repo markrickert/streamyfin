@@ -16,6 +16,23 @@ import { Colors } from "@/constants/Colors";
 <View className='bg-surface' />
 ```
 
+## Native code
+
+Kotlin and Swift read the same palette. `scripts/native-palette.ts` writes it as a
+`Colors` object (`Colors.kt`, `Colors.swift`) into each native module that cannot
+import another's files: `mpv-player`, `hero-carousel`, `exoplayer-player`,
+`glass-poster`, `tv-search` and the download Live Activity. After changing a color in
+`constants/Colors.ts`, run `bun scripts/native-palette.ts`. Never edit a generated
+file: `scripts/native-palette.test.ts` fails when one drifts. A module that has no
+Compose dependency gets ARGB `Int` constants instead of Compose `Color`s.
+
+`scripts/check-native-colors.ts` runs in `bun run check` and fails on a hex number,
+`Color(red:)`, `Color.White` or `.white` in a `.kt` or `.swift` file. Use
+`Colors.white` or `Colors.surface`, and round to the nearest token as below. A
+line that must keep a literal, such as a color the user picked, ends in
+`// color-literal-ok: <reason>`. System styles such as `.primary`, `.secondary`
+and `.clear` are not flagged.
+
 ## Which token
 
 | Token | Tailwind | Use it for |

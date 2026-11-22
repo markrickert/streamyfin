@@ -15,7 +15,7 @@ object CastColors {
         if (hex.length != 6 && hex.length != 8) return null
         val digits = hex.toLongOrNull(16) ?: return null
         return if (hex.length == 8) {
-            val rgb = (digits shr 8) and 0xFFFFFF
+            val rgb = (digits shr 8) and 0xFFFFFF // color-literal-ok: RGB bitmask, not a color
             val alpha = digits and 0xFF
             ((alpha shl 24) or rgb).toInt()
         } else {
