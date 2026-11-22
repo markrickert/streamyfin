@@ -12,8 +12,9 @@ import Animated, {
 import { TouchableSeerrRouter } from "@/components/common/SeerrItemRouter";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
-import { SeerrBadgeColors, SeerrCardColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import {
+  SEERR_BADGE_COLORS,
   SEERR_PILL_FADE_WIDTH,
   SEERR_PILL_PAN_SLOP,
   SEERR_REQUEST_CARD_POSTER,
@@ -27,16 +28,16 @@ import { type MediaRequest } from "@/utils/seerr/types";
 const LABEL_STYLE = {
   fontSize: 14,
   fontWeight: "bold",
-  color: SeerrCardColors.label,
+  color: Colors.foregroundMuted,
 } as const;
 
 /** One of Seerr's pill badges, with a download's progress behind its text. */
 const Pill: React.FC<{
-  tone: keyof typeof SeerrBadgeColors;
+  tone: keyof typeof SEERR_BADGE_COLORS;
   text: string;
   progress?: number;
 }> = ({ tone, text, progress }) => {
-  const colors = SeerrBadgeColors[tone];
+  const colors = SEERR_BADGE_COLORS[tone];
   return (
     <View
       style={{
@@ -46,7 +47,7 @@ const Pill: React.FC<{
         borderWidth: 1,
         borderColor: colors.border,
         backgroundColor:
-          progress === undefined ? colors.background : SeerrCardColors.surface,
+          progress === undefined ? colors.background : Colors.border,
         paddingHorizontal: 8,
       }}
     >
@@ -144,8 +145,8 @@ const SeasonPills: React.FC<{ labels: string[] }> = ({ labels }) => {
       <LinearGradient
         colors={
           side === "start"
-            ? [SeerrCardColors.fadeTo, SeerrCardColors.clear]
-            : [SeerrCardColors.clear, SeerrCardColors.fadeTo]
+            ? [Colors.border, Colors.transparent]
+            : [Colors.transparent, Colors.border]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
@@ -210,8 +211,8 @@ export const RequestCard: React.FC<{ request: MediaRequest }> = ({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: SeerrCardColors.surface,
-    backgroundColor: SeerrCardColors.surface,
+    borderColor: Colors.border,
+    backgroundColor: Colors.border,
     overflow: "hidden" as const,
   };
 
@@ -249,7 +250,7 @@ export const RequestCard: React.FC<{ request: MediaRequest }> = ({
               style={{ width: "100%", height: "100%" }}
             />
             <LinearGradient
-              colors={[SeerrCardColors.fadeFrom, SeerrCardColors.fadeTo]}
+              colors={[Colors.black50, Colors.border]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -286,7 +287,7 @@ export const RequestCard: React.FC<{ request: MediaRequest }> = ({
                     flexShrink: 1,
                     fontSize: 14,
                     fontWeight: "600",
-                    color: SeerrCardColors.requester,
+                    color: Colors.foreground,
                   }}
                 >
                   {current.requestedBy.displayName}

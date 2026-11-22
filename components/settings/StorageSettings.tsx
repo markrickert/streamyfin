@@ -80,13 +80,13 @@ export const StorageSettings = () => {
               <View
                 style={{
                   width: `${(size.appSize / size.total) * 100}%`,
-                  backgroundColor: Colors.primaryRGB,
+                  backgroundColor: Colors.primary,
                 }}
               />
               <View
                 style={{
                   width: `${((size.total - size.remaining - size.appSize) / size.total) * 100}%`,
-                  backgroundColor: Colors.primaryLightRGB,
+                  backgroundColor: Colors.accent,
                 }}
               />
             </View>

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TVOptionCard } from "@/components/tv/TVOptionCard";
-import { TV_PANEL_BACKING } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import type {
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     flex: 1,
     // Android TV does not blur what is behind a BlurView, it only tints it:
     // without a backing of its own the posters show through the rows.
-    backgroundColor: TV_PANEL_BACKING,
+    backgroundColor: Colors.surfaceTranslucent,
     paddingTop: scaleSize(60),
     paddingBottom: scaleSize(40),
     overflow: "visible",

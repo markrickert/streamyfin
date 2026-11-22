@@ -15,8 +15,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { TVButton } from "@/components/tv";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
-import { SeerrStatusColors } from "@/constants/Colors";
-import { SEERR_BLOCKED_OPACITY } from "@/constants/Seerr";
+import { SEERR_BLOCKED_OPACITY, SEERR_STATUS_COLORS } from "@/constants/Seerr";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useSeerr } from "@/hooks/useSeerr";
@@ -35,10 +34,10 @@ import { createSubmission } from "@/utils/submission";
 // A season already asked for or in the library shows where it stands, in the
 // colours of the phone's season list (SeasonPicker).
 const STATUS_COLORS: Partial<Record<MediaStatus, string>> = {
-  [MediaStatus.PENDING]: SeerrStatusColors.pending,
-  [MediaStatus.PROCESSING]: SeerrStatusColors.requested,
-  [MediaStatus.PARTIALLY_AVAILABLE]: SeerrStatusColors.available,
-  [MediaStatus.AVAILABLE]: SeerrStatusColors.available,
+  [MediaStatus.PENDING]: SEERR_STATUS_COLORS.pending,
+  [MediaStatus.PROCESSING]: SEERR_STATUS_COLORS.requested,
+  [MediaStatus.PARTIALLY_AVAILABLE]: SEERR_STATUS_COLORS.available,
+  [MediaStatus.AVAILABLE]: SEERR_STATUS_COLORS.available,
 };
 
 /** A season's card: chosen or not, or where it stands when it is settled. */
@@ -308,7 +307,7 @@ export default function TVSeasonSelectModalPage() {
                     styles.note,
                     {
                       fontSize: typography.callout,
-                      color: spent ? SeerrStatusColors.pending : "#FFFFFF",
+                      color: spent ? SEERR_STATUS_COLORS.pending : "#FFFFFF",
                     },
                   ]}
                 >

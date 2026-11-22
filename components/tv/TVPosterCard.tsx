@@ -461,7 +461,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         position: "absolute",
         top: scaleSize(12),
         right: scaleSize(12),
-        backgroundColor: Colors.live,
+        backgroundColor: Colors.danger,
         borderRadius: scaleSize(8),
         paddingHorizontal: scaleSize(12),
         paddingVertical: scaleSize(6),

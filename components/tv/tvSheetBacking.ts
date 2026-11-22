@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { TV_PANEL_BACKING } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 
 /**
  * The backing a TV sheet draws behind its content. Android TV does not blur
@@ -8,4 +8,6 @@ import { TV_PANEL_BACKING } from "@/constants/Colors";
  * glass.
  */
 export const tvSheetBacking = () =>
-  Platform.OS === "android" ? { backgroundColor: TV_PANEL_BACKING } : undefined;
+  Platform.OS === "android"
+    ? { backgroundColor: Colors.surfaceTranslucent }
+    : undefined;

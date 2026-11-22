@@ -6,7 +6,7 @@ import {
   type ViewInstance,
   type ViewStyle,
 } from "react-native";
-import { SeerrIssueColors } from "@/constants/Colors";
+import { SEERR_ISSUE_COLORS } from "@/constants/Seerr";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -33,12 +33,12 @@ const getButtonStyles = (
       // Seerr's issue yellow, as the phone's report button.
       return {
         backgroundColor: focused
-          ? SeerrIssueColors.focused
-          : SeerrIssueColors.background,
+          ? SEERR_ISSUE_COLORS.focused
+          : SEERR_ISSUE_COLORS.background,
         borderWidth: scaleSize(2),
         borderColor: focused
           ? "rgba(255, 255, 255, 0.9)"
-          : SeerrIssueColors.border,
+          : SEERR_ISSUE_COLORS.border,
       };
     case "glass":
       return {

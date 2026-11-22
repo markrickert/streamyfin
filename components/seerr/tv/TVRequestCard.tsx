@@ -5,8 +5,9 @@ import { View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
-import { SeerrBadgeColors, SeerrCardColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import {
+  SEERR_BADGE_COLORS,
   SEERR_TV_REQUEST_CARD_POSTER,
   SEERR_TV_REQUEST_CARD_SEASONS,
   SEERR_TV_REQUEST_CARD_WIDTH,
@@ -19,12 +20,12 @@ import type { MediaRequest } from "@/utils/seerr/types";
 
 /** One of Seerr's pill badges at the TV's size, a download's progress behind. */
 const TVPill: React.FC<{
-  tone: keyof typeof SeerrBadgeColors;
+  tone: keyof typeof SEERR_BADGE_COLORS;
   text: string;
   progress?: number;
 }> = ({ tone, text, progress }) => {
   const typography = useScaledTVTypography();
-  const colors = SeerrBadgeColors[tone];
+  const colors = SEERR_BADGE_COLORS[tone];
   return (
     <View
       style={{
@@ -33,7 +34,7 @@ const TVPill: React.FC<{
         borderWidth: 1,
         borderColor: colors.border,
         backgroundColor:
-          progress === undefined ? colors.background : SeerrCardColors.surface,
+          progress === undefined ? colors.background : Colors.border,
         paddingHorizontal: scaleSize(12),
       }}
     >
@@ -98,7 +99,7 @@ export const TVRequestCard: React.FC<{
   const label = {
     fontSize: typography.callout,
     fontWeight: "bold",
-    color: SeerrCardColors.label,
+    color: Colors.foregroundMuted,
   } as const;
   const shown = seasonLabels.slice(0, SEERR_TV_REQUEST_CARD_SEASONS);
   const hidden = seasonLabels.length - shown.length;
@@ -108,7 +109,7 @@ export const TVRequestCard: React.FC<{
     height: poster.height + 2 * padding,
     padding,
     borderRadius: scaleSize(20),
-    backgroundColor: SeerrCardColors.surface,
+    backgroundColor: Colors.border,
     overflow: "hidden" as const,
   };
 
@@ -143,7 +144,7 @@ export const TVRequestCard: React.FC<{
               style={{ width: "100%", height: "100%" }}
             />
             <LinearGradient
-              colors={[SeerrCardColors.fadeFrom, SeerrCardColors.fadeTo]}
+              colors={[Colors.black50, Colors.border]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -200,7 +201,7 @@ export const TVRequestCard: React.FC<{
                     flexShrink: 1,
                     fontSize: typography.callout,
                     fontWeight: "600",
-                    color: SeerrCardColors.requester,
+                    color: Colors.foreground,
                   }}
                 >
                   {current.requestedBy.displayName}

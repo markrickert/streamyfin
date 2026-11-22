@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
-import { Colors, SeerrStatusColors, SheetColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
+import { SEERR_STATUS_COLORS } from "@/constants/Seerr";
 import { quotaFill, seasonQuotaText } from "@/utils/seerr/quota";
 
 interface Props {
@@ -33,7 +34,7 @@ export const SeasonQuota: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const spent = remaining <= 0 || restricted || overLimit !== undefined;
-  const tint = spent ? SeerrStatusColors.pending : Colors.primary;
+  const tint = spent ? SEERR_STATUS_COLORS.pending : Colors.primary;
   const words = seasonQuotaText(t, { remaining, limit, days, overLimit });
 
   return (
@@ -49,13 +50,13 @@ export const SeasonQuota: React.FC<Props> = ({
           style={{
             fontSize: 13,
             fontWeight: "600",
-            color: spent ? SeerrStatusColors.pending : undefined,
+            color: spent ? SEERR_STATUS_COLORS.pending : undefined,
           }}
         >
           {words.status}
         </Text>
         {words.period && (
-          <Text style={{ fontSize: 13, color: SheetColors.secondaryText }}>
+          <Text style={{ fontSize: 13, color: Colors.foregroundMuted }}>
             {words.period}
           </Text>
         )}
@@ -66,7 +67,7 @@ export const SeasonQuota: React.FC<Props> = ({
           borderRadius: 2,
           marginTop: 6,
           overflow: "hidden",
-          backgroundColor: SheetColors.group,
+          backgroundColor: Colors.surfaceRaised,
         }}
       >
         <View
@@ -83,7 +84,7 @@ export const SeasonQuota: React.FC<Props> = ({
           style={{
             marginTop: 6,
             fontSize: 13,
-            color: SheetColors.secondaryText,
+            color: Colors.foregroundMuted,
           }}
         >
           {words.required}

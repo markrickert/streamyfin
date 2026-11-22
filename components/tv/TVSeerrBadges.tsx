@@ -2,10 +2,11 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import type React from "react";
 import { View } from "react-native";
 import {
-  SeerrMediaBadgeColors,
-  SeerrStatusBadgeColors,
-} from "@/constants/Colors";
-import { SEERR_TV_BADGE_INSET, SEERR_TV_BADGE_SIZE } from "@/constants/Seerr";
+  SEERR_MEDIA_BADGE_COLORS,
+  SEERR_STATUS_BADGE_COLORS,
+  SEERR_TV_BADGE_INSET,
+  SEERR_TV_BADGE_SIZE,
+} from "@/constants/Seerr";
 import { scaleSize } from "@/utils/scaleSize";
 import { seerrStatusBadge } from "@/utils/seerr/statusBadge";
 import { type MediaStatus, MediaType } from "@/utils/seerr/types";
@@ -24,9 +25,9 @@ export const TVSeerrBadges: React.FC<{
   const badge = seerrStatusBadge(status, canRequest);
   const type =
     mediaType === MediaType.MOVIE
-      ? SeerrMediaBadgeColors.movie
+      ? SEERR_MEDIA_BADGE_COLORS.movie
       : mediaType === MediaType.TV
-        ? SeerrMediaBadgeColors.tv
+        ? SEERR_MEDIA_BADGE_COLORS.tv
         : undefined;
   const circle = {
     position: "absolute",
@@ -71,7 +72,7 @@ export const TVSeerrBadges: React.FC<{
             circle,
             {
               right: inset,
-              backgroundColor: SeerrStatusBadgeColors[badge.tone],
+              backgroundColor: SEERR_STATUS_BADGE_COLORS[badge.tone],
             },
           ]}
         >

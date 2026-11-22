@@ -1,6 +1,6 @@
 import { MediaStatus } from "./types";
 
-/** The colours of a status badge, one per tone (SeerrStatusBadgeColors). */
+/** The colors of a status badge, one per tone (SEERR_STATUS_BADGE_COLORS). */
 export type SeerrStatusTone =
   | "pending"
   | "processing"

@@ -110,7 +110,7 @@ export const CardArtwork: React.FC<Props> = ({
             borderRadius: 10,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: card.live ? Colors.live : Colors.primary,
+            backgroundColor: card.live ? Colors.danger : Colors.primary,
           }}
         >
           <Text style={{ fontSize: 11, fontWeight: "700" }}>{badgeLabel}</Text>

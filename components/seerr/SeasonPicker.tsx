@@ -3,9 +3,10 @@ import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
-import { Colors, SeerrStatusColors, SheetColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_BLOCKED_OPACITY,
+  SEERR_STATUS_COLORS,
   SEERR_STATUS_TINT_ALPHA,
 } from "@/constants/Seerr";
 import {
@@ -20,10 +21,10 @@ import { MediaStatus } from "@/utils/seerr/types";
 // circle, with the season list's own icon, so the column of circles reads as
 // the state of the whole series.
 const STATUS_COLORS: Partial<Record<MediaStatus, string>> = {
-  [MediaStatus.PENDING]: SeerrStatusColors.pending,
-  [MediaStatus.PROCESSING]: SeerrStatusColors.requested,
-  [MediaStatus.PARTIALLY_AVAILABLE]: SeerrStatusColors.available,
-  [MediaStatus.AVAILABLE]: SeerrStatusColors.available,
+  [MediaStatus.PENDING]: SEERR_STATUS_COLORS.pending,
+  [MediaStatus.PROCESSING]: SEERR_STATUS_COLORS.requested,
+  [MediaStatus.PARTIALLY_AVAILABLE]: SEERR_STATUS_COLORS.available,
+  [MediaStatus.AVAILABLE]: SEERR_STATUS_COLORS.available,
 };
 
 const CIRCLE = 24;
@@ -66,7 +67,7 @@ export const SeasonPicker: React.FC<Props> = ({
   return (
     <View
       style={{
-        backgroundColor: SheetColors.group,
+        backgroundColor: Colors.surfaceRaised,
         borderRadius: 14,
         overflow: "hidden",
       }}
@@ -81,7 +82,7 @@ export const SeasonPicker: React.FC<Props> = ({
         const locked = row.locked
           ? {
               icon: seerrStatusBadge(status, false)?.icon,
-              color: STATUS_COLORS[status] ?? SheetColors.secondaryText,
+              color: STATUS_COLORS[status] ?? Colors.foregroundMuted,
             }
           : undefined;
         const name =
@@ -100,7 +101,7 @@ export const SeasonPicker: React.FC<Props> = ({
                 style={{
                   height: 1,
                   marginLeft: 14 + CIRCLE + 14,
-                  backgroundColor: SheetColors.separator,
+                  backgroundColor: Colors.border,
                 }}
               />
             )}
@@ -142,7 +143,10 @@ export const SeasonPicker: React.FC<Props> = ({
                       }
                     : chosen
                       ? { backgroundColor: Colors.primary }
-                      : { borderWidth: 2, borderColor: SheetColors.idle }),
+                      : {
+                          borderWidth: 2,
+                          borderColor: Colors.foregroundDisabled,
+                        }),
                 }}
               >
                 {locked ? (
@@ -165,7 +169,7 @@ export const SeasonPicker: React.FC<Props> = ({
                   style={{
                     fontSize: 13,
                     marginTop: 1,
-                    color: SheetColors.secondaryText,
+                    color: Colors.foregroundMuted,
                   }}
                 >
                   {episodes}

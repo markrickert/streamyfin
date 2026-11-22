@@ -24,7 +24,7 @@ import { Text } from "@/components/common/Text";
 import { ParallaxScrollContext } from "@/components/ParallaxPage";
 import SeerrStatusIcon from "@/components/seerr/SeerrStatusIcon";
 import { SeerrEpisodeRow } from "@/components/series/SeerrEpisodeRow";
-import { ParallaxPageColors, SheetColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_SEASON_BAND_FADE,
   SEERR_SEASON_FADE_HEIGHT,
@@ -76,9 +76,7 @@ const SeasonEpisodes: React.FC<{
       {(seasonWithEpisodes?.episodes ?? []).map((episode, index) => (
         <View key={episode.id}>
           {index > 0 && (
-            <View
-              style={{ height: 1, backgroundColor: SheetColors.separator }}
-            />
+            <View style={{ height: 1, backgroundColor: Colors.border }} />
           )}
           <SeerrEpisodeRow
             episode={episode}
@@ -190,7 +188,7 @@ const OpenSeason: React.FC<{
               // corners let the episodes passing under it show through.
               top: -top,
               bottom: 0,
-              backgroundColor: ParallaxPageColors.background,
+              backgroundColor: Colors.black,
             },
             bandStyle,
           ]}
@@ -212,7 +210,7 @@ const OpenSeason: React.FC<{
           ]}
         >
           <LinearGradient
-            colors={[ParallaxPageColors.background, ParallaxPageColors.clear]}
+            colors={[Colors.black, Colors.transparent]}
             style={{ flex: 1 }}
           />
         </Animated.View>
@@ -335,7 +333,7 @@ const SeerrSeasons: React.FC<{
               paddingHorizontal: 16,
               borderRadius: 12,
               // Opaque, so the episodes it passes over do not show through.
-              backgroundColor: SheetColors.group,
+              backgroundColor: Colors.surfaceRaised,
             }}
           >
             <View
@@ -349,7 +347,7 @@ const SeerrSeasons: React.FC<{
               <Ionicons
                 name={open ? "chevron-down" : "chevron-forward"}
                 size={16}
-                color={SheetColors.secondaryText}
+                color={Colors.foregroundMuted}
               />
               {/* Text rather than tags: the iOS glass behind a tag
                   vanished once the list reloaded after a request. */}
@@ -366,7 +364,7 @@ const SeerrSeasons: React.FC<{
               <Text
                 style={{
                   fontSize: 13,
-                  color: SheetColors.secondaryText,
+                  color: Colors.foregroundMuted,
                 }}
               >
                 {t("seerr.number_episodes", {
