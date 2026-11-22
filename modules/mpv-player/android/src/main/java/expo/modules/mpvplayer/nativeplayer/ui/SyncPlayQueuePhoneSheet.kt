@@ -65,16 +65,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.SyncPlayPlaylistItemRecord
 import expo.modules.mpvplayer.nativeplayer.syncPlayQueueActionAllowed
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
-private val SheetBackground = Color(0xFF1C1C1E)
-private val SectionBackground = Color(0xFF2C2C2E)
-private val SecondaryText = Color(0xFF8E8E93)
-private val Destructive = Color(0xFFFF453A)
+private val SheetBackground = Colors.surface
+private val SectionBackground = Colors.surfaceRaised
+private val SecondaryText = Colors.foregroundMuted
+private val Destructive = Colors.danger
 private val SectionCorner = 14.dp
 // Fixed, so a drag can be turned into a queue position without measuring.
 private val QueueRowHeight = 76.dp
@@ -138,7 +139,7 @@ internal fun SyncPlayQueuePhoneSheet(viewModel: PlayerViewModel) {
         onDismissRequest = { viewModel.closeSyncPlayQueue() },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = SheetBackground,
-        contentColor = Color.White
+        contentColor = Colors.white
     ) {
         LazyColumn(
             modifier = Modifier
@@ -369,7 +370,7 @@ private fun Section(title: String?, content: @Composable ColumnScope.() -> Unit)
 
 @Composable
 private fun Divider() {
-    HorizontalDivider(Modifier.padding(start = 16.dp), thickness = 0.5.dp, color = Color(0x33FFFFFF))
+    HorizontalDivider(Modifier.padding(start = 16.dp), thickness = 0.5.dp, color = Colors.white20)
 }
 
 /** A label with its control or value at the trailing edge. */
@@ -398,7 +399,7 @@ private fun ValueRow(
 @Composable
 private fun ActionRow(
     title: String, tag: String, enabled: Boolean,
-    color: Color = Color.White,
+    color: Color = Colors.white,
     onClick: () -> Unit
 ) {
     Text(
@@ -452,7 +453,7 @@ private fun QueueRow(
         modifier
             .fillMaxWidth()
             .height(QueueRowHeight)
-            .background(if (dragging) Color(0xFF3A3A3C) else SectionBackground)
+            .background(if (dragging) Colors.border else SectionBackground)
             .testTag("syncplay-native-select-${item.playlistItemId}")
             .clickable(enabled = enabled, onClick = onSelect)
             .alpha(if (enabled) 1f else 0.5f),
@@ -470,7 +471,7 @@ private fun QueueRow(
             Text(
                 item.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 16.sp,
                 fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (current) PlayerAccentColor else Color.White
+                color = if (current) PlayerAccentColor else Colors.white
             )
             item.subtitle?.takeIf { it.isNotBlank() }?.let {
                 Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 13.sp, color = SecondaryText)

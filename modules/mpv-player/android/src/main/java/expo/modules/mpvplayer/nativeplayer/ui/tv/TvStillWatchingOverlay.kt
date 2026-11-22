@@ -19,13 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 
 @Composable
@@ -42,20 +42,20 @@ fun TvStillWatchingOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.75f)),
+            .background(Colors.black80),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .widthIn(max = 560.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF1E1E1E))
+                .background(Colors.surface)
                 .padding(36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = viewModel.str("stillWatching", "Are you still watching?"),
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center

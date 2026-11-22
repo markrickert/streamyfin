@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,6 +38,7 @@ import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.EpisodeListItemRecord
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.ui.RemoteImage
@@ -75,9 +75,9 @@ fun TvEpisodeShelf(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color.Black.copy(alpha = 0f),
-                        Color.Black.copy(alpha = 0.75f),
-                        Color.Black.copy(alpha = 0.95f)
+                        Colors.transparent,
+                        Colors.black80,
+                        Colors.black
                     )
                 )
             )
@@ -87,7 +87,7 @@ fun TvEpisodeShelf(
         Column {
             Text(
                 text = viewModel.str("episodes", "Episodes"),
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = TvMetrics.INSET_H)
@@ -127,7 +127,7 @@ private fun TvEpisodeCard(
         shape = CardDefaults.shape(shape = RoundedCornerShape(TvMetrics.POSTER_CORNER)),
         border = CardDefaults.border(
             focusedBorder = Border(
-                border = androidx.compose.foundation.BorderStroke(3.dp, Color.White),
+                border = androidx.compose.foundation.BorderStroke(3.dp, Colors.white),
                 shape = RoundedCornerShape(TvMetrics.POSTER_CORNER)
             )
         )
@@ -150,7 +150,7 @@ private fun TvEpisodeCard(
                         .align(Alignment.TopStart)
                         .padding(10.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White)
+                        .background(Colors.white)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Row(
@@ -160,12 +160,12 @@ private fun TvEpisodeCard(
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = null,
-                            tint = Color.Black,
+                            tint = Colors.black,
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
                             text = nowPlayingText,
-                            color = Color.Black,
+                            color = Colors.black,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -190,7 +190,7 @@ private fun TvEpisodeCard(
 
                 Text(
                     text = titleText,
-                    color = Color.White,
+                    color = Colors.white,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -204,14 +204,14 @@ private fun TvEpisodeCard(
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f))
+                            .background(Colors.white30)
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth((episode.progressPercent / 100.0).toFloat().coerceIn(0f, 1f))
                                 .height(4.dp)
                                 .clip(CircleShape)
-                                .background(Color.White)
+                                .background(Colors.white)
                         )
                     }
                 }

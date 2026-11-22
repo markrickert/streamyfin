@@ -27,11 +27,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.EpisodeListItemRecord
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 
@@ -46,7 +46,7 @@ fun EpisodeListSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1C1C1E)
+        containerColor = Colors.surface
     ) {
         Column(
             modifier = Modifier
@@ -55,7 +55,7 @@ fun EpisodeListSheet(
         ) {
             Text(
                 text = viewModel.strings.get("episodes", "Episodes"),
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -89,7 +89,7 @@ private fun EpisodeRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(if (isCurrent) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f))
+            .background(if (isCurrent) Colors.white20 else Colors.white05)
             .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -99,20 +99,20 @@ private fun EpisodeRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(if (isCurrent) PlayerAccentColor else Color.White.copy(alpha = 0.1f)),
+                .background(if (isCurrent) PlayerAccentColor else Colors.white10),
             contentAlignment = Alignment.Center
         ) {
             if (isCurrent) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = Colors.white,
                     modifier = Modifier.size(20.dp)
                 )
             } else {
                 Text(
                     text = "${episode.indexNumber ?: ""}",
-                    color = Color.White,
+                    color = Colors.white,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
@@ -125,7 +125,7 @@ private fun EpisodeRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = episode.title,
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 14.sp,
                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
@@ -139,7 +139,7 @@ private fun EpisodeRow(
                         .fillMaxWidth()
                         .height(3.dp)
                         .clip(RoundedCornerShape(1.5.dp))
-                        .background(Color.White.copy(alpha = 0.2f))
+                        .background(Colors.white20)
                 ) {
                     Box(
                         modifier = Modifier

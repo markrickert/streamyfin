@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -75,7 +75,7 @@ fun PlayerBottomBar(
         currentChapter?.name?.let { chName ->
             Text(
                 text = chName,
-                color = Color.White.copy(alpha = 0.75f),
+                color = Colors.white80,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -103,7 +103,7 @@ fun PlayerBottomBar(
             // Elapsed
             Text(
                 text = formatTimeSec(position),
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -119,14 +119,14 @@ fun PlayerBottomBar(
                     val endsAt = calculateEndsAt(duration - position)
                     Text(
                         text = viewModel.strings.formatEndsAt(endsAt),
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = Colors.white50,
                         fontSize = 11.sp
                     )
                 }
 
                 Text(
                     text = formatTimeSec(duration),
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = Colors.white80,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -191,8 +191,8 @@ private fun ScrubberBar(
                     // incoming constraints — which squashed it to 36dp tall.
                     .requiredSize(bubbleWidth, bubbleHeight)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF1E1E1E))
-                    .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                    .background(Colors.surface)
+                    .border(1.dp, Colors.white30, RoundedCornerShape(8.dp))
             ) {
                 previewThumbnail?.let { bmp ->
                     Image(
@@ -211,7 +211,7 @@ private fun ScrubberBar(
                         .height(36.dp)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                                colors = listOf(Colors.transparent, Colors.black80)
                             )
                         )
                 )
@@ -225,7 +225,7 @@ private fun ScrubberBar(
                     currentChapterAtScrub?.name?.let { chName ->
                         Text(
                             text = chName,
-                            color = Color.White.copy(alpha = 0.85f),
+                            color = Colors.white80,
                             fontSize = 9.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -233,7 +233,7 @@ private fun ScrubberBar(
                     }
                     Text(
                         text = formatTimeSec(position),
-                        color = Color.White,
+                        color = Colors.white,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -307,7 +307,7 @@ private fun ScrubberBar(
                                 .offset { IntOffset((chFraction * totalWidthPx).roundToInt(), 0) }
                                 .width(2.dp)
                                 .fillMaxHeight()
-                                .background(Color.Black.copy(alpha = 0.6f))
+                                .background(Colors.black60)
                         )
                     }
                 }
@@ -326,7 +326,7 @@ private fun ScrubberBar(
                 }
                 .size(thumbRadius * 2)
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(Colors.white)
         )
     }
 }

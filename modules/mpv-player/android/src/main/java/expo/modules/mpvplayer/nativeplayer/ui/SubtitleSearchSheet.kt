@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.SubtitleSearchResultRecord
 
@@ -60,7 +61,7 @@ fun SubtitleSearchSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1C1C1E)
+        containerColor = Colors.surface
     ) {
         Column(
             modifier = Modifier
@@ -77,7 +78,7 @@ fun SubtitleSearchSheet(
             ) {
                 Text(
                     text = viewModel.strings.get("searchSubtitles", "Search Subtitles"),
-                    color = Color.White,
+                    color = Colors.white,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -88,21 +89,21 @@ fun SubtitleSearchSheet(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.1f))
+                                .background(Colors.white10)
                                 .clickable { showLangMenu = true }
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = langDisplayName,
-                                color = Color.White,
+                                color = Colors.white,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = Colors.white,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -146,7 +147,7 @@ fun SubtitleSearchSheet(
                     ) {
                         Text(
                             text = viewModel.subtitleSearchError ?: viewModel.strings.get("searchFailed", "Search failed"),
-                            color = Color.Red.copy(alpha = 0.8f),
+                            color = Colors.danger,
                             fontSize = 14.sp
                         )
                     }
@@ -161,7 +162,7 @@ fun SubtitleSearchSheet(
                         ) {
                             Text(
                                 text = viewModel.strings.get("noSubtitlesFound", "No subtitles found"),
-                                color = Color.White.copy(alpha = 0.6f),
+                                color = Colors.white50,
                                 fontSize = 14.sp
                             )
                         }
@@ -197,7 +198,7 @@ private fun SubtitleResultRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(Colors.white05)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -205,7 +206,7 @@ private fun SubtitleResultRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = result.name,
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 2,
@@ -221,7 +222,7 @@ private fun SubtitleResultRow(
                 // Provider
                 Text(
                     text = result.providerName,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = Colors.white50,
                     fontSize = 11.sp
                 )
 
@@ -230,7 +231,7 @@ private fun SubtitleResultRow(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(PlayerAccentColor.copy(alpha = 0.25f))
+                            .background(Colors.primarySubtle)
                             .padding(horizontal = 4.dp, vertical = 1.dp)
                     ) {
                         Text(text = "MATCH", color = PlayerAccentColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -242,10 +243,10 @@ private fun SubtitleResultRow(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Color.White.copy(alpha = 0.15f))
+                            .background(Colors.white20)
                             .padding(horizontal = 4.dp, vertical = 1.dp)
                     ) {
-                        Text(text = "SDH", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "SDH", color = Colors.white, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

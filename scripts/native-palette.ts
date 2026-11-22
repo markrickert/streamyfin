@@ -40,17 +40,27 @@ const tokens = Object.entries(Colors).map(([name, value]) => ({
   rgba: parse(value),
 }));
 
-export const renderKotlinPalette = (packageName: string) => {
+const argb = ({ r, g, b, a }: Rgba) =>
+  `0x${byte(Math.round(a * 255))}${byte(r)}${byte(g)}${byte(b)}`;
+
+/**
+ * `compose: false` is for a module with no Compose dependency, whose views
+ * take `android.graphics.Color` Ints.
+ */
+export const renderKotlinPalette = (packageName: string, compose = true) => {
   const lines = tokens.map(({ name, rgba }) => {
-    if (!rgba) return `  val ${name} = Color.Transparent`;
-    const alpha = byte(Math.round(rgba.a * 255));
-    return `  val ${name} = Color(0x${alpha}${byte(rgba.r)}${byte(rgba.g)}${byte(rgba.b)})`;
+    if (!compose) {
+      return rgba
+        ? `  const val ${name} = ${argb(rgba)}.toInt()`
+        : `  const val ${name} = 0x00000000`;
+    }
+    return rgba
+      ? `  val ${name} = Color(${argb(rgba)})`
+      : `  val ${name} = Color.Transparent`;
   });
   return `// ${HEADER}
 package ${packageName}
-
-import androidx.compose.ui.graphics.Color
-
+${compose ? "\nimport androidx.compose.ui.graphics.Color\n" : ""}
 internal object Colors {
 ${lines.join("\n")}
 }
@@ -76,12 +86,12 @@ const KOTLIN_ROOT = "src/main/java/expo/modules";
 
 export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
   ...[
-    ["mpv-player", "mpvplayer"],
-    ["hero-carousel", "herocarousel"],
-    ["exoplayer-player", "exoplayerplayer"],
-  ].map(([module, pkg]) => ({
+    ["mpv-player", "mpvplayer", true],
+    ["hero-carousel", "herocarousel", true],
+    ["exoplayer-player", "exoplayerplayer", false],
+  ].map(([module, pkg, compose]) => ({
     path: `modules/${module}/android/${KOTLIN_ROOT}/${pkg}/Colors.kt`,
-    content: renderKotlinPalette(`expo.modules.${pkg}`),
+    content: renderKotlinPalette(`expo.modules.${pkg}`, compose as boolean),
   })),
   ...[
     "modules/mpv-player/ios",

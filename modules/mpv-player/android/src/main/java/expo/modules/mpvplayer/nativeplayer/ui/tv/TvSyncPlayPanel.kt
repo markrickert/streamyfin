@@ -33,7 +33,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -45,6 +44,7 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.SyncPlayPlaylistItemRecord
 import expo.modules.mpvplayer.nativeplayer.SyncPlayStateRecord
@@ -52,8 +52,8 @@ import expo.modules.mpvplayer.nativeplayer.syncPlayQueueActionAllowed
 import expo.modules.mpvplayer.nativeplayer.ui.RemoteImage
 import kotlinx.coroutines.delay
 
-private val Destructive = Color(0xFFFF6B60)
-private val DestructiveOnFocus = Color(0xFFB3261E)
+private val Destructive = Colors.dangerLight
+private val DestructiveOnFocus = Colors.danger
 private val RepeatModes = listOf("RepeatNone", "RepeatAll", "RepeatOne")
 // Long enough for a row that was just composed to take focus.
 private const val FOCUS_DELAY_MS = 60L
@@ -101,7 +101,7 @@ fun TvSyncPlayPanel(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
             .fillMaxSize()
             // A modal moment, as the subtitle search: the video dims so the
             // panel reads as the only interactive surface.
-            .background(Color.Black.copy(alpha = 0.7f))
+            .background(Colors.black80)
             .semantics { testTagsAsResourceId = true }
             .testTag("syncplay-native-queue"),
         contentAlignment = Alignment.Center
@@ -111,7 +111,7 @@ fun TvSyncPlayPanel(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
                 // Sized so the right column shows all of its rows at once.
                 .size(width = 1040.dp, height = 620.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF1A1A1A))
+                .background(Colors.surface)
                 .padding(28.dp)
         ) {
             if (menuEntry != null) {
@@ -177,7 +177,7 @@ private fun Header(state: SyncPlayStateRecord, reconnecting: String) {
         color = TvPalette.OnSurfaceDim, fontSize = 15.sp
     )
     state.error?.let {
-        Text(it, color = Color(0xFFFFB74D), fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(it, color = Colors.warningLight, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 

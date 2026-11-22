@@ -28,11 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import kotlinx.coroutines.delay
 
@@ -54,7 +54,7 @@ fun TechnicalInfoOverlay(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.Black.copy(alpha = 0.85f))
+            .background(Colors.black80)
             .padding(16.dp)
             .width(320.dp)
     ) {
@@ -66,7 +66,7 @@ fun TechnicalInfoOverlay(
             ) {
                 Text(
                     text = viewModel.strings.get("technicalInfo", "Technical Info"),
-                    color = Color.White,
+                    color = Colors.white,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -74,11 +74,11 @@ fun TechnicalInfoOverlay(
                     onClick = onDismiss,
                     modifier = Modifier.size(28.dp)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Colors.white, modifier = Modifier.size(18.dp))
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.White.copy(alpha = 0.2f))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Colors.white20)
 
             TechInfoRow("Video Codec", techInfo["videoCodec"]?.toString() ?: "N/A")
             val w = techInfo["videoWidth"]
@@ -115,7 +115,7 @@ private fun TechInfoRow(label: String, value: String) {
             .padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-        Text(text = value, color = Color.White, fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium)
+        Text(text = label, color = Colors.white50, fontSize = 12.sp)
+        Text(text = value, color = Colors.white, fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium)
     }
 }

@@ -2,6 +2,7 @@ package expo.modules.herocarousel
 
 import android.graphics.Bitmap
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -126,28 +127,28 @@ private object HeroLayout {
 private val BlurSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 private val PlaceholderBrush = Brush.linearGradient(
-  listOf(Color(0xFF292929), Color(0xFF1A1A1A))
+  listOf(Colors.surfaceRaised, Colors.surface)
 )
 
 /** Scrim so the glass panel and label stay legible on bright art. */
 private val CardScrimBrush = Brush.verticalGradient(
-  0f to Color.Black.copy(alpha = 0.25f),
-  0.3f to Color.Transparent,
-  0.45f to Color.Transparent,
-  1f to Color.Black.copy(alpha = 0.65f)
+  0f to Colors.black30,
+  0.3f to Colors.transparent,
+  0.45f to Colors.transparent,
+  1f to Colors.black60
 )
 
 private val PanelSheenBrush = Brush.verticalGradient(
-  listOf(Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = 0.04f))
+  listOf(Colors.white10, Colors.white05)
 )
 
 /** iOS `.destructive` red, so both platforms flag the same row the same way. */
-private val DestructiveColor = Color(0xFFFF453A)
+private val DestructiveColor = Colors.danger
 
-private val TextPrimary = Color.White
-private val TextSecondary = Color.White.copy(alpha = 0.9f)
-private val TextTertiary = Color.White.copy(alpha = 0.75f)
-private val HairlineColor = Color.White.copy(alpha = 0.15f)
+private val TextPrimary = Colors.white
+private val TextSecondary = Colors.white
+private val TextTertiary = Colors.white80
+private val HairlineColor = Colors.white20
 
 // MARK: - Root
 
@@ -208,10 +209,10 @@ internal fun HeroCarouselRoot(
 }
 
 private val HeroColorScheme = darkColorScheme(
-  surface = Color(0xFF1C1C1E),
-  surfaceContainer = Color(0xFF1C1C1E),
-  onSurface = Color.White,
-  onSurfaceVariant = Color.White.copy(alpha = 0.7f)
+  surface = Colors.surface,
+  surfaceContainer = Colors.surface,
+  onSurface = Colors.white,
+  onSurfaceVariant = Colors.white80
 )
 
 // MARK: - Pager
@@ -340,7 +341,7 @@ private fun HeroCard(
       }
       .shadow(HeroLayout.CardElevation, shape, clip = false)
       .clip(shape)
-      .border(1.dp, Color.White.copy(alpha = 0.12f), shape)
+      .border(1.dp, Colors.white10, shape)
       .clickable(
         interactionSource = interactionSource,
         indication = null,
@@ -433,7 +434,7 @@ private fun HeroLabelChip(label: String, iconName: String?, modifier: Modifier =
   Row(
     modifier = modifier
       .clip(CircleShape)
-      .background(Color.Black.copy(alpha = 0.42f))
+      .background(Colors.black50)
       .border(0.5.dp, HairlineColor, CircleShape)
       .padding(horizontal = 10.dp, vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically,
@@ -443,13 +444,13 @@ private fun HeroLabelChip(label: String, iconName: String?, modifier: Modifier =
       Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = Color.White.copy(alpha = 0.95f),
+        tint = Colors.white,
         modifier = Modifier.size(11.dp)
       )
     }
     Text(
       text = label.uppercase(),
-      color = Color.White.copy(alpha = 0.95f),
+      color = Colors.white,
       fontSize = 10.sp,
       fontWeight = FontWeight.Black,
       letterSpacing = 0.8.sp,
@@ -487,7 +488,7 @@ private fun HeroInfoPanel(
     Modifier
       .fillMaxWidth()
       .clip(shape)
-      .border(1.dp, Color.White.copy(alpha = 0.1f), shape)
+      .border(1.dp, Colors.white10, shape)
   ) {
     if (BlurSupported) {
       // SwiftUI's `.ultraThinMaterial` samples whatever is behind it; Compose
@@ -513,7 +514,7 @@ private fun HeroInfoPanel(
     Box(
       Modifier
         .matchParentSize()
-        .background(Color.Black.copy(alpha = if (BlurSupported) 0.38f else 0.62f))
+        .background(if (BlurSupported) Colors.black30 else Colors.black60)
     )
     Box(Modifier.matchParentSize().background(PanelSheenBrush))
 
@@ -639,7 +640,7 @@ private fun HeroBadges(item: HeroItem) {
           Icon(
             imageVector = Icons.Filled.Star,
             contentDescription = null,
-            tint = Color(0xFFFFD60A),
+            tint = Colors.warningLight,
             modifier = Modifier.size(10.dp)
           )
           Text(
@@ -672,7 +673,7 @@ private fun HeroBadgeChip(content: @Composable () -> Unit) {
   Box(
     modifier = Modifier
       .clip(CircleShape)
-      .background(Color.White.copy(alpha = 0.14f))
+      .background(Colors.white10)
       .padding(horizontal = 8.dp, vertical = 4.dp)
   ) {
     content()
@@ -686,7 +687,7 @@ private fun HeroProgressBar(progress: Float) {
       .fillMaxWidth()
       .height(3.dp)
       .clip(CircleShape)
-      .background(Color.White.copy(alpha = 0.2f))
+      .background(Colors.white20)
   ) {
     Box(
       Modifier
@@ -694,7 +695,7 @@ private fun HeroProgressBar(progress: Float) {
         .widthIn(min = 4.dp)
         .fillMaxHeight()
         .clip(CircleShape)
-        .background(Color.White.copy(alpha = 0.9f))
+        .background(Colors.white)
     )
   }
 }
@@ -762,17 +763,17 @@ private fun HeroPageDots(
           animationSpec = spring(dampingRatio = 0.8f, stiffness = 350f),
           label = "heroDotWidth"
         )
-        val alpha by animateFloatAsState(
-          targetValue = if (active) 0.9f else 0.3f,
+        val dotColor by animateColorAsState(
+          targetValue = if (active) Colors.white else Colors.white30,
           animationSpec = spring(dampingRatio = 0.8f, stiffness = 350f),
-          label = "heroDotAlpha"
+          label = "heroDotColor"
         )
         Box(
           Modifier
             .width(width)
             .height(6.dp)
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = alpha))
+            .background(dotColor)
         )
       }
     }
@@ -800,7 +801,7 @@ private fun HeroFilterMenu(
       modifier = Modifier
         .size(HeroLayout.FilterButtonSize)
         .clip(CircleShape)
-        .background(Color.Black.copy(alpha = 0.45f))
+        .background(Colors.black50)
         .border(0.5.dp, HairlineColor, CircleShape)
         .clickable { expanded = true },
       contentAlignment = Alignment.Center
@@ -808,7 +809,7 @@ private fun HeroFilterMenu(
       Icon(
         imageVector = Icons.Filled.FilterList,
         contentDescription = label.takeIf { it.isNotEmpty() },
-        tint = Color.White.copy(alpha = 0.95f),
+        tint = Colors.white,
         modifier = Modifier.size(17.dp)
       )
     }
@@ -816,13 +817,13 @@ private fun HeroFilterMenu(
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       sections.forEachIndexed { sectionIndex, section ->
         if (sectionIndex > 0) {
-          HorizontalDivider(color = Color.White.copy(alpha = 0.12f))
+          HorizontalDivider(color = Colors.white10)
         }
         val title = section.title
         if (!title.isNullOrEmpty()) {
           Text(
             text = title,
-            color = Color.White.copy(alpha = 0.6f),
+            color = Colors.white50,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -833,7 +834,7 @@ private fun HeroFilterMenu(
             text = {
               Text(
                 text = option.label,
-                color = if (option.destructive) DestructiveColor else Color.White
+                color = if (option.destructive) DestructiveColor else Colors.white
               )
             },
             trailingIcon = {
@@ -844,7 +845,7 @@ private fun HeroFilterMenu(
                 Icon(
                   imageVector = Icons.Filled.Check,
                   contentDescription = null,
-                  tint = Color.White
+                  tint = Colors.white
                 )
               }
             },
@@ -872,8 +873,8 @@ private fun HeroSkeleton() {
         .weight(1f)
         .padding(horizontal = HeroLayout.PageMargin)
         .clip(shape)
-        .background(Color.White.copy(alpha = 0.06f))
-        .border(1.dp, Color.White.copy(alpha = 0.08f), shape)
+        .background(Colors.white05)
+        .border(1.dp, Colors.white10, shape)
     )
     Spacer(Modifier.height(HeroLayout.DotsArea))
   }

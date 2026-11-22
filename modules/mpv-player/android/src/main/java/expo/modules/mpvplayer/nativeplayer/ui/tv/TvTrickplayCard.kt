@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
@@ -26,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.TrickplayProvider
 import expo.modules.mpvplayer.nativeplayer.ui.formatTimeSec
 
@@ -74,7 +74,7 @@ fun TvTrickplayCard(
 
         Text(
             text = formatTimeSec(positionSec),
-            color = Color.White,
+            color = Colors.white,
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = FontFamily.Monospace,

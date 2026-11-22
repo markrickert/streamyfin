@@ -10,9 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import expo.modules.mpvplayer.Colors
 
 /**
  * The chrome's shared palette. Every floating surface uses the same glass
@@ -22,27 +22,27 @@ import androidx.compose.ui.unit.dp
  */
 object TvPalette {
     /** Fill for surfaces over video — translucent so the film bleeds through. */
-    val SurfaceGlass = Color.Black.copy(alpha = 0.52f)
+    val SurfaceGlass = Colors.black50
 
     /** Fill for surfaces that need text legibility (menus, cards, pills). */
-    val SurfaceGlassStrong = Color.Black.copy(alpha = 0.72f)
+    val SurfaceGlassStrong = Colors.black80
 
     /** 1dp edge catch-light on every glass surface. */
-    val Hairline = Color.White.copy(alpha = 0.14f)
+    val Hairline = Colors.white10
 
     /** Top of the faux top-light gradient on larger surfaces. */
-    val SheenTop = Color.White.copy(alpha = 0.09f)
+    val SheenTop = Colors.white10
 
-    val OnSurface = Color.White
-    val OnSurfaceDim = Color.White.copy(alpha = 0.65f)
-    val OnSurfaceFaint = Color.White.copy(alpha = 0.40f)
+    val OnSurface = Colors.white
+    val OnSurfaceDim = Colors.white80
+    val OnSurfaceFaint = Colors.white50
 
     /** Focus is always white fill with black content. */
-    val FocusFill = Color.White
-    val OnFocus = Color.Black
+    val FocusFill = Colors.white
+    val OnFocus = Colors.black
 
     /** Unfocused row/chip fill when already sitting on a glass panel. */
-    val RowFill = Color.White.copy(alpha = 0.07f)
+    val RowFill = Colors.white05
 }
 
 /**
@@ -62,7 +62,7 @@ fun Modifier.tvGlass(
         base.background(
             Brush.verticalGradient(
                 0f to TvPalette.SheenTop,
-                0.45f to Color.Transparent
+                0.45f to Colors.transparent
             )
         )
     } else {
@@ -99,9 +99,9 @@ fun TvPosterScrim(modifier: Modifier = Modifier) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color.Black.copy(alpha = 0f),
-                        Color.Black.copy(alpha = 0.55f),
-                        Color.Black.copy(alpha = 0.85f)
+                        Colors.transparent,
+                        Colors.black60,
+                        Colors.black80
                     )
                 )
             )

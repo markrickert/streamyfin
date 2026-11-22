@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +42,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerConstants
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.TrackMenuItemRecord
@@ -57,12 +57,12 @@ import kotlin.math.roundToInt
 fun TvPlayerTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = Color.White,
-            onPrimary = Color.Black,
-            surface = Color(0xFF1E1E1E),
-            onSurface = Color.White,
-            background = Color.Black,
-            onBackground = Color.White
+            primary = Colors.white,
+            onPrimary = Colors.black,
+            surface = Colors.surface,
+            onSurface = Colors.white,
+            background = Colors.black,
+            onBackground = Colors.white
         ),
         content = content
     )
@@ -78,7 +78,7 @@ fun TvMenuPanel(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(Colors.black50)
     ) {
         Surface(
             modifier = Modifier
@@ -113,7 +113,7 @@ fun TvMenuPanel(
 
                 Text(
                     text = headerTitle,
-                    color = Color.White,
+                    color = Colors.white,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -523,7 +523,7 @@ private fun TvMenuRow(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = Colors.white,
                     modifier = Modifier.size(20.dp)
                 )
             }

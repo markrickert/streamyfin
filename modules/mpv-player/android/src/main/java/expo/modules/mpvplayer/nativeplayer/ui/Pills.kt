@@ -35,13 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.MediaSegmentRecord
 import expo.modules.mpvplayer.nativeplayer.NextEpisodeRecord
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
@@ -54,7 +54,7 @@ fun SkipSegmentButton(viewModel: PlayerViewModel, segment: MediaSegmentRecord) {
         onClick = { viewModel.skipActiveSegment() },
         colors = ButtonDefaults.buttonColors(
             containerColor = PlayerPillBackground,
-            contentColor = Color.White
+            contentColor = Colors.white
         ),
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier.padding(8.dp)
@@ -80,7 +80,7 @@ fun SkipSegmentButton(viewModel: PlayerViewModel, segment: MediaSegmentRecord) {
 fun SegmentSkippedNotice(text: String) {
     Text(
         text = text,
-        color = Color.White,
+        color = Colors.white,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         maxLines = 1,
@@ -123,7 +123,7 @@ fun NextEpisodeCountdownView(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .background(PlayerPillBackground)
-            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+            .border(1.dp, Colors.white20, RoundedCornerShape(16.dp))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -150,7 +150,7 @@ fun NextEpisodeCountdownView(
             next.subtitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = Colors.white80,
                     fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -158,7 +158,7 @@ fun NextEpisodeCountdownView(
             }
             Text(
                 text = next.title,
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
@@ -178,12 +178,12 @@ fun NextEpisodeCountdownView(
                 val strokeWidth = 3.dp.toPx()
                 val inset = strokeWidth / 2f
                 drawCircle(
-                    color = Color.White.copy(alpha = 0.3f),
+                    color = Colors.white30,
                     radius = (size.minDimension - strokeWidth) / 2f,
                     style = Stroke(width = strokeWidth)
                 )
                 drawArc(
-                    color = Color.White,
+                    color = Colors.white,
                     startAngle = -90f,
                     sweepAngle = 360f * ringFraction,
                     useCenter = false,
@@ -195,7 +195,7 @@ fun NextEpisodeCountdownView(
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = playNowLabel,
-                tint = Color.White,
+                tint = Colors.white,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -210,7 +210,7 @@ fun NextEpisodeCountdownView(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = cancelLabel,
-                tint = Color.White.copy(alpha = 0.8f),
+                tint = Colors.white80,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -224,21 +224,21 @@ fun HoldSpeedPill(speedRate: Double) {
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.55f))
+            .background(Colors.black60)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(
             text = label,
-            color = Color.White,
+            color = Colors.white,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
         )
         Icon(
             imageVector = Icons.Default.FastForward,
             contentDescription = null,
-            tint = Color.White,
+            tint = Colors.white,
             modifier = Modifier.size(12.dp)
         )
     }
@@ -249,13 +249,13 @@ fun DoubleTapSeekPill(forward: Boolean, seconds: Double) {
     Box(
         modifier = Modifier
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.6f))
+            .background(Colors.black60)
             .padding(18.dp)
     ) {
         SeekIcon(
             forward = forward,
             seconds = seconds,
-            tint = Color.White,
+            tint = Colors.white,
             contentDescription = null,
             modifier = Modifier.size(36.dp)
         )
@@ -270,7 +270,7 @@ fun UnlockControlsPill(viewModel: PlayerViewModel) {
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.55f))
+            .background(Colors.black60)
             .clickable { viewModel.unlockControls() }
             .padding(horizontal = 14.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -279,12 +279,12 @@ fun UnlockControlsPill(viewModel: PlayerViewModel) {
         Icon(
             imageVector = Icons.Default.LockOpen,
             contentDescription = null,
-            tint = Color.White,
+            tint = Colors.white,
             modifier = Modifier.size(14.dp)
         )
         Text(
             text = unlockLabel,
-            color = Color.White,
+            color = Colors.white,
             fontWeight = FontWeight.SemiBold,
             fontSize = 13.sp
         )
