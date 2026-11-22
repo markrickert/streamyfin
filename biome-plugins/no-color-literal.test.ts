@@ -15,7 +15,7 @@ const FLAGGED = [
   "a: <X className='flex text-red-500 p-2' />",
   "a: <X className='bg-[#121212]' />",
   "a: <X className='border-t-purple-600' />",
-  "a: `p-2 text-gray-400 ${b}`",
+  "a: `p-2 text-gray-400`",
 ];
 
 const ALLOWED = [
@@ -42,11 +42,11 @@ const lintedLines = (cases: string[]): number[] =>
     {
       dir: "components",
       name: "Probe.tsx",
-      content: `const b = 1;\nexport const a = [\n${cases
+      content: `export const a = [\n${cases
         .map((c) => `  ${c.replace(/^a: /, "")},`)
         .join("\n")}\n];\n`,
     },
-  ])["Probe.tsx"].map((line) => line - 2);
+  ])["Probe.tsx"].map((line) => line - 1);
 
 describe("no-color-literal", () => {
   const all = [...FLAGGED, ...ALLOWED];

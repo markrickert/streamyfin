@@ -29,7 +29,7 @@ cadence meant knowing both existed, and nothing would have failed if only one ha
 | --- | --- |
 | `constants/Values.ts` | Cross cutting app values with no better home (tab height, carousel height, sheet ratio) |
 | `constants/Keyboard.ts` | What the app passes to the keyboard: the start of the id that keeps the toolbar away from an iOS number pad |
-| `constants/Colors.ts` | Colour tokens |
+| `constants/Colors.ts` | The color palette, see [colors.md](colors.md) |
 | `constants/MediaTypes.ts` | Media type unions |
 | `constants/Images.ts` | Server image requests: the detail page logo height, and the pixel caps and steps on what is asked for |
 | `constants/TVSizes.ts` | TV poster sizes, gaps, padding, animation timings, how close to the end a growing grid asks for more, where Android TV's top tab bar ends |

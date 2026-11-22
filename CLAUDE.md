@@ -31,6 +31,7 @@ Read the relevant one before writing code in that area.
 
 | Document | Read it when |
 | --- | --- |
+| [docs/conventions/colors.md](docs/conventions/colors.md) | Writing or changing any color: a style, an icon, a className, a new screen |
 | [docs/conventions/constants.md](docs/conventions/constants.md) | Adding a threshold, interval, ratio, storage key, or any value used twice |
 | [docs/conventions/contributing-flow.md](docs/conventions/contributing-flow.md) | Opening, describing, or reviewing a PR |
 | [docs/conventions/e2e-test-ids.md](docs/conventions/e2e-test-ids.md) | Adding, renaming or removing a testID that a Maestro flow targets |
