@@ -86,12 +86,12 @@ const KOTLIN_ROOT = "src/main/java/expo/modules";
 
 export const NATIVE_PALETTE_TARGETS: { path: string; content: string }[] = [
   ...[
-    ["mpv-player", "mpvplayer", true],
-    ["hero-carousel", "herocarousel", true],
-    ["exoplayer-player", "exoplayerplayer", false],
-  ].map(([module, pkg, compose]) => ({
+    { module: "mpv-player", pkg: "mpvplayer", compose: true },
+    { module: "hero-carousel", pkg: "herocarousel", compose: true },
+    { module: "exoplayer-player", pkg: "exoplayerplayer", compose: false },
+  ].map(({ module, pkg, compose }) => ({
     path: `modules/${module}/android/${KOTLIN_ROOT}/${pkg}/Colors.kt`,
-    content: renderKotlinPalette(`expo.modules.${pkg}`, compose as boolean),
+    content: renderKotlinPalette(`expo.modules.${pkg}`, compose),
   })),
   ...[
     "modules/mpv-player/ios",

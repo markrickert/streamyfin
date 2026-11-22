@@ -227,7 +227,7 @@ private func isProgressStale(_ context: ActivityViewContext<DownloadActivityAttr
 
 private func progressTint(for context: ActivityViewContext<DownloadActivityAttributes>) -> Color {
   if context.state.state == .failed { return Colors.danger }
-  return isProgressStale(context) ? Colors.foregroundDisabled : Colors.primary
+  return isProgressStale(context) ? Colors.primarySubtle : Colors.primary
 }
 
 /// Interval driving the self-advancing bar and countdown, when the last update carried a

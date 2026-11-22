@@ -28,7 +28,7 @@ struct SyncPlayQueueView: View {
 						Text(state.groupName).font(.headline)
 						Text(state.connected ? state.status : text("reconnecting", "Reconnecting"))
 							.foregroundStyle(.secondary)
-						if let error = state.error { Text(error).foregroundStyle(Colors.danger) }
+						if let error = state.error { Text(error).foregroundStyle(Colors.dangerLight) }
 						HStack {
 							Button { requestAction("previous") } label: {
 								Label(text("previous", "Previous"), systemImage: "backward.end.fill")
@@ -163,10 +163,10 @@ struct SyncPlayQueueView: View {
 	@ViewBuilder
 	private func poster(_ item: SyncPlayPlaylistItemRecord) -> some View {
 		if let imageUrl = item.imageUrl, let url = URL(string: imageUrl) {
-			RemoteImage(url: url, headers: viewModel.imageHeaders) { Colors.surfaceRaised }
+			RemoteImage(url: url, headers: viewModel.imageHeaders) { Colors.white10 }
 		} else {
 			ZStack {
-				Colors.surfaceRaised
+				Colors.white10
 				Image(systemName: "film").foregroundStyle(.secondary)
 			}
 		}

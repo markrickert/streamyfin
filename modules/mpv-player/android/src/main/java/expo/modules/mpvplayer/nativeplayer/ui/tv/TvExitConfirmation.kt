@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -100,8 +99,8 @@ fun TvExitConfirmation(
                 Button(
                     onClick = { viewModel.confirmExit() },
                     colors = ButtonDefaults.colors(
-                        containerColor = Colors.dangerSubtle,
-                        focusedContainerColor = Colors.danger
+                        containerColor = Colors.danger,
+                        focusedContainerColor = Colors.dangerLight
                     )
                 ) {
                     Text(

@@ -55,7 +55,7 @@ fun EpisodeListSheet(
         ) {
             Text(
                 text = viewModel.strings.get("episodes", "Episodes"),
-                color = Colors.white,
+                color = Colors.foreground,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -106,13 +106,13 @@ private fun EpisodeRow(
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Colors.white,
+                    tint = Colors.foreground,
                     modifier = Modifier.size(20.dp)
                 )
             } else {
                 Text(
                     text = "${episode.indexNumber ?: ""}",
-                    color = Colors.white,
+                    color = Colors.foreground,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
@@ -125,7 +125,7 @@ private fun EpisodeRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = episode.title,
-                color = Colors.white,
+                color = Colors.foreground,
                 fontSize = 14.sp,
                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,

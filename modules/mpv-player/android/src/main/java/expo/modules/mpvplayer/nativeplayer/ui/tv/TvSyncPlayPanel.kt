@@ -53,7 +53,7 @@ import expo.modules.mpvplayer.nativeplayer.ui.RemoteImage
 import kotlinx.coroutines.delay
 
 private val Destructive = Colors.dangerLight
-private val DestructiveOnFocus = Colors.danger
+private val DestructiveOnFocus = Colors.black
 private val RepeatModes = listOf("RepeatNone", "RepeatAll", "RepeatOne")
 // Long enough for a row that was just composed to take focus.
 private const val FOCUS_DELAY_MS = 60L

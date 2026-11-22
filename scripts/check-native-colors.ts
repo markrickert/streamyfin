@@ -12,7 +12,7 @@ import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "..");
 const SKIPPED_DIRS = new Set(["build", "Pods", "node_modules", ".gradle"]);
-const GENERATED = new Set(["Colors.kt", "Colors.swift"]);
+const GENERATED_HEADER = "Generated from constants/Colors.ts";
 const ESCAPE = "color-literal-ok:";
 
 const NAMED =
@@ -20,17 +20,24 @@ const NAMED =
 
 const COMMON = [
   /\b0x[0-9A-Fa-f]{6,8}\b/,
-  /"#[0-9A-Fa-f]{6,8}"/,
-  /\b(?:UI)?Color\(\s*(?:red|white|hue|\.sRGB|\.display|\d)/,
+  /"#[0-9A-Fa-f]{3,8}"/,
+  /\b(?:UI|CG)?Color\(\s*(?:red|white|gray|hue|\.sRGB|\.display|\d|$)/,
+  /\bColors\.\w+\.(?:copy\(alpha|opacity\()/,
 ];
 const KOTLIN = [
   ...COMMON,
   /\bColor\.(?!Transparent\b)[A-Z][A-Za-z]*/,
   /\bColor\.argb\(\s*\d/,
+  /\bColor\.(?:rgb|valueOf|hsv|hsl)\(/,
+  /\.toColorInt\(\)/,
 ];
 const SWIFT = [
   ...COMMON,
-  new RegExp(`\\b(?:UI)?Color\\.(?:${NAMED})\\b`),
+  new RegExp(`\\b(?:UI)?Color\\.(?:${NAMED}|darkGray|lightGray)\\b`),
+  /\.system(?:Red|Orange|Yellow|Green|Mint|Teal|Cyan|Blue|Indigo|Purple|Pink|Brown|Gray\d?|Fill|Background|GroupedBackground)\b/,
+  /\b(?:UI|CG)?Color\.init\(/,
+  /(?<![\w.])\.init\(\s*(?:red|white|gray)/,
+  /\bUIColor\(displayP3Red/,
   new RegExp(`(?<![\\w.])\\.(?:${NAMED})\\b`),
 ];
 
@@ -64,21 +71,21 @@ const sourcesUnder = (dir: string): string[] =>
         ? []
         : sourcesUnder(path.join(dir, entry.name));
     }
-    const isSource = /\.(kt|swift)$/.test(entry.name);
-    return isSource && !GENERATED.has(entry.name)
-      ? [path.join(dir, entry.name)]
-      : [];
+    return /\.(kt|swift)$/.test(entry.name) ? [path.join(dir, entry.name)] : [];
   });
+
+export const isGeneratedPalette = (source: string) =>
+  source.slice(0, 200).includes(GENERATED_HEADER);
 
 export const scanNativeSources = (): ColorViolation[] =>
   ["modules", "targets"]
     .flatMap((dir) => sourcesUnder(path.join(ROOT, dir)))
-    .flatMap((file) =>
-      findNativeColorLiterals(
-        path.relative(ROOT, file),
-        fs.readFileSync(file, "utf8"),
-      ),
-    );
+    .flatMap((file) => {
+      const source = fs.readFileSync(file, "utf8");
+      return isGeneratedPalette(source)
+        ? []
+        : findNativeColorLiterals(path.relative(ROOT, file), source);
+    });
 
 if (require.main === module) {
   const violations = scanNativeSources();

@@ -142,7 +142,7 @@ struct GlassPosterView: View {
 
   private var placeholderView: some View {
     Rectangle()
-      .fill(Colors.surfaceRaised)
+      .fill(Colors.white10)
   }
 
   private var progressOverlay: some View {

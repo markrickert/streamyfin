@@ -1,5 +1,6 @@
 import {
   findNativeColorLiterals,
+  isGeneratedPalette,
   scanNativeSources,
 } from "./check-native-colors";
 
@@ -18,6 +19,14 @@ describe("findNativeColorLiterals", () => {
     "setBackgroundColor(Color.BLACK)",
     'val a = Color.parseColor("#9334E9")',
     "val a = Color(red = 0.5f, green = 0f, blue = 0f)",
+    "val a = Color.rgb(255, 0, 0)",
+    "val a = android.graphics.Color.rgb(255, 0, 0)",
+    "val a = Color.valueOf(1f, 0f, 0f)",
+    "val a = Color.hsv(10f, 1f, 1f)",
+    'val a = Color.parseColor("#FFF")',
+    'val a = "#fff".toColorInt()',
+    "val a = Colors.white.copy(alpha = 0.37f)",
+    "val a = Color(",
   ])("flags the Kotlin line %s", (line) => {
     expect(flagged("A.kt", line)).toBe(1);
   });
@@ -50,6 +59,17 @@ describe("findNativeColorLiterals", () => {
     ".foregroundStyle(.orange)",
     'let a = Color(hex: "#9334E9")',
     "let a = 0xFF9334E9",
+    "let a = UIColor.systemRed",
+    "let a = Color(.systemGray6)",
+    "let a = Color(UIColor.systemGray)",
+    "let a = UIColor.darkGray",
+    "let a = CGColor(red: 1, green: 0, blue: 0, alpha: 1)",
+    "let a = CGColor(gray: 0.5, alpha: 1)",
+    "let a = UIColor.init(red: 1, green: 0, blue: 0, alpha: 1)",
+    "let a = Color.init(white: 0.5)",
+    "let a = UIColor(displayP3Red: 1, green: 0, blue: 0, alpha: 1)",
+    "let a = Color(",
+    "let a = Colors.white.opacity(0.37)",
   ])("flags the Swift line %s", (line) => {
     expect(flagged("A.swift", line)).toBe(1);
   });
@@ -67,6 +87,13 @@ describe("findNativeColorLiterals", () => {
     "// .foregroundStyle(.white)",
   ])("allows the Swift line %s", (line) => {
     expect(flagged("A.swift", line)).toBe(0);
+  });
+
+  it("recognises a generated palette by its header, not its file name", () => {
+    expect(
+      isGeneratedPalette("// Generated from constants/Colors.ts by x\n"),
+    ).toBe(true);
+    expect(isGeneratedPalette("val a = Color(0xFF000000)\n")).toBe(false);
   });
 
   it("reports the line number", () => {
