@@ -2,8 +2,8 @@
 
 Every color of the app is a token of the palette in `constants/Colors.ts`. The same
 palette is the only set of colors in `tailwind.config.js`, under kebab-case names:
-`Colors.foregroundMuted` is `text-foreground-muted`. `constants/Colors.test.ts` fails
-when the two drift apart. `no-color-literal` (`biome-plugins/no-color-literal.grit`)
+`Colors.foregroundMuted` is `text-foreground-muted`. `bun scripts/native-palette.ts`
+generates that config, so never edit its colors. `no-color-literal` (`biome-plugins/no-color-literal.grit`)
 fails `bun run check` on a hex or `rgb()` string, a named color in a style value or
 color prop (any string but `transparent`, `none` and `currentColor`), and a Tailwind color
 outside the palette (`bg-neutral-900`,
@@ -18,7 +18,8 @@ import { Colors } from "@/constants/Colors";
 
 ## Native code
 
-Kotlin and Swift read the same palette. `scripts/native-palette.ts` writes it as a
+Kotlin and Swift read the same palette. `scripts/native-palette.ts` (which also writes
+`tailwind.config.js`) writes it as a
 `Colors` object (`Colors.kt`, `Colors.swift`) into every native module that cannot
 import another's files. Its `NATIVE_PALETTE_TARGETS` is the list. After changing a
 color in `constants/Colors.ts`, run `bun scripts/native-palette.ts`. `postinstall`

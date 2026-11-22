@@ -6,6 +6,7 @@ import {
   nativePaletteTargets,
   renderKotlinPalette,
   renderSwiftPalette,
+  renderTailwindConfig,
 } from "./native-palette";
 
 const ROOT = path.resolve(__dirname, "..");
@@ -76,6 +77,23 @@ describe("renderSwiftPalette", () => {
   });
 });
 
+describe("renderTailwindConfig", () => {
+  const tailwind = renderTailwindConfig();
+
+  it("names a color in kebab-case, quoted only when it needs it", () => {
+    expect(tailwind).toContain('"foreground-muted": "#9ca3af",');
+    expect(tailwind).toContain('      primary: "#9334E9",');
+  });
+
+  it("keeps an rgba token as written", () => {
+    expect(tailwind).toContain('"danger-subtle": "rgba(239, 68, 68, 0.2)",');
+  });
+
+  it("leaves out the white and black opacity variants", () => {
+    expect(tailwind).not.toMatch(/^\s+(white|black)\d+:/m);
+  });
+});
+
 describe("NATIVE_PALETTE_TARGETS", () => {
   it.each(NATIVE_PALETTE_TARGETS)(
     "$path matches what the generator writes",
@@ -93,13 +111,13 @@ describe("nativePaletteTargets", () => {
     const targets = nativePaletteTargets(palette);
     expect(targets).toHaveLength(NATIVE_PALETTE_TARGETS.length);
     for (const { content } of targets) {
-      expect(content).toMatch(/brandNew = /);
+      expect(content).toMatch(/brandNew\b|brand-new/);
     }
   });
 
   it("drops a deleted token from every target", () => {
     for (const { content } of nativePaletteTargets(withoutTransparent)) {
-      expect(content).not.toMatch(/transparent = /);
+      expect(content).not.toMatch(/transparent\b/);
     }
   });
 });

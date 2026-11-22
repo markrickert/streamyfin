@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 
+// Generated from constants/Colors.ts by scripts/native-palette.ts. Do not edit.
 // The palette of constants/Colors.ts, by kebab-case name, and nothing else:
 // a class naming any other color (`bg-neutral-900`) renders nothing.
 // `white/10` and friends are Colors.white10, Tailwind's own opacity modifier.
-// constants/Colors.test.ts fails when the two drift apart.
 module.exports = {
   darkMode: "class",
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],

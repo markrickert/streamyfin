@@ -1,7 +1,7 @@
 /**
  * Writes the palette of `constants/Colors.ts` as Kotlin and Swift, one copy
- * per native module that cannot import another's files. Run
- * `bun scripts/native-palette.ts` after changing a color.
+ * per native module that cannot import another's files, and as the Tailwind
+ * config. Run `bun scripts/native-palette.ts` after changing a color.
  * `native-palette.test.ts` fails when a copy on disk drifts from this output.
  * See docs/conventions/colors.md.
  */
@@ -89,6 +89,41 @@ ${lines.join("\n")}
 `;
 };
 
+const OPACITY_VARIANT = /^(white|black)\d+$/;
+const kebab = (name: string) =>
+  name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+
+/**
+ * The opacity variants (`white10`) are left out: Tailwind reaches them as
+ * `white/10`.
+ */
+export const renderTailwindConfig = (palette: Palette = Colors) => {
+  const lines = Object.entries(palette)
+    .filter(([name]) => !OPACITY_VARIANT.test(name))
+    .map(([name, value]) => {
+      const key = kebab(name);
+      return `      ${key.includes("-") ? `"${key}"` : key}: "${value}",`;
+    });
+  return `/** @type {import('tailwindcss').Config} */
+
+// ${HEADER}
+// The palette of constants/Colors.ts, by kebab-case name, and nothing else:
+// a class naming any other color (\`bg-neutral-900\`) renders nothing.
+// \`white/10\` and friends are Colors.white10, Tailwind's own opacity modifier.
+module.exports = {
+  darkMode: "class",
+  content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    colors: {
+${lines.join("\n")}
+    },
+    extend: {},
+  },
+  plugins: [],
+};
+`;
+};
+
 const KOTLIN_ROOT = "src/main/java/expo/modules";
 
 export const nativePaletteTargets = (
@@ -112,6 +147,7 @@ export const nativePaletteTargets = (
     path: `${dir}/Colors.swift`,
     content: renderSwiftPalette(palette),
   })),
+  { path: "tailwind.config.js", content: renderTailwindConfig(palette) },
 ];
 
 export const NATIVE_PALETTE_TARGETS = nativePaletteTargets();
