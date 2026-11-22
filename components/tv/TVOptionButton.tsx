@@ -56,7 +56,7 @@ export const TVOptionButton = React.forwardRef<
             <Text
               style={{
                 fontSize: typography.callout,
-                color: Colors.border,
+                color: Colors.black,
                 flexShrink: 0,
               }}
             >

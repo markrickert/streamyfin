@@ -58,7 +58,7 @@ export const TVFilterButton: React.FC<TVFilterButtonProps> = ({
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? Colors.border : Colors.foregroundMuted,
+                color: focused ? Colors.black : Colors.foregroundMuted,
               }}
             >
               {label}

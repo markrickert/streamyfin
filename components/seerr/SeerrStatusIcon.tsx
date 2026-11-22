@@ -15,7 +15,7 @@ interface Props {
   small?: boolean;
 }
 
-// Seerr's colours for each tone (StatusBadgeMini); a season row lays its own
+// Seerr's colors for each tone (StatusBadgeMini); a season row lays its own
 // background over the request "+" through className.
 const TONE_CLASSES: Record<SeerrStatusTone, string> = {
   processing: "bg-info border-info-light ring-info-light text-foreground",

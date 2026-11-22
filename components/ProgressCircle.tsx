@@ -28,9 +28,9 @@ type ProgressCircleProps = {
   fill: number;
   /** Stroke width of the ring. */
   width: number;
-  /** Colour of the progress part. */
+  /** Color of the progress part. */
   tintColor: string;
-  /** Colour of the remaining part. */
+  /** Color of the remaining part. */
   backgroundColor: string;
 };
 

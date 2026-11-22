@@ -74,7 +74,7 @@ export const TVChannelCard: React.FC<TVChannelCardProps> = ({
               style={[
                 styles.numberFallback,
                 {
-                  backgroundColor: focused ? Colors.foreground : Colors.white10,
+                  backgroundColor: focused ? Colors.white : Colors.white10,
                 },
               ]}
             >

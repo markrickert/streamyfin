@@ -2,7 +2,7 @@
  * The tables the Seerr web interface owns, copied rather than typed.
  *
  * These are not API shapes: they are the networks and studios its discover
- * rows offer, the colours it gives each genre, and two constants the app
+ * rows offer, the colors it gives each genre, and two constants the app
  * reads alongside them. Nothing serves them over HTTP, so the spec cannot
  * describe them and the generator cannot reach them.
  *

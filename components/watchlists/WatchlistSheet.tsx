@@ -102,7 +102,11 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
             color={Colors.foregroundMuted}
           />
         ) : (
-          <Ionicons name='ban-outline' size={22} color={Colors.border} />
+          <Ionicons
+            name='ban-outline'
+            size={22}
+            color={Colors.foregroundDisabled}
+          />
         )}
       </View>
     </TouchableOpacity>
@@ -224,7 +228,11 @@ const WatchlistSheetContent: React.FC<WatchlistSheetContentProps> = ({
       {/* Watchlist List */}
       {sortedWatchlists.length === 0 ? (
         <View className='py-8 items-center'>
-          <Ionicons name='list-outline' size={48} color={Colors.border} />
+          <Ionicons
+            name='list-outline'
+            size={48}
+            color={Colors.foregroundDisabled}
+          />
           <Text className='text-foreground-muted text-center mt-4'>
             {t("watchlists.empty_title")}
           </Text>

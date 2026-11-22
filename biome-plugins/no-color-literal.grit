@@ -26,13 +26,13 @@ or {
   `$k: $v` where {
     $k <: r"^(?:color|[A-Za-z]*Color|fill|stroke)$",
     $v <: JsStringLiteralExpression(),
-    $v <: r"^.(?:white|black|red|blue|green|yellow|gray|grey|gold|purple|orange|pink).$",
+    $v <: not r"^.(?:transparent|none|currentColor).",
     register_diagnostic(span=$v, message="Never write a named color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
   },
   JsxAttribute(name=$n, initializer=$i) where {
     $n <: r"^(?:tintColor|fill|stroke|thumbColor|backgroundColor|borderColor)$",
     $i <: contains JsxString() as $v,
-    $v <: r"^.(?:white|black|red|blue|green|yellow|gray|grey|gold|purple|orange|pink).$",
+    $v <: not r"^.(?:transparent|none|currentColor).",
     register_diagnostic(span=$v, message="Never write a named color. Use a token from Colors in @/constants/Colors, see docs/conventions/colors.md.", severity="error")
   }
 }

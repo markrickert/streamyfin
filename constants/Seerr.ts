@@ -138,9 +138,6 @@ export const SEERR_TV_BADGE_INSET = 10;
 /** A season row the quota leaves no room for, greyed as on Seerr's site. */
 export const SEERR_BLOCKED_OPACITY = 0.45;
 
-/** The alpha a season's status colour takes behind its icon, about 18%. */
-export const SEERR_STATUS_TINT_ALPHA = "2e";
-
 /*
  * Where builds from before the rename stored the same things, when Seerr was
  * called Jellyseerr. Each is read once, moved to the name above, and deleted.
@@ -162,6 +159,13 @@ export const SEERR_STATUS_COLORS = {
   available: Colors.success,
   pending: Colors.warning,
   requested: Colors.infoLight,
+} as const;
+
+/** SEERR_STATUS_COLORS as the tint behind a season's status icon. */
+export const SEERR_STATUS_TINTS = {
+  available: Colors.successSubtle,
+  pending: Colors.warningSubtle,
+  requested: Colors.infoSubtle,
 } as const;
 
 /** Seerr's pill badges: each tone's fill, edge and text. */

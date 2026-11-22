@@ -31,9 +31,9 @@ describe("the discover tables", () => {
     expect(studios.filter((s) => !s.image).map((s) => s.id)).toEqual([]);
   });
 
-  // Each genre is drawn as a gradient between two colours, so a row with one
-  // colour, or three, breaks the slider rather than looking odd.
-  test("colour every genre with a pair", () => {
+  // Each genre is drawn as a gradient between two colors, so a row with one
+  // colors, or three, breaks the slider rather than looking odd.
+  test("color every genre with a pair", () => {
     const notPairs = (table: Record<string, unknown[]>) =>
       Object.entries(table)
         .filter(([, pair]) => pair.length !== 2)

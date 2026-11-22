@@ -7,7 +7,7 @@ import { Colors } from "@/constants/Colors";
 import {
   SEERR_BLOCKED_OPACITY,
   SEERR_STATUS_COLORS,
-  SEERR_STATUS_TINT_ALPHA,
+  SEERR_STATUS_TINTS,
 } from "@/constants/Seerr";
 import {
   type SeasonBadge,
@@ -25,6 +25,13 @@ const STATUS_COLORS: Partial<Record<MediaStatus, string>> = {
   [MediaStatus.PROCESSING]: SEERR_STATUS_COLORS.requested,
   [MediaStatus.PARTIALLY_AVAILABLE]: SEERR_STATUS_COLORS.available,
   [MediaStatus.AVAILABLE]: SEERR_STATUS_COLORS.available,
+};
+
+const STATUS_TINTS: Partial<Record<MediaStatus, string>> = {
+  [MediaStatus.PENDING]: SEERR_STATUS_TINTS.pending,
+  [MediaStatus.PROCESSING]: SEERR_STATUS_TINTS.requested,
+  [MediaStatus.PARTIALLY_AVAILABLE]: SEERR_STATUS_TINTS.available,
+  [MediaStatus.AVAILABLE]: SEERR_STATUS_TINTS.available,
 };
 
 const CIRCLE = 24;
@@ -83,6 +90,7 @@ export const SeasonPicker: React.FC<Props> = ({
           ? {
               icon: seerrStatusBadge(status, false)?.icon,
               color: STATUS_COLORS[status] ?? Colors.foregroundMuted,
+              tint: STATUS_TINTS[status] ?? Colors.white10,
             }
           : undefined;
         const name =
@@ -139,7 +147,7 @@ export const SeasonPicker: React.FC<Props> = ({
                   justifyContent: "center",
                   ...(locked
                     ? {
-                        backgroundColor: `${locked.color}${SEERR_STATUS_TINT_ALPHA}`,
+                        backgroundColor: locked.tint,
                       }
                     : chosen
                       ? { backgroundColor: Colors.primary }

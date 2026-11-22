@@ -79,7 +79,7 @@ const FALLBACK_GLYPHS: Partial<
 
 interface Props {
   name: HeaderIconName;
-  /** Defaults to white; pass a colour to signal a toggle's "on" state. */
+  /** Defaults to white; pass a color to signal a toggle's "on" state. */
   tintColor?: string;
   /** Only override for icons rendered outside a header. */
   size?: number;
