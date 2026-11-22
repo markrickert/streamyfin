@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react-native";
 import { Platform, StyleSheet } from "react-native";
-import { TV_PANEL_BACKING } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { TVPasswordEntryModal } from "./TVPasswordEntryModal";
 import { TVPINEntryModal } from "./TVPINEntryModal";
 
@@ -59,7 +59,7 @@ describe.each(SHEETS)("the %s sheet", (_name, panelId, sheet) => {
     jest.replaceProperty(Platform, "OS", "android");
     await render(sheet());
 
-    expect(panelBackground(panelId)).toBe(TV_PANEL_BACKING);
+    expect(panelBackground(panelId)).toBe(Colors.surfaceTranslucent);
   });
 
   test("on Apple TV keeps its frosted glass", async () => {

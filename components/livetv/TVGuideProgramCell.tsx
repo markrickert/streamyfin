@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 6,
     right: 6,
-    backgroundColor: Colors.live,
+    backgroundColor: Colors.danger,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,

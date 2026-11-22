@@ -12,8 +12,8 @@ import { SeerrRequestIcon } from "@/components/seerr/SeerrRequestIcon";
 import { TVButton } from "@/components/tv";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
-import { SeerrStatusBadgeColors } from "@/constants/Colors";
 import {
+  SEERR_STATUS_BADGE_COLORS,
   SEERR_TV_ROW_CARD_GAP,
   SEERR_TV_ROW_PADDING,
   SEERR_TV_ROW_TITLE_GAP,
@@ -213,7 +213,7 @@ export const TVSeerrSeasons: React.FC<{
                       borderRadius: scaleSize(16),
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: SeerrStatusBadgeColors[badge.tone],
+                      backgroundColor: SEERR_STATUS_BADGE_COLORS[badge.tone],
                     }}
                   >
                     <MaterialCommunityIcons

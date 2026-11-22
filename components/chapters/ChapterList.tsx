@@ -100,7 +100,7 @@ function ChapterListComponent({
               accessibilityRole='button'
               accessibilityLabel={t("chapters.close")}
             >
-              <Ionicons name='close' size={24} color={Colors.text} />
+              <Ionicons name='close' size={24} color={Colors.foreground} />
             </Pressable>
           </View>
           <FlatList
@@ -146,7 +146,7 @@ function ChapterListComponent({
                   <Text
                     style={[
                       styles.rowText,
-                      { color: isActive ? Colors.primary : Colors.text },
+                      { color: isActive ? Colors.primary : Colors.foreground },
                     ]}
                     numberOfLines={1}
                   >
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     maxHeight: "70%",
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    color: Colors.text,
+    color: Colors.foreground,
     fontSize: 17,
     fontWeight: "700",
   },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rowTime: {
-    color: Colors.icon,
+    color: Colors.foregroundMuted,
     fontSize: 13,
     marginLeft: 12,
   },

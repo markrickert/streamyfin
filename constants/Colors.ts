@@ -1,119 +1,75 @@
-import type { SeerrStatusTone } from "@/utils/seerr/statusBadge";
-
+/**
+ * The palette. Every color of the app is one of these, and
+ * `tailwind.config.js` holds the same values under kebab-case names
+ * (`foregroundMuted` is `foreground-muted`). `constants/Colors.test.ts` fails
+ * when the two drift apart. See docs/conventions/colors.md.
+ */
 export const Colors = {
+  /** Brand color: primary buttons, selection, progress. */
   primary: "#9334E9",
-  primaryRGB: "rgb(147 51 234)",
-  primaryLightRGB: "rgb(192 132 252)",
-  text: "#ECEDEE",
-  background: "#151718",
-  tint: "#fff",
-  icon: "#9BA1A6",
-  tabIconDefault: "#9BA1A6",
-  tabIconSelected: "#9333ea",
-  // The LIVE badge of a Live TV program, on the cards and in the TV guide.
-  live: "#EF4444",
-};
+  /** Borders on a primary fill. */
+  primaryDark: "#7e22ce",
+  /** Lighter brand color for text, icons and switches on a dark surface. */
+  accent: "#C084FC",
 
-/**
- * Behind the content of a TV sheet or panel drawn over a page. Android TV does
- * not blur what is behind a BlurView, it only tints it: without a backing of
- * its own, the page shows through the sheet.
- */
-export const TV_PANEL_BACKING = "rgba(18, 18, 20, 0.96)";
+  /** Text and icons. */
+  foreground: "#ECEDEE",
+  /** Secondary text, section headers, inactive icons. */
+  foregroundMuted: "#9ca3af",
+  /** Disabled and placeholder text, empty state icons. */
+  foregroundDisabled: "#737373",
 
-/** The placeholders a TV row or page draws in the shape of its content while it loads. */
-export const TV_SKELETON = "#262626";
+  /** Sheets, cards and panels. */
+  surface: "#171717",
+  /** Rows, inputs and anything sitting on a surface. */
+  surfaceRaised: "#262626",
+  /** Separators and outlines. */
+  border: "#404040",
 
-/**
- * What a Seerr status reads as wherever it is spelled out: available in
- * green, pending in amber, requested (approved and on its way) in indigo.
- */
-export const SeerrStatusColors = {
-  available: "#22c55e",
-  pending: "#f59e0b",
-  requested: "#818cf8",
-} as const;
+  /** White fills such as focused TV buttons, and light overlays. */
+  white: "#FFFFFF",
+  /** Page background, text on white, shadows and dark overlays. */
+  black: "#000000",
+  transparent: "transparent",
 
-/** Seerr's badges (its Badge): each tone's fill, edge and text. */
-export const SeerrBadgeColors = {
-  primary: {
-    background: "rgba(99, 102, 241, 0.8)",
-    border: "#6366f1",
-    text: "#e0e7ff",
-  },
-  success: {
-    background: "rgba(34, 197, 94, 0.8)",
-    border: "#22c55e",
-    text: "#dcfce7",
-  },
-  warning: {
-    background: "rgba(234, 179, 8, 0.8)",
-    border: "#eab308",
-    text: "#fef9c3",
-  },
-  danger: {
-    background: "rgba(220, 38, 38, 0.8)",
-    border: "#ef4444",
-    text: "#fee2e2",
-  },
-} as const;
+  /** Errors, destructive actions, the LIVE badge. */
+  danger: "#ef4444",
+  /** Error text and icons on a dark surface, borders on a danger fill. */
+  dangerLight: "#f87171",
+  /** Success and available states. */
+  success: "#22c55e",
+  /** Success text on a dark surface, borders on a success fill. */
+  successLight: "#4ade80",
+  /** Warning fills and pending states. */
+  warning: "#f59e0b",
+  /** Warning text and icons, ratings, borders on a warning fill. */
+  warningLight: "#fbbf24",
+  /** Links, informational badges, processing states. */
+  info: "#3b82f6",
+  /** Info text on a dark surface, borders on an info fill. */
+  infoLight: "#60a5fa",
+  /** The favorite heart. */
+  favorite: "#ec4899",
 
-/** Seerr's request card: its surface, the fade over its backdrop, its text. */
-export const SeerrCardColors = {
-  surface: "#374151",
-  fadeFrom: "rgba(31, 41, 55, 0.47)",
-  fadeTo: "rgba(31, 41, 55, 1)",
-  clear: "rgba(31, 41, 55, 0)",
-  requester: "#d1d5db",
-  label: "#9ca3af",
-} as const;
-
-/** The report issue button of a Seerr page, Seerr's warning yellow. */
-export const SeerrIssueColors = {
-  background: "rgba(234, 179, 8, 0.5)",
-  border: "#facc15",
-  /** The TV button with the focus on it. */
-  focused: "rgba(234, 179, 8, 0.8)",
-} as const;
-
-/** The surfaces of a sheet: its background, a group of rows, their lines. */
-export const SheetColors = {
-  background: "#171717",
-  group: "#212121",
-  separator: "#303030",
-  secondaryText: "#9ba1a6",
-  idle: "#5a5a5a",
-} as const;
-
-/** The background of a page drawn under a parallax header (ParallaxPage). */
-export const ParallaxPageColors = {
-  background: "black",
-  /** The background, see-through, for a fade into it. */
-  clear: "rgba(0, 0, 0, 0)",
-} as const;
-
-/**
- * Seerr's status badge colours per tone (StatusBadgeMini), for the TV, which
- * draws with styles: the phone's badge (SeerrStatusIcon) has the same ones as
- * classes.
- */
-export const SeerrStatusBadgeColors: Record<SeerrStatusTone, string> = {
-  pending: "#eab308",
-  processing: "#6366f1",
-  partial: "#22c55e",
-  available: "#a855f7",
-  blocklisted: "#ef4444",
-  request: "#16a34a",
-};
-
-/** Seerr's type badge over a poster: a film in blue, a series in purple. */
-export const SeerrMediaBadgeColors = {
-  movie: {
-    background: "rgba(37, 99, 235, 0.9)",
-    border: "rgba(96, 165, 250, 0.4)",
-  },
-  tv: {
-    background: "rgba(147, 51, 234, 0.9)",
-    border: "rgba(192, 132, 252, 0.4)",
-  },
+  white05: "rgba(255, 255, 255, 0.05)",
+  white10: "rgba(255, 255, 255, 0.1)",
+  white20: "rgba(255, 255, 255, 0.2)",
+  white30: "rgba(255, 255, 255, 0.3)",
+  white50: "rgba(255, 255, 255, 0.5)",
+  white80: "rgba(255, 255, 255, 0.8)",
+  black10: "rgba(0, 0, 0, 0.1)",
+  black30: "rgba(0, 0, 0, 0.3)",
+  black50: "rgba(0, 0, 0, 0.5)",
+  black60: "rgba(0, 0, 0, 0.6)",
+  black80: "rgba(0, 0, 0, 0.8)",
+  primarySubtle: "rgba(147, 52, 233, 0.2)",
+  dangerSubtle: "rgba(239, 68, 68, 0.2)",
+  successSubtle: "rgba(34, 197, 94, 0.2)",
+  warningSubtle: "rgba(245, 158, 11, 0.2)",
+  infoSubtle: "rgba(59, 130, 246, 0.2)",
+  /**
+   * A sheet's backing. Android TV does not blur what is behind a BlurView, it
+   * only tints it, so a sheet needs one of its own there.
+   */
+  surfaceTranslucent: "rgba(23, 23, 23, 0.9)",
 } as const;

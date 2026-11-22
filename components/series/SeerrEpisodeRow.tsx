@@ -4,7 +4,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
-import { SheetColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import type { SeasonWithEpisodes } from "@/utils/seerr/types";
 
 type Episode = NonNullable<SeasonWithEpisodes["episodes"]>[number];
@@ -28,7 +28,7 @@ export const SeerrEpisodeRow: React.FC<{
             aspectRatio: 16 / 9,
             borderRadius: 8,
             overflow: "hidden",
-            backgroundColor: SheetColors.group,
+            backgroundColor: Colors.surfaceRaised,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -59,7 +59,7 @@ export const SeerrEpisodeRow: React.FC<{
               style={{
                 fontSize: 13,
                 marginTop: 2,
-                color: SheetColors.secondaryText,
+                color: Colors.foregroundMuted,
               }}
             >
               {airDate}
@@ -72,7 +72,7 @@ export const SeerrEpisodeRow: React.FC<{
           style={{
             fontSize: 13,
             lineHeight: 18,
-            color: SheetColors.secondaryText,
+            color: Colors.foregroundMuted,
           }}
         >
           {episode.overview}

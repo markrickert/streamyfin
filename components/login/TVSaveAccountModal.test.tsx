@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react-native";
 import { Platform, StyleSheet } from "react-native";
-import { TV_PANEL_BACKING } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { TVSaveAccountModal } from "./TVSaveAccountModal";
 
 jest.mock("@/components/tv", () => ({
@@ -38,7 +38,7 @@ test("on Android TV the sheet draws a backing of its own over the form behind it
   jest.replaceProperty(Platform, "OS", "android");
   await renderSheet();
 
-  expect(panelBackground()).toBe(TV_PANEL_BACKING);
+  expect(panelBackground()).toBe(Colors.surfaceTranslucent);
 });
 
 // Apple TV really blurs behind the sheet, as behind its other sign-in sheets:

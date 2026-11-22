@@ -5,7 +5,7 @@ import { Text } from "@/components/common/Text";
 import { TVHorizontalList } from "@/components/tv/TVHorizontalList";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
 import { TVPosterPill } from "@/components/tv/TVPosterPill";
-import { TV_SKELETON } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useEpisodeAirLabels } from "@/hooks/useEpisodeAirLabels";
@@ -108,8 +108,8 @@ export const TVEpisodeList: React.FC<TVEpisodeListProps> = ({
   const renderSkeleton = useCallback(() => {
     const line = {
       fontSize: typography.callout,
-      color: TV_SKELETON,
-      backgroundColor: TV_SKELETON,
+      color: Colors.surfaceRaised,
+      backgroundColor: Colors.surfaceRaised,
       borderRadius: 6,
       overflow: "hidden" as const,
     };
@@ -121,7 +121,7 @@ export const TVEpisodeList: React.FC<TVEpisodeListProps> = ({
             width: posterSizes.episode,
             aspectRatio: 16 / 9,
             borderRadius: scaleSize(24),
-            backgroundColor: TV_SKELETON,
+            backgroundColor: Colors.surfaceRaised,
           }}
         />
         {/* Text there for its height only: read aloud, it named an episode

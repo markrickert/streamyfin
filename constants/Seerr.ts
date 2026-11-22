@@ -1,4 +1,6 @@
 import { Platform } from "react-native";
+import type { SeerrStatusTone } from "@/utils/seerr/statusBadge";
+import { Colors } from "./Colors";
 
 /** MMKV: the signed-in Seerr user. */
 export const SEERR_USER_STORAGE_KEY = "SEERR_USER";
@@ -151,3 +153,65 @@ export const LEGACY_SEERR_PASSWORD_KEY_PREFIX = "jellyseerrpw_";
 
 /** The name Seerr's custom headers were filed under, in MMKV and SecureStore. */
 export const LEGACY_SEERR_HEADERS_NAME = "jellyseerr";
+
+/**
+ * What a Seerr status reads as wherever it is spelled out: available in
+ * green, pending in amber, requested (approved and on its way) in blue.
+ */
+export const SEERR_STATUS_COLORS = {
+  available: Colors.success,
+  pending: Colors.warning,
+  requested: Colors.infoLight,
+} as const;
+
+/** Seerr's pill badges: each tone's fill, edge and text. */
+export const SEERR_BADGE_COLORS = {
+  primary: {
+    background: Colors.info,
+    border: Colors.infoLight,
+    text: Colors.foreground,
+  },
+  success: {
+    background: Colors.success,
+    border: Colors.successLight,
+    text: Colors.foreground,
+  },
+  warning: {
+    background: Colors.warning,
+    border: Colors.warningLight,
+    text: Colors.foreground,
+  },
+  danger: {
+    background: Colors.danger,
+    border: Colors.dangerLight,
+    text: Colors.foreground,
+  },
+} as const;
+
+/** The report issue button of a Seerr page, in its warning tone. */
+export const SEERR_ISSUE_COLORS = {
+  background: Colors.warningSubtle,
+  border: Colors.warningLight,
+  /** The TV button with the focus on it. */
+  focused: Colors.warning,
+} as const;
+
+/**
+ * Seerr's status badge colors per tone (StatusBadgeMini), for the TV, which
+ * draws with styles: the phone's badge (SeerrStatusIcon) has the same ones as
+ * classes.
+ */
+export const SEERR_STATUS_BADGE_COLORS: Record<SeerrStatusTone, string> = {
+  pending: Colors.warning,
+  processing: Colors.info,
+  partial: Colors.success,
+  available: Colors.primary,
+  blocklisted: Colors.danger,
+  request: Colors.success,
+};
+
+/** Seerr's type badge over a poster: a film in blue, a series in purple. */
+export const SEERR_MEDIA_BADGE_COLORS = {
+  movie: { background: Colors.info, border: Colors.infoSubtle },
+  tv: { background: Colors.primary, border: Colors.primarySubtle },
+} as const;

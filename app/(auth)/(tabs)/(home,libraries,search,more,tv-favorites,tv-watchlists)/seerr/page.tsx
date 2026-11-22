@@ -31,8 +31,8 @@ import { SeerrRequestIcon } from "@/components/seerr/SeerrRequestIcon";
 import { TVSeerrPage } from "@/components/seerr/tv";
 import SeerrSeasons from "@/components/series/SeerrSeasons";
 import { ItemActions } from "@/components/series/SeriesActions";
-import { SeerrIssueColors, SheetColors } from "@/constants/Colors";
-import { SEERR_BACKDROP_SIZE } from "@/constants/Seerr";
+import { Colors } from "@/constants/Colors";
+import { SEERR_BACKDROP_SIZE, SEERR_ISSUE_COLORS } from "@/constants/Seerr";
 import {
   BACKGROUND_IMAGE_TRANSITION,
   POSTER_ASPECT_RATIO,
@@ -420,8 +420,8 @@ const MobilePage: React.FC = () => {
                           justifyContent: "center",
                           borderRadius: 12,
                           borderWidth: 1,
-                          borderColor: SeerrIssueColors.border,
-                          backgroundColor: SeerrIssueColors.background,
+                          borderColor: SEERR_ISSUE_COLORS.border,
+                          backgroundColor: SEERR_ISSUE_COLORS.background,
                         }}
                       >
                         <Ionicons
@@ -552,7 +552,7 @@ const MobilePage: React.FC = () => {
             backgroundColor: "white",
           }}
           backgroundStyle={{
-            backgroundColor: SheetColors.background,
+            backgroundColor: Colors.surface,
           }}
           backdropComponent={renderBackdrop}
           stackBehavior='push'

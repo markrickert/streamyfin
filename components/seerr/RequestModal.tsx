@@ -19,7 +19,7 @@ import { Text } from "@/components/common/Text";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
 import { SeasonPicker } from "@/components/seerr/SeasonPicker";
 import { SeasonQuota } from "@/components/seerr/SeasonQuota";
-import { Colors, SheetColors } from "@/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { SHEET_MAX_HEIGHT_RATIO } from "@/constants/Values";
 import { useSeerr } from "@/hooks/useSeerr";
 import { useSeerrSeasonRequest } from "@/hooks/useSeerrSeasonRequest";
@@ -386,7 +386,7 @@ const RequestModal = forwardRef<
           backgroundColor: "white",
         }}
         backgroundStyle={{
-          backgroundColor: SheetColors.background,
+          backgroundColor: Colors.surface,
         }}
         backdropComponent={(sheetProps: BottomSheetBackdropProps) => (
           <BottomSheetBackdrop
@@ -441,7 +441,9 @@ const RequestModal = forwardRef<
                   <Text
                     style={{
                       fontSize: 15,
-                      color: canToggleAll ? Colors.primary : SheetColors.idle,
+                      color: canToggleAll
+                        ? Colors.primary
+                        : Colors.foregroundDisabled,
                     }}
                   >
                     {selecting
