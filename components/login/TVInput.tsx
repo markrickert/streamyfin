@@ -7,6 +7,7 @@ import {
   type TextInputInstance,
   type TextInputProps,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -63,17 +64,15 @@ export const TVInput: React.FC<TVInputProps> = ({
         style={{
           transform: [{ scale }],
           borderRadius: scaleSize(12),
-          backgroundColor: isFocused
-            ? "rgba(255,255,255,0.15)"
-            : "rgba(255,255,255,0.08)",
+          backgroundColor: isFocused ? Colors.white10 : Colors.white10,
           borderWidth: 2,
-          borderColor: isFocused ? "#FFFFFF" : "transparent",
+          borderColor: isFocused ? Colors.white : Colors.transparent,
         }}
       >
         <TextInput
           ref={inputRef}
           placeholder={displayPlaceholder}
-          placeholderTextColor='rgba(255,255,255,0.35)'
+          placeholderTextColor={Colors.foregroundDisabled}
           allowFontScaling={false}
           style={[
             {
@@ -81,7 +80,7 @@ export const TVInput: React.FC<TVInputProps> = ({
               // its height, which cut the top off the larger text sizes.
               minHeight: scaleSize(64),
               fontSize: typography.heading,
-              color: "#FFFFFF",
+              color: Colors.foreground,
               paddingHorizontal: scaleSize(20),
             },
             style,

@@ -4,6 +4,7 @@ import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { Button } from "../Button";
@@ -62,9 +63,9 @@ export const NextItemButton: React.FC<Props> = ({
       {...props}
     >
       {type === "next" ? (
-        <Ionicons name='chevron-forward' size={24} color='white' />
+        <Ionicons name='chevron-forward' size={24} color={Colors.foreground} />
       ) : (
-        <Ionicons name='chevron-back' size={24} color='white' />
+        <Ionicons name='chevron-back' size={24} color={Colors.foreground} />
       )}
     </Button>
   );

@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DismissKeyboardArea } from "@/components/common/DismissKeyboardArea";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
 import { verifyAccountPIN } from "@/utils/secureCredentials";
@@ -165,8 +166,8 @@ export const PINEntryModal: React.FC<PINEntryModalProps> = ({
       onDismiss={handleDismissed}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
-      handleIndicatorStyle={{ backgroundColor: "white" }}
-      backgroundStyle={{ backgroundColor: "#171717" }}
+      handleIndicatorStyle={{ backgroundColor: Colors.white }}
+      backgroundStyle={{ backgroundColor: Colors.surface }}
       backdropComponent={renderBackdrop}
       keyboardBehavior={isAndroid ? "fillParent" : "interactive"}
       keyboardBlurBehavior='restore'

@@ -17,6 +17,7 @@ import { TVRequestOptionRow } from "@/components/seerr/tv/TVRequestOptionRow";
 import { TVToggleOptionRow } from "@/components/seerr/tv/TVToggleOptionRow";
 import { TVButton, TVOptionSelector } from "@/components/tv";
 import type { TVOptionItem } from "@/components/tv/TVOptionSelector";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useSeerr } from "@/hooks/useSeerr";
@@ -404,7 +405,7 @@ export default function TVRequestModalPage() {
                   <Ionicons
                     name='add'
                     size={22}
-                    color='#FFFFFF'
+                    color={Colors.foreground}
                     style={{ marginRight: 8 }}
                   />
                   <Text
@@ -455,7 +456,7 @@ export default function TVRequestModalPage() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   sheetContainer: {
@@ -474,11 +475,11 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: Colors.foreground,
     marginBottom: 8,
   },
   subtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: 24,
   },
   scrollView: {
@@ -496,13 +497,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    color: "rgba(255,255,255,0.5)",
+    color: Colors.foregroundMuted,
   },
   buttonContainer: {
     marginTop: 24,
   },
   buttonText: {
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: Colors.foreground,
   },
 });

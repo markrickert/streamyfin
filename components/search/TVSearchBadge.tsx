@@ -2,6 +2,7 @@ import React from "react";
 import { Animated, Pressable } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 export interface TVSearchBadgeProps {
@@ -33,8 +34,8 @@ export const TVSearchBadge: React.FC<TVSearchBadgeProps> = ({
             paddingHorizontal: 24,
             paddingVertical: 14,
             borderRadius: 24,
-            backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.1)",
-            shadowColor: "#fff",
+            backgroundColor: focused ? Colors.white : Colors.white10,
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.4 : 0,
             shadowRadius: focused ? 12 : 0,
@@ -44,7 +45,7 @@ export const TVSearchBadge: React.FC<TVSearchBadgeProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#000" : "#fff",
+            color: focused ? Colors.black : Colors.foreground,
             fontWeight: focused ? "600" : "400",
           }}
         >

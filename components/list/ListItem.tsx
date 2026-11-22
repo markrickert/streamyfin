@@ -150,7 +150,11 @@ const ListItemContent = ({
         )}
         {showArrow && (
           <View className={children ? "ml-1" : "ml-auto"}>
-            <Ionicons name='chevron-forward' size={18} color='#5A5960' />
+            <Ionicons
+              name='chevron-forward'
+              size={18}
+              color={Colors.foregroundDisabled}
+            />
           </View>
         )}
       </View>

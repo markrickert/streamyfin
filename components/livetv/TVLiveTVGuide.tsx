@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { usePlayMedia } from "@/hooks/usePlayMedia";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -231,7 +232,7 @@ export const TVLiveTVGuide: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#FFFFFF' />
+        <ActivityIndicator size='large' color={Colors.foreground} />
       </View>
     );
   }
@@ -390,31 +391,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "rgba(255, 255, 255, 0.6)",
+    color: Colors.foregroundMuted,
   },
   gridWrapper: {
     flex: 1,
     flexDirection: "row",
   },
   channelColumn: {
-    backgroundColor: "rgba(40, 40, 40, 1)",
+    backgroundColor: Colors.surfaceRaised,
     borderRightWidth: 1,
-    borderRightColor: "rgba(255, 255, 255, 0.2)",
+    borderRightColor: Colors.white20,
   },
   channelLabel: {
     height: ROW_HEIGHT,
     justifyContent: "center",
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.2)",
+    borderBottomColor: Colors.white20,
   },
   channelNumber: {
-    color: "rgba(255, 255, 255, 0.5)",
+    color: Colors.foregroundMuted,
     fontWeight: "400",
     marginBottom: 2,
   },
   channelName: {
-    color: "#FFFFFF",
+    color: Colors.foreground,
     fontWeight: "600",
   },
   horizontalScroll: {
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
   currentTimeIndicator: {
     position: "absolute",
     width: 2,
-    backgroundColor: "#EF4444",
+    backgroundColor: Colors.danger,
     zIndex: 10,
     pointerEvents: "none",
   },

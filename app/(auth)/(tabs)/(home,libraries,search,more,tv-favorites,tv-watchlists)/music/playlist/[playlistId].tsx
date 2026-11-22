@@ -27,6 +27,7 @@ import { MusicTrackItem } from "@/components/music/MusicTrackItem";
 import { PlaylistOptionsSheet } from "@/components/music/PlaylistOptionsSheet";
 import { PlaylistPickerSheet } from "@/components/music/PlaylistPickerSheet";
 import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
+import { Colors } from "@/constants/Colors";
 import { useRemoveFromPlaylist } from "@/hooks/usePlaylistMutations";
 import { downloadTrack, getLocalPath } from "@/providers/AudioStorage";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -109,7 +110,7 @@ export default function PlaylistDetailScreen() {
     navigation.setOptions({
       title: playlist?.Name ?? "",
       headerTransparent: true,
-      headerStyle: { backgroundColor: "transparent" },
+      headerStyle: { backgroundColor: Colors.transparent },
       headerShadowVisible: false,
       headerRight: () => (
         <HeaderButtonGroup>
@@ -216,8 +217,8 @@ export default function PlaylistDetailScreen() {
               height: ARTWORK_SIZE,
               borderRadius: 8,
               overflow: "hidden",
-              backgroundColor: "#1a1a1a",
-              shadowColor: "#000",
+              backgroundColor: Colors.surface,
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: 0.3,
               shadowRadius: 12,
@@ -233,7 +234,11 @@ export default function PlaylistDetailScreen() {
               />
             ) : (
               <View className='flex-1 items-center justify-center bg-neutral-800'>
-                <Ionicons name='list' size={60} color='#666' />
+                <Ionicons
+                  name='list'
+                  size={60}
+                  color={Colors.foregroundDisabled}
+                />
               </View>
             )}
           </View>
@@ -252,7 +257,7 @@ export default function PlaylistDetailScreen() {
               onPress={handlePlayAll}
               className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mr-3'
             >
-              <Ionicons name='play' size={20} color='white' />
+              <Ionicons name='play' size={20} color={Colors.foreground} />
               <Text className='text-white font-medium ml-2'>
                 {t("music.play")}
               </Text>
@@ -261,7 +266,7 @@ export default function PlaylistDetailScreen() {
               onPress={handleShuffle}
               className='flex flex-row items-center bg-neutral-800 px-6 py-3 rounded-full mr-3'
             >
-              <Ionicons name='shuffle' size={20} color='white' />
+              <Ionicons name='shuffle' size={20} color={Colors.foreground} />
               <Text className='text-white font-medium ml-2'>
                 {t("music.shuffle")}
               </Text>
@@ -272,7 +277,7 @@ export default function PlaylistDetailScreen() {
               className='flex items-center justify-center bg-neutral-800 p-3 rounded-full'
             >
               {isDownloading ? (
-                <ActivityIndicator size={20} color='white' />
+                <ActivityIndicator size={20} color={Colors.foreground} />
               ) : (
                 <Ionicons
                   name={
@@ -281,7 +286,9 @@ export default function PlaylistDetailScreen() {
                       : "download-outline"
                   }
                   size={20}
-                  color={allTracksDownloaded ? "#22c55e" : "white"}
+                  color={
+                    allTracksDownloaded ? Colors.success : Colors.foreground
+                  }
                 />
               )}
             </TouchableOpacity>

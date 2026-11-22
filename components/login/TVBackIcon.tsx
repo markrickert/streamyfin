@@ -3,6 +3,7 @@ import React from "react";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -35,7 +36,7 @@ export const TVBackIcon = React.forwardRef<ViewInstance, TVBackIconProps>(
             {
               alignItems: "center",
               width: scaleSize(160),
-              shadowColor: "#fff",
+              shadowColor: Colors.white,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: focused ? 0.5 : 0,
               shadowRadius: focused ? scaleSize(16) : 0,
@@ -47,12 +48,10 @@ export const TVBackIcon = React.forwardRef<ViewInstance, TVBackIconProps>(
               width: scaleSize(140),
               height: scaleSize(140),
               borderRadius: scaleSize(70),
-              backgroundColor: focused
-                ? "rgba(255,255,255,0.15)"
-                : "rgba(255,255,255,0.05)",
+              backgroundColor: focused ? Colors.white10 : Colors.white05,
               marginBottom: scaleSize(14),
               borderWidth: scaleSize(2),
-              borderColor: focused ? "#fff" : "rgba(255,255,255,0.3)",
+              borderColor: focused ? Colors.white : Colors.white30,
               borderStyle: "dashed",
               justifyContent: "center",
               alignItems: "center",
@@ -61,7 +60,7 @@ export const TVBackIcon = React.forwardRef<ViewInstance, TVBackIconProps>(
             <Ionicons
               name='arrow-back'
               size={scaleSize(56)}
-              color={focused ? "#fff" : "rgba(255,255,255,0.5)"}
+              color={focused ? Colors.foreground : Colors.foregroundMuted}
             />
           </View>
 
@@ -69,7 +68,7 @@ export const TVBackIcon = React.forwardRef<ViewInstance, TVBackIconProps>(
             style={{
               fontSize: typography.body,
               fontWeight: "600",
-              color: focused ? "#fff" : "rgba(255,255,255,0.7)",
+              color: focused ? Colors.foreground : Colors.foregroundMuted,
               textAlign: "center",
             }}
             numberOfLines={2}

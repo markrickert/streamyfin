@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { tvSheetBacking } from "@/components/tv/tvSheetBacking";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { verifyAccountPIN } from "@/utils/secureCredentials";
@@ -67,7 +68,7 @@ const NumberPadButton: React.FC<{
           styles.numberButton,
           {
             transform: [{ scale }],
-            backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.1)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
           },
         ]}
       >
@@ -75,13 +76,16 @@ const NumberPadButton: React.FC<{
           <Ionicons
             name='backspace-outline'
             size={28}
-            color={focused ? "#000" : "#fff"}
+            color={focused ? Colors.black : Colors.foreground}
           />
         ) : (
           <Text
             style={[
               styles.numberText,
-              { fontSize: typography.body, color: focused ? "#000" : "#fff" },
+              {
+                fontSize: typography.body,
+                color: focused ? Colors.black : Colors.foreground,
+              },
             ]}
           >
             {value}
@@ -141,13 +145,13 @@ const ForgotPINLink: React.FC<{
           paddingHorizontal: scaleSize(16),
           paddingVertical: scaleSize(10),
           borderRadius: scaleSize(8),
-          backgroundColor: focused ? "rgba(255,255,255,0.15)" : "transparent",
+          backgroundColor: focused ? Colors.white10 : Colors.transparent,
         }}
       >
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#fff" : "rgba(255,255,255,0.5)",
+            color: focused ? Colors.foreground : Colors.foregroundMuted,
           }}
         >
           {label}
@@ -421,7 +425,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    backgroundColor: Colors.black80,
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
@@ -440,12 +444,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "bold",
-    color: "#fff",
+    color: Colors.foreground,
     marginBottom: scaleSize(8),
     textAlign: "center",
   },
   subtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: scaleSize(32),
     textAlign: "center",
   },
@@ -459,16 +463,16 @@ const styles = StyleSheet.create({
     height: scaleSize(20),
     borderRadius: scaleSize(10),
     borderWidth: scaleSize(2),
-    borderColor: "rgba(255,255,255,0.4)",
-    backgroundColor: "transparent",
+    borderColor: Colors.white30,
+    backgroundColor: Colors.transparent,
   },
   pinDotFilled: {
-    backgroundColor: "#fff",
-    borderColor: "#fff",
+    backgroundColor: Colors.white,
+    borderColor: Colors.white,
   },
   pinDotError: {
-    borderColor: "#ef4444",
-    backgroundColor: "#ef4444",
+    borderColor: Colors.danger,
+    backgroundColor: Colors.danger,
   },
   numberPad: {
     gap: scaleSize(12),

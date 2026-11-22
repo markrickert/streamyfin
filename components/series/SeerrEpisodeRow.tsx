@@ -45,7 +45,7 @@ export const SeerrEpisodeRow: React.FC<{
             <Ionicons
               name='image-outline'
               size={22}
-              color='white'
+              color={Colors.foreground}
               style={{ opacity: 0.4 }}
             />
           )}

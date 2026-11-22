@@ -123,7 +123,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
   refSetter,
   width: customWidth,
   style,
-  glowColor = "white",
+  glowColor = Colors.white,
   scaleAmount = 1.05,
   imageUrlGetter,
   preferEpisodeImage = false,
@@ -271,7 +271,8 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
     onBlurProp?.(item);
   }, [animateTo, onBlurProp, item, useGlass]);
 
-  const shadowColor = glowColor === "white" ? "#ffffff" : "#a855f7";
+  const shadowColor =
+    glowColor === Colors.white ? Colors.white : Colors.primary;
 
   // Text rendering helpers
   const renderSubtitle = () => {
@@ -286,7 +287,9 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
       const duration = item.RunTimeTicks
         ? runtimeTicksToMinutes(item.RunTimeTicks)
         : null;
-      const textColor = displayShowName ? "#9CA3AF" : "#FFFFFF";
+      const textColor = displayShowName
+        ? Colors.foregroundMuted
+        : Colors.foreground;
       // When the show name is the title, the episode name takes the slot the
       // duration usually occupies. Gate on what is actually rendered, so an
       // item without RunTimeTicks does not silently drop its episode name.
@@ -342,7 +345,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
           numberOfLines={1}
           style={{
             fontSize: typography.callout,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             marginTop: scaleSize(4),
           }}
         >
@@ -360,7 +363,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
             numberOfLines={1}
             style={{
               fontSize: typography.callout,
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               marginTop: scaleSize(4),
             }}
           >
@@ -379,7 +382,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
             numberOfLines={1}
             style={{
               fontSize: typography.callout,
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               marginTop: scaleSize(4),
             }}
           >
@@ -395,7 +398,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             marginTop: scaleSize(4),
           }}
         >
@@ -411,7 +414,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
           numberOfLines={1}
           style={{
             fontSize: typography.callout,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             marginTop: scaleSize(4),
           }}
         >
@@ -430,7 +433,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         position: "absolute",
         top: scaleSize(12),
         left: scaleSize(12),
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.white,
         borderRadius: scaleSize(8),
         flexDirection: "row",
         alignItems: "center",
@@ -440,10 +443,10 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         zIndex: 10,
       }}
     >
-      <Ionicons name='play' size={scaleSize(16)} color='#000000' />
+      <Ionicons name='play' size={scaleSize(16)} color={Colors.black} />
       <Text
         style={{
-          color: "#000000",
+          color: Colors.black,
           fontSize: typography.callout,
           fontWeight: "700",
         }}
@@ -470,7 +473,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
     >
       <Text
         style={{
-          color: "#FFFFFF",
+          color: Colors.foreground,
           fontSize: typography.callout,
           fontWeight: "700",
         }}
@@ -493,7 +496,11 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         justifyContent: "center",
       }}
     >
-      <Ionicons name='play-circle' size={scaleSize(56)} color='white' />
+      <Ionicons
+        name='play-circle'
+        size={scaleSize(56)}
+        color={Colors.foreground}
+      />
     </View>
   ) : null;
 
@@ -507,9 +514,9 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
             width,
             aspectRatio,
             borderRadius: scaleSize(24),
-            backgroundColor: "#1a1a1a",
+            backgroundColor: Colors.surface,
             borderWidth: scaleSize(2),
-            borderColor: focused ? "#FFFFFF" : "transparent",
+            borderColor: focused ? Colors.white : Colors.transparent,
           }}
         >
           {overlay}
@@ -557,9 +564,9 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
           aspectRatio,
           borderRadius: scaleSize(24),
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: Colors.surface,
           borderWidth: scaleSize(2),
-          borderColor: focused ? "#FFFFFF" : "transparent",
+          borderColor: focused ? Colors.white : Colors.transparent,
         }}
       >
         <Image
@@ -598,7 +605,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
           numberOfLines={displayShowName ? 1 : 2}
           style={{
             fontSize: typography.callout,
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginTop: scaleSize(4),
             fontWeight: "500",
           }}
@@ -615,7 +622,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
           numberOfLines={2}
           style={{
             fontSize: typography.callout,
-            color: "#FFFFFF",
+            color: Colors.foreground,
             textAlign: "center",
           }}
         >
@@ -630,7 +637,7 @@ const TVPosterCardComponent: React.FC<TVPosterCardProps> = ({
         numberOfLines={titleLines}
         style={{
           fontSize: typography.callout,
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginTop: scaleSize(4),
           fontWeight: "500",
         }}

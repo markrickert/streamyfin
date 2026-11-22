@@ -23,6 +23,7 @@ import { CreatePlaylistModal } from "@/components/music/CreatePlaylistModal";
 import { MusicTrackItem } from "@/components/music/MusicTrackItem";
 import { PlaylistPickerSheet } from "@/components/music/PlaylistPickerSheet";
 import { TrackOptionsSheet } from "@/components/music/TrackOptionsSheet";
+import { Colors } from "@/constants/Colors";
 import {
   downloadTrack,
   isPermanentlyDownloaded,
@@ -99,7 +100,7 @@ export default function AlbumDetailScreen() {
     navigation.setOptions({
       title: album?.Name ?? "",
       headerTransparent: true,
-      headerStyle: { backgroundColor: "transparent" },
+      headerStyle: { backgroundColor: Colors.transparent },
       headerShadowVisible: false,
       headerRight: Chromecast
         ? () => (
@@ -203,8 +204,8 @@ export default function AlbumDetailScreen() {
               height: artworkSize,
               borderRadius: 8,
               overflow: "hidden",
-              backgroundColor: "#1a1a1a",
-              shadowColor: "#000",
+              backgroundColor: Colors.surface,
+              shadowColor: Colors.black,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: 0.3,
               shadowRadius: 12,
@@ -220,7 +221,11 @@ export default function AlbumDetailScreen() {
               />
             ) : (
               <View className='flex-1 items-center justify-center bg-neutral-800'>
-                <Ionicons name='disc' size={60} color='#666' />
+                <Ionicons
+                  name='disc'
+                  size={60}
+                  color={Colors.foregroundDisabled}
+                />
               </View>
             )}
           </View>
@@ -243,7 +248,7 @@ export default function AlbumDetailScreen() {
               onPress={handlePlayAll}
               className='flex flex-row items-center bg-purple-600 px-6 py-3 rounded-full mr-3'
             >
-              <Ionicons name='play' size={20} color='white' />
+              <Ionicons name='play' size={20} color={Colors.foreground} />
               <Text className='text-white font-medium ml-2'>
                 {t("music.play")}
               </Text>
@@ -252,7 +257,7 @@ export default function AlbumDetailScreen() {
               onPress={handleShuffle}
               className='flex flex-row items-center bg-neutral-800 px-6 py-3 rounded-full mr-3'
             >
-              <Ionicons name='shuffle' size={20} color='white' />
+              <Ionicons name='shuffle' size={20} color={Colors.foreground} />
               <Text className='text-white font-medium ml-2'>
                 {t("music.shuffle")}
               </Text>
@@ -263,7 +268,7 @@ export default function AlbumDetailScreen() {
               className='flex items-center justify-center bg-neutral-800 p-3 rounded-full'
             >
               {isDownloading ? (
-                <ActivityIndicator size={20} color='white' />
+                <ActivityIndicator size={20} color={Colors.foreground} />
               ) : (
                 <Ionicons
                   name={
@@ -272,7 +277,9 @@ export default function AlbumDetailScreen() {
                       : "download-outline"
                   }
                   size={20}
-                  color={allTracksDownloaded ? "#22c55e" : "white"}
+                  color={
+                    allTracksDownloaded ? Colors.success : Colors.foreground
+                  }
                 />
               )}
             </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import React from "react";
+import { Colors } from "@/constants/Colors";
 import { useMarkAsPlayed } from "@/hooks/useMarkAsPlayed";
 import { scaleSize } from "@/utils/scaleSize";
 import { TVButton } from "./TVButton";
@@ -27,7 +28,7 @@ export const TVPlayedButton: React.FC<TVPlayedButtonProps> = ({
       <Ionicons
         name={isPlayed ? "checkmark-circle" : "checkmark-circle-outline"}
         size={scaleSize(28)}
-        color='#FFFFFF'
+        color={Colors.foreground}
       />
     </TVButton>
   );

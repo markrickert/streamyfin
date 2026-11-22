@@ -10,6 +10,7 @@ import {
   AUTO_BITRATE_RATIO_CHOICES,
   AUTO_BITRATE_TTL_CHOICES,
 } from "@/constants/Bitrate";
+import { Colors } from "@/constants/Colors";
 import { useAutoBitrateMeasure } from "@/hooks/useAutoBitrateMeasure";
 import { useSettings } from "@/utils/atoms/settings";
 import {
@@ -44,7 +45,11 @@ const choices = <T extends number>(
 const Trigger: React.FC<{ label: string }> = ({ label }) => (
   <View className='flex flex-row items-center justify-between pl-3 py-1.5 '>
     <Text className='mr-1 text-[#8E8D91]'>{label}</Text>
-    <Ionicons name='chevron-expand-sharp' size={18} color='#5A5960' />
+    <Ionicons
+      name='chevron-expand-sharp'
+      size={18}
+      color={Colors.foregroundDisabled}
+    />
   </View>
 );
 

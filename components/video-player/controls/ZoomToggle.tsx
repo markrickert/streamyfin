@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { ICON_SIZES } from "./constants";
 
@@ -36,7 +37,7 @@ export const ZoomToggle: React.FC<ZoomToggleProps> = ({
         <Ionicons
           name={isZoomedToFill ? "contract-outline" : "expand-outline"}
           size={ICON_SIZES.HEADER}
-          color='white'
+          color={Colors.foreground}
         />
       </View>
     </TouchableOpacity>

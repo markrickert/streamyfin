@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
@@ -32,7 +33,7 @@ export const TVLogoutButton: React.FC<TVLogoutButtonProps> = ({
         style={[
           animatedStyle,
           {
-            shadowColor: "#ef4444",
+            shadowColor: Colors.danger,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: focused ? 0.6 : 0,
             shadowRadius: focused ? 20 : 0,
@@ -41,7 +42,7 @@ export const TVLogoutButton: React.FC<TVLogoutButtonProps> = ({
       >
         <View
           style={{
-            backgroundColor: focused ? "#ef4444" : "rgba(239, 68, 68, 0.8)",
+            backgroundColor: focused ? Colors.danger : Colors.danger,
             borderRadius: scaleSize(12),
             paddingVertical: scaleSize(18),
             paddingHorizontal: scaleSize(48),
@@ -53,7 +54,7 @@ export const TVLogoutButton: React.FC<TVLogoutButtonProps> = ({
             style={{
               fontSize: typography.body,
               fontWeight: "bold",
-              color: "#FFFFFF",
+              color: Colors.foreground,
             }}
           >
             {t("home.settings.log_out_button")}

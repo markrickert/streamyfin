@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TVOptionCard } from "@/components/tv";
+import { Colors } from "@/constants/Colors";
 import { TVSheetTiming } from "@/constants/TVSheet";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -248,7 +249,7 @@ export default function TVOptionModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   sheetContainer: {
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: scaleSize(16),
     paddingHorizontal: scaleSize(48),
     textTransform: "uppercase",

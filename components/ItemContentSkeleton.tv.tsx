@@ -1,6 +1,7 @@
 import React from "react";
 import { useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Colors } from "@/constants/Colors";
 import {
   TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO,
   TV_DETAIL_POSTER_WIDTH_RATIO,
@@ -27,7 +28,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
           style={{
             height: scaleSize(150),
             width: "80%",
-            backgroundColor: "#1a1a1a",
+            backgroundColor: Colors.surface,
             borderRadius: scaleSize(8),
             marginBottom: scaleSize(24),
           }}
@@ -45,7 +46,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(24),
               width: scaleSize(60),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
             }}
           />
@@ -53,7 +54,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(24),
               width: scaleSize(80),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
             }}
           />
@@ -61,7 +62,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(24),
               width: scaleSize(50),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
             }}
           />
@@ -79,7 +80,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(28),
               width: scaleSize(80),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(14),
             }}
           />
@@ -87,7 +88,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(28),
               width: scaleSize(100),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(14),
             }}
           />
@@ -95,7 +96,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(28),
               width: scaleSize(70),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(14),
             }}
           />
@@ -113,7 +114,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(18),
               width: "100%",
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
               marginBottom: scaleSize(8),
             }}
@@ -122,7 +123,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(18),
               width: "90%",
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
               marginBottom: scaleSize(8),
             }}
@@ -131,7 +132,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(18),
               width: "75%",
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(4),
             }}
           />
@@ -149,7 +150,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(56),
               width: scaleSize(180),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(12),
             }}
           />
@@ -157,7 +158,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
             style={{
               height: scaleSize(56),
               width: scaleSize(56),
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               borderRadius: scaleSize(12),
             }}
           />
@@ -175,7 +176,7 @@ export const ItemContentSkeletonTV: React.FC = () => {
           style={{
             aspectRatio: 2 / 3,
             borderRadius: scaleSize(16),
-            backgroundColor: "#1a1a1a",
+            backgroundColor: Colors.surface,
           }}
         />
       </View>

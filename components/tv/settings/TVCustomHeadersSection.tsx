@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVOptionModal } from "@/hooks/useTVOptionModal";
 import {
@@ -60,7 +61,7 @@ export function TVCustomHeadersSection({
       <TVSectionHeader title={t("custom_headers.title")} />
       <Text
         style={{
-          color: "#9CA3AF",
+          color: Colors.foregroundMuted,
           fontSize: typography.callout - 2,
           marginBottom: scaleSize(16),
           marginLeft: scaleSize(8),
@@ -120,7 +121,7 @@ function TVIntegrationHeaderEditor({
     <View style={{ marginBottom: scaleSize(24) }}>
       <Text
         style={{
-          color: "#FFFFFF",
+          color: Colors.foreground,
           fontSize: typography.body,
           fontWeight: "600",
           marginBottom: scaleSize(8),

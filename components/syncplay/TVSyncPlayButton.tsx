@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { TVButton } from "@/components/tv/TVButton";
+import { Colors } from "@/constants/Colors";
 import { useSyncPlaySheet } from "@/hooks/useSyncPlaySheet";
 import { useSyncPlay } from "@/providers/SyncPlayProvider";
 import { scaleSize } from "@/utils/scaleSize";
@@ -34,7 +35,7 @@ export function TVSyncPlayButton({ items, title }: Props) {
       <Ionicons
         name={group ? "people" : "people-outline"}
         size={scaleSize(28)}
-        color='#FFFFFF'
+        color={Colors.foreground}
       />
     </TVButton>
   );

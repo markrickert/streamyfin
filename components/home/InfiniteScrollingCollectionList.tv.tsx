@@ -18,6 +18,7 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
@@ -86,23 +87,23 @@ const TVSeeAllCard: React.FC<{
             width,
             aspectRatio,
             borderRadius: scaleSize(24),
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
+            backgroundColor: Colors.white10,
             justifyContent: "center",
             alignItems: "center",
             borderWidth: 1,
-            borderColor: "rgba(255, 255, 255, 0.15)",
+            borderColor: Colors.white10,
           }}
         >
           <Ionicons
             name='arrow-forward'
             size={scaleSize(32)}
-            color='white'
+            color={Colors.foreground}
             style={{ marginBottom: scaleSize(8) }}
           />
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#FFFFFF",
+              color: Colors.foreground,
               fontWeight: "600",
             }}
           >
@@ -267,7 +268,7 @@ const InfiniteScrollingCollectionListComponent: React.FC<Props> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "700",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: scaleSize(20),
           marginLeft: sizes.padding.horizontal,
           letterSpacing: 0.5,
@@ -279,7 +280,7 @@ const InfiniteScrollingCollectionListComponent: React.FC<Props> = ({
       {isLoading === false && allItems.length === 0 && (
         <Text
           style={{
-            color: "#737373",
+            color: Colors.foregroundDisabled,
             fontSize: typography.callout,
             marginLeft: sizes.padding.horizontal,
           }}
@@ -302,7 +303,7 @@ const InfiniteScrollingCollectionListComponent: React.FC<Props> = ({
             <View key={i} style={{ width: itemWidth }}>
               <View
                 style={{
-                  backgroundColor: "#262626",
+                  backgroundColor: Colors.surfaceRaised,
                   width: itemWidth,
                   aspectRatio: orientation === "horizontal" ? 16 / 9 : 10 / 15,
                   borderRadius: scaleSize(24),
@@ -320,8 +321,8 @@ const InfiniteScrollingCollectionListComponent: React.FC<Props> = ({
               >
                 <Text
                   style={{
-                    color: "#262626",
-                    backgroundColor: "#262626",
+                    color: Colors.surfaceRaised,
+                    backgroundColor: Colors.surfaceRaised,
                     borderRadius: 6,
                     fontSize: typography.callout,
                   }}
@@ -387,7 +388,7 @@ const InfiniteScrollingCollectionListComponent: React.FC<Props> = ({
                         : scaleSize(315),
                   }}
                 >
-                  <ActivityIndicator size='small' color='white' />
+                  <ActivityIndicator size='small' color={Colors.foreground} />
                 </View>
               )}
               {parentId && allItems.length > 0 && (

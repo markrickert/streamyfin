@@ -2,6 +2,7 @@ import React from "react";
 import { Animated, Pressable, ScrollView, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface ToggleItem {
@@ -42,24 +43,24 @@ const TVToggleChip: React.FC<TVToggleChipProps> = ({
             paddingVertical: 10,
             paddingHorizontal: 16,
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : item.selected
-                ? "rgba(255,255,255,0.25)"
-                : "rgba(255,255,255,0.1)",
+                ? Colors.white20
+                : Colors.white10,
             borderRadius: 20,
             borderWidth: 1,
             borderColor: focused
-              ? "#fff"
+              ? Colors.white
               : item.selected
-                ? "rgba(255,255,255,0.4)"
-                : "rgba(255,255,255,0.15)",
+                ? Colors.white30
+                : Colors.white10,
           },
         ]}
       >
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#000" : "#fff",
+            color: focused ? Colors.black : Colors.foreground,
             fontWeight: item.selected || focused ? "600" : "400",
           }}
         >
@@ -91,7 +92,7 @@ export const TVToggleOptionRow: React.FC<TVToggleOptionRowProps> = ({
       <Text
         style={{
           fontSize: typography.callout,
-          color: "rgba(255,255,255,0.6)",
+          color: Colors.foregroundMuted,
           marginBottom: 10,
         }}
       >

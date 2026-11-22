@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
@@ -47,9 +48,7 @@ export const TVSettingsOptionButton = React.forwardRef<
         style={[
           animatedStyle,
           {
-            backgroundColor: focused
-              ? "rgba(255, 255, 255, 0.15)"
-              : "rgba(255, 255, 255, 0.05)",
+            backgroundColor: focused ? Colors.white10 : Colors.white05,
             borderRadius: scaleSize(12),
             paddingVertical: scaleSize(16),
             paddingHorizontal: scaleSize(24),
@@ -62,14 +61,14 @@ export const TVSettingsOptionButton = React.forwardRef<
         ]}
       >
         <View>
-          <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+          <Text style={{ fontSize: typography.body, color: Colors.foreground }}>
             {label}
           </Text>
           {disabledByAdmin && (
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "#EF4444",
+                color: Colors.danger,
                 marginTop: scaleSize(2),
               }}
             >
@@ -81,7 +80,7 @@ export const TVSettingsOptionButton = React.forwardRef<
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               marginRight: scaleSize(12),
             }}
           >
@@ -90,7 +89,7 @@ export const TVSettingsOptionButton = React.forwardRef<
           <Ionicons
             name='chevron-forward'
             size={scaleSize(20)}
-            color='#6B7280'
+            color={Colors.foregroundDisabled}
           />
         </View>
       </Animated.View>

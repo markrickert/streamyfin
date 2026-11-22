@@ -15,6 +15,7 @@ import { ItemImage } from "@/components/common/ItemImage";
 import { Text } from "@/components/common/Text";
 import { HourHeader } from "@/components/livetv/HourHeader";
 import { LiveTVGuideRow } from "@/components/livetv/LiveTVGuideRow";
+import { Colors } from "@/constants/Colors";
 import { LIVE_TV_GUIDE_CHANNEL_COLUMN_WIDTH } from "@/constants/LiveTVGuide";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 
@@ -202,7 +203,9 @@ const PageButtons: React.FC<PageButtonsProps> = ({
         <Ionicons
           name='chevron-back'
           size={24}
-          color={currentPage === 1 ? "gray" : "white"}
+          color={
+            currentPage === 1 ? Colors.foregroundDisabled : Colors.foreground
+          }
         />
         <Text
           className={`ml-1 ${
@@ -226,7 +229,7 @@ const PageButtons: React.FC<PageButtonsProps> = ({
         <Ionicons
           name='chevron-forward'
           size={24}
-          color={isNextDisabled ? "gray" : "white"}
+          color={isNextDisabled ? Colors.foregroundDisabled : Colors.foreground}
         />
       </TouchableOpacity>
     </View>

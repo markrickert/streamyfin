@@ -265,7 +265,7 @@ export const TVLibrarySheet: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)" },
+  overlay: { flex: 1, backgroundColor: Colors.black50 },
   overlayBottom: { justifyContent: "flex-end" },
   overlayRight: { flexDirection: "row", justifyContent: "flex-end" },
   sheet: { width: "100%" },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: scaleSize(16),
     paddingHorizontal: EDGE_PADDING,
     textTransform: "uppercase",

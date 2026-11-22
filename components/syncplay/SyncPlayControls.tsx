@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Image } from "@/components/common/ServerImage";
 import { SettingSwitch } from "@/components/common/SettingSwitch";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useSyncPlay } from "@/providers/SyncPlayProvider";
 import {
@@ -80,7 +81,7 @@ export function SyncPlayPlayback({ items, onClose }: Props) {
       className='w-11 h-11 items-center justify-center'
       style={{ opacity: enabled ? 1 : 0.35 }}
     >
-      <Ionicons name={icon} size={24} color='white' />
+      <Ionicons name={icon} size={24} color={Colors.foreground} />
     </TouchableOpacity>
   );
 
@@ -96,7 +97,7 @@ export function SyncPlayPlayback({ items, onClose }: Props) {
               cachePolicy='memory-disk'
             />
           ) : (
-            <Ionicons name='film' size={18} color='#9899A1' />
+            <Ionicons name='film' size={18} color={Colors.foregroundMuted} />
           )}
         </View>
         <View className='flex-1'>

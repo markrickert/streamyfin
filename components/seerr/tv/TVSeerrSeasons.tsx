@@ -12,6 +12,7 @@ import { SeerrRequestIcon } from "@/components/seerr/SeerrRequestIcon";
 import { TVButton } from "@/components/tv";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_STATUS_BADGE_COLORS,
   SEERR_TV_ROW_CARD_GAP,
@@ -137,7 +138,7 @@ export const TVSeerrSeasons: React.FC<{
         style={{
           fontSize: typography.heading,
           fontWeight: "bold",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: scaleSize(SEERR_TV_ROW_TITLE_GAP),
         }}
       >
@@ -169,13 +170,9 @@ export const TVSeerrSeasons: React.FC<{
                   width: scaleSize(SEERR_TV_SEASON_CARD_WIDTH),
                   padding: scaleSize(18),
                   borderRadius: scaleSize(16),
-                  backgroundColor: selected
-                    ? "rgba(255,255,255,0.22)"
-                    : "rgba(255,255,255,0.08)",
+                  backgroundColor: selected ? Colors.white20 : Colors.white10,
                   borderWidth: 1,
-                  borderColor: selected
-                    ? "rgba(255,255,255,0.5)"
-                    : "rgba(255,255,255,0.1)",
+                  borderColor: selected ? Colors.white50 : Colors.white10,
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -188,7 +185,7 @@ export const TVSeerrSeasons: React.FC<{
                     style={{
                       fontSize: typography.callout,
                       fontWeight: "600",
-                      color: "#FFFFFF",
+                      color: Colors.foreground,
                     }}
                   >
                     {name(season.seasonNumber)}
@@ -196,7 +193,7 @@ export const TVSeerrSeasons: React.FC<{
                   <Text
                     style={{
                       fontSize: typography.callout * 0.8,
-                      color: "rgba(255,255,255,0.6)",
+                      color: Colors.foregroundMuted,
                     }}
                   >
                     {t("seerr.number_episodes", {
@@ -219,7 +216,7 @@ export const TVSeerrSeasons: React.FC<{
                     <MaterialCommunityIcons
                       name={badge.icon}
                       size={scaleSize(20)}
-                      color='white'
+                      color={Colors.foreground}
                     />
                   </View>
                 )}
@@ -242,7 +239,7 @@ export const TVSeerrSeasons: React.FC<{
               style={{
                 fontSize: typography.callout,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
               }}
             >
               {name(current)}
@@ -253,13 +250,13 @@ export const TVSeerrSeasons: React.FC<{
                 onPress={() => onRequestSeason(current)}
               >
                 <View style={{ marginRight: 8 }}>
-                  <SeerrRequestIcon size={22} color='#FFFFFF' />
+                  <SeerrRequestIcon size={22} color={Colors.foreground} />
                 </View>
                 <Text
                   style={{
                     fontSize: typography.callout,
                     fontWeight: "bold",
-                    color: "#FFFFFF",
+                    color: Colors.foreground,
                   }}
                 >
                   {t("seerr.request_button")}

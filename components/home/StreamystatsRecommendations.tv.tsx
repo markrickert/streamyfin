@@ -8,10 +8,10 @@ import { useSegments } from "expo-router";
 import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 import { FlatList, View, type ViewProps } from "react-native";
-
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -190,7 +190,7 @@ export const StreamystatsRecommendations: React.FC<Props> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "700",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 20,
           marginLeft: sizes.padding.horizontal,
           letterSpacing: 0.5,
@@ -213,7 +213,7 @@ export const StreamystatsRecommendations: React.FC<Props> = ({
             <View key={i} style={{ width: sizes.posters.poster }}>
               <View
                 style={{
-                  backgroundColor: "#262626",
+                  backgroundColor: Colors.surfaceRaised,
                   width: sizes.posters.poster,
                   aspectRatio: 10 / 15,
                   borderRadius: scaleSize(24),
@@ -231,8 +231,8 @@ export const StreamystatsRecommendations: React.FC<Props> = ({
               >
                 <Text
                   style={{
-                    color: "#262626",
-                    backgroundColor: "#262626",
+                    color: Colors.surfaceRaised,
+                    backgroundColor: Colors.surfaceRaised,
                     borderRadius: 6,
                     fontSize: typography.callout,
                   }}

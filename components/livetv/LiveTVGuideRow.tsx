@@ -1,6 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { useMemo, useRef } from "react";
 import { View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import {
   LIVE_TV_GUIDE_HOUR_MS,
   LIVE_TV_GUIDE_HOUR_WIDTH,
@@ -84,7 +85,7 @@ export const LiveTVGuideRow = ({
               position: "absolute",
               left: p.position,
               backgroundColor: isCurrentlyLive(p)
-                ? "rgba(255, 255, 255, 0.1)"
+                ? Colors.white10
                 : "transparent",
             }}
             className='flex flex-col items-center justify-center border border-neutral-800 overflow-hidden'

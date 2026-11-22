@@ -7,7 +7,7 @@ import { POSTER_IMAGE_TRANSITION } from "@/constants/Values";
 import type { CardData } from "./CardData";
 
 /** What a card shows where its artwork goes: none, or one still loading. */
-const ARTWORK_PLACEHOLDER_COLOR = "#1a1a1a";
+const ARTWORK_PLACEHOLDER_COLOR = Colors.surface;
 
 type Props = {
   card: CardData;
@@ -55,7 +55,7 @@ export const CardArtwork: React.FC<Props> = ({
         borderRadius: cornerRadius,
         overflow: "hidden",
         borderWidth: 0.5,
-        borderColor: "rgba(255,255,255,0.12)",
+        borderColor: Colors.white10,
         // A reused cell drops the previous artwork, and the new one fades in
         // over this rather than over the screen behind the card.
         backgroundColor: ARTWORK_PLACEHOLDER_COLOR,
@@ -85,7 +85,7 @@ export const CardArtwork: React.FC<Props> = ({
             right: 0,
             bottom: 0,
             height: 3,
-            backgroundColor: "rgba(255,255,255,0.25)",
+            backgroundColor: Colors.white20,
           }}
         >
           <View

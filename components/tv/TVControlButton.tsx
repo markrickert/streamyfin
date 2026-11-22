@@ -6,6 +6,7 @@ import {
   StyleSheet,
   type ViewInstance,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -61,17 +62,17 @@ export const TVControlButton: FC<TVControlButtonProps> = ({
           styles.button,
           animatedStyle,
           {
-            backgroundColor: focused
-              ? "rgba(255,255,255,0.3)"
-              : "rgba(255,255,255,0.1)",
-            borderColor: focused
-              ? "rgba(255,255,255,0.8)"
-              : "rgba(255,255,255,0.2)",
+            backgroundColor: focused ? Colors.white30 : Colors.white10,
+            borderColor: focused ? Colors.white80 : Colors.white20,
             opacity: disabled ? 0.3 : 1,
           },
         ]}
       >
-        <Ionicons name={icon} size={scaleSize(size)} color='#fff' />
+        <Ionicons
+          name={icon}
+          size={scaleSize(size)}
+          color={Colors.foreground}
+        />
       </RNAnimated.View>
     </Pressable>
   );

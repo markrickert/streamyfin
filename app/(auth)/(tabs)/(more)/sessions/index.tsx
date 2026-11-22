@@ -16,6 +16,7 @@ import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
 import Poster from "@/components/posters/Poster";
 import { SessionModeControls } from "@/components/sessions/SessionModeControls";
+import { Colors } from "@/constants/Colors";
 import { useInterval } from "@/hooks/useInterval";
 import { useSessions, type useSessionsProps } from "@/hooks/useSessions";
 import { apiAtom } from "@/providers/JellyfinProvider";
@@ -219,9 +220,9 @@ const SessionCard = ({ session }: SessionCardProps) => {
             <View className='flex flex-row justify-between align-bottom mb-1'>
               <Text className='-ml-0.5 text-xs opacity-50 align-left text-left'>
                 {!session.PlayState?.IsPaused ? (
-                  <Ionicons name='play' size={14} color='white' />
+                  <Ionicons name='play' size={14} color={Colors.foreground} />
                 ) : (
-                  <Ionicons name='pause' size={14} color='white' />
+                  <Ionicons name='pause' size={14} color={Colors.foreground} />
                 )}
               </Text>
               <Text className='text-xs opacity-50 align-right text-right'>
@@ -251,7 +252,7 @@ const SessionCard = ({ session }: SessionCardProps) => {
                 <MaterialCommunityIcons
                   name='skip-previous'
                   size={24}
-                  color='white'
+                  color={Colors.foreground}
                 />
               </TouchableOpacity>
 
@@ -265,9 +266,9 @@ const SessionCard = ({ session }: SessionCardProps) => {
                 }}
               >
                 {session.PlayState?.IsPaused ? (
-                  <Ionicons name='play' size={24} color='white' />
+                  <Ionicons name='play' size={24} color={Colors.foreground} />
                 ) : (
-                  <Ionicons name='pause' size={24} color='white' />
+                  <Ionicons name='pause' size={24} color={Colors.foreground} />
                 )}
               </TouchableOpacity>
 
@@ -278,7 +279,7 @@ const SessionCard = ({ session }: SessionCardProps) => {
                   opacity: isControlLoading[PlaystateCommand.Stop] ? 0.5 : 1,
                 }}
               >
-                <Ionicons name='stop' size={24} color='white' />
+                <Ionicons name='stop' size={24} color={Colors.foreground} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -293,7 +294,7 @@ const SessionCard = ({ session }: SessionCardProps) => {
                 <MaterialCommunityIcons
                   name='skip-next'
                   size={24}
-                  color='white'
+                  color={Colors.foreground}
                 />
               </TouchableOpacity>
 
@@ -306,7 +307,11 @@ const SessionCard = ({ session }: SessionCardProps) => {
                     : 1,
                 }}
               >
-                <Ionicons name='volume-low' size={24} color='white' />
+                <Ionicons
+                  name='volume-low'
+                  size={24}
+                  color={Colors.foreground}
+                />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -321,7 +326,11 @@ const SessionCard = ({ session }: SessionCardProps) => {
                 <Ionicons
                   name='volume-mute'
                   size={24}
-                  color={session.PlayState?.IsMuted ? "red" : "white"}
+                  color={
+                    session.PlayState?.IsMuted
+                      ? Colors.danger
+                      : Colors.foreground
+                  }
                 />
               </TouchableOpacity>
 
@@ -334,7 +343,11 @@ const SessionCard = ({ session }: SessionCardProps) => {
                     : 1,
                 }}
               >
-                <Ionicons name='volume-high' size={24} color='white' />
+                <Ionicons
+                  name='volume-high'
+                  size={24}
+                  color={Colors.foreground}
+                />
               </TouchableOpacity>
             </View>
 
@@ -358,21 +371,45 @@ interface TranscodingBadgesProps {
 
 const TranscodingBadges = ({ properties }: TranscodingBadgesProps) => {
   const iconMap = {
-    bitrate: <Ionicons name='speedometer-outline' size={12} color='white' />,
-    codec: <Ionicons name='layers-outline' size={12} color='white' />,
-    videoRange: (
-      <Ionicons name='color-palette-outline' size={12} color='white' />
+    bitrate: (
+      <Ionicons
+        name='speedometer-outline'
+        size={12}
+        color={Colors.foreground}
+      />
     ),
-    resolution: <Ionicons name='film-outline' size={12} color='white' />,
-    language: <Ionicons name='language-outline' size={12} color='white' />,
-    audioChannels: <Ionicons name='mic-outline' size={12} color='white' />,
-    hwType: <Ionicons name='hardware-chip-outline' size={12} color='white' />,
+    codec: (
+      <Ionicons name='layers-outline' size={12} color={Colors.foreground} />
+    ),
+    videoRange: (
+      <Ionicons
+        name='color-palette-outline'
+        size={12}
+        color={Colors.foreground}
+      />
+    ),
+    resolution: (
+      <Ionicons name='film-outline' size={12} color={Colors.foreground} />
+    ),
+    language: (
+      <Ionicons name='language-outline' size={12} color={Colors.foreground} />
+    ),
+    audioChannels: (
+      <Ionicons name='mic-outline' size={12} color={Colors.foreground} />
+    ),
+    hwType: (
+      <Ionicons
+        name='hardware-chip-outline'
+        size={12}
+        color={Colors.foreground}
+      />
+    ),
   } as const;
 
   const icon = (val: string) => {
     return (
       iconMap[val as keyof typeof iconMap] ?? (
-        <Ionicons name='layers-outline' size={12} color='white' />
+        <Ionicons name='layers-outline' size={12} color={Colors.foreground} />
       )
     );
   };
@@ -442,7 +479,7 @@ const TranscodingStreamView = ({
             <MaterialCommunityIcons
               name='arrow-right-bottom'
               size={14}
-              color='white'
+              color={Colors.foreground}
             />
           </Text>
           <Text className='flex-1 text-sm mt-1'>

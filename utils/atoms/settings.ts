@@ -1,5 +1,6 @@
 // pluginSettingsAtom reads the stored plugin settings with storage.get while
 // this module loads, and nothing else this file imports adds that method.
+import { SubtitleColors } from "@/constants/Colors";
 import "@/augmentations/mmkv";
 import {
   type BaseItemKind,
@@ -679,7 +680,7 @@ export const defaultValues: Settings = {
   subtitleBackgroundOpacity: 60,
   subtitleBackgroundPadding: 8,
   subtitleFont: "System",
-  subtitleColor: "#FFFFFF",
+  subtitleColor: SubtitleColors.white,
   subtitleMarginY: 25,
   subtitleAlignX: "center",
   subtitleAlignY: "bottom",

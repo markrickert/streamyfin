@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import {
@@ -76,9 +77,9 @@ export const TVSeriesSeasonCard: React.FC<TVSeriesSeasonCardProps> = ({
           aspectRatio: 10 / 15,
           borderRadius: scaleSize(24),
           overflow: "hidden",
-          backgroundColor: "rgba(255,255,255,0.1)",
+          backgroundColor: Colors.white10,
           borderWidth: scaleSize(2),
-          borderColor: focused ? "#FFFFFF" : "transparent",
+          borderColor: focused ? Colors.white : Colors.transparent,
         }}
       >
         {imageUrl ? (
@@ -98,7 +99,7 @@ export const TVSeriesSeasonCard: React.FC<TVSeriesSeasonCardProps> = ({
             <Ionicons
               name='film'
               size={scaleSize(56)}
-              color='rgba(255,255,255,0.4)'
+              color={Colors.foregroundDisabled}
             />
           </View>
         )}
@@ -131,7 +132,7 @@ export const TVSeriesSeasonCard: React.FC<TVSeriesSeasonCardProps> = ({
             // Only apply scale transform when not using glass effect
             transform: useGlass ? undefined : [{ scale }],
             // Only apply shadow glow when not using glass (glass has its own glow)
-            shadowColor: useGlass ? undefined : "#ffffff",
+            shadowColor: useGlass ? undefined : Colors.white,
             shadowOffset: useGlass ? undefined : { width: 0, height: 0 },
             shadowOpacity: useGlass ? undefined : focused ? 0.3 : 0,
             shadowRadius: useGlass ? undefined : focused ? 12 : 0,
@@ -146,7 +147,7 @@ export const TVSeriesSeasonCard: React.FC<TVSeriesSeasonCardProps> = ({
           style={{
             fontSize: typography.callout,
             fontWeight: "500",
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
           numberOfLines={2}
         >
@@ -157,7 +158,7 @@ export const TVSeriesSeasonCard: React.FC<TVSeriesSeasonCardProps> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               marginTop: scaleSize(4),
             }}
             numberOfLines={1}

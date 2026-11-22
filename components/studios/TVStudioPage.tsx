@@ -6,6 +6,7 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { Loader } from "@/components/Loader";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import {
   TV_GRID_LOAD_MORE_DISTANCE,
   useScaledTVSizes,
@@ -73,7 +74,7 @@ export const TVStudioPage: React.FC<{ studioId: string }> = ({ studioId }) => {
         style={{
           fontSize: typography.title,
           fontWeight: "bold",
-          color: "white",
+          color: Colors.foreground,
           textAlign: "center",
           marginBottom: HEADING_GAP,
         }}
@@ -86,7 +87,7 @@ export const TVStudioPage: React.FC<{ studioId: string }> = ({ studioId }) => {
         <Text
           style={{
             fontSize: typography.body,
-            color: "#737373",
+            color: Colors.foregroundDisabled,
             textAlign: "center",
           }}
         >

@@ -19,6 +19,7 @@ import {
   watchlistItemTypes,
   watchlistSortOptions,
 } from "@/components/watchlists/watchlistOptions";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useDismissKeyboardOnLeave } from "@/hooks/useDismissKeyboardOnLeave";
 import { useUpdateWatchlist } from "@/hooks/useWatchlistMutations";
@@ -102,7 +103,7 @@ export default function EditWatchlistScreen() {
     return (
       <View
         className='flex-1 items-center justify-center'
-        style={{ backgroundColor: "#171717" }}
+        style={{ backgroundColor: Colors.surface }}
       >
         <ActivityIndicator size='large' />
       </View>
@@ -113,7 +114,7 @@ export default function EditWatchlistScreen() {
     return (
       <View
         className='flex-1 items-center justify-center px-8'
-        style={{ backgroundColor: "#171717" }}
+        style={{ backgroundColor: Colors.surface }}
       >
         <Text className='text-lg text-neutral-400'>
           {t("watchlists.not_found")}
@@ -126,7 +127,7 @@ export default function EditWatchlistScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className='flex-1'
-      style={{ backgroundColor: "#171717" }}
+      style={{ backgroundColor: Colors.surface }}
     >
       <ScrollView
         className='flex-1'
@@ -144,7 +145,7 @@ export default function EditWatchlistScreen() {
             value={name}
             onChangeText={setName}
             placeholder={t("watchlists.name_placeholder")}
-            placeholderTextColor='#6b7280'
+            placeholderTextColor={Colors.foregroundDisabled}
             className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
           />
         </View>
@@ -158,7 +159,7 @@ export default function EditWatchlistScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder={t("watchlists.description_placeholder")}
-            placeholderTextColor='#6b7280'
+            placeholderTextColor={Colors.foregroundDisabled}
             className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
             multiline
             numberOfLines={3}
@@ -180,8 +181,8 @@ export default function EditWatchlistScreen() {
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
-            trackColor={{ false: "#374151", true: "#7c3aed" }}
-            thumbColor={isPublic ? "#a78bfa" : "#9ca3af"}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+            thumbColor={isPublic ? Colors.accent : Colors.foregroundMuted}
           />
         </View>
 
@@ -245,10 +246,14 @@ export default function EditWatchlistScreen() {
             className={`py-3 ${!name.trim() ? "opacity-50" : ""}`}
           >
             {updateWatchlist.isPending ? (
-              <ActivityIndicator color='white' />
+              <ActivityIndicator color={Colors.foreground} />
             ) : (
               <View className='flex-row items-center'>
-                <Ionicons name='checkmark' size={20} color='white' />
+                <Ionicons
+                  name='checkmark'
+                  size={20}
+                  color={Colors.foreground}
+                />
                 <Text className='text-white font-semibold text-base'>
                   {t("watchlists.save_button")}
                 </Text>

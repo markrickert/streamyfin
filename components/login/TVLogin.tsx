@@ -8,6 +8,7 @@ import { Alert, View } from "react-native";
 import { useMMKVString } from "react-native-mmkv";
 import { toast } from "sonner-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVMenuKeyInterception } from "@/hooks/useTVBackPress";
 import { apiAtom, useJellyfin, userAtom } from "@/providers/JellyfinProvider";
@@ -636,7 +637,7 @@ export const TVLogin: React.FC = () => {
           <View
             style={{
               flex: 1,
-              backgroundColor: "#000000",
+              backgroundColor: Colors.black,
               justifyContent: "center",
               alignItems: "center",
             }}
@@ -645,7 +646,7 @@ export const TVLogin: React.FC = () => {
               style={{
                 fontSize: typography.heading,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginBottom: scaleSize(12),
               }}
             >
@@ -654,7 +655,7 @@ export const TVLogin: React.FC = () => {
             <Text
               style={{
                 fontSize: typography.callout,
-                color: "#9CA3AF",
+                color: Colors.foregroundMuted,
               }}
             >
               {t("pairing.logging_in_description")}
@@ -684,7 +685,7 @@ export const TVLogin: React.FC = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       <View style={{ flex: 1 }}>{renderScreen()}</View>
 
       {/* Save Account Modal */}

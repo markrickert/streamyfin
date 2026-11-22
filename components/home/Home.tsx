@@ -150,7 +150,7 @@ const HomeMobile = () => {
         >
           <HeaderIcon
             name='downloads'
-            tintColor={hasDownloads ? Colors.primary : "white"}
+            tintColor={hasDownloads ? Colors.primary : Colors.foreground}
           />
         </HeaderButton>
       ),
@@ -509,7 +509,11 @@ const HomeMobile = () => {
               onPress={() => router.push("/(auth)/downloads")}
               justify='center'
               iconRight={
-                <Ionicons name='arrow-forward' size={20} color='white' />
+                <Ionicons
+                  name='arrow-forward'
+                  size={20}
+                  color={Colors.foreground}
+                />
               }
             >
               {t("home.go_to_downloads")}
@@ -523,12 +527,12 @@ const HomeMobile = () => {
             className='mt-2'
             iconRight={
               retryLoading ? null : (
-                <Ionicons name='refresh' size={20} color='white' />
+                <Ionicons name='refresh' size={20} color={Colors.foreground} />
               )
             }
           >
             {retryLoading ? (
-              <ActivityIndicator size='small' color='white' />
+              <ActivityIndicator size='small' color={Colors.foreground} />
             ) : (
               t("home.retry")
             )}
@@ -564,8 +568,8 @@ const HomeMobile = () => {
         <RefreshControl
           refreshing={loading}
           onRefresh={refetch}
-          tintColor='white'
-          colors={["white"]}
+          tintColor={Colors.foreground}
+          colors={[Colors.white]}
         />
       }
       contentContainerStyle={{

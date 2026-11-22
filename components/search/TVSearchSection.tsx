@@ -5,6 +5,7 @@ import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
@@ -95,7 +96,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                   height: 160,
                   borderRadius: 80,
                   overflow: "hidden",
-                  backgroundColor: "#1a1a1a",
+                  backgroundColor: Colors.surface,
                 }}
               >
                 {imageUrl ? (
@@ -110,7 +111,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                       flex: 1,
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: "#262626",
+                      backgroundColor: Colors.surfaceRaised,
                     }}
                   >
                     {/* biome-ignore lint/plugin: emoji glyph, not text */}
@@ -124,7 +125,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                 numberOfLines={2}
                 style={{
                   fontSize: typography.callout,
-                  color: "#FFFFFF",
+                  color: Colors.foreground,
                   textAlign: "center",
                 }}
               >
@@ -162,7 +163,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                   height: posterSizes.poster,
                   borderRadius: 12,
                   overflow: "hidden",
-                  backgroundColor: "#1a1a1a",
+                  backgroundColor: Colors.surface,
                 }}
               >
                 {imageUrl ? (
@@ -177,7 +178,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                       flex: 1,
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: "#262626",
+                      backgroundColor: Colors.surfaceRaised,
                     }}
                   >
                     {/* biome-ignore lint/plugin: emoji glyph, not text */}
@@ -189,7 +190,10 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
             <View style={{ marginTop: 12, flexDirection: "column" }}>
               <Text
                 numberOfLines={2}
-                style={{ fontSize: typography.callout, color: "#FFFFFF" }}
+                style={{
+                  fontSize: typography.callout,
+                  color: Colors.foreground,
+                }}
               >
                 {item.Name}
               </Text>
@@ -198,7 +202,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                   numberOfLines={1}
                   style={{
                     fontSize: typography.callout,
-                    color: "#9CA3AF",
+                    color: Colors.foregroundMuted,
                     marginTop: 2,
                   }}
                 >
@@ -210,7 +214,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                   numberOfLines={1}
                   style={{
                     fontSize: typography.callout,
-                    color: "#9CA3AF",
+                    color: Colors.foregroundMuted,
                     marginTop: 2,
                   }}
                 >
@@ -221,7 +225,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
                 <Text
                   style={{
                     fontSize: typography.callout,
-                    color: "#9CA3AF",
+                    color: Colors.foregroundMuted,
                     marginTop: 2,
                   }}
                 >
@@ -277,7 +281,7 @@ export const TVSearchSection: React.FC<TVSearchSectionProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "700",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 20,
           marginLeft: edgePadding,
           letterSpacing: 0.5,

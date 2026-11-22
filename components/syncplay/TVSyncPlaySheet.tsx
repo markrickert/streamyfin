@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TVOptionCard } from "@/components/tv/TVOptionCard";
+import { Colors } from "@/constants/Colors";
 import { SYNCPLAY_TV_SHEET_DISMISS_MS } from "@/constants/SyncPlay";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import type { SyncPlayGroup } from "@/providers/SyncPlayProvider";
@@ -272,7 +273,9 @@ export function TVSyncPlaySheet({ seed, onClose }: Props) {
           <Text numberOfLines={1} style={secondary}>
             {t("syncplay.now_playing")}
             {"  "}
-            <Text style={{ fontSize: typography.callout, color: "#fff" }}>
+            <Text
+              style={{ fontSize: typography.callout, color: Colors.foreground }}
+            >
               {currentItem?.Name || t("syncplay.unavailable_video")}
             </Text>
           </Text>
@@ -328,9 +331,9 @@ export function TVSyncPlaySheet({ seed, onClose }: Props) {
   );
 }
 
-const MUTED = "rgba(255,255,255,0.6)";
-const WARNING = "#fde68a";
-const ERROR = "#f87171";
+const MUTED = Colors.white50;
+const WARNING = Colors.foreground;
+const ERROR = Colors.dangerLight;
 
 const styles = StyleSheet.create({
   header: {
@@ -344,7 +347,7 @@ const styles = StyleSheet.create({
     gap: scaleSize(16),
   },
   title: {
-    color: "#fff",
+    color: Colors.foreground,
     fontWeight: "600",
     flexShrink: 1,
   },

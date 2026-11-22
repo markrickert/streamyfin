@@ -10,6 +10,7 @@ import { Text } from "@/components/common/Text";
 import { ListGroup } from "@/components/list/ListGroup";
 import { ListItem } from "@/components/list/ListItem";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
+import { Colors } from "@/constants/Colors";
 import {
   MUSIC_LOOKAHEAD_COUNTS,
   MUSIC_NORMALIZATION_MODES,
@@ -184,7 +185,7 @@ export default function MusicSettingsPage() {
                   <Ionicons
                     name='chevron-expand-sharp'
                     size={18}
-                    color='#5A5960'
+                    color={Colors.foregroundDisabled}
                   />
                 </View>
               }
@@ -231,7 +232,7 @@ export default function MusicSettingsPage() {
                     <Ionicons
                       name='chevron-expand-sharp'
                       size={18}
-                      color='#5A5960'
+                      color={Colors.foregroundDisabled}
                     />
                   </View>
                 }
@@ -252,7 +253,7 @@ export default function MusicSettingsPage() {
                     <Ionicons
                       name='chevron-expand-sharp'
                       size={18}
-                      color='#5A5960'
+                      color={Colors.foregroundDisabled}
                     />
                   </View>
                 }

@@ -21,6 +21,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
 import { scaleSize } from "@/utils/scaleSize";
@@ -222,7 +223,7 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
       zIndex: 100,
     },
     focusedCard: {
-      shadowColor: "#fff",
+      shadowColor: Colors.white,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.6,
       shadowRadius: scaleSize(16),
@@ -237,7 +238,7 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
     },
     thumbnail: {
       width: scaleSize(180),
-      backgroundColor: "rgba(0,0,0,0.3)",
+      backgroundColor: Colors.black30,
     },
     content: {
       padding: scaleSize(16),
@@ -246,31 +247,31 @@ const createStyles = (typography: ReturnType<typeof useScaledTVTypography>) =>
     },
     label: {
       fontSize: typography.callout,
-      color: "rgba(255,255,255,0.5)",
+      color: Colors.foregroundMuted,
       textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: scaleSize(4),
     },
     seriesName: {
       fontSize: typography.callout,
-      color: "rgba(255,255,255,0.7)",
+      color: Colors.foregroundMuted,
       marginBottom: scaleSize(2),
     },
     episodeInfo: {
       fontSize: typography.body,
-      color: "#fff",
+      color: Colors.foreground,
       fontWeight: "600",
       marginBottom: scaleSize(12),
     },
     progressContainer: {
       height: scaleSize(4),
-      backgroundColor: "rgba(255,255,255,0.2)",
+      backgroundColor: Colors.white20,
       borderRadius: scaleSize(2),
       overflow: "hidden",
     },
     progressBar: {
       height: "100%",
-      backgroundColor: "#fff",
+      backgroundColor: Colors.white,
       borderRadius: scaleSize(2),
     },
     returnFocusGuide: {

@@ -62,11 +62,11 @@ export const TVGuideProgramCell: React.FC<TVGuideProgramCellProps> = ({
           styles.container,
           {
             backgroundColor: focused
-              ? "#FFFFFF"
+              ? Colors.white
               : isCurrentlyAiring
-                ? "rgba(255, 255, 255, 0.15)"
-                : "rgba(255, 255, 255, 0.08)",
-            borderColor: focused ? "#FFFFFF" : "rgba(255, 255, 255, 0.1)",
+                ? Colors.white10
+                : Colors.white10,
+            borderColor: focused ? Colors.white : Colors.white10,
           },
           focused && styles.focusedShadow,
         ]}
@@ -89,7 +89,7 @@ export const TVGuideProgramCell: React.FC<TVGuideProgramCellProps> = ({
             styles.programName,
             {
               fontSize: typography.callout,
-              color: focused ? "#000000" : "#FFFFFF",
+              color: focused ? Colors.black : Colors.foreground,
             },
           ]}
         >
@@ -103,9 +103,7 @@ export const TVGuideProgramCell: React.FC<TVGuideProgramCellProps> = ({
             styles.timeText,
             {
               fontSize: typography.callout,
-              color: focused
-                ? "rgba(0, 0, 0, 0.6)"
-                : "rgba(255, 255, 255, 0.5)",
+              color: focused ? Colors.black60 : Colors.white50,
             },
           ]}
         >
@@ -127,7 +125,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   focusedShadow: {
-    shadowColor: "#FFFFFF",
+    shadowColor: Colors.white,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -144,7 +142,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   liveBadgeText: {
-    color: "#FFFFFF",
+    color: Colors.foreground,
     fontWeight: "bold",
   },
   programName: {

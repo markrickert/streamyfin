@@ -25,7 +25,7 @@ export const PlayedStatus: React.FC<Props> = ({ items, ...props }) => {
       <RoundButton onPress={handlePress} size={props.size}>
         <HeaderIcon
           name={allPlayed ? "played" : "unplayed"}
-          tintColor={allPlayed ? Colors.primary : "white"}
+          tintColor={allPlayed ? Colors.primary : Colors.foreground}
           size={props.size === "large" ? undefined : 18}
         />
       </RoundButton>

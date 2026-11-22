@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { TVPadding } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
@@ -45,16 +46,16 @@ const TVNavBarTabItem: React.FC<{
     });
 
   const bg = focused
-    ? "rgba(255, 255, 255, 0.95)"
+    ? Colors.white80
     : isActive
-      ? "rgba(255, 255, 255, 0.15)"
+      ? Colors.white10
       : "transparent";
 
   const textColor = focused
-    ? "#000"
+    ? Colors.black
     : isActive
-      ? "#fff"
-      : "rgba(255, 255, 255, 0.7)";
+      ? Colors.white
+      : Colors.white80;
 
   return (
     <Pressable
@@ -72,7 +73,7 @@ const TVNavBarTabItem: React.FC<{
             backgroundColor: bg,
             borderRadius: scaleSize(24),
             borderWidth: isActive && !focused ? 1 : 0,
-            borderColor: "rgba(255, 255, 255, 0.3)",
+            borderColor: Colors.white30,
             paddingHorizontal: scaleSize(28),
             paddingVertical: scaleSize(14),
           },

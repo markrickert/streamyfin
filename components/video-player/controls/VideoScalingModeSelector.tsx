@@ -6,6 +6,7 @@ import {
   type OptionGroup,
   PlatformDropdown,
 } from "@/components/PlatformDropdown";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 
 export type AspectRatio = "default" | "16:9" | "4:3" | "1:1" | "21:9";
@@ -88,7 +89,7 @@ export const AspectRatioSelector: React.FC<AspectRatioSelectorProps> = ({
         className='aspect-square flex flex-col rounded-xl items-center justify-center p-2'
         style={{ opacity: disabled ? 0.5 : 1 }}
       >
-        <Ionicons name='crop-outline' size={24} color='white' />
+        <Ionicons name='crop-outline' size={24} color={Colors.foreground} />
       </View>
     ),
     [disabled],

@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { CONTROLS_CONSTANTS } from "./constants";
 
 // Slightly larger preview (scale 1.6 vs old 1.4) to give the overlay text
@@ -113,7 +114,7 @@ export const TrickplayBubble: FC<TrickplayBubbleProps> = ({
             paddingHorizontal: 3,
             paddingVertical: 1,
             borderRadius: 3,
-            backgroundColor: "rgba(0,0,0,0.55)",
+            backgroundColor: Colors.black60,
             maxWidth: tileWidth - 8,
           }}
         >
@@ -121,7 +122,7 @@ export const TrickplayBubble: FC<TrickplayBubbleProps> = ({
             <Text
               numberOfLines={1}
               style={{
-                color: "#fff",
+                color: Colors.foreground,
                 fontSize: 7,
                 opacity: 0.85,
                 lineHeight: 9,
@@ -132,7 +133,7 @@ export const TrickplayBubble: FC<TrickplayBubbleProps> = ({
           ) : null}
           <Text
             style={{
-              color: "#fff",
+              color: Colors.foreground,
               fontSize: 8,
               fontWeight: "600",
               lineHeight: 10,

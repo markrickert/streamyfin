@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import {
   MEDIA_OPTIONS_BUTTON_FILL_OPACITY,
   MEDIA_OPTIONS_BUTTON_SIZE,
@@ -55,8 +56,8 @@ export const MediaSourceButton: React.FC<Props> = ({
   const [open, setOpen] = useState(false);
 
   const effectiveColors = colors || {
-    primary: "#7c3aed",
-    text: "#000000",
+    primary: Colors.primary,
+    text: Colors.black,
   };
 
   useEffect(() => {

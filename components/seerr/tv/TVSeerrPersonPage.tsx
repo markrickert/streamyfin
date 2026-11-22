@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { TVSeerrPosterCard } from "@/components/tv/TVSeerrPosterCard";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_TV_BIOGRAPHY_LINES,
   SEERR_TV_PERSON_PHOTO,
@@ -88,13 +89,18 @@ export const TVSeerrPersonPage: React.FC<{ personId: string }> = ({
             style={{
               fontSize: typography.title,
               fontWeight: "bold",
-              color: "white",
+              color: Colors.foreground,
             }}
           >
             {details?.name}
           </Text>
           {!!born && (
-            <Text style={{ fontSize: typography.callout, color: "#9CA3AF" }}>
+            <Text
+              style={{
+                fontSize: typography.callout,
+                color: Colors.foregroundMuted,
+              }}
+            >
               {born}
             </Text>
           )}
@@ -103,7 +109,7 @@ export const TVSeerrPersonPage: React.FC<{ personId: string }> = ({
               numberOfLines={SEERR_TV_BIOGRAPHY_LINES}
               style={{
                 fontSize: typography.callout,
-                color: "rgba(255,255,255,0.8)",
+                color: Colors.foreground,
               }}
             >
               {details.biography}
@@ -116,7 +122,7 @@ export const TVSeerrPersonPage: React.FC<{ personId: string }> = ({
           style={{
             fontSize: typography.heading,
             fontWeight: "bold",
-            color: "white",
+            color: Colors.foreground,
             marginBottom: scaleSize(24),
           }}
         >

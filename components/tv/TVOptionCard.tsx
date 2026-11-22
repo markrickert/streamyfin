@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -48,13 +49,13 @@ export const TVOptionCard = React.forwardRef<ViewInstance, TVOptionCardProps>(
               width,
               height,
               backgroundColor: focused
-                ? "#fff"
+                ? Colors.white
                 : selected
-                  ? "rgba(255,255,255,0.15)"
-                  : "rgba(255,255,255,0.08)",
+                  ? Colors.white10
+                  : Colors.white10,
               borderRadius: scaleSize(14),
               borderWidth: focused ? 0 : selected ? scaleSize(2) : 0,
-              borderColor: "rgba(255,255,255,0.6)",
+              borderColor: Colors.white50,
               justifyContent: "center",
               alignItems: "center",
               paddingHorizontal: scaleSize(12),
@@ -76,7 +77,7 @@ export const TVOptionCard = React.forwardRef<ViewInstance, TVOptionCardProps>(
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? "#000" : "#fff",
+                color: focused ? Colors.black : Colors.foreground,
                 fontWeight: focused || selected ? "600" : "400",
                 textAlign: "center",
                 flexShrink: 1,
@@ -89,7 +90,7 @@ export const TVOptionCard = React.forwardRef<ViewInstance, TVOptionCardProps>(
               <Ionicons
                 name='checkmark'
                 size={scaleSize(26)}
-                color='rgba(255,255,255,0.8)'
+                color={Colors.foreground}
                 style={{ marginLeft: scaleSize(8), flexShrink: 0 }}
               />
             )}
@@ -98,7 +99,7 @@ export const TVOptionCard = React.forwardRef<ViewInstance, TVOptionCardProps>(
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)",
+                color: focused ? Colors.black60 : Colors.foregroundMuted,
                 textAlign: "center",
                 marginTop: scaleSize(2),
               }}

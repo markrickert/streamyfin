@@ -23,6 +23,7 @@ import { HeaderButton } from "@/components/common/HeaderButton";
 import { Text } from "@/components/common/Text";
 import ActiveDownloads from "@/components/downloads/ActiveDownloads";
 import { DownloadSize } from "@/components/downloads/DownloadSize";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useDownload } from "@/providers/DownloadProvider";
@@ -358,10 +359,10 @@ export default function DownloadsPage() {
         ref={bottomSheetModalRef}
         enableDynamicSizing
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
-          backgroundColor: "#171717",
+          backgroundColor: Colors.surface,
         }}
         backdropComponent={(props: BottomSheetBackdropProps) => (
           <BottomSheetBackdrop

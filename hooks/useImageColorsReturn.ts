@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import type * as ImageColorsType from "react-native-image-colors";
+import { Colors } from "@/constants/Colors";
 import { apiAtom } from "@/providers/JellyfinProvider";
 
 // Conditionally import react-native-image-colors only on non-TV platforms
@@ -28,8 +29,8 @@ export interface ThemeColors {
 }
 
 const DEFAULT_COLORS: ThemeColors = {
-  primary: "#FFFFFF",
-  text: "#000000",
+  primary: Colors.white,
+  text: Colors.black,
 };
 
 /**
@@ -103,16 +104,16 @@ export const useImageColorsReturn = ({
         source.uri,
         optionsWithOptionalHeaders(
           {
-            fallback: "#fff",
+            fallback: Colors.white,
             cache: false,
           },
           headers,
         ),
       )
         .then((colors: ImageColorsType.ImageColorsResult) => {
-          let primary = "#fff";
-          let text = "#000";
-          let backup = "#fff";
+          let primary: string = Colors.white;
+          let text: string = Colors.black;
+          let backup: string = Colors.white;
 
           // Select the appropriate color based on the platform
           if (colors.platform === "android") {

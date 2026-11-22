@@ -8,6 +8,7 @@ import {
   type ViewInstance,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -41,17 +42,17 @@ export const TVTrackCard = React.forwardRef<ViewInstance, TVTrackCardProps>(
             animatedStyle,
             {
               backgroundColor: focused
-                ? "#fff"
+                ? Colors.white
                 : selected
-                  ? "rgba(255,255,255,0.2)"
-                  : "rgba(255,255,255,0.08)",
+                  ? Colors.white20
+                  : Colors.white10,
             },
           ]}
         >
           <Text
             style={[
               styles.trackCardText,
-              { color: focused ? "#000" : "#fff" },
+              { color: focused ? Colors.black : Colors.foreground },
               (focused || selected) && { fontWeight: "600" },
             ]}
             numberOfLines={2}
@@ -63,7 +64,7 @@ export const TVTrackCard = React.forwardRef<ViewInstance, TVTrackCardProps>(
               style={[
                 styles.trackCardSublabel,
                 {
-                  color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)",
+                  color: focused ? Colors.black60 : Colors.foregroundMuted,
                 },
               ]}
               numberOfLines={1}
@@ -76,7 +77,7 @@ export const TVTrackCard = React.forwardRef<ViewInstance, TVTrackCardProps>(
               <Ionicons
                 name='checkmark'
                 size={scaleSize(16)}
-                color='rgba(255,255,255,0.8)'
+                color={Colors.foreground}
               />
             </View>
           )}

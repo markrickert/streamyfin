@@ -41,6 +41,7 @@ import {
   updatePlaybackSpeedSettings,
 } from "@/components/video-player/controls/utils/playback-speed-settings";
 import { VideoPlayerView } from "@/components/video-player/VideoPlayerView";
+import { Colors } from "@/constants/Colors";
 import { PROGRESS_REPORT_INTERVAL } from "@/constants/Playback";
 import useRouter from "@/hooks/useAppRouter";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -1793,7 +1794,7 @@ export default function DirectPlayerPage() {
           <View
             style={{
               flex: 1,
-              backgroundColor: "black",
+              backgroundColor: Colors.black,
               height: "100%",
               width: "100%",
             }}
@@ -1879,7 +1880,7 @@ export default function DirectPlayerPage() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: "black",
+                    backgroundColor: Colors.black,
                     justifyContent: "center",
                     alignItems: "center",
                   }}

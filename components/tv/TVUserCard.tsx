@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import type { AccountSecurityType } from "@/utils/secureCredentials";
@@ -56,23 +57,23 @@ export const TVUserCard = React.forwardRef<ViewInstance, TVUserCardProps>(
 
     const getBackgroundColor = () => {
       if (isCurrent) {
-        return focused ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.04)";
+        return focused ? Colors.white10 : Colors.white05;
       }
-      return focused ? "#fff" : "rgba(255,255,255,0.08)";
+      return focused ? Colors.white : Colors.white10;
     };
 
     const getTextColor = () => {
       if (isCurrent) {
-        return "rgba(255,255,255,0.4)";
+        return Colors.white30;
       }
-      return focused ? "#000" : "#fff";
+      return focused ? Colors.black : Colors.white;
     };
 
     const getSecondaryColor = () => {
       if (isCurrent) {
-        return "rgba(255,255,255,0.25)";
+        return Colors.white20;
       }
-      return focused ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+      return focused ? Colors.black50 : Colors.white50;
     };
 
     return (
@@ -103,10 +104,10 @@ export const TVUserCard = React.forwardRef<ViewInstance, TVUserCardProps>(
               width: scaleSize(44),
               height: scaleSize(44),
               backgroundColor: isCurrent
-                ? "rgba(255,255,255,0.08)"
+                ? Colors.white10
                 : focused
-                  ? "rgba(0,0,0,0.1)"
-                  : "rgba(255,255,255,0.15)",
+                  ? Colors.black10
+                  : Colors.white10,
               borderRadius: scaleSize(22),
               alignItems: "center",
               justifyContent: "center",
@@ -143,7 +144,7 @@ export const TVUserCard = React.forwardRef<ViewInstance, TVUserCardProps>(
                 <Text
                   style={{
                     fontSize: typography.callout - 4,
-                    color: "rgba(255,255,255,0.3)",
+                    color: Colors.foregroundDisabled,
                     fontStyle: "italic",
                   }}
                 >

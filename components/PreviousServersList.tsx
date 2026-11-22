@@ -253,7 +253,7 @@ export const PreviousServersList: React.FC<PreviousServersListProps> = ({
           className='bg-neutral-700 justify-center items-center px-5'
           accessibilityLabel={t("custom_headers.title")}
         >
-          <Ionicons name='key' size={20} color='white' />
+          <Ionicons name='key' size={20} color={Colors.foreground} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
@@ -263,7 +263,7 @@ export const PreviousServersList: React.FC<PreviousServersListProps> = ({
           className='bg-red-600 justify-center items-center px-5'
           accessibilityLabel={t("server.remove_server")}
         >
-          <Ionicons name='trash' size={20} color='white' />
+          <Ionicons name='trash' size={20} color={Colors.foreground} />
         </TouchableOpacity>
       </View>
     ),

@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { MpvPlayerView } from "@/modules/mpv-player";
 import type { MpvPlayerViewRef } from "@/modules/mpv-player/src/MpvPlayer.types";
 import { useSettings } from "@/utils/atoms/settings";
@@ -130,7 +131,7 @@ export const SubtitlePreview = React.memo(() => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator color='white' />
+        <ActivityIndicator color={Colors.foreground} />
       </View>
     );
   }
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     aspectRatio: 16 / 9,
-    backgroundColor: "black",
+    backgroundColor: Colors.black,
     borderRadius: 8,
     overflow: "hidden",
     marginBottom: 16,
@@ -198,18 +199,18 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   errorText: {
-    color: "#FF453A",
+    color: Colors.danger,
     marginBottom: 10,
     fontSize: 14,
   },
   retryButton: {
-    backgroundColor: "#333",
+    backgroundColor: Colors.border,
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 6,
   },
   retryText: {
-    color: "white",
+    color: Colors.foreground,
     fontSize: 13,
     fontWeight: "600",
   },

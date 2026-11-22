@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import type { ComponentProps } from "react";
 import { Platform } from "react-native";
 import { HeaderGradient } from "@/components/common/HeaderGradient";
+import { Colors } from "@/constants/Colors";
 
 type ICommonScreenOptions = ComponentProps<typeof Stack.Screen>["options"];
 
@@ -20,7 +21,7 @@ type ICommonScreenOptions = ComponentProps<typeof Stack.Screen>["options"];
  * `headerBackground` instead: a dark-to-transparent scrim behind every header.
  */
 export const stackScreenOptions: ICommonScreenOptions = {
-  headerTintColor: "white",
+  headerTintColor: Colors.white,
   headerBackButtonDisplayMode: "minimal",
   scrollEdgeEffects: { top: "hidden" },
   headerBackground:
@@ -52,9 +53,9 @@ export const nestedTabPageScreenOptions: Record<string, ICommonScreenOptions> =
 const watchlistSheetOptions: ICommonScreenOptions = {
   presentation: "modal",
   headerShown: !Platform.isTV,
-  headerStyle: { backgroundColor: "#171717" },
-  headerTintColor: "white",
-  contentStyle: { backgroundColor: "#171717" },
+  headerStyle: { backgroundColor: Colors.surface },
+  headerTintColor: Colors.white,
+  contentStyle: { backgroundColor: Colors.surface },
 };
 
 /**

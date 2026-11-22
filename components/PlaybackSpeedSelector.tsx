@@ -3,6 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useSettings } from "@/utils/atoms/settings";
 import { type OptionGroup, PlatformDropdown } from "./PlatformDropdown";
 import { PlaybackSpeedScope } from "./video-player/controls/utils/playback-speed-settings";
@@ -155,7 +156,7 @@ export const PlaybackSpeedSelector: React.FC<Props> = ({
   const trigger = useMemo(
     () => (
       <View className='aspect-square flex flex-col rounded-xl items-center justify-center p-2'>
-        <Ionicons name='speedometer' size={24} color='white' />
+        <Ionicons name='speedometer' size={24} color={Colors.foreground} />
       </View>
     ),
     [],

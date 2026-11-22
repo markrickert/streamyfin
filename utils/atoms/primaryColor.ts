@@ -1,4 +1,5 @@
 import { atom, useAtom } from "jotai";
+import { Colors } from "@/constants/Colors";
 
 interface ThemeColors {
   primary: string;
@@ -21,11 +22,11 @@ export const calculateTextColor = (backgroundColor: string): string => {
 
   // Use black text if the background is bright and has good contrast with black
   if (brightness > 180 && contrastWithBlack >= 4.5) {
-    return "#000000";
+    return Colors.black;
   }
 
   // Otherwise, use white text
-  return "#FFFFFF";
+  return Colors.white;
 };
 
 // Helper function to calculate contrast ratio
@@ -56,12 +57,12 @@ export const isCloseToBlack = (color: string): boolean => {
 };
 
 export const adjustToNearBlack = (_color: string): string => {
-  return "#313131"; // A very dark gray, almost black
+  return Colors.surfaceRaised; // A very dark gray, almost black
 };
 
 export const itemThemeColorAtom = atom<ThemeColors>({
-  primary: "#FFFFFF",
-  text: "#000000",
+  primary: Colors.white,
+  text: Colors.black,
 });
 
 export const useItemThemeColor = () => useAtom(itemThemeColorAtom);

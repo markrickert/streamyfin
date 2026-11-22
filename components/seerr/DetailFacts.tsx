@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { View, type ViewProps } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useSeerr } from "@/hooks/useSeerr";
 import { countryFlagEmoji } from "@/utils/seerr/countryFlag";
 import { ANIME_KEYWORD_ID } from "@/utils/seerr/data";
@@ -154,16 +155,16 @@ const DetailFacts: React.FC<
               >
                 {r.type === 3 ? (
                   // Theatrical
-                  <Ionicons name='ticket' size={16} color='white' />
+                  <Ionicons name='ticket' size={16} color={Colors.foreground} />
                 ) : r.type === 4 ? (
                   // Digital
-                  <Ionicons name='cloud' size={16} color='white' />
+                  <Ionicons name='cloud' size={16} color={Colors.foreground} />
                 ) : (
                   // Physical
                   <MaterialCommunityIcons
                     name='record-circle-outline'
                     size={16}
-                    color='white'
+                    color={Colors.foreground}
                   />
                 )}
                 <Text>{formatSeerrDate(r.release_date, tag)}</Text>

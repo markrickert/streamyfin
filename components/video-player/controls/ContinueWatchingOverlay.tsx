@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 
 export interface ContinueWatchingOverlayProps {
@@ -42,7 +43,11 @@ const ContinueWatchingOverlay: React.FC<ContinueWatchingOverlayProps> = ({
         {t("player.continue_watching")}
       </Button>
 
-      <Button onPress={router.back} color={"transparent"} className='w-2/3'>
+      <Button
+        onPress={router.back}
+        color={Colors.transparent}
+        className='w-2/3'
+      >
         {t("player.go_back")}
       </Button>
     </View>

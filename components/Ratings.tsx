@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useMemo } from "react";
 import { View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useSeerr } from "@/hooks/useSeerr";
 import type {
   MovieDetails,
@@ -36,7 +37,9 @@ export const Ratings: React.FC<Props> = ({ item, className, ...props }) => {
         <Badge
           text={item.CommunityRating.toFixed(1)}
           variant='gray'
-          iconLeft={<Ionicons name='star' size={14} color='gold' />}
+          iconLeft={
+            <Ionicons name='star' size={14} color={Colors.warningLight} />
+          }
         />
       )}
       {item.CriticRating && (

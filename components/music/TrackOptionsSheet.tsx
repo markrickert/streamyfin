@@ -24,6 +24,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
 import { ArtworkImage } from "@/components/music/ArtworkImage";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useFavorite } from "@/hooks/useFavorite";
 import { useSheetOpenState } from "@/hooks/useSheetOpenState";
@@ -236,10 +237,10 @@ export const TrackOptionsSheet: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
     >
       <BottomSheetView
@@ -258,7 +259,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               height: 56,
               borderRadius: 6,
               overflow: "hidden",
-              backgroundColor: "#1a1a1a",
+              backgroundColor: Colors.surface,
               marginRight: 12,
             }}
           >
@@ -271,7 +272,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
               />
             ) : (
               <View className='flex-1 items-center justify-center bg-neutral-800'>
-                <Ionicons name='musical-note' size={24} color='#737373' />
+                <Ionicons
+                  name='musical-note'
+                  size={24}
+                  color={Colors.foregroundDisabled}
+                />
               </View>
             )}
           </View>
@@ -294,7 +299,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             onPress={handlePlayNext}
             className='flex-row items-center px-4 py-3.5'
           >
-            <Ionicons name='play-forward' size={22} color='white' />
+            <Ionicons name='play-forward' size={22} color={Colors.foreground} />
             <Text className='text-white ml-4 text-base'>
               {t("music.track_options.play_next")}
             </Text>
@@ -306,7 +311,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             onPress={handleAddToQueue}
             className='flex-row items-center px-4 py-3.5'
           >
-            <Ionicons name='list' size={22} color='white' />
+            <Ionicons name='list' size={22} color={Colors.foreground} />
             <Text className='text-white ml-4 text-base'>
               {t("music.track_options.add_to_queue")}
             </Text>
@@ -322,7 +327,7 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             <Ionicons
               name={isFavorite ? "heart" : "heart-outline"}
               size={22}
-              color={isFavorite ? "#ec4899" : "white"}
+              color={isFavorite ? Colors.favorite : Colors.foreground}
             />
             <Text className='text-white ml-4 text-base'>
               {isFavorite
@@ -337,7 +342,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             onPress={handleAddToPlaylist}
             className='flex-row items-center px-4 py-3.5'
           >
-            <Ionicons name='albums-outline' size={22} color='white' />
+            <Ionicons
+              name='albums-outline'
+              size={22}
+              color={Colors.foreground}
+            />
             <Text className='text-white ml-4 text-base'>
               {t("music.track_options.add_to_playlist")}
             </Text>
@@ -350,7 +359,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                 onPress={handleRemoveFromPlaylist}
                 className='flex-row items-center px-4 py-3.5'
               >
-                <Ionicons name='trash-outline' size={22} color='#ef4444' />
+                <Ionicons
+                  name='trash-outline'
+                  size={22}
+                  color={Colors.danger}
+                />
                 <Text className='text-red-500 ml-4 text-base'>
                   {t("music.track_options.remove_from_playlist")}
                 </Text>
@@ -370,14 +383,14 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             className='flex-row items-center px-4 py-3.5'
           >
             {isCurrentlyDownloading || isDownloadingTrack ? (
-              <ActivityIndicator size={22} color='white' />
+              <ActivityIndicator size={22} color={Colors.foreground} />
             ) : (
               <Ionicons
                 name={
                   isAlreadyDownloaded ? "checkmark-circle" : "download-outline"
                 }
                 size={22}
-                color={isAlreadyDownloaded ? "#22c55e" : "white"}
+                color={isAlreadyDownloaded ? Colors.success : Colors.foreground}
               />
             )}
             <Text
@@ -395,7 +408,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
             <>
               <View style={styles.separator} />
               <View className='flex-row items-center px-4 py-3.5'>
-                <Ionicons name='cloud-done-outline' size={22} color='#737373' />
+                <Ionicons
+                  name='cloud-done-outline'
+                  size={22}
+                  color={Colors.foregroundDisabled}
+                />
                 <Text className='text-neutral-500 ml-4 text-base'>
                   {t("music.track_options.cached")}
                 </Text>
@@ -410,7 +427,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                 onPress={handleDelete}
                 className='flex-row items-center px-4 py-3.5'
               >
-                <Ionicons name='trash-outline' size={22} color='#ef4444' />
+                <Ionicons
+                  name='trash-outline'
+                  size={22}
+                  color={Colors.danger}
+                />
                 <Text className='text-red-500 ml-4 text-base'>
                   {isAlreadyDownloaded
                     ? t("music.track_options.delete_download")
@@ -430,7 +451,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                   onPress={handleGoToArtist}
                   className='flex-row items-center px-4 py-3.5'
                 >
-                  <Ionicons name='person-outline' size={22} color='white' />
+                  <Ionicons
+                    name='person-outline'
+                    size={22}
+                    color={Colors.foreground}
+                  />
                   <Text className='text-white ml-4 text-base'>
                     {t("music.track_options.go_to_artist")}
                   </Text>
@@ -444,7 +469,11 @@ export const TrackOptionsSheet: React.FC<Props> = ({
                 onPress={handleGoToAlbum}
                 className='flex-row items-center px-4 py-3.5'
               >
-                <Ionicons name='disc-outline' size={22} color='white' />
+                <Ionicons
+                  name='disc-outline'
+                  size={22}
+                  color={Colors.foreground}
+                />
                 <Text className='text-white ml-4 text-base'>
                   {t("music.track_options.go_to_album")}
                 </Text>
@@ -460,6 +489,6 @@ export const TrackOptionsSheet: React.FC<Props> = ({
 const styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#404040",
+    backgroundColor: Colors.border,
   },
 });

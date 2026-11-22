@@ -5,6 +5,7 @@ import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { textShadowStyle } from "@/components/seerr/discover/GenericSlideCard";
 import { TVFocusablePoster } from "@/components/tv/TVFocusablePoster";
+import { Colors } from "@/constants/Colors";
 import { SEERR_TV_SLIDE_CARD_WIDTH } from "@/constants/Seerr";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
@@ -34,7 +35,7 @@ export const TVSeerrSlideCard: React.FC<{
           aspectRatio: 4 / 3,
           borderRadius: scaleSize(20),
           overflow: "hidden",
-          backgroundColor: "#262626",
+          backgroundColor: Colors.surfaceRaised,
           // A logo keeps its margins; a genre's picture fills the card.
           padding: contentFit === "contain" ? scaleSize(28) : 0,
         }}
@@ -63,7 +64,7 @@ export const TVSeerrSlideCard: React.FC<{
                 {
                   fontSize: typography.heading,
                   fontWeight: "bold",
-                  color: "white",
+                  color: Colors.foreground,
                   textAlign: "center",
                 },
               ]}

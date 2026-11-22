@@ -10,6 +10,7 @@ import { Input } from "@/components/common/Input";
 import { SettingSwitch } from "@/components/common/SettingSwitch";
 import { Stepper } from "@/components/inputs/Stepper";
 import { SubtitlePreview } from "@/components/settings/SubtitlePreview";
+import { Colors, SubtitleColors } from "@/constants/Colors";
 import {
   AudioTranscodeMode,
   defaultValues,
@@ -260,12 +261,30 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
 
   const subtitleColors = useMemo(
     () => [
-      { name: t("home.settings.subtitles.colors.white"), hex: "#FFFFFF" },
-      { name: t("home.settings.subtitles.colors.yellow"), hex: "#FFFF00" },
-      { name: t("home.settings.subtitles.colors.cyan"), hex: "#00FFFF" },
-      { name: t("home.settings.subtitles.colors.green"), hex: "#00FF00" },
-      { name: t("home.settings.subtitles.colors.magenta"), hex: "#FF00FF" },
-      { name: t("home.settings.subtitles.colors.red"), hex: "#FF0000" },
+      {
+        name: t("home.settings.subtitles.colors.white"),
+        hex: SubtitleColors.white,
+      },
+      {
+        name: t("home.settings.subtitles.colors.yellow"),
+        hex: SubtitleColors.yellow,
+      },
+      {
+        name: t("home.settings.subtitles.colors.cyan"),
+        hex: SubtitleColors.cyan,
+      },
+      {
+        name: t("home.settings.subtitles.colors.green"),
+        hex: SubtitleColors.green,
+      },
+      {
+        name: t("home.settings.subtitles.colors.magenta"),
+        hex: SubtitleColors.magenta,
+      },
+      {
+        name: t("home.settings.subtitles.colors.red"),
+        hex: SubtitleColors.red,
+      },
     ],
     [t],
   );
@@ -307,7 +326,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -361,7 +380,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -389,7 +408,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -415,7 +434,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -496,7 +515,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -533,7 +552,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                   backgroundColor: color.hex,
                   borderColor:
                     settings.subtitleColor === color.hex
-                      ? "white"
+                      ? Colors.white
                       : "transparent",
                 }}
               />
@@ -594,7 +613,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -619,7 +638,7 @@ export const SubtitleToggles: React.FC<Props> = React.memo(({ ...props }) => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }

@@ -16,6 +16,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv";
 import { tvSheetBacking } from "@/components/tv/tvSheetBacking";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { scaleSize } from "@/utils/scaleSize";
@@ -53,10 +54,10 @@ const TVSubmitButton: React.FC<{
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : isDisabled
-                ? "#4a4a4a"
-                : "rgba(255,255,255,0.15)",
+                ? Colors.border
+                : Colors.white10,
             paddingHorizontal: scaleSize(24),
             paddingVertical: scaleSize(14),
             borderRadius: scaleSize(10),
@@ -70,18 +71,21 @@ const TVSubmitButton: React.FC<{
         ]}
       >
         {loading ? (
-          <ActivityIndicator size='small' color={focused ? "#000" : "#fff"} />
+          <ActivityIndicator
+            size='small'
+            color={focused ? Colors.black : Colors.foreground}
+          />
         ) : (
           <>
             <Ionicons
               name='log-in-outline'
               size={scaleSize(20)}
-              color={focused ? "#000" : "#fff"}
+              color={focused ? Colors.black : Colors.foreground}
             />
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused ? "#000" : "#fff",
+                color: focused ? Colors.black : Colors.foreground,
                 fontWeight: "600",
               }}
             >
@@ -127,10 +131,10 @@ const TVPasswordInput: React.FC<{
         style={[
           animatedStyle,
           {
-            backgroundColor: "#1F2937",
+            backgroundColor: Colors.surfaceRaised,
             borderRadius: scaleSize(12),
             borderWidth: scaleSize(2),
-            borderColor: focused ? "#fff" : "#374151",
+            borderColor: focused ? Colors.white : Colors.border,
             paddingHorizontal: scaleSize(16),
             paddingVertical: scaleSize(14),
           },
@@ -141,12 +145,12 @@ const TVPasswordInput: React.FC<{
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor='#6B7280'
+          placeholderTextColor={Colors.foregroundDisabled}
           secureTextEntry
           autoCapitalize='none'
           autoCorrect={false}
           style={{
-            color: "#fff",
+            color: Colors.foreground,
             fontSize: typography.callout,
           }}
           onSubmitEditing={onSubmitEditing}
@@ -317,7 +321,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
     zIndex: 1000,
   },
@@ -340,22 +344,22 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "bold",
-    color: "#fff",
+    color: Colors.foreground,
     marginBottom: scaleSize(4),
   },
   subtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
   },
   inputContainer: {
     paddingHorizontal: scaleSize(48),
     marginBottom: scaleSize(20),
   },
   inputLabel: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: scaleSize(8),
   },
   errorText: {
-    color: "#ef4444",
+    color: Colors.danger,
     marginTop: scaleSize(8),
   },
   buttonContainer: {

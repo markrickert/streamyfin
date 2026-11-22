@@ -1,6 +1,7 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import type React from "react";
 import { View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import {
   SEERR_MEDIA_BADGE_COLORS,
   SEERR_STATUS_BADGE_COLORS,
@@ -58,10 +59,10 @@ export const TVSeerrBadges: React.FC<{
             <MaterialCommunityIcons
               name='movie-open'
               size={size * 0.55}
-              color='white'
+              color={Colors.foreground}
             />
           ) : (
-            <Feather name='tv' size={size * 0.55} color='white' />
+            <Feather name='tv' size={size * 0.55} color={Colors.foreground} />
           )}
         </View>
       )}
@@ -79,7 +80,7 @@ export const TVSeerrBadges: React.FC<{
           <MaterialCommunityIcons
             name={badge.icon}
             size={size * 0.62}
-            color='white'
+            color={Colors.foreground}
           />
         </View>
       )}

@@ -11,6 +11,7 @@ import {
   type TextInputProps,
   View,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface InputProps extends TextInputProps {
@@ -60,9 +61,7 @@ export function Input(props: InputProps) {
       height,
       borderRadius: 50,
       borderWidth: isFocused ? 1.5 : 1,
-      borderColor: isFocused
-        ? "rgba(255, 255, 255, 0.3)"
-        : "rgba(255, 255, 255, 0.1)",
+      borderColor: isFocused ? Colors.white30 : Colors.white10,
       overflow: "hidden" as const,
       flexDirection: "row" as const,
       alignItems: "center" as const,
@@ -74,21 +73,21 @@ export function Input(props: InputProps) {
         <Ionicons
           name='search'
           size={iconSize}
-          color={isFocused ? "#999" : "#666"}
+          color={isFocused ? Colors.foregroundMuted : Colors.foregroundDisabled}
           style={{ marginRight: iconMarginRight }}
         />
         <TextInput
           ref={inputRef}
           allowFontScaling={false}
-          placeholderTextColor='#666'
+          placeholderTextColor={Colors.foregroundDisabled}
           style={[
             {
               flex: 1,
               height,
               fontSize,
               fontWeight: "400",
-              color: "#FFFFFF",
-              backgroundColor: "transparent",
+              color: Colors.foreground,
+              backgroundColor: Colors.transparent,
             },
             style,
           ]}
@@ -123,9 +122,7 @@ export function Input(props: InputProps) {
               style={[
                 containerStyle,
                 {
-                  backgroundColor: isFocused
-                    ? "rgba(255, 255, 255, 0.12)"
-                    : "rgba(255, 255, 255, 0.08)",
+                  backgroundColor: isFocused ? Colors.white10 : Colors.white10,
                 },
               ]}
             >
@@ -143,8 +140,8 @@ export function Input(props: InputProps) {
       ref={inputRef}
       className={`p-4 rounded-xl bg-neutral-900 ${extraClassName}`}
       allowFontScaling={false}
-      style={[{ color: "white" }, style]}
-      placeholderTextColor={"#9CA3AF"}
+      style={[{ color: Colors.foreground }, style]}
+      placeholderTextColor={Colors.foregroundMuted}
       clearButtonMode='while-editing'
       {...otherProps}
     />

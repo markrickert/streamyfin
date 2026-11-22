@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { scaleSize } from "@/utils/scaleSize";
 import { Loader } from "./Loader";
@@ -133,7 +134,7 @@ export const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
       <Animated.View
         style={{
           transform: [{ scale }],
-          shadowColor: "#ffffff",
+          shadowColor: Colors.white,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: focused ? 0.5 : 0,
           shadowRadius: focused ? scaleSize(10) : 0,

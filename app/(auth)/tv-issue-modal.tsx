@@ -13,6 +13,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { TVButton, TVOptionCard } from "@/components/tv";
 import { TVSettingsTextInput } from "@/components/tv/settings/TVSettingsTextInput";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useSeerr } from "@/hooks/useSeerr";
@@ -122,7 +123,7 @@ export default function TVIssueModal() {
               style={{
                 fontSize: typography.heading,
                 fontWeight: "bold",
-                color: "white",
+                color: Colors.foreground,
               }}
             >
               {t("seerr.whats_wrong")}
@@ -131,7 +132,7 @@ export default function TVIssueModal() {
               numberOfLines={1}
               style={{
                 fontSize: typography.callout,
-                color: "rgba(255,255,255,0.6)",
+                color: Colors.foregroundMuted,
                 marginBottom: scaleSize(16),
               }}
             >
@@ -168,7 +169,12 @@ export default function TVIssueModal() {
             </View>
             <View style={styles.actions}>
               <TVButton onPress={close} variant='secondary'>
-                <Text style={{ fontSize: typography.callout, color: "white" }}>
+                <Text
+                  style={{
+                    fontSize: typography.callout,
+                    color: Colors.foreground,
+                  }}
+                >
                   {t("seerr.cancel")}
                 </Text>
               </TVButton>
@@ -181,7 +187,7 @@ export default function TVIssueModal() {
                   style={{
                     fontSize: typography.callout,
                     fontWeight: "bold",
-                    color: "black",
+                    color: Colors.black,
                   }}
                 >
                   {t("seerr.submit_button")}
@@ -198,7 +204,7 @@ export default function TVIssueModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
   },
   sheet: {
@@ -214,7 +220,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
   },
   types: {
     paddingVertical: scaleSize(16),

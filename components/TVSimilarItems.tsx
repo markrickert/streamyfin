@@ -7,6 +7,7 @@ import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { TVHorizontalList } from "@/components/tv/TVHorizontalList";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
 import { useSimilarItems } from "@/hooks/useSimilarItems";
@@ -72,7 +73,7 @@ export const TVSimilarItems: React.FC<TVSimilarItemsProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "600",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: scaleSize(24),
           marginLeft: titleInset,
         }}

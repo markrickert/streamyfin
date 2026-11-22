@@ -1,4 +1,5 @@
 // GenreTags.tsx
+
 import { BlurView } from "expo-blur";
 import type React from "react";
 import {
@@ -9,6 +10,7 @@ import {
   View,
   type ViewProps,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { GlassSurface } from "./common/GlassSurface";
 import { Text } from "./common/Text";
@@ -60,10 +62,12 @@ export const Tag: React.FC<
           style={{
             paddingHorizontal: 16,
             paddingVertical: 10,
-            backgroundColor: "rgba(0,0,0,0.3)",
+            backgroundColor: Colors.black30,
           }}
         >
-          <Text style={{ fontSize: typography.callout, color: "#E5E7EB" }}>
+          <Text
+            style={{ fontSize: typography.callout, color: Colors.foreground }}
+          >
             {text}
           </Text>
         </View>

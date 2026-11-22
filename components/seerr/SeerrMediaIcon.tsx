@@ -1,6 +1,7 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useMemo } from "react";
 import { View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { MediaType } from "@/utils/seerr/types";
 
 const SeerrMediaIcon: React.FC<
@@ -27,10 +28,10 @@ const SeerrMediaIcon: React.FC<
           <MaterialCommunityIcons
             name='movie-open'
             size={small ? 12 : 16}
-            color='white'
+            color={Colors.foreground}
           />
         ) : (
-          <Feather size={small ? 12 : 16} name='tv' color='white' />
+          <Feather size={small ? 12 : 16} name='tv' color={Colors.foreground} />
         )}
       </View>
     )

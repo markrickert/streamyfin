@@ -3,6 +3,7 @@ import React, { useCallback, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { scaleSize } from "@/utils/scaleSize";
@@ -79,14 +80,14 @@ export const TVAddUserForm: React.FC<TVAddUserFormProps> = ({
           style={{
             fontSize: typography.title,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(8),
           }}
         >
           {serverName ? (
             <>
               {`${t("login.login_to_title")} `}
-              <Text style={{ color: "#fff" }}>{serverName}</Text>
+              <Text style={{ color: Colors.foreground }}>{serverName}</Text>
             </>
           ) : (
             t("login.login_title")
@@ -95,7 +96,7 @@ export const TVAddUserForm: React.FC<TVAddUserFormProps> = ({
         <Text
           style={{
             fontSize: typography.callout,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             marginBottom: scaleSize(40),
           }}
         >

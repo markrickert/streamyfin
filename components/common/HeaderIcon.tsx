@@ -17,6 +17,7 @@
 
 import { Feather } from "@expo/vector-icons";
 import { SymbolView } from "expo-symbols";
+import { Colors } from "@/constants/Colors";
 import { HEADER_ICON_SIZE } from "./HeaderButton";
 
 /**
@@ -86,7 +87,7 @@ interface Props {
 
 export const HeaderIcon: React.FC<Props> = ({
   name,
-  tintColor = "white",
+  tintColor = Colors.foreground,
   size = HEADER_ICON_SIZE,
 }) => {
   const fallbackGlyph = FALLBACK_GLYPHS[name];

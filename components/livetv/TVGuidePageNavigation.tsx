@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface TVGuidePageNavigationProps {
@@ -66,7 +67,7 @@ const NavButton: React.FC<NavButtonProps> = ({
           styles.navButton,
           animatedStyle,
           {
-            backgroundColor: focused ? "#FFFFFF" : "rgba(255, 255, 255, 0.1)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
             opacity: visuallyDisabled ? 0.3 : 1,
           },
         ]}
@@ -74,14 +75,14 @@ const NavButton: React.FC<NavButtonProps> = ({
         <Ionicons
           name={icon}
           size={20}
-          color={focused ? "#000000" : "#FFFFFF"}
+          color={focused ? Colors.black : Colors.foreground}
         />
         <Text
           style={[
             styles.navButtonText,
             {
               fontSize: typography.callout,
-              color: focused ? "#000000" : "#FFFFFF",
+              color: focused ? Colors.black : Colors.foreground,
             },
           ]}
         >
@@ -155,6 +156,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   pageText: {
-    color: "rgba(255, 255, 255, 0.6)",
+    color: Colors.foregroundMuted,
   },
 });

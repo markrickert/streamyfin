@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, useWindowDimensions } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useSettings } from "@/utils/atoms/settings";
 import { CONTROLS_CONSTANTS } from "./constants";
@@ -337,7 +338,7 @@ export const GestureOverlay = ({
             position: "absolute",
             width: windowWidth,
             height: windowHeight,
-            backgroundColor: "black",
+            backgroundColor: Colors.black,
             left: 0,
             right: 0,
             top: 0,
@@ -357,7 +358,7 @@ export const GestureOverlay = ({
             position: "absolute",
             width: windowWidth,
             height: windowHeight,
-            backgroundColor: "transparent",
+            backgroundColor: Colors.transparent,
             left: 0,
             right: 0,
             top: 0,
@@ -392,9 +393,7 @@ export const GestureOverlay = ({
                           : -50,
                   },
                 ],
-            backgroundColor: isTopFeedback
-              ? "rgba(0, 0, 0, 0.5)"
-              : "rgba(0, 0, 0, 0.8)",
+            backgroundColor: isTopFeedback ? Colors.black50 : Colors.black80,
             paddingHorizontal: isTopFeedback ? 10 : 16,
             paddingVertical: isTopFeedback ? 5 : 12,
             borderRadius: isTopFeedback ? 6 : 8,
@@ -407,12 +406,12 @@ export const GestureOverlay = ({
           <Ionicons
             name={feedback.icon as any}
             size={isTopFeedback ? 14 : 24}
-            color='white'
+            color={Colors.foreground}
             style={{ marginRight: isTopFeedback ? 5 : 8 }}
           />
           <Text
             style={{
-              color: "white",
+              color: Colors.foreground,
               fontSize: isTopFeedback ? 13 : 16,
               fontWeight: "600",
             }}

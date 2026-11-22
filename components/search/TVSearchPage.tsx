@@ -275,14 +275,14 @@ export const TVSearchPage: React.FC<TVSearchPageProps> = ({
               style={{
                 minHeight: 56,
                 width: "100%",
-                backgroundColor: "#262626",
+                backgroundColor: Colors.surfaceRaised,
                 borderRadius: 12,
                 paddingHorizontal: 20,
                 fontSize: typography.body,
-                color: "#fff",
+                color: Colors.foreground,
               }}
               placeholder={t("search.search")}
-              placeholderTextColor='rgba(255,255,255,0.4)'
+              placeholderTextColor={Colors.foregroundDisabled}
               onChangeText={setSearch}
               defaultValue=''
               autoFocus={false}
@@ -377,7 +377,7 @@ export const TVSearchPage: React.FC<TVSearchPageProps> = ({
               style={{
                 fontSize: typography.heading,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: Colors.foreground,
                 marginBottom: 8,
               }}
             >
@@ -386,7 +386,7 @@ export const TVSearchPage: React.FC<TVSearchPageProps> = ({
             <Text
               style={{
                 fontSize: typography.body,
-                color: "rgba(255,255,255,0.6)",
+                color: Colors.foregroundMuted,
               }}
             >
               "{debouncedSearch}"

@@ -7,6 +7,7 @@ import {
   type ViewInstance,
 } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import type { CastCrewPerson } from "@/hooks/useCastCrew";
@@ -47,7 +48,7 @@ export const TVCastSection: React.FC<TVCastSectionProps> = React.memo(
           style={{
             fontSize: typography.heading,
             fontWeight: "600",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: 24,
           }}
         >

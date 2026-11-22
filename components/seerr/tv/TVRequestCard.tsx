@@ -172,7 +172,7 @@ export const TVRequestCard: React.FC<{
               style={{
                 fontSize: typography.heading,
                 fontWeight: "bold",
-                color: "white",
+                color: Colors.foreground,
               }}
             >
               {title}

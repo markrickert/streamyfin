@@ -8,6 +8,7 @@ import { Text } from "@/components/common/Text";
 import { ListGroup } from "@/components/list/ListGroup";
 import { ListItem } from "@/components/list/ListItem";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
+import { Colors } from "@/constants/Colors";
 import { SegmentSkipMode, useSettings } from "@/utils/atoms/settings";
 
 type SkipSettingKey =
@@ -90,7 +91,7 @@ export default function SegmentSkipPage() {
                       <Ionicons
                         name='chevron-expand-sharp'
                         size={18}
-                        color='#5A5960'
+                        color={Colors.foregroundDisabled}
                       />
                     </View>
                   }

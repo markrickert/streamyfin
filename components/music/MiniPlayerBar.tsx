@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GlassSurface } from "@/components/common/GlassSurface";
 import { Text } from "@/components/common/Text";
 import { ArtworkImage } from "@/components/music/ArtworkImage";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { apiAtom } from "@/providers/JellyfinProvider";
 import { useMusicPlayer } from "@/providers/MusicPlayerProvider";
@@ -175,7 +176,11 @@ export const MiniPlayerBar: React.FC = () => {
             />
           ) : (
             <View style={styles.albumPlaceholder}>
-              <Ionicons name='musical-note' size={20} color='#888' />
+              <Ionicons
+                name='musical-note'
+                size={20}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           )}
         </View>
@@ -194,7 +199,11 @@ export const MiniPlayerBar: React.FC = () => {
       {/* Controls */}
       <View style={styles.controls}>
         {isLoading ? (
-          <ActivityIndicator size='small' color='white' style={styles.loader} />
+          <ActivityIndicator
+            size='small'
+            color={Colors.foreground}
+            style={styles.loader}
+          />
         ) : (
           <>
             <TouchableOpacity
@@ -205,7 +214,7 @@ export const MiniPlayerBar: React.FC = () => {
               <Ionicons
                 name={isPlaying ? "pause" : "play"}
                 size={26}
-                color='white'
+                color={Colors.foreground}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -213,7 +222,11 @@ export const MiniPlayerBar: React.FC = () => {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.controlButton}
             >
-              <Ionicons name='play-forward' size={22} color='white' />
+              <Ionicons
+                name='play-forward'
+                size={22}
+                color={Colors.foreground}
+              />
             </TouchableOpacity>
           </>
         )}
@@ -271,7 +284,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: HORIZONTAL_MARGIN,
     right: HORIZONTAL_MARGIN,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -290,10 +303,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: "rgba(28, 28, 30, 0.97)",
+    backgroundColor: Colors.surfaceTranslucent,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: Colors.white10,
   },
   tappableArea: {
     flex: 1,
@@ -305,7 +318,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 8,
     overflow: "hidden",
-    backgroundColor: "#333",
+    backgroundColor: Colors.border,
   },
   albumImage: {
     width: "100%",
@@ -315,7 +328,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: Colors.surfaceRaised,
   },
   trackInfo: {
     flex: 1,
@@ -324,12 +337,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   trackTitle: {
-    color: "white",
+    color: Colors.foreground,
     fontSize: 14,
     fontWeight: "600",
   },
   artistName: {
-    color: "rgba(255, 255, 255, 0.6)",
+    color: Colors.white50,
     fontSize: 12,
   },
   controls: {
@@ -348,12 +361,12 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     height: 3,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: Colors.white10,
     borderRadius: 1.5,
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "white",
+    backgroundColor: Colors.white,
     borderRadius: 1.5,
   },
 });

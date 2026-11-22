@@ -430,7 +430,7 @@ export const DownloadItems: React.FC<DownloadProps> = ({
           fill={progress}
           width={PROGRESS_RING_WIDTH}
           tintColor={Colors.primary}
-          backgroundColor='white'
+          backgroundColor={Colors.white}
         />
       );
     }
@@ -467,10 +467,10 @@ export const DownloadItems: React.FC<DownloadProps> = ({
         ref={bottomSheetModalRef}
         enableDynamicSizing
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
-          backgroundColor: "#171717",
+          backgroundColor: Colors.surface,
         }}
         onChange={handleSheetChanges}
         backdropComponent={renderBackdrop}

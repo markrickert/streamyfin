@@ -3,6 +3,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client";
 import { type FC, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -138,7 +139,7 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
             <MaterialIcons
               name='screen-rotation'
               size={ICON_SIZES.HEADER}
-              color='white'
+              color={Colors.foreground}
               style={{ opacity: isTogglingOrientation ? 0.5 : 1 }}
             />
           </TouchableOpacity>
@@ -151,7 +152,7 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
             <MaterialIcons
               name='picture-in-picture'
               size={ICON_SIZES.HEADER}
-              color='white'
+              color={Colors.foreground}
             />
           </TouchableOpacity>
         )}
@@ -160,7 +161,11 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
             onPress={switchOnEpisodeMode}
             className='aspect-square flex flex-col rounded-xl items-center justify-center p-2'
           >
-            <Ionicons name='list' size={ICON_SIZES.HEADER} color='white' />
+            <Ionicons
+              name='list'
+              size={ICON_SIZES.HEADER}
+              color={Colors.foreground}
+            />
           </TouchableOpacity>
         )}
         {previousItem && (
@@ -171,7 +176,7 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
             <Ionicons
               name='play-skip-back'
               size={ICON_SIZES.HEADER}
-              color='white'
+              color={Colors.foreground}
             />
           </TouchableOpacity>
         )}
@@ -183,7 +188,7 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
             <Ionicons
               name='play-skip-forward'
               size={ICON_SIZES.HEADER}
-              color='white'
+              color={Colors.foreground}
             />
           </TouchableOpacity>
         )}
@@ -197,7 +202,11 @@ export const HeaderControls: FC<HeaderControlsProps> = ({
           onPress={onClose}
           className='aspect-square flex flex-col rounded-xl items-center justify-center p-2'
         >
-          <Ionicons name='close' size={ICON_SIZES.HEADER} color='white' />
+          <Ionicons
+            name='close'
+            size={ICON_SIZES.HEADER}
+            color={Colors.foreground}
+          />
         </TouchableOpacity>
       </View>
     </View>

@@ -25,6 +25,7 @@ import { HeaderIcon } from "@/components/common/HeaderIcon";
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -100,7 +101,7 @@ export default function WatchlistDetailScreen() {
                 <HeaderIcon name='edit' />
               </HeaderButton>
               <HeaderButton onPress={handleDelete}>
-                <HeaderIcon name='delete' tintColor='#ef4444' />
+                <HeaderIcon name='delete' tintColor={Colors.danger} />
               </HeaderButton>
             </HeaderButtonGroup>
           )
@@ -202,7 +203,11 @@ export default function WatchlistDetailScreen() {
           )}
           <View className='flex-row items-center gap-4'>
             <View className='flex-row items-center gap-1'>
-              <Ionicons name='film-outline' size={14} color='#9ca3af' />
+              <Ionicons
+                name='film-outline'
+                size={14}
+                color={Colors.foregroundMuted}
+              />
               <Text className='text-neutral-400 text-sm'>
                 {t("watchlists.item_count", { count: items?.length ?? 0 })}
               </Text>
@@ -213,7 +218,7 @@ export default function WatchlistDetailScreen() {
                   watchlist.isPublic ? "globe-outline" : "lock-closed-outline"
                 }
                 size={14}
-                color='#9ca3af'
+                color={Colors.foregroundMuted}
               />
               <Text className='text-neutral-400 text-sm'>
                 {watchlist.isPublic
@@ -235,7 +240,7 @@ export default function WatchlistDetailScreen() {
   const EmptyComponent = useMemo(
     () => (
       <View className='flex-1 items-center justify-center px-8 py-16'>
-        <Ionicons name='film-outline' size={48} color='#4b5563' />
+        <Ionicons name='film-outline' size={48} color={Colors.border} />
         <Text className='text-neutral-400 text-center mt-4'>
           {t("watchlists.empty_watchlist")}
         </Text>
@@ -285,14 +290,14 @@ export default function WatchlistDetailScreen() {
             marginBottom: 32,
             paddingBottom: 24,
             borderBottomWidth: 1,
-            borderBottomColor: "rgba(255,255,255,0.1)",
+            borderBottomColor: Colors.white10,
           }}
         >
           {watchlist.description && (
             <Text
               style={{
                 fontSize: typography.body,
-                color: "#9CA3AF",
+                color: Colors.foregroundMuted,
                 marginBottom: 16,
                 textAlign: "center",
               }}
@@ -310,8 +315,17 @@ export default function WatchlistDetailScreen() {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              <Ionicons name='film-outline' size={20} color='#9ca3af' />
-              <Text style={{ fontSize: typography.callout, color: "#9CA3AF" }}>
+              <Ionicons
+                name='film-outline'
+                size={20}
+                color={Colors.foregroundMuted}
+              />
+              <Text
+                style={{
+                  fontSize: typography.callout,
+                  color: Colors.foregroundMuted,
+                }}
+              >
                 {t("watchlists.item_count", { count: items?.length ?? 0 })}
               </Text>
             </View>
@@ -323,16 +337,26 @@ export default function WatchlistDetailScreen() {
                   watchlist.isPublic ? "globe-outline" : "lock-closed-outline"
                 }
                 size={20}
-                color='#9ca3af'
+                color={Colors.foregroundMuted}
               />
-              <Text style={{ fontSize: typography.callout, color: "#9CA3AF" }}>
+              <Text
+                style={{
+                  fontSize: typography.callout,
+                  color: Colors.foregroundMuted,
+                }}
+              >
                 {watchlist.isPublic
                   ? t("watchlists.public")
                   : t("watchlists.private")}
               </Text>
             </View>
             {!isOwner && (
-              <Text style={{ fontSize: typography.callout, color: "#737373" }}>
+              <Text
+                style={{
+                  fontSize: typography.callout,
+                  color: Colors.foregroundDisabled,
+                }}
+              >
                 {t("watchlists.by_owner")}
               </Text>
             )}
@@ -349,11 +373,11 @@ export default function WatchlistDetailScreen() {
               paddingTop: 100,
             }}
           >
-            <Ionicons name='film-outline' size={48} color='#4b5563' />
+            <Ionicons name='film-outline' size={48} color={Colors.border} />
             <Text
               style={{
                 fontSize: typography.body,
-                color: "#9CA3AF",
+                color: Colors.foregroundMuted,
                 textAlign: "center",
                 marginTop: 16,
               }}

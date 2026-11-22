@@ -160,7 +160,7 @@ export const Favorites = () => {
             fontSize: typography.heading,
             fontWeight: "bold",
             marginBottom: 8,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {t("favorites.noDataTitle")}
@@ -170,7 +170,7 @@ export const Favorites = () => {
             textAlign: "center",
             opacity: 0.7,
             fontSize: typography.body,
-            color: "#FFFFFF",
+            color: Colors.foreground,
           }}
         >
           {t("favorites.noData")}

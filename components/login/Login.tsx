@@ -393,8 +393,8 @@ export const Login: React.FC = () => {
                   <Switch
                     value={saveAccount}
                     onValueChange={setSaveAccount}
-                    trackColor={{ false: "#3f3f46", true: Colors.primary }}
-                    thumbColor='white'
+                    trackColor={{ false: Colors.border, true: Colors.primary }}
+                    thumbColor={Colors.white}
                   />
                   <Text className='ml-3 text-neutral-300'>
                     {t("save_account.save_for_later")}
@@ -416,7 +416,7 @@ export const Login: React.FC = () => {
                     <MaterialCommunityIcons
                       name='cellphone-lock'
                       size={24}
-                      color='white'
+                      color={Colors.foreground}
                     />
                   </TouchableOpacity>
                 </View>

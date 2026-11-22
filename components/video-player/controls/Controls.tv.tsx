@@ -37,6 +37,7 @@ import {
   TVSkipSegmentCard,
 } from "@/components/tv";
 import { TVFocusableProgressBar } from "@/components/tv/TVFocusableProgressBar";
+import { Colors } from "@/constants/Colors";
 import { NEXT_EPISODE_COUNTDOWN_MS } from "@/constants/Playback";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -1724,7 +1725,7 @@ const styles = StyleSheet.create({
   },
   darkOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: Colors.black30,
   },
   focusStealingOverlay: {
     ...StyleSheet.absoluteFill,
@@ -1749,20 +1750,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   subtitleText: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.white50,
   },
   titleText: {
-    color: "#fff",
+    color: Colors.foreground,
     fontWeight: "bold",
   },
   liveBadge: {
-    backgroundColor: "#EF4444",
+    backgroundColor: Colors.danger,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
   },
   liveBadgeText: {
-    color: "#FFF",
+    color: Colors.foreground,
     fontWeight: "bold",
   },
   controlButtonsRow: {
@@ -1797,7 +1798,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: TV_SEEKBAR_HEIGHT,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: Colors.white20,
     borderRadius: 8,
     overflow: "hidden",
   },
@@ -1806,7 +1807,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: Colors.white30,
     borderRadius: 8,
   },
   progressFill: {
@@ -1814,7 +1815,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 8,
   },
   timeContainer: {
@@ -1824,14 +1825,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   timeText: {
-    color: "rgba(255,255,255,0.7)",
+    color: Colors.white80,
   },
   timeRight: {
     flexDirection: "column",
     alignItems: "flex-end",
   },
   endsAtText: {
-    color: "rgba(255,255,255,0.5)",
+    color: Colors.white50,
     marginTop: 2,
   },
   // Minimal seek bar styles
@@ -1849,7 +1850,7 @@ const styles = StyleSheet.create({
   },
   minimalProgressGlow: {
     // Same glow effect and scale as focused TVFocusableProgressBar
-    shadowColor: "#fff",
+    shadowColor: Colors.white,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
@@ -1857,7 +1858,7 @@ const styles = StyleSheet.create({
   },
   minimalProgressTrack: {
     // Brighter track like focused state
-    backgroundColor: "rgba(255,255,255,0.35)",
+    backgroundColor: Colors.white30,
   },
   minimalProgressTrackWrapper: {
     position: "relative",
@@ -1875,7 +1876,7 @@ const styles = StyleSheet.create({
     width: 2,
     height: TV_SEEKBAR_HEIGHT + 5,
     bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: Colors.white50,
     borderRadius: 1,
     transform: [{ translateX: -1 }],
   },

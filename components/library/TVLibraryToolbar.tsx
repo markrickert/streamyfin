@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/common/Text";
 import { TVButton } from "@/components/tv/TVButton";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { requestTVFocus } from "@/utils/requestTVFocus";
 import { scaleSize } from "@/utils/scaleSize";
@@ -101,7 +102,7 @@ export const TVLibraryToolbar: React.FC<Props> = ({
           style={{
             fontSize: typography.heading,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             flexShrink: 1,
           }}
         >
@@ -134,7 +135,7 @@ export const TVLibraryToolbar: React.FC<Props> = ({
               <Ionicons
                 name={icon}
                 size={scaleSize(24)}
-                color='#FFFFFF'
+                color={Colors.foreground}
                 style={{ marginRight: scaleSize(8) }}
               />
               <Text
@@ -142,7 +143,7 @@ export const TVLibraryToolbar: React.FC<Props> = ({
                 style={{
                   fontSize: typography.callout,
                   fontWeight: "bold",
-                  color: "#FFFFFF",
+                  color: Colors.foreground,
                   flexShrink: 1,
                 }}
               >
@@ -157,7 +158,7 @@ export const TVLibraryToolbar: React.FC<Props> = ({
           numberOfLines={1}
           style={{
             fontSize: typography.callout,
-            color: "rgba(255,255,255,0.6)",
+            color: Colors.foregroundMuted,
             paddingTop: scaleSize(16),
           }}
         >

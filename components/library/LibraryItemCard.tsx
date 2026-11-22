@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { type TouchableOpacityProps, View } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
 import { getPrimaryImageUrl } from "@/utils/jellyfin/image/getPrimaryImageUrl";
@@ -126,7 +127,7 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
           <Ionicons
             name={icons[library.CollectionType!] || "folder"}
             size={22}
-            color={"#e5e5e5"}
+            color={Colors.foreground}
           />
           <Text className='text-start px-4 text-neutral-200'>
             {library.Name}
@@ -171,7 +172,7 @@ export const LibraryItemCard: React.FC<Props> = ({ library, ...props }) => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.3)", // Adjust the alpha value (0.3) to control darkness
+                backgroundColor: Colors.black30, // Adjust the alpha value (0.3) to control darkness
               }}
             />
           </View>

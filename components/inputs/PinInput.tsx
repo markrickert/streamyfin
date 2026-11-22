@@ -10,6 +10,7 @@ import {
   View,
   type ViewStyle,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { NO_KEYBOARD_TOOLBAR } from "@/constants/Keyboard";
 
 interface PinInputProps
@@ -138,27 +139,27 @@ const styles = StyleSheet.create({
     width: 40,
     height: 48,
     borderWidth: 1,
-    borderColor: "#374151",
+    borderColor: Colors.border,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1F2937",
+    backgroundColor: Colors.surfaceRaised,
   },
   activeCell: {
-    borderColor: "#6366F1",
+    borderColor: Colors.info,
   },
   filledCell: {
-    borderColor: "#4B5563",
+    borderColor: Colors.border,
   },
   digit: {
     fontSize: 24,
-    color: "white",
+    color: Colors.foreground,
     fontWeight: "500",
   },
   cursor: {
     position: "absolute",
     width: 2,
     height: 24,
-    backgroundColor: "#6366F1",
+    backgroundColor: Colors.info,
   },
 });

@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import TopTabs from "expo-router/js-top-tabs";
 import { useTranslation } from "react-i18next";
 import { MusicLibraryIdContext } from "@/components/music/MusicLibraryContext";
+import { Colors } from "@/constants/Colors";
 
 const TAB_LABEL_FONT_SIZE = 13;
 const TAB_ITEM_HORIZONTAL_PADDING = 12;
@@ -19,7 +20,7 @@ const Layout = () => {
       <Stack.Screen
         options={{
           title: t("music.title"),
-          headerStyle: { backgroundColor: "black" },
+          headerStyle: { backgroundColor: Colors.black },
           headerShadowVisible: false,
         }}
       />
@@ -28,8 +29,8 @@ const Layout = () => {
           keyboardDismissMode='none'
           screenOptions={{
             tabBarBounces: true,
-            tabBarActiveTintColor: "#FFFFFF",
-            tabBarInactiveTintColor: "#9CA3AF",
+            tabBarActiveTintColor: Colors.white,
+            tabBarInactiveTintColor: Colors.foregroundMuted,
             tabBarLabelStyle: {
               fontSize: TAB_LABEL_FONT_SIZE,
               fontWeight: "600",
@@ -39,11 +40,11 @@ const Layout = () => {
               width: "auto",
               paddingHorizontal: TAB_ITEM_HORIZONTAL_PADDING,
             },
-            tabBarStyle: { backgroundColor: "black" },
+            tabBarStyle: { backgroundColor: Colors.black },
             animationEnabled: true,
             lazy: true,
             swipeEnabled: true,
-            tabBarIndicatorStyle: { backgroundColor: "#9334E9" },
+            tabBarIndicatorStyle: { backgroundColor: Colors.primary },
             tabBarScrollEnabled: true,
           }}
         >

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Animated, Easing, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 
@@ -64,7 +65,7 @@ export const TVSaveAccountToggle: React.FC<TVSaveAccountToggleProps> = ({
         style={[
           {
             transform: [{ scale }],
-            shadowColor: "#fff",
+            shadowColor: Colors.white,
             shadowOffset: { width: 0, height: 0 },
             shadowRadius: 16,
             elevation: 8,
@@ -74,9 +75,9 @@ export const TVSaveAccountToggle: React.FC<TVSaveAccountToggleProps> = ({
       >
         <View
           style={{
-            backgroundColor: isFocused ? "#2a2a2a" : "#1a1a1a",
+            backgroundColor: isFocused ? Colors.surfaceRaised : Colors.surface,
             borderWidth: 2,
-            borderColor: isFocused ? "#FFFFFF" : "transparent",
+            borderColor: isFocused ? Colors.white : Colors.transparent,
             borderRadius: scaleSize(16),
             paddingHorizontal: scaleSize(24),
             paddingVertical: scaleSize(20),
@@ -88,7 +89,7 @@ export const TVSaveAccountToggle: React.FC<TVSaveAccountToggleProps> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#FFFFFF",
+              color: Colors.foreground,
             }}
           >
             {label}
@@ -99,7 +100,7 @@ export const TVSaveAccountToggle: React.FC<TVSaveAccountToggleProps> = ({
               width: scaleSize(60),
               height: scaleSize(34),
               borderRadius: scaleSize(17),
-              backgroundColor: value ? "#fff" : "#3f3f46",
+              backgroundColor: value ? Colors.white : Colors.border,
               justifyContent: "center",
               paddingHorizontal: scaleSize(3),
             }}
@@ -109,7 +110,7 @@ export const TVSaveAccountToggle: React.FC<TVSaveAccountToggleProps> = ({
                 width: scaleSize(28),
                 height: scaleSize(28),
                 borderRadius: scaleSize(14),
-                backgroundColor: value ? "#000" : "#fff",
+                backgroundColor: value ? Colors.black : Colors.white,
                 alignSelf: value ? "flex-end" : "flex-start",
               }}
             />

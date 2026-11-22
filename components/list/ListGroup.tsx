@@ -6,6 +6,7 @@ import React, {
   type ReactElement,
 } from "react";
 import { StyleSheet, View, type ViewProps, type ViewStyle } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { Text } from "../common/Text";
 
 interface Props extends ViewProps {
@@ -54,6 +55,6 @@ export const ListGroup: React.FC<PropsWithChildren<Props>> = ({
 const styles = StyleSheet.create({
   borderBottom: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#3D3C40",
+    borderBottomColor: Colors.border,
   },
 });

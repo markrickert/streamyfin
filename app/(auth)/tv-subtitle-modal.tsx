@@ -23,6 +23,7 @@ import {
 import { Text } from "@/components/common/Text";
 import { TVTabButton, useTVFocusAnimation } from "@/components/tv";
 import type { Track } from "@/components/video-player/controls/types";
+import { Colors } from "@/constants/Colors";
 import { TVSheetTiming } from "@/constants/TVSheet";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -70,17 +71,20 @@ const TVTrackCard = React.forwardRef<
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : selected
-                ? "rgba(255,255,255,0.2)"
-                : "rgba(255,255,255,0.08)",
+                ? Colors.white20
+                : Colors.white10,
           },
         ]}
       >
         <Text
           style={[
             styles.trackCardText,
-            { color: focused ? "#000" : "#fff", fontSize: scaleSize(16) },
+            {
+              color: focused ? Colors.black : Colors.foreground,
+              fontSize: scaleSize(16),
+            },
             (focused || selected) && { fontWeight: "600" },
           ]}
           numberOfLines={3}
@@ -92,7 +96,7 @@ const TVTrackCard = React.forwardRef<
             style={[
               styles.trackCardSublabel,
               {
-                color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)",
+                color: focused ? Colors.black60 : Colors.foregroundMuted,
                 fontSize: scaleSize(12),
               },
             ]}
@@ -106,7 +110,7 @@ const TVTrackCard = React.forwardRef<
             <Ionicons
               name='checkmark'
               size={scaleSize(16)}
-              color='rgba(255,255,255,0.8)'
+              color={Colors.foreground}
             />
           </View>
         )}
@@ -143,17 +147,20 @@ const LanguageCard = React.forwardRef<
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : selected
-                ? "rgba(255,255,255,0.2)"
-                : "rgba(255,255,255,0.08)",
+                ? Colors.white20
+                : Colors.white10,
           },
         ]}
       >
         <Text
           style={[
             styles.languageCardText,
-            { color: focused ? "#000" : "#fff", fontSize: scaleSize(15) },
+            {
+              color: focused ? Colors.black : Colors.foreground,
+              fontSize: scaleSize(15),
+            },
             (focused || selected) && { fontWeight: "600" },
           ]}
           numberOfLines={1}
@@ -164,7 +171,7 @@ const LanguageCard = React.forwardRef<
           style={[
             styles.languageCardCode,
             {
-              color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)",
+              color: focused ? Colors.black60 : Colors.foregroundMuted,
               fontSize: scaleSize(11),
             },
           ]}
@@ -176,7 +183,7 @@ const LanguageCard = React.forwardRef<
             <Ionicons
               name='checkmark'
               size={scaleSize(16)}
-              color='rgba(255,255,255,0.8)'
+              color={Colors.foreground}
             />
           </View>
         )}
@@ -216,10 +223,8 @@ const SubtitleResultCard = React.forwardRef<
           styles.resultCard,
           animatedStyle,
           {
-            backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.08)",
-            borderColor: focused
-              ? "rgba(255,255,255,0.8)"
-              : "rgba(255,255,255,0.1)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
+            borderColor: focused ? Colors.white80 : Colors.white10,
             opacity: dimmed ? 0.4 : 1,
           },
         ]}
@@ -229,9 +234,7 @@ const SubtitleResultCard = React.forwardRef<
           style={[
             styles.providerBadge,
             {
-              backgroundColor: focused
-                ? "rgba(0,0,0,0.1)"
-                : "rgba(255,255,255,0.1)",
+              backgroundColor: focused ? Colors.black10 : Colors.white10,
             },
           ]}
         >
@@ -239,7 +242,7 @@ const SubtitleResultCard = React.forwardRef<
             style={[
               styles.providerText,
               {
-                color: focused ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
+                color: focused ? Colors.black60 : Colors.foregroundMuted,
                 fontSize: scaleSize(11),
               },
             ]}
@@ -252,7 +255,10 @@ const SubtitleResultCard = React.forwardRef<
         <Text
           style={[
             styles.resultName,
-            { color: focused ? "#000" : "#fff", fontSize: scaleSize(14) },
+            {
+              color: focused ? Colors.black : Colors.foreground,
+              fontSize: scaleSize(14),
+            },
           ]}
           numberOfLines={2}
         >
@@ -266,7 +272,7 @@ const SubtitleResultCard = React.forwardRef<
             style={[
               styles.resultMetaText,
               {
-                color: focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)",
+                color: focused ? Colors.black60 : Colors.foregroundMuted,
                 fontSize: scaleSize(12),
               },
             ]}
@@ -281,15 +287,13 @@ const SubtitleResultCard = React.forwardRef<
                 <Ionicons
                   name='star'
                   size={scaleSize(12)}
-                  color={focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)"}
+                  color={focused ? Colors.black60 : Colors.foregroundMuted}
                 />
                 <Text
                   style={[
                     styles.resultMetaText,
                     {
-                      color: focused
-                        ? "rgba(0,0,0,0.6)"
-                        : "rgba(255,255,255,0.5)",
+                      color: focused ? Colors.black60 : Colors.white50,
                       fontSize: scaleSize(12),
                     },
                   ]}
@@ -305,15 +309,13 @@ const SubtitleResultCard = React.forwardRef<
               <Ionicons
                 name='download-outline'
                 size={scaleSize(12)}
-                color={focused ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.5)"}
+                color={focused ? Colors.black60 : Colors.foregroundMuted}
               />
               <Text
                 style={[
                   styles.resultMetaText,
                   {
-                    color: focused
-                      ? "rgba(0,0,0,0.6)"
-                      : "rgba(255,255,255,0.5)",
+                    color: focused ? Colors.black60 : Colors.white50,
                     fontSize: scaleSize(12),
                   },
                 ]}
@@ -332,8 +334,8 @@ const SubtitleResultCard = React.forwardRef<
                 styles.flag,
                 {
                   backgroundColor: focused
-                    ? "rgba(0,150,0,0.2)"
-                    : "rgba(0,200,0,0.2)",
+                    ? Colors.successSubtle
+                    : Colors.successSubtle,
                 },
               ]}
             >
@@ -347,16 +349,14 @@ const SubtitleResultCard = React.forwardRef<
               style={[
                 styles.flag,
                 {
-                  backgroundColor: focused
-                    ? "rgba(0,0,0,0.1)"
-                    : "rgba(255,255,255,0.1)",
+                  backgroundColor: focused ? Colors.black10 : Colors.white10,
                 },
               ]}
             >
               <Ionicons
                 name='ear-outline'
                 size={scaleSize(12)}
-                color={focused ? "#000" : "#fff"}
+                color={focused ? Colors.black : Colors.foreground}
               />
             </View>
           )}
@@ -366,8 +366,8 @@ const SubtitleResultCard = React.forwardRef<
                 styles.flag,
                 {
                   backgroundColor: focused
-                    ? "rgba(0,0,150,0.2)"
-                    : "rgba(100,100,255,0.2)",
+                    ? Colors.infoSubtle
+                    : Colors.infoSubtle,
                 },
               ]}
             >
@@ -381,7 +381,7 @@ const SubtitleResultCard = React.forwardRef<
         {/* Loading indicator when downloading */}
         {isDownloading && (
           <View style={styles.downloadingOverlay}>
-            <ActivityIndicator size='small' color='#fff' />
+            <ActivityIndicator size='small' color={Colors.foreground} />
           </View>
         )}
       </Animated.View>
@@ -413,10 +413,10 @@ const TVStepperButton: React.FC<{
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : disabled
-                ? "rgba(255,255,255,0.05)"
-                : "rgba(255,255,255,0.12)",
+                ? Colors.white05
+                : Colors.white10,
             opacity: disabled ? 0.4 : 1,
           },
         ]}
@@ -424,7 +424,13 @@ const TVStepperButton: React.FC<{
         <Ionicons
           name={icon}
           size={scaleSize(28)}
-          color={focused ? "#000" : disabled ? "rgba(255,255,255,0.4)" : "#fff"}
+          color={
+            focused
+              ? Colors.black
+              : disabled
+                ? Colors.foregroundDisabled
+                : Colors.foreground
+          }
         />
       </Animated.View>
     </Pressable>
@@ -509,17 +515,20 @@ const TVAlignmentCard: React.FC<{
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : selected
-                ? "rgba(255,255,255,0.2)"
-                : "rgba(255,255,255,0.08)",
+                ? Colors.white20
+                : Colors.white10,
           },
         ]}
       >
         <Text
           style={[
             styles.alignmentCardText,
-            { color: focused ? "#000" : "#fff", fontSize: scaleSize(15) },
+            {
+              color: focused ? Colors.black : Colors.foreground,
+              fontSize: scaleSize(15),
+            },
             (focused || selected) && { fontWeight: "600" },
           ]}
         >
@@ -530,7 +539,7 @@ const TVAlignmentCard: React.FC<{
             <Ionicons
               name='checkmark'
               size={scaleSize(14)}
-              color='rgba(255,255,255,0.8)'
+              color={Colors.foreground}
             />
           </View>
         )}
@@ -926,7 +935,10 @@ export default function TVSubtitleModal() {
                   {/* Loading state */}
                   {isSearching && (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size='small' color='#fff' />
+                      <ActivityIndicator
+                        size='small'
+                        color={Colors.foreground}
+                      />
                     </View>
                   )}
 
@@ -936,7 +948,7 @@ export default function TVSubtitleModal() {
                       <Ionicons
                         name='alert-circle-outline'
                         size={scaleSize(32)}
-                        color='rgba(255,100,100,0.8)'
+                        color={Colors.dangerLight}
                       />
                       <Text
                         style={[styles.errorText, { fontSize: scaleSize(16) }]}
@@ -964,7 +976,7 @@ export default function TVSubtitleModal() {
                         <Ionicons
                           name='document-text-outline'
                           size={scaleSize(32)}
-                          color='rgba(255,255,255,0.4)'
+                          color={Colors.foregroundDisabled}
                         />
                         <Text
                           style={[
@@ -1011,7 +1023,7 @@ export default function TVSubtitleModal() {
                     <Ionicons
                       name='information-circle-outline'
                       size={scaleSize(16)}
-                      color='rgba(255,255,255,0.4)'
+                      color={Colors.foregroundDisabled}
                     />
                     <Text
                       style={[
@@ -1176,7 +1188,7 @@ export default function TVSubtitleModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: Colors.black60,
     justifyContent: "flex-end",
   },
   sheetContainer: {
@@ -1197,7 +1209,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.foreground,
     marginBottom: scaleSize(16),
   },
   tabRow: {
@@ -1209,7 +1221,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontWeight: "500",
-    color: "rgba(255,255,255,0.5)",
+    color: Colors.foregroundMuted,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: scaleSize(12),
@@ -1326,11 +1338,11 @@ const styles = StyleSheet.create({
   },
   flagText: {
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.foreground,
   },
   downloadingOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: Colors.black50,
     borderRadius: scaleSize(14),
     justifyContent: "center",
     alignItems: "center",
@@ -1345,12 +1357,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorText: {
-    color: "rgba(255,100,100,0.9)",
+    color: Colors.dangerLight,
     marginTop: scaleSize(8),
     fontWeight: "500",
   },
   errorHint: {
-    color: "rgba(255,255,255,0.5)",
+    color: Colors.foregroundMuted,
     marginTop: scaleSize(4),
     textAlign: "center",
   },
@@ -1359,7 +1371,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "rgba(255,255,255,0.5)",
+    color: Colors.foregroundMuted,
     marginTop: scaleSize(8),
   },
   apiKeyHint: {
@@ -1386,7 +1398,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontWeight: "500",
-    color: "#fff",
+    color: Colors.foreground,
   },
   sizeControlContainer: {
     flexDirection: "row",
@@ -1406,7 +1418,7 @@ const styles = StyleSheet.create({
   },
   sizeValueText: {
     fontWeight: "600",
-    color: "#fff",
+    color: Colors.foreground,
     fontSize: scaleSize(24),
   },
   alignmentRow: {

@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import { useTranscodingProgress } from "@/hooks/useTranscodingProgress";
@@ -163,11 +164,11 @@ const getPlayMethodLabel = (method: PlayMethod): string => {
 const getPlayMethodColor = (method: PlayMethod): string => {
   switch (method) {
     case "DirectPlay":
-      return "#4ade80"; // green
+      return Colors.successLight; // green
     case "DirectStream":
-      return "#60a5fa"; // blue
+      return Colors.infoLight; // blue
     case "Transcode":
-      return "#fbbf24"; // yellow/amber
+      return Colors.warningLight; // yellow/amber
     default:
       return "white";
   }
@@ -499,37 +500,37 @@ const styles = StyleSheet.create({
     zIndex: 15,
   },
   infoBox: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     minWidth: 150,
   },
   infoBoxTV: {
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: Colors.black60,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 16,
     minWidth: 250,
   },
   infoText: {
-    color: "white",
+    color: Colors.foreground,
     fontSize: 12,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
     lineHeight: 18,
   },
   infoTextTV: {
-    color: "white",
+    color: Colors.foreground,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
   warningText: {
-    color: "#ff9800",
+    color: Colors.warning,
   },
   reasonText: {
-    color: "#fbbf24",
+    color: Colors.warningLight,
     fontSize: 10,
   },
   reasonTextTV: {
-    color: "#fbbf24",
+    color: Colors.warningLight,
   },
 });

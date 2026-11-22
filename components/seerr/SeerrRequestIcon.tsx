@@ -1,5 +1,6 @@
 import type React from "react";
 import Svg, { Path } from "react-native-svg";
+import { Colors } from "@/constants/Colors";
 
 /**
  * The icon Seerr puts on its request buttons (RequestButton): Heroicons'
@@ -7,7 +8,7 @@ import Svg, { Path } from "react-native-svg";
  */
 export const SeerrRequestIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
-  color = "white",
+  color = Colors.foreground,
 }) => (
   <Svg
     width={size}

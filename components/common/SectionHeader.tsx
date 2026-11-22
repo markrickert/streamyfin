@@ -34,7 +34,9 @@ export const SectionHeader: React.FC<Props> = ({
         >
           <Text
             style={{
-              color: actionDisabled ? "rgba(255,255,255,0.4)" : Colors.primary,
+              color: actionDisabled
+                ? Colors.foregroundDisabled
+                : Colors.primary,
             }}
           >
             {actionLabel}

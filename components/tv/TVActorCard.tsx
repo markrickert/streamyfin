@@ -3,6 +3,7 @@ import React from "react";
 import { Animated, Pressable, View, type ViewInstance } from "react-native";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
@@ -42,7 +43,7 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
             {
               alignItems: "center",
               width: scaleSize(160),
-              shadowColor: "#fff",
+              shadowColor: Colors.white,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: focused ? 0.5 : 0,
               shadowRadius: focused ? scaleSize(16) : 0,
@@ -55,10 +56,10 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
               height: scaleSize(140),
               borderRadius: scaleSize(70),
               overflow: "hidden",
-              backgroundColor: "rgba(255,255,255,0.1)",
+              backgroundColor: Colors.white10,
               marginBottom: scaleSize(14),
               borderWidth: scaleSize(2),
-              borderColor: focused ? "#FFFFFF" : "transparent",
+              borderColor: focused ? Colors.white : Colors.transparent,
             }}
           >
             {imageUrl ? (
@@ -78,7 +79,7 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
                 <Ionicons
                   name='person'
                   size={scaleSize(56)}
-                  color='rgba(255,255,255,0.4)'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             )}
@@ -88,7 +89,7 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
             style={{
               fontSize: typography.callout,
               fontWeight: "500",
-              color: focused ? "#fff" : "rgba(255,255,255,0.9)",
+              color: focused ? Colors.foreground : Colors.foreground,
               textAlign: "center",
               marginBottom: scaleSize(4),
             }}
@@ -101,9 +102,7 @@ export const TVActorCard = React.forwardRef<ViewInstance, TVActorCardProps>(
             <Text
               style={{
                 fontSize: typography.callout,
-                color: focused
-                  ? "rgba(255,255,255,0.8)"
-                  : "rgba(255,255,255,0.5)",
+                color: focused ? Colors.foreground : Colors.white50,
                 textAlign: "center",
                 fontWeight: "500",
               }}

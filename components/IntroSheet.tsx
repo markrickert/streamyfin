@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
 import { SettingSwitch } from "@/components/common/SettingSwitch";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useSettings } from "@/utils/atoms/settings";
 import { storage } from "@/utils/mmkv";
@@ -67,8 +68,8 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
       ref={bottomSheetRef}
       enableDynamicSizing
       backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: "#171717" }}
-      handleIndicatorStyle={{ backgroundColor: "#737373" }}
+      backgroundStyle={{ backgroundColor: Colors.surface }}
+      handleIndicatorStyle={{ backgroundColor: Colors.foregroundDisabled }}
     >
       <BottomSheetScrollView
         style={{
@@ -129,7 +130,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
                     <Ionicons
                       name='cloud-download-outline'
                       size={32}
-                      color='white'
+                      color={Colors.foreground}
                     />
                   </View>
                   <View className='shrink ml-2'>
@@ -149,7 +150,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
                     }}
                     className='flex items-center justify-center'
                   >
-                    <Feather name='cast' size={28} color={"white"} />
+                    <Feather name='cast' size={28} color={Colors.foreground} />
                   </View>
                   <View className='shrink ml-2'>
                     <Text className='font-bold mb-1'>Chromecast</Text>
@@ -168,7 +169,7 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
                 }}
                 className='flex items-center justify-center'
               >
-                <Feather name='settings' size={28} color={"white"} />
+                <Feather name='settings' size={28} color={Colors.foreground} />
               </View>
               <View className='shrink ml-2'>
                 <Text className='font-bold mb-1'>
@@ -217,7 +218,11 @@ export const IntroSheet = forwardRef<IntroSheetRef>((_, ref) => {
                 }}
                 className='flex items-center justify-center'
               >
-                <Ionicons name='bug-outline' size={28} color='white' />
+                <Ionicons
+                  name='bug-outline'
+                  size={28}
+                  color={Colors.foreground}
+                />
               </View>
               <View className='shrink flex-1 ml-2 mr-3'>
                 <Text className='shrink text-xs'>

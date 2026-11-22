@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "../hooks/useTVFocusAnimation";
@@ -37,9 +38,7 @@ export const TVSettingsRow: React.FC<TVSettingsRowProps> = ({
         style={[
           animatedStyle,
           {
-            backgroundColor: focused
-              ? "rgba(255, 255, 255, 0.15)"
-              : "rgba(255, 255, 255, 0.05)",
+            backgroundColor: focused ? Colors.white10 : Colors.white05,
             borderRadius: scaleSize(12),
             paddingVertical: scaleSize(16),
             paddingHorizontal: scaleSize(24),
@@ -50,14 +49,14 @@ export const TVSettingsRow: React.FC<TVSettingsRowProps> = ({
           },
         ]}
       >
-        <Text style={{ fontSize: typography.body, color: "#FFFFFF" }}>
+        <Text style={{ fontSize: typography.body, color: Colors.foreground }}>
           {label}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#9CA3AF",
+              color: Colors.foregroundMuted,
               marginRight: showChevron ? scaleSize(12) : 0,
             }}
           >
@@ -67,7 +66,7 @@ export const TVSettingsRow: React.FC<TVSettingsRowProps> = ({
             <Ionicons
               name='chevron-forward'
               size={scaleSize(20)}
-              color='#6B7280'
+              color={Colors.foregroundDisabled}
             />
           )}
         </View>

@@ -4,9 +4,10 @@ import {
   HeaderButtonGroup,
 } from "@/components/common/HeaderButton";
 import { HeaderIcon } from "@/components/common/HeaderIcon";
+import { Colors } from "@/constants/Colors";
 
 /** Tint of a header icon whose button cannot be pressed right now. */
-const DISABLED_TINT = "#737373";
+const DISABLED_TINT = Colors.foregroundDisabled;
 
 interface Props {
   onPlayAll: () => void;
@@ -22,7 +23,7 @@ export const LibraryPlayButtons: React.FC<Props> = ({
   disabled,
 }) => {
   const { t } = useTranslation();
-  const tintColor = disabled ? DISABLED_TINT : "white";
+  const tintColor = disabled ? DISABLED_TINT : Colors.foreground;
 
   return (
     <HeaderButtonGroup>

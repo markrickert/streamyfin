@@ -383,7 +383,7 @@ const RequestModal = forwardRef<
         enableDismissOnClose
         onDismiss={handleDismiss}
         handleIndicatorStyle={{
-          backgroundColor: "white",
+          backgroundColor: Colors.white,
         }}
         backgroundStyle={{
           backgroundColor: Colors.surface,

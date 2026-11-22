@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { useMMKVString } from "react-native-mmkv";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import type { SavedServer } from "@/utils/secureCredentials";
@@ -82,7 +83,7 @@ export const TVServerSelectionScreen: React.FC<
           style={{
             fontSize: typography.title,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             textAlign: "center",
             marginBottom: scaleSize(8),
           }}
@@ -92,7 +93,7 @@ export const TVServerSelectionScreen: React.FC<
         <Text
           style={{
             fontSize: typography.body,
-            color: "#9CA3AF",
+            color: Colors.foregroundMuted,
             textAlign: "center",
             marginBottom: scaleSize(48),
           }}

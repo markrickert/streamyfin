@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import { SEGMENT_SKIP_KEY, type SegmentTypeName } from "@/utils/segments";
@@ -121,16 +122,16 @@ export const TVSkipSegmentCard: FC<TVSkipSegmentCardProps> = ({
             styles.button,
             animatedStyle,
             {
-              backgroundColor: focused
-                ? "rgba(255,255,255,0.3)"
-                : "rgba(255,255,255,0.1)",
-              borderColor: focused
-                ? "rgba(255,255,255,0.8)"
-                : "rgba(255,255,255,0.2)",
+              backgroundColor: focused ? Colors.white30 : Colors.white10,
+              borderColor: focused ? Colors.white80 : Colors.white20,
             },
           ]}
         >
-          <Ionicons name='play-forward' size={scaleSize(20)} color='#fff' />
+          <Ionicons
+            name='play-forward'
+            size={scaleSize(20)}
+            color={Colors.foreground}
+          />
           <Text style={[styles.label, { fontSize: typography.callout }]}>
             {labelText}
           </Text>
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     gap: scaleSize(8),
   },
   label: {
-    color: "#fff",
+    color: Colors.foreground,
     fontWeight: "600",
   },
   returnFocusGuide: {

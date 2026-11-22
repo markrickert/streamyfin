@@ -1,6 +1,7 @@
 import { BlurView } from "expo-blur";
 import type React from "react";
 import { Platform, View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 interface Props extends ViewProps {
   blurAmount?: number;
@@ -27,7 +28,7 @@ export const PlatformBlurView: React.FC<Props> = ({
 
   return (
     <View
-      style={[{ backgroundColor: "rgba(50, 50, 50, 0.9)" }, style]}
+      style={[{ backgroundColor: Colors.surfaceTranslucent }, style]}
       {...props}
     >
       {children}

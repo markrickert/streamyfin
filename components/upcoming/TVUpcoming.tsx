@@ -9,6 +9,7 @@ import { Loader } from "@/components/Loader";
 import { TVHorizontalList } from "@/components/tv/TVHorizontalList";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
 import { TVPosterPill } from "@/components/tv/TVPosterPill";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import useRouter from "@/hooks/useAppRouter";
@@ -114,7 +115,7 @@ export const TVUpcoming: React.FC<Props> = ({ parentId }) => {
         <Text
           style={{
             fontSize: typography.body,
-            color: "#737373",
+            color: Colors.foregroundDisabled,
             marginLeft: padding,
           }}
         >

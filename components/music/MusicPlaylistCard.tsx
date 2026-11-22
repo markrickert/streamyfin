@@ -7,6 +7,7 @@ import React, { useCallback, useMemo } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { ArtworkImage } from "@/components/music/ArtworkImage";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { getLocalPath } from "@/providers/AudioStorage";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
@@ -78,7 +79,7 @@ export const MusicPlaylistCard: React.FC<Props> = ({ playlist }) => {
           height: IMAGE_SIZE,
           borderRadius: 8,
           overflow: "hidden",
-          backgroundColor: "#1a1a1a",
+          backgroundColor: Colors.surface,
         }}
       >
         {imageUrl ? (
@@ -107,7 +108,7 @@ export const MusicPlaylistCard: React.FC<Props> = ({ playlist }) => {
         <Ionicons
           name='checkmark-circle'
           size={18}
-          color='#22c55e'
+          color={Colors.success}
           style={{ marginRight: 4 }}
         />
       ) : hasDownloads ? (

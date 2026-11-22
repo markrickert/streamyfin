@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, View } from "react-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
@@ -34,7 +35,7 @@ export const TVSeriesNavigation: React.FC<TVSeriesNavigationProps> = React.memo(
           style={{
             fontSize: typography.heading,
             fontWeight: "700",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(20),
             letterSpacing: 0.5,
           }}

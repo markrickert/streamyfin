@@ -8,6 +8,7 @@ import { PlatformDropdown } from "@/components/PlatformDropdown";
 import { PLAYBACK_SPEEDS } from "@/components/PlaybackSpeedSelector";
 import DisabledSetting from "@/components/settings/DisabledSetting";
 import { stillWatchingPresetLabel } from "@/components/settings/stillWatchingPresetLabel";
+import { Colors } from "@/constants/Colors";
 import { STILL_WATCHING_PRESET_ORDER } from "@/constants/StillWatching";
 import useRouter from "@/hooks/useAppRouter";
 import * as ScreenOrientation from "@/packages/expo-screen-orientation";
@@ -124,7 +125,7 @@ export const PlaybackControlsSettings: React.FC = () => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -161,7 +162,7 @@ export const PlaybackControlsSettings: React.FC = () => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -226,7 +227,7 @@ export const PlaybackControlsSettings: React.FC = () => {
                 <Ionicons
                   name='chevron-expand-sharp'
                   size={18}
-                  color='#5A5960'
+                  color={Colors.foregroundDisabled}
                 />
               </View>
             }
@@ -240,7 +241,11 @@ export const PlaybackControlsSettings: React.FC = () => {
           subtitle={t("home.settings.other.segment_skip_settings_description")}
           onPress={() => router.push("/settings/segment-skip/page")}
         >
-          <Ionicons name='chevron-forward' size={20} color='#8E8D91' />
+          <Ionicons
+            name='chevron-forward'
+            size={20}
+            color={Colors.foregroundMuted}
+          />
         </ListItem>
       </ListGroup>
     </DisabledSetting>

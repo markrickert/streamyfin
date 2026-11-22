@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/common/Input";
 import { SettingSwitch } from "@/components/common/SettingSwitch";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import { useCustomHeaderRows } from "@/hooks/useCustomHeaderRows";
 import {
   type CustomHeader,
@@ -145,7 +146,7 @@ export function CustomHeaderList({
         <Ionicons
           name={revealedRows.has(rowIds[index]) ? "eye-off" : "eye"}
           size={20}
-          color='#9CA3AF'
+          color={Colors.foregroundMuted}
         />
       </TouchableOpacity>
     </View>
@@ -176,7 +177,7 @@ export function CustomHeaderList({
         className='flex-row items-center gap-x-1 py-1 px-2'
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons name='trash-outline' size={15} color='#F87171' />
+        <Ionicons name='trash-outline' size={15} color={Colors.dangerLight} />
         <Text className='text-xs text-red-400'>{t("common.remove")}</Text>
       </TouchableOpacity>
     </View>

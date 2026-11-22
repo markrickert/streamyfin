@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import ReanimatedModule, { useAnimatedStyle } from "react-native-reanimated";
+import { Colors } from "@/constants/Colors";
 import { scaleSize } from "@/utils/scaleSize";
 import { useTVFocusAnimation } from "./hooks/useTVFocusAnimation";
 
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   },
   animatedContainerFocused: {
     // Subtle glow effect when focused
-    shadowColor: "#fff",
+    shadowColor: Colors.white,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: scaleSize(12),
@@ -154,20 +155,20 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: PROGRESS_BAR_HEIGHT,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: Colors.white20,
     borderRadius: scaleSize(8),
     overflow: "hidden",
   },
   progressTrackFocused: {
     // Brighter track when focused
-    backgroundColor: "rgba(255,255,255,0.35)",
+    backgroundColor: Colors.white30,
   },
   cacheProgress: {
     position: "absolute",
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: Colors.white30,
     borderRadius: scaleSize(8),
   },
   progressFill: {
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: scaleSize(8),
   },
   chapterMarkersContainer: {
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     width: scaleSize(2),
     height: PROGRESS_BAR_HEIGHT + scaleSize(5),
     bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: Colors.white50,
     borderRadius: scaleSize(1),
     transform: [{ translateX: -scaleSize(1) }],
   },

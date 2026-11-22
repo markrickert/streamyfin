@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
 import { toast } from "sonner-native";
 import { SettingSwitch } from "@/components/common/SettingSwitch";
+import { Colors } from "@/constants/Colors";
 import { useWifiSSID } from "@/hooks/useWifiSSID";
 import { openLocationSettings } from "@/modules/wifi-ssid";
 import { useServerUrl } from "@/providers/ServerUrlProvider";
@@ -277,7 +278,11 @@ export function LocalNetworkSettings(): React.ReactElement | null {
                   onPress={() => handleRemoveNetwork(wifiSSID)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name='close-circle' size={22} color='#EF4444' />
+                  <Ionicons
+                    name='close-circle'
+                    size={22}
+                    color={Colors.danger}
+                  />
                 </TouchableOpacity>
               </ListItem>
             ))}

@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
+import { Colors } from "@/constants/Colors";
 import type { QuickConnectStatus } from "@/hooks/useQuickConnect";
 import { Button } from "../Button";
 import { Text } from "../common/Text";
@@ -108,8 +109,8 @@ export const QuickConnectCodeModal: React.FC<Props> = ({
       ref={bottomSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
-      handleIndicatorStyle={{ backgroundColor: "white" }}
-      backgroundStyle={{ backgroundColor: "#171717" }}
+      handleIndicatorStyle={{ backgroundColor: Colors.white }}
+      backgroundStyle={{ backgroundColor: Colors.surface }}
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView
@@ -139,7 +140,7 @@ export const QuickConnectCodeModal: React.FC<Props> = ({
                 <Ionicons
                   name='copy-outline'
                   size={22}
-                  color='white'
+                  color={Colors.foreground}
                   style={{ opacity: 0.4, marginLeft: 16 }}
                 />
               </TouchableOpacity>

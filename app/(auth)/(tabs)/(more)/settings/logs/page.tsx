@@ -12,6 +12,7 @@ import { HeaderButton } from "@/components/common/HeaderButton";
 import { Text } from "@/components/common/Text";
 import { FilterButton } from "@/components/filters/FilterButton";
 import { Loader } from "@/components/Loader";
+import { Colors } from "@/constants/Colors";
 import { LogLevel, useLog, writeErrorLog } from "@/utils/log";
 
 // Conditionally import expo-sharing only on non-TV platforms
@@ -31,7 +32,7 @@ export default function Page() {
 
   const defaultLevels: LogLevel[] = ["INFO", "ERROR", "DEBUG", "WARN"];
   const codeBlockStyle = {
-    backgroundColor: "#000",
+    backgroundColor: Colors.black,
     padding: 10,
     fontFamily: "monospace",
     maxHeight: 300,
@@ -195,7 +196,11 @@ export default function Page() {
                     onPress={() => copyLog(log)}
                     className='flex flex-row items-center self-end px-2 py-1'
                   >
-                    <Ionicons name='copy-outline' size={16} color='white' />
+                    <Ionicons
+                      name='copy-outline'
+                      size={16}
+                      color={Colors.foreground}
+                    />
                     <Text className='text-xs ml-1'>
                       {t("home.settings.logs.copy")}
                     </Text>

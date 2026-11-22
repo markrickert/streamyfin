@@ -3,6 +3,7 @@ import React from "react";
 import { Animated, Pressable, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { useTVFocusAnimation } from "@/components/tv/hooks/useTVFocusAnimation";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 
 interface TVRequestOptionRowProps {
@@ -44,21 +45,17 @@ export const TVRequestOptionRow: React.FC<TVRequestOptionRowProps> = ({
             alignItems: "center",
             paddingVertical: 14,
             paddingHorizontal: 16,
-            backgroundColor: focused
-              ? "rgba(255,255,255,0.15)"
-              : "rgba(255,255,255,0.05)",
+            backgroundColor: focused ? Colors.white10 : Colors.white05,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: focused
-              ? "rgba(255,255,255,0.3)"
-              : "rgba(255,255,255,0.1)",
+            borderColor: focused ? Colors.white30 : Colors.white10,
           },
         ]}
       >
         <Text
           style={{
             fontSize: typography.callout,
-            color: "rgba(255,255,255,0.6)",
+            color: Colors.foregroundMuted,
           }}
         >
           {label}
@@ -67,7 +64,7 @@ export const TVRequestOptionRow: React.FC<TVRequestOptionRowProps> = ({
           <Text
             style={{
               fontSize: typography.body,
-              color: focused ? "#FFFFFF" : "rgba(255,255,255,0.9)",
+              color: focused ? Colors.foreground : Colors.foreground,
               fontWeight: "500",
             }}
             numberOfLines={1}
@@ -77,7 +74,7 @@ export const TVRequestOptionRow: React.FC<TVRequestOptionRowProps> = ({
           <Ionicons
             name='chevron-forward'
             size={18}
-            color={focused ? "#FFFFFF" : "rgba(255,255,255,0.5)"}
+            color={focused ? Colors.foreground : Colors.foregroundMuted}
           />
         </View>
       </Animated.View>

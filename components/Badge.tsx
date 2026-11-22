@@ -1,5 +1,6 @@
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { GlassSurface } from "./common/GlassSurface";
 import { Text } from "./common/Text";
@@ -61,7 +62,7 @@ export const Badge: React.FC<Props> = ({
               paddingHorizontal: 16,
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: "rgba(0,0,0,0.3)",
+              backgroundColor: Colors.black30,
             },
             props.style,
           ]}
@@ -70,7 +71,7 @@ export const Badge: React.FC<Props> = ({
           <Text
             style={{
               fontSize: typography.callout,
-              color: "#E5E7EB",
+              color: Colors.foreground,
             }}
           >
             {text}
@@ -93,7 +94,8 @@ export const Badge: React.FC<Props> = ({
           alignSelf: "flex-start",
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: variant === "purple" ? "#9333ea" : "#262626",
+          backgroundColor:
+            variant === "purple" ? Colors.primary : Colors.surfaceRaised,
         },
         props.style,
       ]}
@@ -102,7 +104,7 @@ export const Badge: React.FC<Props> = ({
       <Text
         style={{
           fontSize: 12,
-          color: "#fff",
+          color: Colors.foreground,
         }}
       >
         {text}
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 50,
-    backgroundColor: "transparent",
+    backgroundColor: Colors.transparent,
   },
   iconLeft: {
     marginRight: 4,

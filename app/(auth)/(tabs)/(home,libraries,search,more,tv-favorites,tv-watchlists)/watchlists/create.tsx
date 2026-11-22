@@ -18,6 +18,7 @@ import {
   watchlistItemTypes,
   watchlistSortOptions,
 } from "@/components/watchlists/watchlistOptions";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useDismissKeyboardOnLeave } from "@/hooks/useDismissKeyboardOnLeave";
 import { useCreateWatchlist } from "@/hooks/useWatchlistMutations";
@@ -72,7 +73,7 @@ export default function CreateWatchlistScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className='flex-1'
-      style={{ backgroundColor: "#171717" }}
+      style={{ backgroundColor: Colors.surface }}
     >
       <ScrollView
         className='flex-1'
@@ -90,7 +91,7 @@ export default function CreateWatchlistScreen() {
             value={name}
             onChangeText={setName}
             placeholder={t("watchlists.name_placeholder")}
-            placeholderTextColor='#6b7280'
+            placeholderTextColor={Colors.foregroundDisabled}
             className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
             autoFocus
           />
@@ -105,7 +106,7 @@ export default function CreateWatchlistScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder={t("watchlists.description_placeholder")}
-            placeholderTextColor='#6b7280'
+            placeholderTextColor={Colors.foregroundDisabled}
             className='bg-neutral-800 text-white px-4 py-3 rounded-lg text-base'
             multiline
             numberOfLines={3}
@@ -127,8 +128,8 @@ export default function CreateWatchlistScreen() {
           <Switch
             value={isPublic}
             onValueChange={setIsPublic}
-            trackColor={{ false: "#374151", true: "#7c3aed" }}
-            thumbColor={isPublic ? "#a78bfa" : "#9ca3af"}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+            thumbColor={isPublic ? Colors.accent : Colors.foregroundMuted}
           />
         </View>
 
@@ -192,10 +193,10 @@ export default function CreateWatchlistScreen() {
             className={`py-3 ${!name.trim() ? "opacity-50" : ""}`}
           >
             {createWatchlist.isPending ? (
-              <ActivityIndicator color='white' />
+              <ActivityIndicator color={Colors.foreground} />
             ) : (
               <View className='flex-row items-center'>
-                <Ionicons name='add' size={20} color='white' />
+                <Ionicons name='add' size={20} color={Colors.foreground} />
                 <Text className='text-white font-semibold text-base'>
                   {t("watchlists.create_button")}
                 </Text>

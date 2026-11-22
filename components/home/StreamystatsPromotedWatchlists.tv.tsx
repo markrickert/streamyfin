@@ -8,10 +8,10 @@ import { useSegments } from "expo-router";
 import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 import { FlatList, View, type ViewProps } from "react-native";
-
 import { Text } from "@/components/common/Text";
 import { getItemNavigation } from "@/components/common/TouchableItemRouter";
 import { TVPosterCard } from "@/components/tv/TVPosterCard";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVPosterSizes } from "@/constants/TVPosterSizes";
 import { useScaledTVSizes } from "@/constants/TVSizes";
 import { useScaledTVTypography } from "@/constants/TVTypography";
@@ -144,7 +144,7 @@ const WatchlistSection: React.FC<WatchlistSectionProps> = ({
         style={{
           fontSize: typography.heading,
           fontWeight: "700",
-          color: "#FFFFFF",
+          color: Colors.foreground,
           marginBottom: 20,
           marginLeft: sizes.padding.horizontal,
           letterSpacing: 0.5,
@@ -167,7 +167,7 @@ const WatchlistSection: React.FC<WatchlistSectionProps> = ({
             <View key={i} style={{ width: posterSizes.poster }}>
               <View
                 style={{
-                  backgroundColor: "#262626",
+                  backgroundColor: Colors.surfaceRaised,
                   width: posterSizes.poster,
                   aspectRatio: 10 / 15,
                   borderRadius: scaleSize(24),
@@ -185,8 +185,8 @@ const WatchlistSection: React.FC<WatchlistSectionProps> = ({
               >
                 <Text
                   style={{
-                    color: "#262626",
-                    backgroundColor: "#262626",
+                    color: Colors.surfaceRaised,
+                    backgroundColor: Colors.surfaceRaised,
                     borderRadius: 6,
                     fontSize: typography.callout,
                   }}
@@ -312,7 +312,7 @@ export const StreamystatsPromotedWatchlists: React.FC<
           style={{
             height: scaleSize(16),
             width: scaleSize(128),
-            backgroundColor: "#262626",
+            backgroundColor: Colors.surfaceRaised,
             borderRadius: scaleSize(4),
             marginLeft: sizes.padding.horizontal,
             marginBottom: scaleSize(20),
@@ -331,7 +331,7 @@ export const StreamystatsPromotedWatchlists: React.FC<
             <View key={i} style={{ width: posterSizes.poster }}>
               <View
                 style={{
-                  backgroundColor: "#262626",
+                  backgroundColor: Colors.surfaceRaised,
                   width: posterSizes.poster,
                   aspectRatio: 10 / 15,
                   borderRadius: scaleSize(24),
@@ -349,8 +349,8 @@ export const StreamystatsPromotedWatchlists: React.FC<
               >
                 <Text
                   style={{
-                    color: "#262626",
-                    backgroundColor: "#262626",
+                    color: Colors.surfaceRaised,
+                    backgroundColor: Colors.surfaceRaised,
                     borderRadius: 6,
                     fontSize: typography.callout,
                   }}

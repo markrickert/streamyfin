@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, View } from "react-native";
 import { PlatformDropdown } from "@/components/PlatformDropdown";
+import { Colors } from "@/constants/Colors";
 import {
   getActiveVideoPlayerEngine,
   type MpvVoDriver,
@@ -66,7 +67,11 @@ export const MpvVoSettings: React.FC = () => {
               <Text className='mr-1 text-[#8E8D91]'>
                 {currentVoDriverLabel}
               </Text>
-              <Ionicons name='chevron-expand-sharp' size={18} color='#5A5960' />
+              <Ionicons
+                name='chevron-expand-sharp'
+                size={18}
+                color={Colors.foregroundDisabled}
+              />
             </View>
           }
           title={t("home.settings.vo_driver.vo_mode")}

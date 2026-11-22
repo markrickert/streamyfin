@@ -4,6 +4,7 @@ import { ScrollView, View } from "react-native";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/common/Text";
 import { TVCustomHeaderEditor } from "@/components/tv/settings";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { useTVBackPress } from "@/hooks/useTVBackPress";
 import { type CustomHeader, usableCustomHeaders } from "@/utils/customHeaders";
@@ -74,7 +75,7 @@ export const TVAddServerForm: React.FC<TVAddServerFormProps> = ({
           style={{
             fontSize: typography.heading,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             textAlign: "left",
             marginBottom: scaleSize(24),
             paddingHorizontal: scaleSize(8),

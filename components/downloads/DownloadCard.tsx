@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { toast } from "sonner-native";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useNetworkAwareQueryClient } from "@/hooks/useNetworkAwareQueryClient";
 import { useDownload } from "@/providers/DownloadProvider";
@@ -142,7 +143,7 @@ export const DownloadCard = ({ process, ...props }: DownloadCardProps) => {
           onPress={() => handleDelete(process.id)}
           className='p-2 bg-neutral-800 rounded-full'
         >
-          <Ionicons name='close' size={20} color='red' />
+          <Ionicons name='close' size={20} color={Colors.danger} />
         </TouchableOpacity>
       </View>
 
@@ -180,7 +181,7 @@ export const DownloadCard = ({ process, ...props }: DownloadCardProps) => {
             {/* Row 1: Progress + Downloaded/Total */}
             <View className='flex flex-row items-center gap-x-2 mt-1.5'>
               {sanitizedProgress === 0 ? (
-                <ActivityIndicator size={"small"} color={"white"} />
+                <ActivityIndicator size={"small"} color={Colors.foreground} />
               ) : (
                 <Text className='text-xs font-semibold'>
                   {sanitizedProgress.toFixed(0)}%

@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { TouchableOpacity, View, type ViewProps } from "react-native";
+import { Colors } from "@/constants/Colors";
 import {
   type SeerrStatusTone,
   seerrStatusBadge,
@@ -46,7 +47,7 @@ const SeerrStatusIcon: React.FC<Props & ViewProps> = ({
           <MaterialCommunityIcons
             name={badge.icon}
             size={small ? 14 : 18}
-            color='white'
+            color={Colors.foreground}
           />
         </View>
       </TouchableOpacity>

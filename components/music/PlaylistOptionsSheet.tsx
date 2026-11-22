@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/common/Text";
+import { Colors } from "@/constants/Colors";
 import useRouter from "@/hooks/useAppRouter";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useDeletePlaylist } from "@/hooks/usePlaylistMutations";
@@ -89,10 +90,10 @@ export const PlaylistOptionsSheet: React.FC<Props> = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{
-        backgroundColor: "white",
+        backgroundColor: Colors.white,
       }}
       backgroundStyle={{
-        backgroundColor: "#171717",
+        backgroundColor: Colors.surface,
       }}
     >
       <BottomSheetView
@@ -108,7 +109,7 @@ export const PlaylistOptionsSheet: React.FC<Props> = ({
             onPress={handleDeletePlaylist}
             className='flex-row items-center px-4 py-3.5'
           >
-            <Ionicons name='trash-outline' size={22} color='#ef4444' />
+            <Ionicons name='trash-outline' size={22} color={Colors.danger} />
             <Text className='text-red-500 ml-4 text-base'>
               {t("music.playlists.delete_playlist")}
             </Text>
@@ -122,6 +123,6 @@ export const PlaylistOptionsSheet: React.FC<Props> = ({
 const _styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#404040",
+    backgroundColor: Colors.border,
   },
 });

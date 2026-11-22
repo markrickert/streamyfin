@@ -9,6 +9,7 @@ import { Badge } from "@/components/Badge";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
 import { GenreTags } from "@/components/GenreTags";
+import { Colors } from "@/constants/Colors";
 import { TV_DETAIL_OVERVIEW_MAX_WIDTH_RATIO } from "@/constants/TVDetailLayout";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { apiAtom } from "@/providers/JellyfinProvider";
@@ -63,7 +64,7 @@ export const TVSeriesHeader: React.FC<TVSeriesHeaderProps> = ({ item }) => {
           style={{
             fontSize: typography.display,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: scaleSize(16),
           }}
           numberOfLines={2}
@@ -83,7 +84,7 @@ export const TVSeriesHeader: React.FC<TVSeriesHeaderProps> = ({ item }) => {
         }}
       >
         {yearString && (
-          <Text style={{ color: "white", fontSize: typography.body }}>
+          <Text style={{ color: Colors.foreground, fontSize: typography.body }}>
             {yearString}
           </Text>
         )}
@@ -94,7 +95,9 @@ export const TVSeriesHeader: React.FC<TVSeriesHeaderProps> = ({ item }) => {
           <Badge
             text={item.CommunityRating.toFixed(1)}
             variant='gray'
-            iconLeft={<Ionicons name='star' size={16} color='gold' />}
+            iconLeft={
+              <Ionicons name='star' size={16} color={Colors.warningLight} />
+            }
           />
         )}
         <AwardsBadge item={item} />
@@ -122,13 +125,13 @@ export const TVSeriesHeader: React.FC<TVSeriesHeaderProps> = ({ item }) => {
           <View
             style={{
               padding: scaleSize(16),
-              backgroundColor: "rgba(0,0,0,0.3)",
+              backgroundColor: Colors.black30,
             }}
           >
             <Text
               style={{
                 fontSize: typography.body,
-                color: "#E5E7EB",
+                color: Colors.foreground,
                 lineHeight: scaleSize(32),
               }}
               numberOfLines={4}

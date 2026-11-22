@@ -16,6 +16,7 @@ import { Text } from "@/components/common/Text";
 import { TVPinInput, type TVPinInputRef } from "@/components/inputs/TVPinInput";
 import { TVOptionCard, useTVFocusAnimation } from "@/components/tv";
 import { tvSheetBacking } from "@/components/tv/tvSheetBacking";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { scaleSize } from "@/utils/scaleSize";
 import type { AccountSecurityType } from "@/utils/secureCredentials";
@@ -85,10 +86,10 @@ const TVSaveButton: React.FC<{
           animatedStyle,
           {
             backgroundColor: focused
-              ? "#fff"
+              ? Colors.white
               : disabled
-                ? "#4a4a4a"
-                : "rgba(255,255,255,0.15)",
+                ? Colors.border
+                : Colors.white10,
             paddingHorizontal: scaleSize(24),
             paddingVertical: scaleSize(14),
             borderRadius: scaleSize(10),
@@ -102,12 +103,12 @@ const TVSaveButton: React.FC<{
         <Ionicons
           name='checkmark'
           size={scaleSize(20)}
-          color={focused ? "#000" : "#fff"}
+          color={focused ? Colors.black : Colors.foreground}
         />
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#000" : "#fff",
+            color: focused ? Colors.black : Colors.foreground,
             fontWeight: "600",
           }}
         >
@@ -139,7 +140,7 @@ const TVBackButton: React.FC<{
         style={[
           animatedStyle,
           {
-            backgroundColor: focused ? "#fff" : "rgba(255,255,255,0.15)",
+            backgroundColor: focused ? Colors.white : Colors.white10,
             paddingHorizontal: scaleSize(20),
             paddingVertical: scaleSize(12),
             borderRadius: scaleSize(10),
@@ -152,12 +153,12 @@ const TVBackButton: React.FC<{
         <Ionicons
           name='chevron-back'
           size={scaleSize(20)}
-          color={focused ? "#000" : "rgba(255,255,255,0.8)"}
+          color={focused ? Colors.black : Colors.foreground}
         />
         <Text
           style={{
             fontSize: typography.callout,
-            color: focused ? "#000" : "rgba(255,255,255,0.8)",
+            color: focused ? Colors.black : Colors.foreground,
             fontWeight: "500",
           }}
         >
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: Colors.black50,
     justifyContent: "flex-end",
     zIndex: 1000,
   },
@@ -434,15 +435,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "bold",
-    color: "#fff",
+    color: Colors.foreground,
     marginBottom: scaleSize(4),
   },
   subtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
   },
   sectionTitle: {
     fontWeight: "500",
-    color: "rgba(255,255,255,0.6)",
+    color: Colors.foregroundMuted,
     marginBottom: scaleSize(16),
     paddingHorizontal: scaleSize(48),
     textTransform: "uppercase",
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: scaleSize(10),
   },
   errorText: {
-    color: "#ef4444",
+    color: Colors.danger,
     marginTop: scaleSize(12),
     textAlign: "center",
   },

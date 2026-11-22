@@ -10,6 +10,7 @@ import { TVChannelsGrid } from "@/components/livetv/TVChannelsGrid";
 import { TVLiveTVGuide } from "@/components/livetv/TVLiveTVGuide";
 import { TVLiveTVPlaceholder } from "@/components/livetv/TVLiveTVPlaceholder";
 import { TVTabButton } from "@/components/tv/TVTabButton";
+import { Colors } from "@/constants/Colors";
 import { useScaledTVTypography } from "@/constants/TVTypography";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 
@@ -217,7 +218,7 @@ export const TVLiveTVPage: React.FC = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+    <View style={{ flex: 1, backgroundColor: Colors.black }}>
       {/* Header with Title and Tabs */}
       <View
         style={{
@@ -231,7 +232,7 @@ export const TVLiveTVPage: React.FC = () => {
           style={{
             fontSize: typography.display,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: Colors.foreground,
             marginBottom: 24,
           }}
         >

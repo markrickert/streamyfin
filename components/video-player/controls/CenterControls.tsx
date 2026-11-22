@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { Platform, TouchableOpacity, View } from "react-native";
 import { Text } from "@/components/common/Text";
 import { Loader } from "@/components/Loader";
+import { Colors } from "@/constants/Colors";
 import { useControlsSafeAreaInsets } from "@/hooks/useControlsSafeAreaInsets";
 import { useSettings } from "@/utils/atoms/settings";
 import AudioSlider from "./AudioSlider";
@@ -85,7 +86,7 @@ export const CenterControls: FC<CenterControlsProps> = ({
             <Ionicons
               name='refresh-outline'
               size={ICON_SIZES.CENTER}
-              color='white'
+              color={Colors.foreground}
               style={{
                 transform: [{ scaleY: -1 }, { rotate: "180deg" }],
               }}
@@ -93,7 +94,7 @@ export const CenterControls: FC<CenterControlsProps> = ({
             <Text
               style={{
                 position: "absolute",
-                color: "white",
+                color: Colors.foreground,
                 fontSize: 16,
                 fontWeight: "bold",
                 bottom: 10,
@@ -114,7 +115,7 @@ export const CenterControls: FC<CenterControlsProps> = ({
           <Ionicons
             name='play-back'
             size={ICON_SIZES.CENTER - 10}
-            color='white'
+            color={Colors.foreground}
           />
         </TouchableOpacity>
       )}
@@ -125,7 +126,7 @@ export const CenterControls: FC<CenterControlsProps> = ({
             <Ionicons
               name={isPlaying ? "pause" : "play"}
               size={ICON_SIZES.CENTER}
-              color='white'
+              color={Colors.foreground}
             />
           ) : (
             <Loader size={"large"} />
@@ -142,7 +143,7 @@ export const CenterControls: FC<CenterControlsProps> = ({
           <Ionicons
             name='play-forward'
             size={ICON_SIZES.CENTER - 10}
-            color='white'
+            color={Colors.foreground}
           />
         </TouchableOpacity>
       )}
@@ -159,12 +160,12 @@ export const CenterControls: FC<CenterControlsProps> = ({
             <Ionicons
               name='refresh-outline'
               size={ICON_SIZES.CENTER}
-              color='white'
+              color={Colors.foreground}
             />
             <Text
               style={{
                 position: "absolute",
-                color: "white",
+                color: Colors.foreground,
                 fontSize: 16,
                 fontWeight: "bold",
                 bottom: 10,
