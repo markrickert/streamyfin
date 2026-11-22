@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "postinstall": "bun scripts/native-palette.ts",
-    "clean": "bun scripts/native-palette.ts && echo y | expo prebuild --clean",
+    "clean": "echo y | expo prebuild --clean",
     "start": "expo start",
     "prebuild": "cross-env EXPO_TV=0 bun run clean",
     "prebuild:tv": "cross-env EXPO_TV=1 bun run clean",

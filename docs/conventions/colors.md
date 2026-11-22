@@ -22,7 +22,7 @@ Kotlin and Swift read the same palette. `scripts/native-palette.ts` writes it as
 `Colors` object (`Colors.kt`, `Colors.swift`) into every native module that cannot
 import another's files. Its `NATIVE_PALETTE_TARGETS` is the list. After changing a
 color in `constants/Colors.ts`, run `bun scripts/native-palette.ts`. `postinstall`
-and `bun run prebuild` (`clean`) run it too, so CI and EAS builds regenerate the
+runs it too, so CI and EAS builds, which install first, regenerate the
 files from `Colors.ts` and never ship a stale, missing or extra token. The files
 stay committed. Never edit a generated file: `scripts/native-palette.test.ts` fails
 when one drifts. A module
