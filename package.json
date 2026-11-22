@@ -17,7 +17,7 @@
     "ios:unsigned-build:tv": "cross-env EXPO_TV=1 bun scripts/ios/build-ios.ts --production",
     "prepare": "husky",
     "typecheck": "bun scripts/typecheck.ts",
-    "check": "biome check . --max-diagnostics 1000",
+    "check": "biome check . --max-diagnostics 1000 && bun scripts/check-native-colors.ts",
     "lint": "biome check --write --unsafe --max-diagnostics 1000",
     "format": "biome format --write .",
     "doctor": "expo-doctor",
