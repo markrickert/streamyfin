@@ -61,7 +61,7 @@ const getColorClasses = (
         return "bg-surface";
       case "white":
         return focused
-          ? "bg-foreground border-2 border-foreground-muted"
+          ? "bg-white border-2 border-foreground-muted"
           : "bg-white border border-foreground";
       case "transparent":
         return "bg-transparent";

@@ -92,7 +92,11 @@ const EmptyState: React.FC<{ onCreatePress: () => void }> = ({
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='list-outline' size={64} color={Colors.border} />
+      <Ionicons
+        name='list-outline'
+        size={64}
+        color={Colors.foregroundDisabled}
+      />
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.empty_title")}
       </Text>
@@ -109,7 +113,11 @@ const NotConfiguredState: React.FC = () => {
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='settings-outline' size={64} color={Colors.border} />
+      <Ionicons
+        name='settings-outline'
+        size={64}
+        color={Colors.foregroundDisabled}
+      />
       <Text className='text-xl font-semibold mt-4 text-center'>
         {t("watchlists.not_configured_title")}
       </Text>
@@ -138,7 +146,11 @@ const LoadFailedState: React.FC<{
 
   return (
     <View className='flex-1 items-center justify-center px-8'>
-      <Ionicons name='cloud-offline-outline' size={64} color={Colors.border} />
+      <Ionicons
+        name='cloud-offline-outline'
+        size={64}
+        color={Colors.foregroundDisabled}
+      />
       <Text
         className='text-xl font-semibold mt-4 text-center'
         style={isTV ? { fontSize: typography.title } : undefined}

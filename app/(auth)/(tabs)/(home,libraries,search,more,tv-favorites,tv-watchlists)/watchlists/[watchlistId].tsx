@@ -240,7 +240,11 @@ export default function WatchlistDetailScreen() {
   const EmptyComponent = useMemo(
     () => (
       <View className='flex-1 items-center justify-center px-8 py-16'>
-        <Ionicons name='film-outline' size={48} color={Colors.border} />
+        <Ionicons
+          name='film-outline'
+          size={48}
+          color={Colors.foregroundDisabled}
+        />
         <Text className='text-foreground-muted text-center mt-4'>
           {t("watchlists.empty_watchlist")}
         </Text>
@@ -373,7 +377,11 @@ export default function WatchlistDetailScreen() {
               paddingTop: 100,
             }}
           >
-            <Ionicons name='film-outline' size={48} color={Colors.border} />
+            <Ionicons
+              name='film-outline'
+              size={48}
+              color={Colors.foregroundDisabled}
+            />
             <Text
               style={{
                 fontSize: typography.body,

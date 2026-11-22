@@ -25,7 +25,7 @@ describe("ServerUrlStatusText", () => {
     });
   });
 
-  test("keeps its own colour next to the caller's spacing", async () => {
+  test("keeps its own color next to the caller's spacing", async () => {
     await render(<ServerUrlStatusText state={unreachable} className='mt-2' />);
 
     const message = screen.getByText("server_url.unreachable");
