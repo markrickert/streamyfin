@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -47,6 +46,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.ui.formatTimeSec
 import java.text.SimpleDateFormat
@@ -108,12 +108,12 @@ fun TvTransportBar(
                     pressedScale = 1f
                 ),
                 colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent
+                    containerColor = Colors.transparent,
+                    focusedContainerColor = Colors.transparent
                 ),
                 border = ClickableSurfaceDefaults.border(
                     focusedBorder = Border(
-                        border = androidx.compose.foundation.BorderStroke(2.dp, Color.White.copy(alpha = 0.4f)),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, Colors.white50),
                         shape = RoundedCornerShape(8.dp)
                     )
                 ),
@@ -167,7 +167,7 @@ fun TvTransportBar(
                     Icon(
                         imageVector = glyph,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Colors.white,
                         modifier = Modifier.size(24.dp)
                     )
 
@@ -189,7 +189,7 @@ fun TvTransportBar(
                                 .fillMaxWidth()
                                 .height(trackHeight)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.25f))
+                                .background(Colors.white30)
                         ) {
                             // Buffered track
                             Box(
@@ -197,7 +197,7 @@ fun TvTransportBar(
                                     .fillMaxWidth(bufferedFraction)
                                     .height(trackHeight)
                                     .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.45f))
+                                    .background(Colors.white50)
                             )
 
                             // Played track
@@ -206,7 +206,7 @@ fun TvTransportBar(
                                     .fillMaxWidth(playedFraction)
                                     .height(trackHeight)
                                     .clip(CircleShape)
-                                    .background(Color.White)
+                                    .background(Colors.white)
                             )
 
                             // Chapter tick marks
@@ -220,7 +220,7 @@ fun TvTransportBar(
                                                 .offset { IntOffset(tickOffsetPx.roundToInt(), 0) }
                                                 .width(3.dp)
                                                 .height(trackHeight)
-                                                .background(Color.Black.copy(alpha = 0.6f))
+                                                .background(Colors.black60)
                                         )
                                     }
                                 }
@@ -284,7 +284,7 @@ fun TvTransportBar(
             Column(horizontalAlignment = Alignment.Start) {
                 Text(
                     text = formatTimeSec(position),
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Colors.white,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = FontFamily.Monospace
@@ -294,7 +294,7 @@ fun TvTransportBar(
                 if (!chName.isNullOrBlank()) {
                     Text(
                         text = chName,
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = Colors.white50,
                         fontSize = 16.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -306,7 +306,7 @@ fun TvTransportBar(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "-${formatTimeSec(remaining)}",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Colors.white,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = FontFamily.Monospace
@@ -316,7 +316,7 @@ fun TvTransportBar(
                     val endsAtText = endsAtLabel(viewModel, remaining)
                     Text(
                         text = endsAtText,
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = Colors.white50,
                         fontSize = 16.sp,
                         fontFamily = FontFamily.Monospace
                     )

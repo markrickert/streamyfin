@@ -1,5 +1,7 @@
 package expo.modules.mpvplayer.nativeplayer
 
+import androidx.compose.ui.graphics.toArgb
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.playback.shouldPauseOnPictureInPictureEnd
 import expo.modules.mpvplayer.playback.shouldPauseOnActivityStop
 import android.os.PowerManager
@@ -11,7 +13,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -272,7 +273,7 @@ class NativePlayerSession(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                setBackgroundColor(Color.BLACK)
+                setBackgroundColor(Colors.black.toArgb())
             }
         } else {
             FrameLayout(activity).apply {
@@ -280,7 +281,7 @@ class NativePlayerSession(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                setBackgroundColor(Color.BLACK)
+                setBackgroundColor(Colors.black.toArgb())
                 isFocusable = true
                 isFocusableInTouchMode = true
                 setOnKeyListener { _, keyCode, event ->

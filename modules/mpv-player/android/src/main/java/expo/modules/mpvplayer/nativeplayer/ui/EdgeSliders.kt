@@ -23,8 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.BrightnessController
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.SystemVolumeController
@@ -47,7 +47,7 @@ fun BrightnessSliderView(viewModel: PlayerViewModel, controller: BrightnessContr
                 .fillMaxWidth()
                 .fillMaxHeight(level.coerceIn(0.0f, 1.0f))
                 .clip(RoundedCornerShape(18.dp))
-                .background(Color.White.copy(alpha = 0.35f))
+                .background(Colors.white30)
         )
 
         // Bottom Icon
@@ -58,7 +58,7 @@ fun BrightnessSliderView(viewModel: PlayerViewModel, controller: BrightnessContr
             Icon(
                 imageVector = if (level > 0.5f) Icons.Default.BrightnessHigh else Icons.Default.BrightnessLow,
                 contentDescription = "Brightness",
-                tint = Color.White,
+                tint = Colors.white,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -83,7 +83,7 @@ fun VolumeSliderView(viewModel: PlayerViewModel, controller: SystemVolumeControl
                 .fillMaxWidth()
                 .fillMaxHeight(level.coerceIn(0.0f, 1.0f))
                 .clip(RoundedCornerShape(18.dp))
-                .background(Color.White.copy(alpha = 0.35f))
+                .background(Colors.white30)
         )
 
         // Bottom Icon
@@ -99,7 +99,7 @@ fun VolumeSliderView(viewModel: PlayerViewModel, controller: SystemVolumeControl
             Icon(
                 imageVector = icon,
                 contentDescription = "Volume",
-                tint = Color.White,
+                tint = Colors.white,
                 modifier = Modifier.size(18.dp)
             )
         }

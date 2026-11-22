@@ -22,12 +22,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.TvFocusZone
 import expo.modules.mpvplayer.nativeplayer.deriveTvFocusZone
@@ -73,8 +73,8 @@ fun TvPlayerScreen(
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.Black.copy(alpha = 0.55f),
-                                        Color.Black.copy(alpha = 0f)
+                                        Colors.black60,
+                                        Colors.transparent
                                     )
                                 )
                             )
@@ -87,8 +87,8 @@ fun TvPlayerScreen(
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.Black.copy(alpha = 0f),
-                                        Color.Black.copy(alpha = 0.55f)
+                                        Colors.transparent,
+                                        Colors.black60
                                     )
                                 )
                             )
@@ -181,7 +181,7 @@ private fun TvMetadataHeader(
         if (!meta.title.isNullOrBlank()) {
             Text(
                 text = meta.title ?: "",
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -192,7 +192,7 @@ private fun TvMetadataHeader(
         if (!meta.subtitle.isNullOrBlank()) {
             Text(
                 text = meta.subtitle ?: "",
-                color = Color.White.copy(alpha = 0.7f),
+                color = Colors.white80,
                 fontSize = 18.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

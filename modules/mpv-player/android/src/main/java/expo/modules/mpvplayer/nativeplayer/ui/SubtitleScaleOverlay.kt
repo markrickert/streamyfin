@@ -25,11 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -59,7 +59,7 @@ fun SubtitleScaleOverlay(viewModel: PlayerViewModel) {
             modifier = Modifier
                 .widthIn(max = 520.dp)
                 .fillMaxWidth()
-                .background(Color(0xF21C1C1E), RoundedCornerShape(18.dp))
+                .background(Colors.surfaceTranslucent, RoundedCornerShape(18.dp))
                 .pointerInput(Unit) { detectTapGestures { } }
                 .padding(horizontal = 20.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -71,7 +71,7 @@ fun SubtitleScaleOverlay(viewModel: PlayerViewModel) {
             ) {
                 Text(
                     text = viewModel.str("subtitleSize", "Subtitle Size"),
-                    color = Color.White,
+                    color = Colors.white,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -84,14 +84,14 @@ fun SubtitleScaleOverlay(viewModel: PlayerViewModel) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = viewModel.str("close", "Close"),
-                        tint = Color.White
+                        tint = Colors.white
                     )
                 }
             }
 
             Text(
                 text = "${viewModel.subtitleScale}×",
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
             )

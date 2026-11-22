@@ -213,9 +213,9 @@ class ExoPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     private var subtitleAlignY: String = "bottom"
     // Background color carries its own alpha (parsed from #RRGGBBAA in
     // setSubtitleBackgroundColor) so no separate enabled/opacity flags.
-    private var subtitleBackgroundColor: Int = Color.argb(0, 0, 0, 0)
+    private var subtitleBackgroundColor: Int = Colors.transparent
     private var currentSubtitleCues: List<Cue> = emptyList()
-    private var subtitleForegroundColor: Int = Color.WHITE
+    private var subtitleForegroundColor: Int = Colors.white
     private var subtitleTypeface: Typeface = Typeface.SANS_SERIF
     private var subtitleBorderStyle: String = "outline-and-shadow"
 
@@ -414,7 +414,7 @@ class ExoPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     init {
-        setBackgroundColor(Color.BLACK)
+        setBackgroundColor(Colors.black)
 
         // SurfaceView (not TextureView): frames composite straight from the
         // decoder via SurfaceFlinger, so the codec's native video scaler
@@ -1116,7 +1116,7 @@ class ExoPlayerView(context: Context, appContext: AppContext) : ExpoView(context
                 edgeType = CaptionStyleCompat.EDGE_TYPE_NONE
                 // The padded span draws the background. Leaving CaptionStyle's
                 // background transparent avoids a second box tight to glyphs.
-                backgroundColor = Color.TRANSPARENT
+                backgroundColor = Colors.transparent
             }
             else -> {
                 // "outline-and-shadow"
@@ -1124,16 +1124,16 @@ class ExoPlayerView(context: Context, appContext: AppContext) : ExpoView(context
                     CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
                 else
                     CaptionStyleCompat.EDGE_TYPE_OUTLINE
-                backgroundColor = Color.TRANSPARENT
+                backgroundColor = Colors.transparent
             }
         }
 
         val style = CaptionStyleCompat(
             foreground,
             backgroundColor,
-            Color.TRANSPARENT,
+            Colors.transparent,
             edgeType,
-            Color.BLACK,
+            Colors.black,
             subtitleTypeface
         )
         // applySubtitleCues converts authored text spans to plain text before
@@ -1153,7 +1153,7 @@ class ExoPlayerView(context: Context, appContext: AppContext) : ExpoView(context
         val windowColor = if (useBackground) {
             subtitleBackgroundColor
         } else {
-            Color.TRANSPARENT
+            Colors.transparent
         }
         val styledCues = currentSubtitleCues.map { cue ->
             val cueText = cue.text ?: return@map cue

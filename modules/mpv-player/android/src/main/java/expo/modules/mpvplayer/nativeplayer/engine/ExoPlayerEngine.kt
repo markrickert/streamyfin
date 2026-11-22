@@ -15,6 +15,7 @@ import android.view.Surface
 import android.view.SurfaceView
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ColorInfo
@@ -42,6 +43,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.LoadEventInfo
 import androidx.media3.exoplayer.source.MediaLoadData
 import androidx.media3.datasource.DefaultDataSource
+import expo.modules.mpvplayer.Colors
 import java.io.IOException
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.SubtitleView
@@ -238,9 +240,9 @@ class ExoPlayerEngine(private val context: Context) : PlayerEngine {
     private var subtitleFontSizePct: Int? = null // 0-100
     private var subtitleBottomFraction: Float? = null
     private var subtitleAlignY: String = "bottom"
-    private var subtitleBackgroundColor: Int = Color.argb(0, 0, 0, 0)
+    private var subtitleBackgroundColor: Int = Colors.transparent.toArgb()
     private var currentSubtitleCues: List<Cue> = emptyList()
-    private var subtitleForegroundColor: Int = Color.WHITE
+    private var subtitleForegroundColor: Int = Colors.white.toArgb()
     private var subtitleTypeface: Typeface = Typeface.SANS_SERIF
     private var subtitleBorderStyle: String = "outline-and-shadow"
 
@@ -1032,7 +1034,7 @@ class ExoPlayerEngine(private val context: Context) : PlayerEngine {
             }
         }
         (config["background"] as? String)?.let { bg ->
-            subtitleBackgroundColor = parseColor(bg, Color.argb(0, 0, 0, 0))
+            subtitleBackgroundColor = parseColor(bg, Colors.transparent.toArgb())
             // Mirror the JS wrapper: a visible background switches to the
             // padded box style, anything else back to outline-and-shadow.
             subtitleBorderStyle =
@@ -1137,23 +1139,23 @@ class ExoPlayerEngine(private val context: Context) : PlayerEngine {
         when (subtitleBorderStyle) {
             "background-box" -> {
                 edgeType = CaptionStyleCompat.EDGE_TYPE_NONE
-                backgroundColor = Color.TRANSPARENT
+                backgroundColor = Colors.transparent.toArgb()
             }
             else -> {
                 edgeType = if (subtitleAlignY == "center")
                     CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
                 else
                     CaptionStyleCompat.EDGE_TYPE_OUTLINE
-                backgroundColor = Color.TRANSPARENT
+                backgroundColor = Colors.transparent.toArgb()
             }
         }
 
         val style = CaptionStyleCompat(
             foreground,
             backgroundColor,
-            Color.TRANSPARENT,
+            Colors.transparent.toArgb(),
             edgeType,
-            Color.BLACK,
+            Colors.black.toArgb(),
             subtitleTypeface,
         )
         sv.setApplyEmbeddedStyles(true)
@@ -1167,7 +1169,7 @@ class ExoPlayerEngine(private val context: Context) : PlayerEngine {
         val useBackground =
             subtitleBorderStyle == "background-box" && Color.alpha(subtitleBackgroundColor) > 0
 
-        val windowColor = if (useBackground) subtitleBackgroundColor else Color.TRANSPARENT
+        val windowColor = if (useBackground) subtitleBackgroundColor else Colors.transparent.toArgb()
         val styledCues = currentSubtitleCues.map { cue ->
             val cueText = cue.text ?: return@map cue
             cue.buildUpon()

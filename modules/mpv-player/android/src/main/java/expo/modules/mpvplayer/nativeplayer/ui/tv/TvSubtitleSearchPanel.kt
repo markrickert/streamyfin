@@ -36,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +47,7 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.SubtitleSearchResultRecord
 
@@ -83,14 +83,14 @@ fun TvSubtitleSearchPanel(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f)),
+            .background(Colors.black80),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .size(width = 960.dp, height = 640.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF1A1A1A))
+                .background(Colors.surface)
                 .padding(32.dp)
         ) {
             // Header
@@ -101,7 +101,7 @@ fun TvSubtitleSearchPanel(
             ) {
                 Text(
                     text = viewModel.str("searchSubtitles", "Search Subtitles"),
-                    color = Color.White,
+                    color = Colors.white,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -117,7 +117,7 @@ fun TvSubtitleSearchPanel(
                         Icon(
                             imageVector = Icons.Filled.Language,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = Colors.white,
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
@@ -189,7 +189,7 @@ fun TvSubtitleSearchPanel(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = Color.White)
+                            CircularProgressIndicator(color = Colors.white)
                         }
                     }
                     "error" -> {
@@ -201,13 +201,13 @@ fun TvSubtitleSearchPanel(
                                 Icon(
                                     imageVector = Icons.Filled.Warning,
                                     contentDescription = null,
-                                    tint = Color(0xFFFFCC00),
+                                    tint = Colors.warningLight,
                                     modifier = Modifier.size(48.dp)
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     text = viewModel.str("searchFailed", "Search failed"),
-                                    color = Color.White,
+                                    color = Colors.white,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -215,7 +215,7 @@ fun TvSubtitleSearchPanel(
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = viewModel.subtitleSearchError ?: "",
-                                        color = Color.White.copy(alpha = 0.7f),
+                                        color = Colors.white80,
                                         fontSize = 15.sp,
                                         textAlign = TextAlign.Center
                                     )
@@ -231,7 +231,7 @@ fun TvSubtitleSearchPanel(
                             ) {
                                 Text(
                                     text = viewModel.str("noSubtitlesFound", "No subtitles found"),
-                                    color = Color.White.copy(alpha = 0.7f),
+                                    color = Colors.white80,
                                     fontSize = 18.sp
                                 )
                             }
@@ -319,7 +319,7 @@ private fun TvSubtitleResultRow(
                         Icon(
                             imageVector = Icons.Filled.Star,
                             contentDescription = null,
-                            tint = Color(0xFFFFCC00),
+                            tint = Colors.warningLight,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(2.dp))
@@ -361,7 +361,7 @@ private fun TvSubtitleResultRow(
                 Icon(
                     imageVector = Icons.Filled.CheckCircle,
                     contentDescription = "Match",
-                    tint = Color(0xFF4CAF50),
+                    tint = Colors.success,
                     modifier = Modifier.size(22.dp)
                 )
             }

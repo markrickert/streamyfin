@@ -20,10 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 
 @Composable
@@ -34,21 +34,21 @@ fun StillWatchingOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.75f)),
+            .background(Colors.black80),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .width(320.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFF1C1C1E))
+                .background(Colors.surface)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = viewModel.strings.get("stillWatching", "Are you still watching?"),
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -59,7 +59,7 @@ fun StillWatchingOverlay(
                 onClick = { viewModel.continueWatchingFromStillWatching() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PlayerAccentColor,
-                    contentColor = Color.White
+                    contentColor = Colors.white
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
@@ -78,7 +78,7 @@ fun StillWatchingOverlay(
             ) {
                 Text(
                     text = viewModel.strings.get("goBack", "Go Back"),
-                    color = Color.White,
+                    color = Colors.white,
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp
                 )

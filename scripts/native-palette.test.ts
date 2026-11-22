@@ -36,6 +36,19 @@ describe("renderKotlinPalette", () => {
   });
 });
 
+describe("renderKotlinPalette without Compose", () => {
+  const kotlin = renderKotlinPalette("expo.modules.example", false);
+
+  it("writes each token as an ARGB Int for android.graphics views", () => {
+    expect(kotlin).toContain("const val primary = 0xFF9334E9.toInt()");
+    expect(kotlin).toContain("const val transparent = 0x00000000");
+  });
+
+  it("does not import Compose", () => {
+    expect(kotlin).not.toContain("androidx.compose");
+  });
+});
+
 describe("renderSwiftPalette", () => {
   const swift = renderSwiftPalette();
 

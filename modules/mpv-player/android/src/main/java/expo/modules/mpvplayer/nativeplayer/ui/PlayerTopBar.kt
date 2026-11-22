@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerConstants
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 import expo.modules.mpvplayer.nativeplayer.TrackMenuItemRecord
@@ -80,7 +81,7 @@ fun PlayerTopBar(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = viewModel.strings.get("close", "Close"),
-                tint = Color.White
+                tint = Colors.white
             )
         }
 
@@ -93,7 +94,7 @@ fun PlayerTopBar(
             viewModel.metadata?.title?.let { title ->
                 Text(
                     text = title,
-                    color = Color.White,
+                    color = Colors.white,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
                     maxLines = 1,
@@ -103,7 +104,7 @@ fun PlayerTopBar(
             viewModel.metadata?.subtitle?.let { subtitle ->
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = Colors.white80,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -139,7 +140,7 @@ fun PlayerTopBar(
                 Icon(
                     imageVector = Icons.Default.PictureInPicture,
                     contentDescription = "Picture in Picture",
-                    tint = Color.White
+                    tint = Colors.white
                 )
             }
         }
@@ -153,7 +154,7 @@ fun PlayerTopBar(
                 Icon(
                     imageVector = Icons.Default.AspectRatio,
                     contentDescription = viewModel.strings.get("zoomToFill", "Zoom to Fill"),
-                    tint = if (viewModel.isZoomedToFill) PlayerAccentColor else Color.White
+                    tint = if (viewModel.isZoomedToFill) PlayerAccentColor else Colors.white
                 )
             }
         }
@@ -170,7 +171,7 @@ fun PlayerTopBar(
                 Icon(
                     imageVector = Icons.Default.FormatListBulleted,
                     contentDescription = viewModel.strings.get("episodes", "Episodes"),
-                    tint = Color.White
+                    tint = Colors.white
                 )
             }
         }
@@ -188,7 +189,7 @@ fun PlayerTopBar(
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = viewModel.strings.get("speed", "Speed"),
-                        tint = Color.White
+                        tint = Colors.white
                     )
                 }
 
@@ -233,7 +234,7 @@ fun PlayerTopBar(
                     Icon(
                         imageVector = Icons.Default.GraphicEq,
                         contentDescription = viewModel.strings.get("audio", "Audio"),
-                        tint = Color.White
+                        tint = Colors.white
                     )
                 }
 
@@ -248,7 +249,7 @@ fun PlayerTopBar(
                         text = viewModel.strings.get("audio", "Audio Tracks"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = Colors.foregroundMuted,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
 
@@ -280,7 +281,7 @@ fun PlayerTopBar(
                             text = viewModel.strings.get("audioSync", "Audio Sync"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color.Gray,
+                            color = Colors.foregroundMuted,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         PlayerConstants.SYNC_OFFSET_PRESETS.forEach { offset ->
@@ -308,7 +309,7 @@ fun PlayerTopBar(
                             text = viewModel.strings.get("volumeBoost", "Volume Boost"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color.Gray,
+                            color = Colors.foregroundMuted,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         PlayerConstants.VOLUME_BOOST_PRESETS.forEach { percent ->
@@ -382,7 +383,7 @@ fun PlayerTopBar(
                     Icon(
                         imageVector = Icons.Default.ClosedCaption,
                         contentDescription = viewModel.strings.get("subtitles", "Subtitles"),
-                        tint = Color.White
+                        tint = Colors.white
                     )
                 }
 
@@ -397,7 +398,7 @@ fun PlayerTopBar(
                         text = viewModel.strings.get("subtitles", "Subtitles"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = Colors.foregroundMuted,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
 
@@ -426,7 +427,7 @@ fun PlayerTopBar(
                             text = viewModel.strings.get("subtitleSize", "Subtitle Size"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color.Gray,
+                            color = Colors.foregroundMuted,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         DropdownMenuItem(
@@ -446,7 +447,7 @@ fun PlayerTopBar(
                             text = viewModel.strings.get("subtitleSync", "Subtitle Sync"),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color.Gray,
+                            color = Colors.foregroundMuted,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         PlayerConstants.SYNC_OFFSET_PRESETS.forEach { offset ->
@@ -500,7 +501,7 @@ fun PlayerTopBar(
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More",
-                    tint = Color.White
+                    tint = Colors.white
                 )
             }
 
@@ -528,7 +529,7 @@ fun PlayerTopBar(
                         text = viewModel.strings.get("quality", "Quality"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = Colors.foregroundMuted,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     viewModel.qualityMenu.forEach { q ->
@@ -557,7 +558,7 @@ fun PlayerTopBar(
                         text = viewModel.strings.get("chapters", "Chapters"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = Colors.foregroundMuted,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     viewModel.chapters.forEachIndexed { i, ch ->
@@ -578,7 +579,7 @@ fun PlayerTopBar(
                         text = viewModel.strings.get("sleepTimer", "Sleep Timer"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = Colors.foregroundMuted,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     if (viewModel.sleepTimerMinutes != null) {

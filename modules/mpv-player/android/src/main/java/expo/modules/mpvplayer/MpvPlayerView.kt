@@ -1,5 +1,6 @@
 package expo.modules.mpvplayer
 
+import androidx.compose.ui.graphics.toArgb
 import expo.modules.mpvplayer.playback.shouldPauseOnPictureInPictureEnd
 import expo.modules.mpvplayer.playback.shouldPauseOnActivityStop
 import android.os.PowerManager
@@ -7,7 +8,6 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -134,7 +134,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     init {
-        setBackgroundColor(Color.BLACK)
+        setBackgroundColor(Colors.black.toArgb())
 
         // SurfaceView for video rendering. Routes the surface directly to
         // SurfaceFlinger (the OS compositor), giving mpv a standalone

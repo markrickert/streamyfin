@@ -23,8 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 
 @Composable
@@ -53,7 +53,7 @@ fun PlayerScreen(
                         .align(Alignment.TopCenter)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(PlayerDarkScrim, Color.Transparent)
+                                colors = listOf(PlayerDarkScrim, Colors.transparent)
                             )
                         )
                 )
@@ -66,7 +66,7 @@ fun PlayerScreen(
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, PlayerDarkScrim)
+                                colors = listOf(Colors.transparent, PlayerDarkScrim)
                             )
                         )
                 )
@@ -123,7 +123,7 @@ fun PlayerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = Colors.white,
                     modifier = Modifier.size(44.dp),
                     strokeWidth = 3.dp
                 )

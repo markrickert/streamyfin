@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Text
+import expo.modules.mpvplayer.Colors
 import expo.modules.mpvplayer.nativeplayer.PlayerViewModel
 
 @Composable
@@ -50,20 +51,20 @@ fun TvExitConfirmation(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f)),
+            .background(Colors.black80),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .widthIn(max = 580.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF1E1E1E))
+                .background(Colors.surface)
                 .padding(36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = title,
-                color = Color.White,
+                color = Colors.white,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -73,7 +74,7 @@ fun TvExitConfirmation(
 
             Text(
                 text = message,
-                color = Color.White.copy(alpha = 0.8f),
+                color = Colors.white80,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 24.sp
@@ -99,8 +100,8 @@ fun TvExitConfirmation(
                 Button(
                     onClick = { viewModel.confirmExit() },
                     colors = ButtonDefaults.colors(
-                        containerColor = Color(0xFFE50914).copy(alpha = 0.8f),
-                        focusedContainerColor = Color(0xFFE50914)
+                        containerColor = Colors.dangerSubtle,
+                        focusedContainerColor = Colors.danger
                     )
                 ) {
                     Text(
