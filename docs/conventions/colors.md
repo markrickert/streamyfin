@@ -19,12 +19,11 @@ import { Colors } from "@/constants/Colors";
 ## Native code
 
 Kotlin and Swift read the same palette. `scripts/native-palette.ts` writes it as a
-`Colors` object (`Colors.kt`, `Colors.swift`) into each native module that cannot
-import another's files: `mpv-player`, `hero-carousel`, `exoplayer-player`,
-`glass-poster`, `tv-search` and the download Live Activity. After changing a color in
-`constants/Colors.ts`, run `bun scripts/native-palette.ts`. Never edit a generated
-file: `scripts/native-palette.test.ts` fails when one drifts. A module that has no
-Compose dependency gets ARGB `Int` constants instead of Compose `Color`s.
+`Colors` object (`Colors.kt`, `Colors.swift`) into every native module that cannot
+import another's files. Its `NATIVE_PALETTE_TARGETS` is the list. After changing a
+color in `constants/Colors.ts`, run `bun scripts/native-palette.ts`. Never edit a
+generated file: `scripts/native-palette.test.ts` fails when one drifts. A module
+with no Compose dependency gets ARGB `Int` constants instead of Compose `Color`s.
 
 `scripts/check-native-colors.ts` runs in `bun run check` and fails on a hex number,
 `Color(red:)`, `Color.White` or `.white` in a `.kt` or `.swift` file. Use

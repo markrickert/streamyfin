@@ -86,10 +86,10 @@ struct EpisodeListView: View {
 	private func thumbnail(for episode: EpisodeListItemRecord) -> some View {
 		if let imageUrl = episode.imageUrl, let url = URL(string: imageUrl) {
 			RemoteImage(url: url, headers: viewModel.imageHeaders) {
-				Colors.surfaceRaised
+				Colors.white10
 			}
 		} else {
-			Colors.surfaceRaised
+			Colors.white10
 		}
 	}
 }

@@ -48,7 +48,7 @@ fun StillWatchingOverlay(
         ) {
             Text(
                 text = viewModel.strings.get("stillWatching", "Are you still watching?"),
-                color = Colors.white,
+                color = Colors.foreground,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -59,7 +59,7 @@ fun StillWatchingOverlay(
                 onClick = { viewModel.continueWatchingFromStillWatching() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PlayerAccentColor,
-                    contentColor = Colors.white
+                    contentColor = Colors.foreground
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
@@ -78,7 +78,7 @@ fun StillWatchingOverlay(
             ) {
                 Text(
                     text = viewModel.strings.get("goBack", "Go Back"),
-                    color = Colors.white,
+                    color = Colors.foreground,
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp
                 )

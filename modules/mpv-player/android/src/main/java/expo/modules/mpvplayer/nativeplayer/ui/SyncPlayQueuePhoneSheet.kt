@@ -75,7 +75,7 @@ import kotlinx.coroutines.delay
 private val SheetBackground = Colors.surface
 private val SectionBackground = Colors.surfaceRaised
 private val SecondaryText = Colors.foregroundMuted
-private val Destructive = Colors.danger
+private val Destructive = Colors.dangerLight
 private val SectionCorner = 14.dp
 // Fixed, so a drag can be turned into a queue position without measuring.
 private val QueueRowHeight = 76.dp
@@ -139,7 +139,7 @@ internal fun SyncPlayQueuePhoneSheet(viewModel: PlayerViewModel) {
         onDismissRequest = { viewModel.closeSyncPlayQueue() },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = SheetBackground,
-        contentColor = Colors.white
+        contentColor = Colors.foreground
     ) {
         LazyColumn(
             modifier = Modifier
@@ -399,7 +399,7 @@ private fun ValueRow(
 @Composable
 private fun ActionRow(
     title: String, tag: String, enabled: Boolean,
-    color: Color = Colors.white,
+    color: Color = Colors.foreground,
     onClick: () -> Unit
 ) {
     Text(

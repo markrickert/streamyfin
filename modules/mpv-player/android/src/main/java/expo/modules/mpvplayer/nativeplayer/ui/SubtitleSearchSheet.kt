@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -78,7 +77,7 @@ fun SubtitleSearchSheet(
             ) {
                 Text(
                     text = viewModel.strings.get("searchSubtitles", "Search Subtitles"),
-                    color = Colors.white,
+                    color = Colors.foreground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -96,14 +95,14 @@ fun SubtitleSearchSheet(
                         ) {
                             Text(
                                 text = langDisplayName,
-                                color = Colors.white,
+                                color = Colors.foreground,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = null,
-                                tint = Colors.white,
+                                tint = Colors.foreground,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -147,7 +146,7 @@ fun SubtitleSearchSheet(
                     ) {
                         Text(
                             text = viewModel.subtitleSearchError ?: viewModel.strings.get("searchFailed", "Search failed"),
-                            color = Colors.danger,
+                            color = Colors.dangerLight,
                             fontSize = 14.sp
                         )
                     }
@@ -162,7 +161,7 @@ fun SubtitleSearchSheet(
                         ) {
                             Text(
                                 text = viewModel.strings.get("noSubtitlesFound", "No subtitles found"),
-                                color = Colors.white50,
+                                color = Colors.foregroundMuted,
                                 fontSize = 14.sp
                             )
                         }
@@ -206,7 +205,7 @@ private fun SubtitleResultRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = result.name,
-                color = Colors.white,
+                color = Colors.foreground,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 2,
@@ -222,7 +221,7 @@ private fun SubtitleResultRow(
                 // Provider
                 Text(
                     text = result.providerName,
-                    color = Colors.white50,
+                    color = Colors.foregroundMuted,
                     fontSize = 11.sp
                 )
 
@@ -246,7 +245,7 @@ private fun SubtitleResultRow(
                             .background(Colors.white20)
                             .padding(horizontal = 4.dp, vertical = 1.dp)
                     ) {
-                        Text(text = "SDH", color = Colors.white, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "SDH", color = Colors.foreground, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

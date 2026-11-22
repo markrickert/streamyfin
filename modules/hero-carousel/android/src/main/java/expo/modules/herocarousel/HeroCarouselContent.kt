@@ -71,7 +71,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -146,7 +145,7 @@ private val PanelSheenBrush = Brush.verticalGradient(
 private val DestructiveColor = Colors.danger
 
 private val TextPrimary = Colors.white
-private val TextSecondary = Colors.white
+private val TextSecondary = Colors.white80
 private val TextTertiary = Colors.white80
 private val HairlineColor = Colors.white20
 
