@@ -36,9 +36,10 @@ with full signal and battery, and puts it back when it ends: System UI demo mode
 Android (which also hides notification icons), `simctl status_bar` on iOS. On Android
 every run also turns stylus handwriting off.
 
-1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`,
-   this runner) into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot
-   change the tools mid-run. `e2e/reports/` is gitignored.
+1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`)
+   into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot change the
+   tools mid-run. The runner itself is loaded before the first switch and is not copied.
+   `e2e/reports/` is gitignored.
 2. Brings up the local fixture: `bun run e2e:setup`, `e2e:seed`, `e2e:enrich`, then Seerr
    catalog enablement + plugin provisioning via `suites.syncplay.seerr`. It never runs
    `e2e:down` — the fixture stays up afterwards.
@@ -85,7 +86,7 @@ informational: its TMDB feed is live data.
 Upstream Maestro hangs on tvOS (mobile-dev-inc/Maestro PR #3021 is unmerged), so every
 platform runs the pinned `plexinc/Maestro` fork `cli-2.8.0.6`, one driver for all four.
 It is downloaded once into `e2e/reports/shots/tools/<tag>/`, sha256-verified (see
-`MAESTRO_TAG` and `MAESTRO_SHA256` in `shots-lib.ts`), and passed to `maestro.py
+`MAESTRO_TAG` and `MAESTRO_SHA256` in `lib/tooling.ts`), and passed to `maestro.py
 --maestro <binary>`. Apple TV adds `--platform tvos`. The cache is keyed by tag, so
 bumping the pin makes `doctor` report the new one missing until `--fix` or the next `run`
 installs it. The user's global `maestro` is never used or touched, and there is no
