@@ -1278,6 +1278,34 @@ describe("iOS preinstalled app guard", () => {
 
 // The flows are data, not code: parse the real YAML so a future flow edit that drops
 // the permission grant or reorders the overlay dismissal fails here, not on device.
+describe("Seerr detail tap on refs with and without the poster testID", () => {
+  type Command = Record<string, any>;
+  const commandsOf = (file: string): Command[] =>
+    loadAllYaml(
+      readFileSync(join(__dirname, "flows", file), "utf8"),
+    )[1] as Command[];
+  const poster = { id: "seerr-poster-194310" };
+
+  // The two branches are separate checks, run one after the other. With the testID
+  // branch first, its tap opens the detail page, where the poster is gone, so the
+  // fallback ran there too and failed to find the movies row.
+  it.each(["seerr-mobile.yml", "seerr-tv.yml"])(
+    "%s runs the title fallback before the testID branch, so only one of them taps",
+    (file) => {
+      const cmds = commandsOf(file);
+      const fallback = cmds.findIndex(
+        (cmd) => cmd.runFlow?.when?.notVisible?.id === poster.id,
+      );
+      const byTestId = cmds.findIndex(
+        (cmd) => cmd.runFlow?.when?.visible?.id === poster.id,
+      );
+      expect(fallback).toBeGreaterThanOrEqual(0);
+      expect(byTestId).toBeGreaterThanOrEqual(0);
+      expect(fallback).toBeLessThan(byTestId);
+    },
+  );
+});
+
 describe("bootstrap-login first-run overlays", () => {
   type Command = Record<string, any>;
   const commandsOf = (file: string): Command[] =>
