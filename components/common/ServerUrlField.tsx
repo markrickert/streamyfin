@@ -31,6 +31,7 @@ interface ServerUrlFieldProps {
   placeholder?: string;
   editable?: boolean;
   resolveOptions?: ResolveOptions;
+  testID?: string;
 }
 
 /**
@@ -50,6 +51,7 @@ export function ServerUrlField({
   placeholder,
   editable = true,
   resolveOptions,
+  testID,
 }: ServerUrlFieldProps) {
   const resolver = useServerUrlResolver(probe, resolveOptions);
   const lastResolvedInput = useRef<string | null>(null);
@@ -173,6 +175,7 @@ export function ServerUrlField({
         returnKeyType='go'
         textContentType='URL'
         clearButtonMode='never'
+        testID={testID}
       />
 
       {/* px-4 is the input's own padding, so the status lines up with the

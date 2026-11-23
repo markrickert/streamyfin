@@ -283,6 +283,7 @@ export const SeerrSettings = () => {
             <View style={{ opacity: urlLocked ? 0.5 : 1 }}>
               <View className='mb-2'>
                 <ServerUrlField
+                  testID='seerr-server-url'
                   value={
                     urlLocked
                       ? (settings?.seerrServerUrl ?? "")

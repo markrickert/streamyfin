@@ -61,6 +61,7 @@ const SeerrPoster: React.FC<Props> = ({ item, horizontal }) => {
 
   return (
     <TouchableSeerrRouter
+      testID={item?.id ? `seerr-poster-${item.id}` : undefined}
       result={item}
       mediaTitle={title}
       releaseYear={releaseYear}
