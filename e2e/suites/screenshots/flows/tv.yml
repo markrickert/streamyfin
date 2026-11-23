@@ -1,0 +1,88 @@
+# TV screenshot pass (Android TV and Apple TV): the same flow runs on the before and after
+# builds. Needs the session bootstrap-login-tv.yml leaves behind, so no clearState here. Tabs
+# and items are tapped, which the Android TV emulator accepts like a click and the tvOS
+# Maestro fork clicks like a D-pad select: a remote press that follows another too fast is
+# dropped, and a tap does not depend on where the focus was. The app still draws its own
+# focus ring on whatever it focuses on arrival, so that shows in the shots.
+# Never open a title: on TV, Center/Select on a card starts playback, which changes the
+# fixture account. Screenshot names are the pairing key for compare.ts, so keep them stable.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 01-home
+
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 4000
+    optional: true
+- takeScreenshot: 02-search
+
+- tapOn: "Favorites"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 4000
+    optional: true
+- takeScreenshot: 03-favorites
+
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 5000
+    optional: true
+- takeScreenshot: 04-library
+
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 4000
+    optional: true
+- takeScreenshot: 05-settings
+
+- tapOn: "Library"
+- tapOn: "Movies"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 8000
+    optional: true
+- takeScreenshot: 06-library-movies
+- pressKey: Back
+
+# The Inactivity timeout modal: the TV modal panel is where a color change shows most. Rows
+# ignore touch, so the D-pad moves the focus (two Downs from the tab bar) and Center opens
+# it. Each press waits, because one that follows another too fast is dropped. The modal is
+# only opened: no option is chosen, so no setting changes. No item page is opened anywhere
+# in this flow: Center/Select on a Home card starts playback, and the fixture account must
+# not play.
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 3000
+    optional: true
+- pressKey: Remote Dpad Down
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1500
+    optional: true
+- pressKey: Remote Dpad Down
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1500
+    optional: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "24 hours"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 2000
+    optional: true
+- takeScreenshot: 07-settings-modal
+- pressKey: Back

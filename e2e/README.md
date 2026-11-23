@@ -10,7 +10,7 @@ server log, the session the server records, the receiver on the TV.
 | --- | --- |
 | `bench/` | Shared tooling: configuration, Jellyfin client, sessions observer, device inventory, Cast sender, Maestro runner, reports |
 | `fixtures/` | Shared test data: receiver protocol vectors (replayed by Jest and the Python sender, later by JUnit and XCTest), media cases for the playback matrix |
-| `suites/<name>/` | One folder per feature under test (`syncplay`, `cast`), each with its own README |
+| `suites/<name>/` | One folder per feature under test (`syncplay`, `cast`, `screenshots`), each with its own README |
 | `reports/` | Local run output, ignored by git |
 
 ## Tiers

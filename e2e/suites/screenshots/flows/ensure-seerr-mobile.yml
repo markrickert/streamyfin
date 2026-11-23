@@ -1,0 +1,21 @@
+# Connects the phone app to Seerr only when it is not connected. The Search tab shows a Library |
+# Discover switch once Seerr is set up, so a missing "Discover" means the bootstrap has to run.
+# Needs the session bootstrap-login-mobile.yml leaves behind.
+# Run: e2e/suites/screenshots/run.sh ensure-seerr-mobile <out dir> [device]
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000
+- tapOn: "Search"
+- hideKeyboard:
+    optional: true
+- extendedWaitUntil:
+    visible: "Discover"
+    timeout: 6000
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Discover"
+    file: bootstrap-seerr-mobile.yml

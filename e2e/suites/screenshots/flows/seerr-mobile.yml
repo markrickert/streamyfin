@@ -1,0 +1,107 @@
+# Seerr screens on a phone: Discover, a search and a title's page. Needs
+# bootstrap-seerr-mobile.yml to have run on this build. Discover rows are live TMDB data,
+# so the noise floor decides whether they count; "Iron Man" is a fixed title for the pages
+# below.
+# Read-only: nothing here may create a request, which would change the Seerr server.
+# The seeded catalog has no Continue Watching, so the wait is on the Recently added row.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- tapOn: "Search"
+- hideKeyboard:
+    optional: true
+# The pill can ignore a tap that lands while the page is still mounting, so tap it again
+# until the Discover rows are there.
+- tapOn: "Discover"
+- repeat:
+    while:
+      notVisible: "Trending"
+    times: 4
+    commands:
+      - extendedWaitUntil:
+          visible: "Trending"
+          timeout: 4000
+          optional: true
+      - runFlow:
+          when:
+            notVisible: "Trending"
+          commands:
+            - tapOn: "Discover"
+- extendedWaitUntil:
+    visible: "Trending"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 10-seerr-discover
+
+# Typing before the keyboard is up drops the text and leaves the Discover page, whose own
+# Iron Man card would satisfy the wait below. The typed query reads back as exactly
+# "Iron Man", which no card label does (they carry the year), so retype until it is there.
+- tapOn: '.*Search\.\.\..*'
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1500
+    optional: true
+- inputText: "Iron Man"
+- repeat:
+    while:
+      notVisible: "Iron Man"
+    times: 3
+    commands:
+      - tapOn: '.*Search\.\.\..*'
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+      - inputText: "Iron Man"
+- hideKeyboard:
+    optional: true
+- extendedWaitUntil:
+    visible: ".*Iron Man.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 11-seerr-search
+
+# First result: Iron Man (2008), TMDB id 1726 — a stable id across runs. The request sheet
+# is deliberately not opened: its button creates a request on the Seerr server, and a
+# mistimed tap would submit one.
+# Refs before the SeerrPoster testID fall back to the card's title text, which sits
+# inside the card and clicks through to its pressable on all three platforms.
+# The Popular movies row sits at the bottom edge, partly under the search bar, so the card
+# is brought to the centre first: at the edge the tap target can fall outside the screen.
+- runFlow:
+    when:
+      visible:
+        id: "seerr-poster-1726"
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "seerr-poster-1726"
+          centerElement: true
+      - tapOn:
+          id: "seerr-poster-1726"
+- runFlow:
+    when:
+      notVisible:
+        id: "seerr-poster-1726"
+    commands:
+      - scrollUntilVisible:
+          element: "Iron Man"
+          centerElement: true
+      - tapOn: "Iron Man"
+- extendedWaitUntil:
+    visible: ".*Iron Man.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 12-seerr-detail

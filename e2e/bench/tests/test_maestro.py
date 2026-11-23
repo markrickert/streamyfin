@@ -26,6 +26,25 @@ class BuildCommandTests(unittest.TestCase):
             ["/opt/maestro", "--device", "emulator-5554", "test", "-e", "SERVER_URL=http://x", "-e", "FAKE_CAST=1", "flow.yml"],
         )
 
+    def test_build_command_with_out_keeps_screenshots_in_one_flat_folder(self):
+        command = build_command(
+            Path("flow.yml"), device=None, env={"SERVER_URL": "http://x"}, maestro=Path("/opt/maestro"), out=Path("shots/before")
+        )
+        self.assertEqual(
+            command,
+            ["/opt/maestro", "test", "--debug-output", "shots/before", "--flatten-debug-output", "-e", "SERVER_URL=http://x", "flow.yml"],
+        )
+        self.assertEqual(
+            build_command(Path("flow.yml"), device=None, env={}, maestro=Path("/opt/maestro")),
+            ["/opt/maestro", "test", "flow.yml"],
+        )
+
+    def test_build_command_with_platform_and_a_pinned_binary(self):
+        command = build_command(
+            Path("flow.yml"), device="UDID", env={}, maestro=Path("/tools/maestro-tvos"), platform="tvos"
+        )
+        self.assertEqual(command, ["/tools/maestro-tvos", "--device", "UDID", "--platform", "tvos", "test", "flow.yml"])
+
     def test_default_maestro_path_is_the_user_install(self):
         from unittest import mock
 

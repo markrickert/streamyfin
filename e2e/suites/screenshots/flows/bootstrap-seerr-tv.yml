@@ -1,0 +1,18 @@
+# Verifies the signed-in TV app (Android TV and Apple TV) is connected to Seerr. There is no Seerr section in TV
+# Settings: TV clients learn the Seerr URL and API key from the Streamyfin plugin on the
+# Jellyfin server, pushed by seerr.py's provisioning helper, and JellyfinProvider signs in
+# automatically. So this flow only proves the connection: the Search tab shows a Library |
+# Discover switch once Seerr is set up, and a missing "Discover" badge fails the run.
+# Run after the plugin provisioning and a fresh sign-in (bootstrap-login-tv.yml).
+# Apple TV runs through the tvOS Maestro fork.
+# Run: e2e/suites/screenshots/run.sh bootstrap-seerr-tv <out dir> [device]
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: "Discover"
+    timeout: 30000
