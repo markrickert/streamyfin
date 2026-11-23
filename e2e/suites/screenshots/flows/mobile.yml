@@ -112,6 +112,12 @@ appId: ${MAESTRO_APP_ID}
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
+# The title sorts into the first rows. scrollUntilVisible swipes down as soon as its
+# first look misses, so a grid that is still loading scrolls past it for good.
+- extendedWaitUntil:
+    visible: "The Blacksmith.*"
+    timeout: 15000
+    optional: true
 - scrollUntilVisible:
     element: "The Blacksmith.*"
 - tapOn: "The Blacksmith.*"
