@@ -193,6 +193,9 @@
     "experiments": {
       "typedRoutes": true
     },
+    "buildCacheProvider": {
+      "plugin": "./scripts/build-cache-provider.js"
+    },
     "extra": {
       "router": {
         "origin": false

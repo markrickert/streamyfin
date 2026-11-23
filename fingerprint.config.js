@@ -49,6 +49,9 @@ const configFiles = () => {
 /** @type {import('@expo/fingerprint').Config} */
 module.exports = {
   sourceSkips: ["ExpoConfigExtraSection"],
+  // Expo CLI runs the build cache provider on the developer's machine and it
+  // never ships, so an edit to it must not force a native CI build.
+  ignorePaths: ["scripts/build-cache-provider.js"],
   extraSources: [
     {
       type: "dir",

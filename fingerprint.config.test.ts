@@ -14,6 +14,12 @@ describe("fingerprint.config.js", () => {
     expect(config.sourceSkips).toContain("ExpoConfigExtraSection");
   });
 
+  it("never hashes the build cache provider", () => {
+    // Expo CLI runs the provider on the developer's machine and it never
+    // ships, so an edit to it must not force a native CI build.
+    expect(config.ignorePaths).toContain("scripts/build-cache-provider.js");
+  });
+
   it("hashes the app extension sources", () => {
     // Config plugins copy targets/ in at prebuild, out of the fingerprint's sight.
     expect(hashed.has("targets")).toBe(true);
