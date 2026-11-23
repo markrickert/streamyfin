@@ -247,6 +247,7 @@ function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     ["install -r", ok],
     ["pm clear", ok],
     ["push /tmp/streamyfin-shots-fast-refresh-off.xml", ok],
+    ["push /tmp/streamyfin-shots-dev-menu-fab-off.xml", ok],
     ["run-as", ok],
     // The phone emulator reports no leanback — pm exits 1 for "absent", which is the
     // real answer, not a failure.
@@ -1010,6 +1011,22 @@ describe("fresh-state capture sequence", () => {
     expect(f.files.get("/tmp/streamyfin-shots-fast-refresh-off.xml")).toContain(
       'name="hot_module_replacement" value="false"',
     );
+    // The dev menu's floating button is off after each clear, before that pass's launch.
+    // The deep link's __expo_disable_fab lasts one process; a flow's launchApp restarts
+    // the app and brings the button back, its "Tools" label in the first 10 s of a shot.
+    const fab = execs(f, "expo.modules.devmenu.sharedpreferences.xml");
+    expect(fab).toHaveLength(3);
+    for (const argv of fab)
+      expect(argv.join(" ")).toContain(
+        "run-as com.example.streamyfin.debug cp /data/local/tmp/streamyfin-shots-dev-menu-fab-off.xml shared_prefs/expo.modules.devmenu.sharedpreferences.xml",
+      );
+    expect(f.files.get("/tmp/streamyfin-shots-dev-menu-fab-off.xml")).toContain(
+      'name="showFab" value="false"',
+    );
+    const steps = f.execLog.map((argv) => argv.join(" "));
+    expect(
+      steps.findIndex((a) => a.includes("devmenu.sharedpreferences.xml")),
+    ).toBeLessThan(steps.findIndex((a) => a.includes("am start")));
     const order = f.execLog.map((argv) => argv.join(" "));
     expect(order.findIndex((a) => a.includes("pm clear"))).toBeLessThan(
       order.findIndex((a) => a.includes("_preferences.xml")),
@@ -1227,6 +1244,19 @@ describe("iOS preinstalled app guard", () => {
         "NO",
         plist,
       ]);
+    // The dev menu's floating button stays off across the flows' launchApp restarts,
+    // which drop the deep link's one-process __expo_disable_fab.
+    const fab = execs(f, "EXDevMenuShowFloatingActionButton");
+    expect(fab).toHaveLength(3);
+    for (const argv of fab)
+      expect(argv).toEqual([
+        "plutil",
+        "-insert",
+        "EXDevMenuShowFloatingActionButton",
+        "-bool",
+        "NO",
+        plist,
+      ]);
     // The default is written after the reinstall and before the app is first opened.
     const trace = f.execLog.map((argv) => argv.join(" "));
     const install = trace.findIndex((a) => a.includes("simctl install"));
@@ -1255,21 +1285,29 @@ describe("bootstrap-login first-run overlays", () => {
       readFileSync(join(__dirname, "flows", file), "utf8"),
     )[1] as Command[];
 
-  it("accepts the open-in prompt, then dismisses the onboarding sheet and dev menu in order", () => {
+  // The picker step comes first: the link it opens raises the iOS "Open in" prompt,
+  // which the next step accepts.
+  it("reconnects from the server picker, accepts the open-in prompt, then dismisses the onboarding sheet and dev menu in order", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
-    expect(cmds).toHaveLength(3);
-    expect(cmds[0].runFlow.when.visible).toBe("Open in .*");
+    expect(cmds).toHaveLength(4);
+    expect(cmds[0].runFlow.when.visible).toBe("Fetch development servers");
     expect(cmds[0].runFlow.commands).toEqual([
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[1].runFlow.when.visible).toBe("Open in .*");
+    expect(cmds[1].runFlow.commands).toEqual([
       { tapOn: "Open" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[1].runFlow.when.visible).toBe("Continue");
-    expect(cmds[1].runFlow.commands).toEqual([
+    expect(cmds[2].runFlow.when.visible).toBe("Continue");
+    expect(cmds[2].runFlow.commands).toEqual([
       { tapOn: "Continue" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[2].runFlow.when.visible).toBe("Go home");
-    expect(cmds[2].runFlow.commands).toEqual([
+    expect(cmds[3].runFlow.when.visible).toBe("Go home");
+    expect(cmds[3].runFlow.commands).toEqual([
       { tapOn: "Close" },
       "waitForAnimationToEnd",
     ]);
