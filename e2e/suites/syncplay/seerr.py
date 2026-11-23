@@ -11,8 +11,6 @@ import urllib.request
 
 READY_ATTEMPTS = 90
 READY_DELAY_SECONDS = 2
-JELLYFIN_HOSTNAME = "jellyfin"  # the compose service name, reachable on the shared network
-JELLYFIN_PORT = 8096
 MEDIA_SERVER_TYPE_JELLYFIN = 2
 FIXTURE_LIBRARY = "SyncPlay Fixtures"
 # Seerr's mapLibraries excludes music, books, musicvideos, homevideos and boxsets
@@ -50,13 +48,15 @@ def wait_for_public(opener, url):
     raise RuntimeError(f"Seerr at {url} did not become ready within {READY_ATTEMPTS * READY_DELAY_SECONDS} seconds")
 
 
-def login(opener, url, username, password, first_run):
+def login(opener, url, username, password, jellyfin=None):
+    """Sign in to Seerr through Jellyfin; jellyfin, a (hostname, port) pair, onboards it first."""
     body = {"username": username, "password": password}
-    if first_run:
+    if jellyfin is not None:
         # Seerr only accepts a hostname while none is saved; sending one on a rerun is a 500.
+        hostname, port = jellyfin
         body.update({
-            "hostname": JELLYFIN_HOSTNAME,
-            "port": JELLYFIN_PORT,
+            "hostname": hostname,
+            "port": port,
             "useSsl": False,
             "urlBase": "",
             "email": f"{username}@localhost",
@@ -83,13 +83,15 @@ def enable_named(opener, url, names):
 def ensure_ready(owned, username, password):
     """Idempotent onboarding: first run connects Jellyfin and enables the fixture library;
     a rerun just proves the owner login still works."""
+    from suites.syncplay import setup
+
     url = base_url(owned)
     opener = new_session()
     public = wait_for_public(opener, url)
     if public.get("initialized"):
-        login(opener, url, username, password, first_run=False)
+        login(opener, url, username, password)
         return
-    login(opener, url, username, password, first_run=True)
+    login(opener, url, username, password, jellyfin=setup.backend(owned).jellyfin_address_for_seerr(owned))
     enable_named(opener, url, (FIXTURE_LIBRARY,))
     request(opener, url, "/api/v1/settings/initialize", "POST")
     if not request(opener, url, "/api/v1/settings/public").get("initialized"):
@@ -105,7 +107,7 @@ def enable_catalog_libraries(owned):
     opener = new_session()
     if not request(opener, url, "/api/v1/settings/public").get("initialized"):
         raise RuntimeError("Seerr is not initialized; run setup.py first")
-    login(opener, url, OWNER, setup.PASSWORD, first_run=False)
+    login(opener, url, OWNER, setup.PASSWORD)
     enable_named(opener, url, CATALOG_LIBRARIES)
 
 
