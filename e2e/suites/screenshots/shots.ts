@@ -2,7 +2,7 @@
 /**
  * Dev-mode screenshot comparison on this checkout.
  *
- *   bun e2e/suites/screenshots/shots.ts doctor [--platform <ios|android|android-tv|apple-tv>]
+ *   bun e2e/suites/screenshots/shots.ts doctor [--fix] [--platform <ios|android|android-tv|apple-tv>]
  *   bun e2e/suites/screenshots/shots.ts run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
  *
  * --before defaults to the base the Reassure baseline uses: this branch's PR target, else

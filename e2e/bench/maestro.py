@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--flow", required=True, type=Path)
     parser.add_argument("--device", help="adb serial or simulator udid; the one emulator or simulator running otherwise, never a phone")
     parser.add_argument("--env", action="append", default=[], metavar="KEY=VALUE")
-    parser.add_argument("--maestro", type=Path, help="a specific maestro binary, e.g. the pinned tvOS fork")
+    parser.add_argument("--maestro", type=Path, help="a specific maestro binary, e.g. the screenshot suite's pinned plexinc fork")
     parser.add_argument("--platform", help="forwarded to `maestro --platform` (the fork's tvOS driver)")
     parser.add_argument("--syncplay", action="store_true", help="also pass SERVER_URL, ANDROID_SERVER_URL, USERNAME, GUEST_USERNAME and PASSWORD for the throwaway server from suites/syncplay/setup.py")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SECONDS, help="seconds before a stalled Maestro is stopped")

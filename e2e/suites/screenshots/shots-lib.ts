@@ -19,6 +19,8 @@ export type Platform = (typeof PLATFORMS)[number];
 
 export interface Cli {
   command: "doctor" | "run";
+  /** doctor only: bring up what the runner itself would, instead of only reporting. */
+  fix?: boolean;
   platform?: Platform;
   before?: string;
   after?: string;
@@ -77,16 +79,22 @@ export function parseArgs(argv: string[]): Cli {
   const [command, ...rest] = argv;
   if (command !== "doctor" && command !== "run")
     throw new ShotError(
-      "usage: shots.ts doctor [--platform <p>] | run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]",
+      "usage: shots.ts doctor [--fix] [--platform <p>] | run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]",
     );
   const flags: Record<string, string> = {};
-  for (let i = 0; i < rest.length; i += 2) {
+  let fix = false;
+  for (let i = 0; i < rest.length; i++) {
+    if (command === "doctor" && rest[i] === "--fix") {
+      fix = true;
+      continue;
+    }
     if (!rest[i].startsWith("--") || rest[i + 1] === undefined)
       throw new ShotError(`shots.ts: bad flag near '${rest[i]}'`);
-    flags[rest[i].slice(2)] = rest[i + 1];
+    flags[rest[i].slice(2)] = rest[++i];
   }
   const cli: Cli = {
     command,
+    fix,
     platform: flags.platform as Platform | undefined,
     before: flags.before,
     after: flags.after ?? "HEAD",
@@ -116,8 +124,8 @@ export function parseArgs(argv: string[]): Cli {
 interface PlatformSpec {
   tv: boolean;
   fingerprintPlatform: "ios" | "android";
-  /** The fork-only tvOS driver needs the pinned binary, not the user's maestro. */
-  fork: boolean;
+  /** Forwarded as `maestro --platform`: the pinned fork's tvOS driver. */
+  maestroPlatform?: "tvos";
   login: string;
   screens: string;
   seerrBootstrap: string;
@@ -132,7 +140,6 @@ export function platformSpec(platform: Platform): PlatformSpec {
       return {
         tv: false,
         fingerprintPlatform: platform,
-        fork: false,
         login: "bootstrap-login-mobile",
         screens: "mobile",
         // Plugin-provisioned settings may already have the app connected: the ensure
@@ -145,7 +152,6 @@ export function platformSpec(platform: Platform): PlatformSpec {
       return {
         tv: true,
         fingerprintPlatform: "android",
-        fork: false,
         login: "bootstrap-login-tv",
         screens: "tv",
         seerrBootstrap: "bootstrap-seerr-tv",
@@ -156,7 +162,7 @@ export function platformSpec(platform: Platform): PlatformSpec {
       return {
         tv: true,
         fingerprintPlatform: "ios",
-        fork: true,
+        maestroPlatform: "tvos",
         login: "bootstrap-login-tv",
         screens: "tv",
         seerrBootstrap: "bootstrap-seerr-tv",
@@ -345,37 +351,44 @@ export function ensurePortFree(d: Deps, port: number): void {
 }
 
 /**
- * The pinned tvOS fork. Upstream Maestro hangs on tvOS (mobile-dev-inc/Maestro#3021 is
- * unmerged), so apple-tv runs through plexinc/Maestro cli-2.8.0.6, downloaded once into
- * the ignored tools cache with its release checksum verified. The user's global maestro
- * is never touched.
+ * The pinned Maestro every platform runs through. Upstream Maestro hangs on tvOS
+ * (mobile-dev-inc/Maestro#3021 is unmerged), so this is plexinc/Maestro, downloaded into
+ * the ignored tools cache with its release checksum verified. The cache is keyed by tag:
+ * bumping the pin makes the old binary count as missing. The user's global maestro is
+ * never used or touched.
  */
-export const TVOS_FORK_TAG = "cli-2.8.0.6";
-export const TVOS_FORK_SHA256 =
+export const MAESTRO_TAG = "cli-2.8.0.6";
+export const MAESTRO_SHA256 =
   "fd9abfd350659585e9b317877a38dc159b0dda4bb6c4f081a3f79d3388a90ea3";
 
-export function ensureTvosMaestro(d: Deps, toolsDir: string): string {
-  const binary = `${toolsDir}/maestro/bin/maestro`;
+const maestroBinary = (toolsDir: string) =>
+  `${toolsDir}/${MAESTRO_TAG}/maestro/bin/maestro`;
+
+export function ensureMaestro(d: Deps, toolsDir: string): string {
+  const binary = maestroBinary(toolsDir);
   if (d.fs.exists(binary)) return binary;
-  const url = `https://github.com/plexinc/Maestro/releases/download/${TVOS_FORK_TAG}/maestro.zip`;
-  const zip = `${toolsDir}/maestro-${TVOS_FORK_TAG}.zip`;
+  const url = `https://github.com/plexinc/Maestro/releases/download/${MAESTRO_TAG}/maestro.zip`;
+  const zip = `${toolsDir}/maestro-${MAESTRO_TAG}.zip`;
+  const dest = `${toolsDir}/${MAESTRO_TAG}`;
   d.fs.mkdir(toolsDir);
-  must(d.exec(["curl", "-fsSL", url, "-o", zip]), "download tvOS maestro fork");
+  must(d.exec(["curl", "-fsSL", url, "-o", zip]), "download maestro");
   const sha = must(
     d.exec(["shasum", "-a", "256", zip]),
-    "checksum tvOS maestro fork",
+    "checksum maestro",
   ).split(/\s+/)[0];
-  if (sha !== TVOS_FORK_SHA256) {
+  if (sha !== MAESTRO_SHA256) {
     d.fs.rm(zip);
     throw new ShotError(
-      `tvOS maestro fork checksum mismatch: got ${sha}, want ${TVOS_FORK_SHA256}`,
+      `maestro ${MAESTRO_TAG} checksum mismatch: got ${sha}, want ${MAESTRO_SHA256}`,
     );
   }
-  must(d.exec(["unzip", "-q", zip, "-d", toolsDir]), "unzip tvOS maestro fork");
-  must(d.exec(["chmod", "+x", binary]), "chmod tvOS maestro fork");
+  // A half-unpacked earlier attempt must not mix into this one.
+  d.fs.rm(dest);
+  must(d.exec(["unzip", "-q", zip, "-d", dest]), "unzip maestro");
+  must(d.exec(["chmod", "+x", binary]), "chmod maestro");
   d.fs.rm(zip);
   if (!d.fs.exists(binary))
-    throw new ShotError(`tvOS maestro fork unpacked without ${binary}`);
+    throw new ShotError(`maestro ${MAESTRO_TAG} unpacked without ${binary}`);
   return binary;
 }
 
@@ -407,7 +420,7 @@ export function snapshotTooling(
 
 const DEFAULT_PORT = 18081;
 
-/** Ignored root for sessions, the build cache, and the tvOS fork. */
+/** Ignored root for sessions, the build cache, and the pinned maestro. */
 const REPORTS_DIR = "e2e/reports/shots";
 
 /** Read the persisted fixture .env, tolerating its absence (doctor runs without one). */
@@ -827,7 +840,8 @@ function flowArgv(
   device: string,
   outDir: string,
   env: Record<string, string>,
-  fork?: string,
+  maestro: string,
+  maestroPlatform?: "tvos",
 ): string[] {
   const argv = [
     "python3",
@@ -839,8 +853,9 @@ function flowArgv(
     "--device",
     device,
   ];
-  if (fork) argv.push("--maestro", fork, "--platform", "tvos");
-  argv.push("--env", `MAESTRO_TVOS=${fork ? "1" : "0"}`);
+  argv.push("--maestro", maestro);
+  if (maestroPlatform) argv.push("--platform", maestroPlatform);
+  argv.push("--env", `MAESTRO_TVOS=${maestroPlatform === "tvos" ? "1" : "0"}`);
   for (const [key, value] of Object.entries(env))
     argv.push("--env", `${key}=${value}`);
   return argv;
@@ -853,12 +868,15 @@ function runFlow(
   device: string,
   outDir: string,
   env: Record<string, string>,
-  fork?: string,
+  maestro: string,
+  maestroPlatform?: "tvos",
 ): void {
   // The env map reaches maestro.py through argv; it is never printed by this runner,
   // and a failing flow's stderr is stripped of credentials before it is thrown.
   mustSanitized(
-    d.exec(flowArgv(tooling, flow, device, outDir, env, fork)),
+    d.exec(
+      flowArgv(tooling, flow, device, outDir, env, maestro, maestroPlatform),
+    ),
     `flow ${flow}`,
     [env.MAESTRO_JELLYFIN_PASS, env.MAESTRO_SEERR_PASS],
   );
@@ -912,12 +930,24 @@ function runCapture(
   device: string,
   outDir: string,
   env: Record<string, string>,
-  fork?: string,
+  maestro: string,
 ): void {
-  runFlow(d, tooling, spec.login, device, outDir, env, fork);
-  runFlow(d, tooling, spec.screens, device, outDir, env, fork);
-  runFlow(d, tooling, spec.seerrBootstrap, device, outDir, env, fork);
-  runFlow(d, tooling, spec.seerr, device, outDir, env, fork);
+  for (const flow of [
+    spec.login,
+    spec.screens,
+    spec.seerrBootstrap,
+    spec.seerr,
+  ])
+    runFlow(
+      d,
+      tooling,
+      flow,
+      device,
+      outDir,
+      env,
+      maestro,
+      spec.maestroPlatform,
+    );
 }
 
 function restoreGit(d: Deps, repo: string, start: GitStart): void {
@@ -1028,9 +1058,7 @@ export async function runComparison(
   ensureOutIgnored(d, repo, sessionDir);
   d.fs.mkdir(sessionDir);
   const tooling = snapshotTooling(d, repo, sessionDir);
-  const fork = spec.fork
-    ? ensureTvosMaestro(d, `${repo}/${REPORTS_DIR}/tools`)
-    : undefined;
+  const maestro = ensureMaestro(d, `${repo}/${REPORTS_DIR}/tools`);
   ensureFixture(d, repo);
   // Capture the fixture contract while the checkout that produced it is still on disk:
   // .state/ and .env are gitignored, so they survive the switch — but an absent or
@@ -1177,7 +1205,7 @@ export async function runComparison(
           // because wiping state would also wipe the URL the link just set.
           resetTestAppState(d, cli.platform!, device, appId, artifact);
           launchDevClient(d, cli.platform!, device, appId, port);
-          runCapture(d, tooling, spec, device, outDir, env, fork);
+          runCapture(d, tooling, spec, device, outDir, env, maestro);
         }
       } finally {
         metro.kill();
@@ -1214,6 +1242,35 @@ export async function runComparison(
   }
 }
 
+/** Re-reads .env each call: e2e:setup may have just written it. */
+function fixtureChecks(d: Deps, repo: string): string[] {
+  const dotenv = fixtureDotenv(d, repo);
+  const jellyfinPort = dotenv.SYNCPLAY_PORT ?? "18096";
+  const seerrPort = dotenv.SYNCPLAY_SEERR_PORT ?? "15055";
+  const jellyfin = d.exec([
+    "curl",
+    "-fsS",
+    "-o",
+    "/dev/null",
+    "-w",
+    "%{http_code}",
+    `http://127.0.0.1:${jellyfinPort}/health`,
+  ]);
+  const seerr = d.exec([
+    "curl",
+    "-fsS",
+    `http://127.0.0.1:${seerrPort}/api/v1/settings/public`,
+  ]);
+  return [
+    jellyfin.stdout.trim() === "200"
+      ? "jellyfin fixture healthy"
+      : `jellyfin fixture NOT reachable at :${jellyfinPort}`,
+    seerr.code === 0 && seerr.stdout.includes('"initialized":true')
+      ? "seerr fixture initialized"
+      : "seerr fixture NOT initialized",
+  ];
+}
+
 export function doctor(
   d: Deps,
   cli: Cli,
@@ -1231,47 +1288,23 @@ export function doctor(
       ? `tree dirty (${status.split("\n").length} entries) — run refuses until clean`
       : "tree clean",
   );
-  const dotenv = fixtureDotenv(d, repo);
-  const jellyfinPort = dotenv.SYNCPLAY_PORT ?? "18096";
-  const seerrPort = dotenv.SYNCPLAY_SEERR_PORT ?? "15055";
-  const jellyfin = d.exec([
-    "curl",
-    "-fsS",
-    "-o",
-    "/dev/null",
-    "-w",
-    "%{http_code}",
-    `http://127.0.0.1:${jellyfinPort}/health`,
-  ]);
-  checks.push(
-    jellyfin.stdout.trim() === "200"
-      ? "jellyfin fixture healthy"
-      : `jellyfin fixture NOT reachable at :${jellyfinPort}`,
-  );
-  const seerr = d.exec([
-    "curl",
-    "-fsS",
-    `http://127.0.0.1:${seerrPort}/api/v1/settings/public`,
-  ]);
-  checks.push(
-    seerr.code === 0 && seerr.stdout.includes('"initialized":true')
-      ? "seerr fixture initialized"
-      : "seerr fixture NOT initialized",
-  );
-  if (cli.platform === "apple-tv") {
-    const fork = `${repo}/${REPORTS_DIR}/tools/maestro/bin/maestro`;
-    checks.push(
-      d.fs.exists(fork)
-        ? `tvOS fork cached (${TVOS_FORK_TAG})`
-        : `tvOS fork ${TVOS_FORK_TAG} will download on first run`,
-    );
-  } else {
-    checks.push(
-      d.exec(["maestro", "--version"]).code === 0
-        ? "maestro CLI present"
-        : "maestro CLI missing",
-    );
+  let fixture = fixtureChecks(d, repo);
+  if (cli.fix && fixture.some((check) => check.includes("NOT"))) {
+    d.log("fix: bringing up the local fixture");
+    ensureFixture(d, repo);
+    fixture = fixtureChecks(d, repo);
   }
+  checks.push(...fixture);
+  const tools = `${repo}/${REPORTS_DIR}/tools`;
+  if (cli.fix && !d.fs.exists(maestroBinary(tools))) {
+    d.log(`fix: installing maestro ${MAESTRO_TAG}`);
+    ensureMaestro(d, tools);
+  }
+  checks.push(
+    d.fs.exists(maestroBinary(tools))
+      ? `maestro ${MAESTRO_TAG} installed`
+      : `maestro ${MAESTRO_TAG} NOT installed`,
+  );
   const ok = checks.every((check) => !check.includes("NOT"));
   return { ok, checks };
 }

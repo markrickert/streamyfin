@@ -5,12 +5,13 @@ checkout between the refs, serves each with its own Metro, captures the same sho
 times — before, a fresh "noise" pass on the before build, after — and scores them with
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
 The runner uses local debug clients, never CI release artifacts, and runs locally only,
-never in CI: it needs a simulator or emulator, Maestro, and Docker for the fixture.
+never in CI: it needs a simulator or emulator, Java for Maestro, and Docker for the
+fixture.
 
 ## Commands
 
 ```sh
-bun run e2e:shots:doctor [--platform ios|android|android-tv|apple-tv]
+bun run e2e:shots:doctor [--fix] [--platform ios|android|android-tv|apple-tv]
 bun run e2e:shots --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
 ```
 
@@ -19,7 +20,10 @@ bun run e2e:shots --platform <p> [--before <ref>] [--after <ref>] [--device <id>
 `upstream` before `origin`. A stacked branch should pass its parent. `--after` defaults
 to `HEAD`.
 
-`doctor` is read-only: tree cleanliness, fixture reachability, driver availability.
+`doctor` reports tree cleanliness, fixture reachability, and whether the pinned Maestro
+is installed. It is read-only unless you pass `--fix`. `--fix` brings up an unhealthy
+fixture the way `run` does (step 2 below) and installs the pinned Maestro. It never
+touches a dirty tree: commit or stash yourself.
 `run` refuses a dirty tree, identical refs, a physical device, or a busy port, then:
 
 **Device safety**: use a fresh, dedicated emulator/simulator. Before installing, the
@@ -73,14 +77,16 @@ pairing key for compare.ts — `00-login`, `00-intro` (phones only: `Home.tv.tsx
 presents the sheet), `01`–`09`, `10`–`12` for Seerr. `10-seerr-discover` is scored
 informational: its TMDB feed is live data.
 
-## Apple TV uses the tvOS Maestro fork
+## Every platform uses the pinned Maestro
 
-Upstream Maestro hangs on tvOS (mobile-dev-inc/Maestro PR #3021 is unmerged), so the
-apple-tv path runs the pinned `plexinc/Maestro` fork `cli-2.8.0.6`: downloaded once into
-`e2e/reports/shots/tools/`, sha256-verified (`fd9abfd3…`, see `TVOS_FORK_SHA256` in
-shots-lib.ts), and invoked as `maestro --platform tvos --device <udid>` through
-`maestro.py --maestro <fork> --platform tvos`. The user's global `maestro` is never
-touched, and there is no AppleScript/DeviceHub fallback.
+Upstream Maestro hangs on tvOS (mobile-dev-inc/Maestro PR #3021 is unmerged), so every
+platform runs the pinned `plexinc/Maestro` fork `cli-2.8.0.6`, one driver for all four.
+It is downloaded once into `e2e/reports/shots/tools/<tag>/`, sha256-verified (see
+`MAESTRO_TAG` and `MAESTRO_SHA256` in `shots-lib.ts`), and passed to `maestro.py
+--maestro <binary>`. Apple TV adds `--platform tvos`. The cache is keyed by tag, so
+bumping the pin makes `doctor` report the new one missing until `--fix` or the next `run`
+installs it. The user's global `maestro` is never used or touched, and there is no
+AppleScript/DeviceHub fallback.
 
 ## Seerr on TV
 

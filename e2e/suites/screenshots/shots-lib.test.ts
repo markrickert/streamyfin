@@ -8,9 +8,12 @@ import { join } from "node:path";
 import {
   type Cli,
   type Deps,
+  doctor,
   type ExecResult,
   ensureDebugBuild,
   ensurePortFree,
+  MAESTRO_SHA256,
+  MAESTRO_TAG,
   parseArgs,
   platformSpec,
   runComparison,
@@ -26,6 +29,8 @@ const { loadAll: loadAllYaml } = require("js-yaml") as {
 };
 
 const REPO = "/repo";
+const MAESTRO_TOOLS = `${REPO}/e2e/reports/shots/tools`;
+const MAESTRO_BIN = `${MAESTRO_TOOLS}/${MAESTRO_TAG}/maestro/bin/maestro`;
 const PASSWORD = "topsecret-fixture";
 
 class FakeSpawn implements SpawnHandle {
@@ -152,6 +157,7 @@ function seed(f: Fake) {
   ])
     f.files.set(`${suite}/flows/${flow}`, "x");
   f.files.set(`${REPO}/e2e/bench/maestro.py`, "x");
+  f.files.set(MAESTRO_BIN, "bin");
   f.files.set(`${REPO}/bun.lock`, "lock-v1");
   f.files.set(`${REPO}/package.json`, "pkg-v1");
   f.files.set(
@@ -276,6 +282,16 @@ describe("parseArgs", () => {
       after: "HEAD",
     });
   });
+  it("accepts --fix as a valueless doctor flag", () => {
+    expect(
+      parseArgs(["doctor", "--fix", "--platform", "apple-tv"]),
+    ).toMatchObject({ command: "doctor", fix: true, platform: "apple-tv" });
+  });
+  it("rejects --fix on run", () => {
+    expect(() => parseArgs(["run", "--platform", "android", "--fix"])).toThrow(
+      ShotError,
+    );
+  });
   it("accepts the documented run shape", () => {
     const cli = parseArgs([
       "run",
@@ -295,12 +311,144 @@ describe("parseArgs", () => {
   });
 });
 
+describe("doctor", () => {
+  const doctorCli: Cli = { command: "doctor", platform: "android" };
+
+  /** A fixture that answers healthy only once `bun run e2e:setup` has run. */
+  function fixtureRoutes(f: Fake, { up }: { up: boolean }) {
+    let healthy = up;
+    f.routes.push(
+      ["status --porcelain", { code: 0, stdout: "", stderr: "" }],
+      [
+        "/health",
+        () => ({ code: 0, stdout: healthy ? "200" : "000", stderr: "" }),
+      ],
+      [
+        "/api/v1/settings/public",
+        () =>
+          healthy
+            ? { code: 0, stdout: '{"initialized":true}', stderr: "" }
+            : { code: 7, stdout: "", stderr: "refused" },
+      ],
+      [
+        "bun run e2e:setup",
+        () => {
+          healthy = true;
+          return ok;
+        },
+      ],
+      ["bun run e2e:seed", ok],
+      ["bun run e2e:enrich", ok],
+      ["suites.syncplay import seerr", ok],
+    );
+  }
+
+  it("stays read-only without --fix", () => {
+    const f = new Fake();
+    seed(f);
+    fixtureRoutes(f, { up: false });
+    const report = doctor(f, doctorCli, REPO);
+    expect(report.ok).toBe(false);
+    expect(execs(f, "bun run e2e:")).toHaveLength(0);
+  });
+
+  it("brings the fixture up with --fix and reports the rechecked state", () => {
+    const f = new Fake();
+    seed(f);
+    fixtureRoutes(f, { up: false });
+    const report = doctor(f, { ...doctorCli, fix: true }, REPO);
+    expect(execs(f, "bun run e2e:").map((argv) => argv[2])).toEqual([
+      "e2e:setup",
+      "e2e:seed",
+      "e2e:enrich",
+    ]);
+    expect(execs(f, "suites.syncplay import seerr")).toHaveLength(1);
+    expect(report).toEqual({
+      ok: true,
+      checks: [
+        "tree clean",
+        "jellyfin fixture healthy",
+        "seerr fixture initialized",
+        `maestro ${MAESTRO_TAG} installed`,
+      ],
+    });
+  });
+
+  it("leaves a healthy fixture alone with --fix", () => {
+    const f = new Fake();
+    seed(f);
+    fixtureRoutes(f, { up: true });
+    expect(doctor(f, { ...doctorCli, fix: true }, REPO).ok).toBe(true);
+    expect(execs(f, "bun run e2e:")).toHaveLength(0);
+  });
+
+  it("never touches a dirty tree, even with --fix", () => {
+    const f = new Fake();
+    seed(f);
+    fixtureRoutes(f, { up: true });
+    f.routes.unshift([
+      "status --porcelain --untracked-files=all",
+      { code: 0, stdout: " M app.tsx", stderr: "" },
+    ]);
+    const report = doctor(f, { ...doctorCli, fix: true }, REPO);
+    expect(report.checks[0]).toContain("tree dirty");
+    expect(
+      f.execLog.filter((argv) => argv[0] === "git" && argv[1] !== "status"),
+    ).toHaveLength(0);
+  });
+
+  function downloadRoutes(f: Fake) {
+    f.routes.push(
+      ["curl -fsSL", ok],
+      ["shasum", { code: 0, stdout: `${MAESTRO_SHA256}  x.zip\n`, stderr: "" }],
+      [
+        "unzip",
+        (fake) => {
+          fake.files.set(MAESTRO_BIN, "bin");
+          return ok;
+        },
+      ],
+      ["chmod", ok],
+    );
+  }
+
+  it("fails without the pinned maestro, even when an older pin is cached", () => {
+    const f = new Fake();
+    seed(f);
+    fixtureRoutes(f, { up: true });
+    f.files.delete(MAESTRO_BIN);
+    f.files.set(`${MAESTRO_TOOLS}/cli-0.0.1/maestro/bin/maestro`, "old");
+    const report = doctor(f, doctorCli, REPO);
+    expect(report.ok).toBe(false);
+    expect(report.checks).toContain(`maestro ${MAESTRO_TAG} NOT installed`);
+    expect(execs(f, "curl -fsSL")).toHaveLength(0);
+  });
+
+  for (const platform of ["android", "apple-tv"] as const)
+    it(`installs the pinned maestro with --fix on ${platform}`, () => {
+      const f = new Fake();
+      seed(f);
+      fixtureRoutes(f, { up: true });
+      f.files.delete(MAESTRO_BIN);
+      downloadRoutes(f);
+      const report = doctor(
+        f,
+        { command: "doctor", platform, fix: true },
+        REPO,
+      );
+      expect(execs(f, "curl -fsSL")).toHaveLength(1);
+      expect(execs(f, "unzip")[0]).toContain(`${MAESTRO_TOOLS}/${MAESTRO_TAG}`);
+      expect(report.ok).toBe(true);
+      expect(report.checks).toContain(`maestro ${MAESTRO_TAG} installed`);
+    });
+});
+
 describe("platformSpec", () => {
-  it("maps apple-tv to the tvOS fork and ios fingerprint", () => {
+  it("maps apple-tv to the tvOS driver and ios fingerprint", () => {
     expect(platformSpec("apple-tv")).toMatchObject({
       tv: true,
       fingerprintPlatform: "ios",
-      fork: true,
+      maestroPlatform: "tvos",
       masks: "masks-ios-tv.json",
     });
   });
@@ -434,6 +582,20 @@ describe("runComparison ordering", () => {
     expect(compare).toContain("--noise");
     expect(compare).toContain("--after");
     expect(report.beforeSha).toBe("sha-before");
+  });
+
+  it("drives a phone with the pinned maestro, without the tvOS platform", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows.length).toBeGreaterThan(0);
+    for (const argv of flows) {
+      expect(argv.join(" ")).toContain(`--maestro ${MAESTRO_BIN}`);
+      expect(argv).not.toContain("tvos");
+      expect(argv).toContain("MAESTRO_TVOS=0");
+    }
   });
 
   it("never logs the fixture password", async () => {
