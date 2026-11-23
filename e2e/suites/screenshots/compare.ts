@@ -20,19 +20,19 @@ import { PNG } from "pngjs";
 /** pixelmatch color distance, 0 to 1: below it two pixels count as the same. */
 const PIXEL_THRESHOLD = 0.1;
 /** A screen whose drift is under this share of its pixels, and under the noise floor, is "unchanged". */
-const MIN_DRIFT_PERCENT = 0.05;
+export const MIN_DRIFT_PERCENT = 0.05;
 /**
  * pixelmatch ignores a small, even shift such as white to #ECEDEE across all the text of a screen,
  * which is the change a palette refactor makes. A screen also counts as changed when this share of
  * its pixels moved by SHIFT_MIN_CHANNEL_DELTA or more, and more than twice the noise floor's share.
  */
-const MIN_SHIFTED_PERCENT = 0.02;
+export const MIN_SHIFTED_PERCENT = 0.02;
 /** Drift must exceed the noise floor by this factor to be flagged. */
-const NOISE_MARGIN = 2;
+export const NOISE_MARGIN = 2;
 /** A pixel pair counts toward a color shift only when some channel moved at least this much. */
 const SHIFT_MIN_CHANNEL_DELTA = 12;
 /** A shift needs this many pixels: text edges make a long tail of one-off pairs. */
-const SHIFT_MIN_PIXELS = 40;
+export const SHIFT_MIN_PIXELS = 40;
 const SHIFT_TOP = 3;
 const COMPOSITE_SCALE = 2;
 const GAP = 16;
@@ -67,13 +67,13 @@ function collect(dir: string): Map<string, string> {
 }
 
 /** Per screen, regions as [x, y, width, height] fractions of the image, painted black before diffing. */
-type Masks = Record<string, [number, number, number, number][]>;
+export type Masks = Record<string, [number, number, number, number][]>;
 
 /**
  * Screens print things that must not reach a PR (the session token) or that always differ between
  * two builds (the build's commit SHA). A fraction survives a different device size.
  */
-function applyMasks(image: PNG, regions: Masks[string] = []): PNG {
+export function applyMasks(image: PNG, regions: Masks[string] = []): PNG {
   for (const [fx, fy, fw, fh] of regions) {
     const x0 = Math.floor(fx * image.width);
     const y0 = Math.floor(fy * image.height);
@@ -97,8 +97,7 @@ function applyMasks(image: PNG, regions: Masks[string] = []): PNG {
  * GPU), not a screen: the comparison would call it unchanged.
  */
 const BLANK_SHARE = 0.999;
-const blank: string[] = [];
-function isBlank(image: PNG): boolean {
+export function isBlank(image: PNG): boolean {
   const { data } = image;
   const pixels = data.length / 4;
   const allowedOther = Math.floor(pixels * (1 - BLANK_SHARE));
@@ -116,14 +115,8 @@ function isBlank(image: PNG): boolean {
   return true;
 }
 
-const read = (file: string, regions: Masks[string] = []) => {
-  const image = PNG.sync.read(fs.readFileSync(file));
-  if (isBlank(image)) blank.push(file);
-  return applyMasks(image, [...(masks["*"] ?? []), ...regions]);
-};
-
 /** Differing pixels as a percentage of the image, or null when the sizes differ. */
-function drift(a: PNG, b: PNG, output?: PNG): number | null {
+export function drift(a: PNG, b: PNG, output?: PNG): number | null {
   if (a.width !== b.width || a.height !== b.height) return null;
   const changed = pixelmatch(
     a.data,
@@ -140,7 +133,7 @@ function drift(a: PNG, b: PNG, output?: PNG): number | null {
 }
 
 /** Share of pixels with a channel that moved by SHIFT_MIN_CHANNEL_DELTA or more, or null when the sizes differ. */
-function shifted(a: PNG, b: PNG): number | null {
+export function shifted(a: PNG, b: PNG): number | null {
   if (a.width !== b.width || a.height !== b.height) return null;
   let count = 0;
   for (let i = 0; i < a.data.length; i += 4) {
@@ -162,7 +155,7 @@ const hex = (data: Buffer, i: number) =>
  * button) repeat the same pair thousands of times, so the top pairs read as the token change
  * itself; gradients and text edges scatter into pairs too rare to list.
  */
-function colorShifts(a: PNG, b: PNG): string {
+export function colorShifts(a: PNG, b: PNG): string {
   if (a.width !== b.width || a.height !== b.height) return "";
   const counts = new Map<string, number>();
   for (let i = 0; i < a.data.length; i += 4) {
@@ -217,20 +210,7 @@ function composite(panels: PNG[]): PNG {
   return out;
 }
 
-const args = parseArgs(process.argv.slice(2));
-for (const required of ["before", "after", "out"]) {
-  if (!args[required]) throw new Error(`Missing --${required}`);
-}
-
-const before = collect(args.before);
-const after = collect(args.after);
-const noise = args.noise ? collect(args.noise) : new Map<string, string>();
-const masks: Masks = args.masks
-  ? JSON.parse(fs.readFileSync(args.masks, "utf8"))
-  : {};
-fs.mkdirSync(args.out, { recursive: true });
-
-type Row = {
+export type Row = {
   name: string;
   percent: number | null;
   floor: number | null;
@@ -240,91 +220,136 @@ type Row = {
   flagged: boolean;
   shifts: string;
 };
-const rows: Row[] = [];
-const onlyOne: string[] = [];
 
-for (const name of [...before.keys()].sort()) {
-  const afterFile = after.get(name);
-  if (!afterFile) {
-    onlyOne.push(`${name} (no after shot)`);
-    continue;
-  }
-  const a = read(before.get(name) as string, masks[name]);
-  const b = read(afterFile, masks[name]);
-  const diff = new PNG({ width: a.width, height: a.height });
-  const percent = drift(a, b, diff);
-  const noiseFile = noise.get(name);
-  const n = noiseFile ? read(noiseFile, masks[name]) : null;
-  const floor = n ? drift(a, n) : null;
-  const shiftedPercent = shifted(a, b);
-  const shiftFloor = n ? shifted(a, n) : null;
+/**
+ * A screen counts as changed when its size differs, or when its drift or its color shift
+ * clears both its own minimum and NOISE_MARGIN times the noise floor. An informational
+ * screen is reported but never counts.
+ */
+export function isChanged(
+  r: Pick<
+    Row,
+    "percent" | "floor" | "shifted" | "shiftFloor" | "informational"
+  >,
+): boolean {
+  if (r.informational) return false;
+  if (r.percent === null) return true;
   const driftFlagged =
-    percent !== null &&
-    percent > MIN_DRIFT_PERCENT &&
-    (floor === null || percent > floor * NOISE_MARGIN);
+    r.percent > MIN_DRIFT_PERCENT &&
+    (r.floor === null || r.percent > r.floor * NOISE_MARGIN);
   const shiftFlagged =
-    shiftedPercent !== null &&
-    shiftedPercent > MIN_SHIFTED_PERCENT &&
-    (shiftFloor === null || shiftedPercent > shiftFloor * NOISE_MARGIN);
-  const informational = name === "10-seerr-discover";
-  const flagged =
-    !informational && (percent === null || driftFlagged || shiftFlagged);
-  rows.push({
-    name,
-    percent,
-    floor,
-    shifted: shiftedPercent,
-    shiftFloor,
-    informational,
-    flagged,
-    shifts: flagged ? colorShifts(a, b) : "",
-  });
-  if (percent !== null) {
-    const panels = [a, b, diff].map((p) => downscale(p, COMPOSITE_SCALE));
-    fs.writeFileSync(
-      path.join(args.out, `${name}.png`),
-      PNG.sync.write(composite(panels)),
-    );
-  }
-}
-for (const name of after.keys()) {
-  if (!before.has(name)) onlyOne.push(`${name} (no before shot)`);
+    r.shifted !== null &&
+    r.shifted > MIN_SHIFTED_PERCENT &&
+    (r.shiftFloor === null || r.shifted > r.shiftFloor * NOISE_MARGIN);
+  return driftFlagged || shiftFlagged;
 }
 
+/** Largest drift first; a size change outranks any drift. */
+export const byDrift = (x: Row, y: Row) => weight(y) - weight(x);
 const weight = (r: Row) =>
   r.percent === null ? 100 : Math.max(r.percent, r.shifted ?? 0);
-rows.sort((x, y) => weight(y) - weight(x));
-const fmt = (n: number | null) =>
-  n === null ? "size differs" : `${n.toFixed(2)}%`;
-const lines = [
-  "| Screen | Drift | Noise floor | Shifted | Shift floor | Verdict | Main color shifts |",
-  "| --- | --- | --- | --- | --- | --- | --- |",
-  ...rows.map(
-    (r) =>
-      `| ${r.name} | ${fmt(r.percent)} | ${r.floor === null ? "n/a" : fmt(r.floor)} | ${fmt(r.shifted)} | ${r.shiftFloor === null ? "n/a" : fmt(r.shiftFloor)} | ${r.informational ? "informational" : r.flagged ? "**changed**" : "unchanged"} | ${r.shifts} |`,
-  ),
-];
-if (onlyOne.length) lines.push("", `Unpaired: ${onlyOne.join(", ")}`);
-fs.writeFileSync(path.join(args.out, "summary.md"), `${lines.join("\n")}\n`);
-console.log(lines.join("\n"));
 
-if (args.evidence) {
-  fs.mkdirSync(args.evidence, { recursive: true });
-  for (const row of rows.filter((r) => r.flagged)) {
-    const composite = path.join(args.out, `${row.name}.png`);
-    if (fs.existsSync(composite)) {
-      fs.copyFileSync(composite, path.join(args.evidence, `${row.name}.png`));
+if (require.main === module) {
+  const args = parseArgs(process.argv.slice(2));
+  for (const required of ["before", "after", "out"]) {
+    if (!args[required]) throw new Error(`Missing --${required}`);
+  }
+
+  const before = collect(args.before);
+  const after = collect(args.after);
+  const noise = args.noise ? collect(args.noise) : new Map<string, string>();
+  const masks: Masks = args.masks
+    ? JSON.parse(fs.readFileSync(args.masks, "utf8"))
+    : {};
+  fs.mkdirSync(args.out, { recursive: true });
+  const blank: string[] = [];
+  const read = (file: string, regions: Masks[string] = []) => {
+    const image = PNG.sync.read(fs.readFileSync(file));
+    if (isBlank(image)) blank.push(file);
+    return applyMasks(image, [...(masks["*"] ?? []), ...regions]);
+  };
+
+  const rows: Row[] = [];
+  const onlyOne: string[] = [];
+
+  for (const name of [...before.keys()].sort()) {
+    const afterFile = after.get(name);
+    if (!afterFile) {
+      onlyOne.push(`${name} (no after shot)`);
+      continue;
+    }
+    const a = read(before.get(name) as string, masks[name]);
+    const b = read(afterFile, masks[name]);
+    const diff = new PNG({ width: a.width, height: a.height });
+    const percent = drift(a, b, diff);
+    const noiseFile = noise.get(name);
+    const n = noiseFile ? read(noiseFile, masks[name]) : null;
+    const floor = n ? drift(a, n) : null;
+    const shiftedPercent = shifted(a, b);
+    const shiftFloor = n ? shifted(a, n) : null;
+    const informational = name === "10-seerr-discover";
+    const flagged = isChanged({
+      percent,
+      floor,
+      shifted: shiftedPercent,
+      shiftFloor,
+      informational,
+    });
+    rows.push({
+      name,
+      percent,
+      floor,
+      shifted: shiftedPercent,
+      shiftFloor,
+      informational,
+      flagged,
+      shifts: flagged ? colorShifts(a, b) : "",
+    });
+    if (percent !== null) {
+      const panels = [a, b, diff].map((p) => downscale(p, COMPOSITE_SCALE));
+      fs.writeFileSync(
+        path.join(args.out, `${name}.png`),
+        PNG.sync.write(composite(panels)),
+      );
     }
   }
-  fs.copyFileSync(
-    path.join(args.out, "summary.md"),
-    path.join(args.evidence, "summary.md"),
-  );
-}
+  for (const name of after.keys()) {
+    if (!before.has(name)) onlyOne.push(`${name} (no before shot)`);
+  }
 
-if (blank.length) {
-  console.error(
-    `\nBlank screenshots, a capture failure, not a result:\n${blank.map((f) => `  ${f}`).join("\n")}`,
-  );
-  process.exitCode = 3;
+  rows.sort(byDrift);
+  const fmt = (n: number | null) =>
+    n === null ? "size differs" : `${n.toFixed(2)}%`;
+  const lines = [
+    "| Screen | Drift | Noise floor | Shifted | Shift floor | Verdict | Main color shifts |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
+    ...rows.map(
+      (r) =>
+        `| ${r.name} | ${fmt(r.percent)} | ${r.floor === null ? "n/a" : fmt(r.floor)} | ${fmt(r.shifted)} | ${r.shiftFloor === null ? "n/a" : fmt(r.shiftFloor)} | ${r.informational ? "informational" : r.flagged ? "**changed**" : "unchanged"} | ${r.shifts} |`,
+    ),
+  ];
+  if (onlyOne.length) lines.push("", `Unpaired: ${onlyOne.join(", ")}`);
+  fs.writeFileSync(path.join(args.out, "summary.md"), `${lines.join("\n")}\n`);
+  console.log(lines.join("\n"));
+
+  if (args.evidence) {
+    fs.mkdirSync(args.evidence, { recursive: true });
+    for (const row of rows.filter((r) => r.flagged)) {
+      const composite = path.join(args.out, `${row.name}.png`);
+      if (fs.existsSync(composite)) {
+        fs.copyFileSync(composite, path.join(args.evidence, `${row.name}.png`));
+      }
+    }
+    fs.copyFileSync(
+      path.join(args.out, "summary.md"),
+      path.join(args.evidence, "summary.md"),
+    );
+  }
+
+  if (blank.length) {
+    console.error(
+      `\nBlank screenshots, a capture failure, not a result:\n${blank.map((f) => `  ${f}`).join("\n")}`,
+    );
+    process.exitCode = 3;
+  }
 }
