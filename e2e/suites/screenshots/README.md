@@ -31,9 +31,10 @@ run installs over any copy of the app with the built app's exact id, and every c
 pass clears that app's data, so a copy you sign in to on the same device loses its data.
 On Android a copy signed with another key is uninstalled and installed again. On iOS
 the per-pass reset uninstalls and reinstalls only the built app, never the whole
-simulator. Physical devices are refused. On Android every run also turns stylus
-handwriting off, and a phone run freezes the status bar in System UI demo mode (12:00,
-full signal and battery, no notification icons) and exits demo mode when it ends.
+simulator. Physical devices are refused. A phone run freezes the status bar at 12:00
+with full signal and battery, and puts it back when it ends: System UI demo mode on
+Android (which also hides notification icons), `simctl status_bar` on iOS. On Android
+every run also turns stylus handwriting off.
 
 1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`,
    this runner) into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot

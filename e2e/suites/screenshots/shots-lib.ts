@@ -373,19 +373,60 @@ const demoCommand = (device: string, command: string[]) => [
 ];
 
 /**
- * Prepares the selected emulator for capture. Stylus handwriting goes off on every
- * Android emulator: Gboard's "Try out your stylus" tutorial can open over a field as
- * typing starts and hide the controls below it. The setting is written on every run,
- * because a wiped or new emulator starts with the default. The phone's status bar is
- * frozen in demo mode, so the clock, signal, battery and notification icons are the
- * same in every shot, and the run's cleanup exits it. TV has no status bar. Only
- * emulators reach here: selectDevice refuses anything else.
+ * The iPhone counterpart of DEMO_STATUS_BAR. `simctl` accepts only an ISO 8601 time
+ * with fractional seconds (a bare "12:00" is refused), and the simulator shows it in the
+ * Mac's time zone, so the time is local noon: the clock reads 12:00 on any Mac.
  */
-export function prepareAndroidDevice(
+const IOS_STATUS_BAR = [
+  "--time",
+  new Date(2026, 0, 1, 12).toISOString(),
+  "--dataNetwork",
+  "wifi",
+  "--wifiMode",
+  "active",
+  "--wifiBars",
+  "3",
+  "--cellularMode",
+  "active",
+  "--cellularBars",
+  "4",
+  "--operatorName",
+  "",
+  "--batteryState",
+  "charged",
+  "--batteryLevel",
+  "100",
+];
+
+/**
+ * Prepares the selected emulator or simulator for capture. The phone's status bar is
+ * frozen, so the clock, signal, battery and notification icons are the same in every
+ * shot, and the run's cleanup puts it back (restoreDevice): System UI demo mode on
+ * Android, `simctl status_bar` on iOS. TV has no status bar. Stylus handwriting goes
+ * off on every Android emulator: Gboard's "Try out your stylus" tutorial can open over
+ * a field as typing starts and hide the controls below it. The setting is written on
+ * every run, because a wiped or new emulator starts with the default. Only emulators
+ * and simulators reach here: selectDevice refuses anything else.
+ */
+export function prepareDevice(
   d: Deps,
   platform: Platform,
   device: string,
 ): void {
+  if (platform === "ios") {
+    must(
+      d.exec([
+        "xcrun",
+        "simctl",
+        "status_bar",
+        device,
+        "override",
+        ...IOS_STATUS_BAR,
+      ]),
+      "override the simulator status bar",
+    );
+    return;
+  }
   if (platform !== "android" && platform !== "android-tv") return;
   must(
     d.exec([
@@ -422,13 +463,20 @@ export function prepareAndroidDevice(
 }
 
 /**
- * Best effort: it runs in the run's cleanup, where a throw would hide the run's error.
- * Sent on every phone run, even one that never got into demo mode: an exit outside demo
- * mode changes nothing, and a setup that failed halfway still gets undone.
+ * Undoes prepareDevice's status bar. Best effort: it runs in the run's cleanup, where a
+ * throw would hide the run's error. Sent on every phone run, even one whose setup never
+ * finished: undoing a status bar that was never frozen changes nothing, and a setup
+ * that failed halfway still gets undone.
  */
-function exitAndroidDemoMode(d: Deps, device: string): void {
-  if (d.exec(demoCommand(device, ["exit"])).code !== 0)
-    d.log(`could not exit status bar demo mode on ${device}`);
+function restoreDevice(d: Deps, platform: Platform, device: string): void {
+  const argv =
+    platform === "android"
+      ? demoCommand(device, ["exit"])
+      : platform === "ios"
+        ? ["xcrun", "simctl", "status_bar", device, "clear"]
+        : undefined;
+  if (argv && d.exec(argv).code !== 0)
+    d.log(`could not restore the status bar on ${device}`);
 }
 
 export function ensurePortFree(d: Deps, port: number): void {
@@ -1200,7 +1248,7 @@ export async function runComparison(
   const cleanup = (): void => {
     metro?.kill();
     metro = undefined;
-    if (cli.platform === "android") exitAndroidDemoMode(d, device);
+    restoreDevice(d, cli.platform!, device);
     try {
       restoreGit(d, repo, start);
       // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
@@ -1221,7 +1269,7 @@ export async function runComparison(
   };
   setInterruptCleanup(cleanup);
   try {
-    prepareAndroidDevice(d, cli.platform!, device);
+    prepareDevice(d, cli.platform!, device);
     const refs: { label: string; sha: string; captures: string[] }[] = [
       { label: "before", sha: beforeSha, captures: ["before", "noise"] },
       { label: "after", sha: afterSha, captures: ["after"] },

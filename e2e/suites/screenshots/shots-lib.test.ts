@@ -16,7 +16,7 @@ import {
   MAESTRO_TAG,
   parseArgs,
   platformSpec,
-  prepareAndroidDevice,
+  prepareDevice,
   runComparison,
   ShotError,
   type SpawnHandle,
@@ -613,7 +613,7 @@ describe("runComparison ordering", () => {
   });
 });
 
-describe("Android device setup", () => {
+describe("device setup", () => {
   const demo = (f: Fake) =>
     execs(f, "com.android.systemui.demo").map((argv) => argv.join(" "));
 
@@ -701,15 +701,48 @@ describe("Android device setup", () => {
   it("turns stylus handwriting off on Android TV but leaves its status bar alone", () => {
     const f = new Fake();
     f.routes.push(["settings put", ok]);
-    prepareAndroidDevice(f, "android-tv", "emulator-5556");
+    prepareDevice(f, "android-tv", "emulator-5556");
     expect(execs(f, "stylus_handwriting_enabled")).toHaveLength(1);
     expect(execs(f, "com.android.systemui.demo")).toHaveLength(0);
     expect(execs(f, "sysui_demo_allowed")).toHaveLength(0);
   });
 
-  it("does nothing on iOS", () => {
+  it("freezes the iPhone status bar with the same values as the Android phone", () => {
     const f = new Fake();
-    prepareAndroidDevice(f, "ios", "UDID");
+    f.routes.push(["status_bar", ok]);
+    prepareDevice(f, "ios", "UDID");
+    expect(f.execLog).toEqual([
+      [
+        "xcrun",
+        "simctl",
+        "status_bar",
+        "UDID",
+        "override",
+        "--time",
+        new Date(2026, 0, 1, 12).toISOString(),
+        "--dataNetwork",
+        "wifi",
+        "--wifiMode",
+        "active",
+        "--wifiBars",
+        "3",
+        "--cellularMode",
+        "active",
+        "--cellularBars",
+        "4",
+        "--operatorName",
+        "",
+        "--batteryState",
+        "charged",
+        "--batteryLevel",
+        "100",
+      ],
+    ]);
+  });
+
+  it("does nothing on Apple TV, which has no status bar", () => {
+    const f = new Fake();
+    prepareDevice(f, "apple-tv", "UDID");
     expect(f.execLog).toHaveLength(0);
   });
 });
@@ -1289,6 +1322,7 @@ describe("iOS install", () => {
         "PlistBuddy",
         { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
       ],
+      ["status_bar", ok],
     );
   }
 
@@ -1309,6 +1343,54 @@ describe("iOS install", () => {
     await runComparison(f, iosCli, REPO);
     expect(execs(f, "listapps")).toHaveLength(0);
     expect(execs(f, "simctl install").length).toBeGreaterThan(0);
+  });
+
+  it("overrides the status bar before the first install and clears it at the end", async () => {
+    const f = new Fake();
+    seed(f);
+    iosHappyRoutes(f);
+    f.routes.push(
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
+    );
+    await runComparison(f, iosCli, REPO);
+    const trace = f.execLog.map((argv) => argv.join(" "));
+    const override = trace.findIndex((a) =>
+      a.startsWith("xcrun simctl status_bar UDID-PHONE override"),
+    );
+    expect(override).toBeGreaterThanOrEqual(0);
+    expect(override).toBeLessThan(
+      trace.findIndex((a) => a.includes("simctl install")),
+    );
+    const clear = trace.lastIndexOf("xcrun simctl status_bar UDID-PHONE clear");
+    const lastFlow = trace.findLastIndex((a) => a.includes("maestro.py"));
+    expect(lastFlow).toBeGreaterThanOrEqual(0);
+    expect(clear).toBeGreaterThan(lastFlow);
+  });
+
+  it("clears the status bar when a flow fails", async () => {
+    const f = new Fake();
+    seed(f);
+    iosHappyRoutes(f);
+    f.routes.push(
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
+      ["seerr-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
+    );
+    await expect(runComparison(f, iosCli, REPO)).rejects.toThrow(ShotError);
+    expect(execs(f, "status_bar UDID-PHONE clear")).toHaveLength(1);
   });
 
   it("turns Fast Refresh off in each fresh install before the deep link", async () => {
