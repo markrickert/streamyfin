@@ -115,7 +115,11 @@ export const hasTrackedChanges = (cwd?: string) =>
     encoding: "utf8",
   }).trim() !== "";
 
-const resolveBaseRef = (explicit?: string) => {
+/**
+ * The base to compare this branch against. `e2e/suites/screenshots/shots.ts` uses it
+ * too, so both comparisons pick the same base.
+ */
+export const resolveBaseRef = (explicit?: string) => {
   const remotes = git("remote").split("\n");
   const name =
     explicit ||

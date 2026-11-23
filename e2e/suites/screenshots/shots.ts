@@ -3,13 +3,17 @@
  * Dev-mode screenshot comparison on this checkout.
  *
  *   bun e2e/suites/screenshots/shots.ts doctor [--platform <ios|android|android-tv|apple-tv>]
- *   bun e2e/suites/screenshots/shots.ts run --platform <p> --before <ref> --after <ref> [--device <id>] [--out <dir>] [--port <port>]
+ *   bun e2e/suites/screenshots/shots.ts run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
+ *
+ * --before defaults to the base the Reassure baseline uses: this branch's PR target, else
+ * develop, looked up on upstream before origin. --after defaults to HEAD.
  *
  * See e2e/suites/screenshots/README.md for the full contract. Requires a clean tree and
  * the local SyncPlay+Seerr fixture; restores the starting ref and native dirs on exit.
  */
 import { spawn, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
+import { resolveBaseRef } from "../../../scripts/reassure-baseline";
 import {
   type Deps,
   doctor,
@@ -94,6 +98,8 @@ async function main() {
     if (!report.ok) process.exit(1);
     return;
   }
+  cli.before = resolveBaseRef(cli.before);
+  console.log(`Comparing ${cli.after} against ${cli.before}.`);
   const report = await runComparison(deps, cli, repo);
   console.log(
     `done: ${report.sessionDir}/report (restored ${report.restored.ref})`,

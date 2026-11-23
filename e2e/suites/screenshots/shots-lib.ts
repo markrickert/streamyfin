@@ -67,11 +67,17 @@ export interface Deps {
 
 export class ShotError extends Error {}
 
+/** How a device reaches this Mac: the Android emulator's alias for the host loopback, or the loopback itself. */
+const hostFor = (platform: Platform) =>
+  platform === "android" || platform === "android-tv"
+    ? "10.0.2.2"
+    : "127.0.0.1";
+
 export function parseArgs(argv: string[]): Cli {
   const [command, ...rest] = argv;
   if (command !== "doctor" && command !== "run")
     throw new ShotError(
-      "usage: shots.ts doctor [--platform <p>] | run --platform <p> --before <ref> --after <ref> [--device <id>] [--out <dir>] [--port <port>]",
+      "usage: shots.ts doctor [--platform <p>] | run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]",
     );
   const flags: Record<string, string> = {};
   for (let i = 0; i < rest.length; i += 2) {
@@ -83,7 +89,7 @@ export function parseArgs(argv: string[]): Cli {
     command,
     platform: flags.platform as Platform | undefined,
     before: flags.before,
-    after: flags.after,
+    after: flags.after ?? "HEAD",
     device: flags.device,
     outDir: flags.out,
     port: flags.port ? Number(flags.port) : undefined,
@@ -96,8 +102,8 @@ export function parseArgs(argv: string[]): Cli {
       `shots.ts: --platform must be one of ${PLATFORMS.join(", ")}`,
     );
   if (command === "run") {
-    for (const key of ["platform", "before", "after"] as const)
-      if (!cli[key]) throw new ShotError(`shots.ts run: --${key} is required`);
+    if (!cli.platform)
+      throw new ShotError("shots.ts run: --platform is required");
     if (
       cli.port !== undefined &&
       (!Number.isInteger(cli.port) || cli.port <= 0)
@@ -435,8 +441,7 @@ export function fixtureEnv(
       throw new ShotError(
         `fixture .env is missing a numeric ${key} — run e2e:setup before screenshots`,
       );
-  const android = platform === "android" || platform === "android-tv";
-  const host = android ? "10.0.2.2" : "127.0.0.1";
+  const host = hostFor(platform);
   return {
     MAESTRO_JELLYFIN_URL: `http://${host}:${dotenv.SYNCPLAY_PORT}`,
     MAESTRO_JELLYFIN_USER: credentials.host.name,
@@ -783,10 +788,7 @@ function launchDevClient(
   appId: string,
   port: number,
 ): void {
-  const host =
-    platform === "android" || platform === "android-tv"
-      ? "10.0.2.2"
-      : "127.0.0.1";
+  const host = hostFor(platform);
   // SDK 58 dev-client deep link: __expo_url pins Metro, the disable flags skip the
   // one-time onboarding sheet and hide the dev client's floating menu button
   // (expo.dev/changelog/sdk-58). The app's scheme is `streamyfin`.
@@ -1038,10 +1040,24 @@ export async function runComparison(
   let metro: SpawnHandle | undefined;
   let nativeMoved: string[] = [];
   let buildDeps = "";
+  // Nested: a refused git restore (new user edits mid-run) must not strand the
+  // native dirs in the backup.
   const cleanup = (): void => {
     metro?.kill();
+    metro = undefined;
     try {
       restoreGit(d, repo, start);
+      // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
+      // a throw here would hide the error this cleanup runs after.
+      if (buildDeps && lockfileChanged(d, repo, buildDeps)) {
+        const install = d.exec(["bun", "install", "--frozen-lockfile"], {
+          cwd: repo,
+        });
+        if (install.code !== 0)
+          d.log(
+            `bun install failed while restoring ${start.ref}; run it by hand before anything else: ${install.stderr.trim().slice(0, 200)}`,
+          );
+      }
     } finally {
       if (nativeMoved.length)
         restoreNativeDirs(d, repo, sessionDir, nativeMoved);
@@ -1194,15 +1210,7 @@ export async function runComparison(
     return { sessionDir, beforeSha, afterSha, restored: start };
   } finally {
     setInterruptCleanup(undefined);
-    metro?.kill();
-    // Nested: a refused git restore (new user edits mid-run) must not strand the
-    // native dirs in the backup.
-    try {
-      restoreGit(d, repo, start);
-    } finally {
-      if (nativeMoved.length)
-        restoreNativeDirs(d, repo, sessionDir, nativeMoved);
-    }
+    cleanup();
   }
 }
 

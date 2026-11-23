@@ -267,10 +267,14 @@ const execs = (f: Fake, needle: string) =>
   f.execLog.filter((argv) => argv.join(" ").includes(needle));
 
 describe("parseArgs", () => {
-  it("rejects a run without refs", () => {
-    expect(() => parseArgs(["run", "--platform", "android"])).toThrow(
-      ShotError,
-    );
+  it("rejects a run without a platform", () => {
+    expect(() => parseArgs(["run", "--before", "a"])).toThrow(ShotError);
+  });
+  it("leaves --before to resolveBaseRef and defaults --after to HEAD", () => {
+    expect(parseArgs(["run", "--platform", "android"])).toMatchObject({
+      before: undefined,
+      after: "HEAD",
+    });
   });
   it("accepts the documented run shape", () => {
     const cli = parseArgs([
@@ -309,6 +313,88 @@ describe("runComparison preflight", () => {
     happyRoutes(f, { dirty: " M app/x.ts\n" });
     await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
     expect(execs(f, "git switch")).toHaveLength(0);
+  });
+});
+
+describe("runComparison restore", () => {
+  /** Each ref's checkout carries its own lockfile, as a real `git switch` would. */
+  function lockfilePerRef(f: Fake, locks: Record<string, string>) {
+    for (const [needle, lock] of Object.entries(locks))
+      f.routes.push([
+        needle,
+        (fake) => {
+          fake.files.set(`${REPO}/bun.lock`, lock);
+          return ok;
+        },
+      ]);
+  }
+
+  it("reinstalls the starting branch's dependencies when the last ref's lockfile differs", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    lockfilePerRef(f, {
+      "git switch --detach sha-before": "lock-v0",
+      "git switch --detach sha-after": "lock-v0",
+      "git switch feat/dev": "lock-v1",
+    });
+    await runComparison(f, runCli, REPO);
+    const installs = f.execLog
+      .map((argv) => argv.join(" "))
+      .filter(
+        (cmd) =>
+          cmd.includes("bun install --frozen-lockfile") ||
+          cmd.includes("git switch"),
+      );
+    expect(installs).toEqual([
+      "git switch --detach sha-before",
+      "bun install --frozen-lockfile",
+      "git switch --detach sha-after",
+      "git switch feat/dev",
+      "bun install --frozen-lockfile",
+    ]);
+  });
+
+  it("skips the reinstall when the last ref already installed the starting lockfile", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    lockfilePerRef(f, {
+      "git switch --detach sha-before": "lock-v0",
+      "git switch --detach sha-after": "lock-v1",
+      "git switch feat/dev": "lock-v1",
+    });
+    await runComparison(f, runCli, REPO);
+    expect(execs(f, "bun install --frozen-lockfile")).toHaveLength(2);
+  });
+
+  it("reports a failed restore install without hiding the run's own error", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    lockfilePerRef(f, {
+      "git switch --detach sha-before": "lock-v0",
+      "git switch feat/dev": "lock-v1",
+    });
+    let installs = 0;
+    f.routes = f.routes.filter(
+      ([needle]) => needle !== "bun install --frozen-lockfile",
+    );
+    f.routes.push(
+      [
+        "bun install --frozen-lockfile",
+        () =>
+          ++installs === 1 ? ok : { code: 1, stdout: "", stderr: "offline" },
+      ],
+      ["compare.ts --before", { code: 1, stdout: "", stderr: "boom" }],
+    );
+    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
+      /compare failed/,
+    );
+    expect(installs).toBe(2);
+    expect(f.logs.join("\n")).toContain(
+      "bun install failed while restoring feat/dev",
+    );
   });
 });
 

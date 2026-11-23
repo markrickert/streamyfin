@@ -4,14 +4,20 @@ Compares two refs screen-for-screen on a development client: the runner switches
 checkout between the refs, serves each with its own Metro, captures the same shots three
 times — before, a fresh "noise" pass on the before build, after — and scores them with
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
-The runner uses local debug clients, never CI release artifacts.
+The runner uses local debug clients, never CI release artifacts, and runs locally only,
+never in CI: it needs a simulator or emulator, Maestro, and Docker for the fixture.
 
 ## Commands
 
 ```sh
-bun e2e/suites/screenshots/shots.ts doctor [--platform ios|android|android-tv|apple-tv]
-bun e2e/suites/screenshots/shots.ts run --platform <p> --before <ref> --after <ref> [--device <id>] [--out <dir>] [--port <port>]
+bun run e2e:shots:doctor [--platform ios|android|android-tv|apple-tv]
+bun run e2e:shots --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
 ```
+
+`--before` defaults to the base the Reassure baseline measures against
+(`resolveBaseRef` in `scripts/reassure-baseline.ts`): the PR target, else `develop`, on
+`upstream` before `origin`. A stacked branch should pass its parent. `--after` defaults
+to `HEAD`.
 
 `doctor` is read-only: tree cleanliness, fixture reachability, driver availability.
 `run` refuses a dirty tree, identical refs, a physical device, or a busy port, then:
@@ -41,9 +47,10 @@ per-pass reset uninstalls and reinstalls only the built app, never the whole sim
    changed-screen evidence land in the session directory.
 
 On success, failure, or Ctrl-C the runner stops only its own Metro, switches back to the
-starting branch or detached SHA (never forcing), and restores `ios/`/`android/` from the
-session backup: a clean prebuild only happens on a cache miss, and the user's native
-dirs are moved aside first, never deleted.
+starting branch or detached SHA (never forcing), reinstalls its dependencies when the last
+ref's lockfile differs, and restores `ios/`/`android/` from the session backup: a clean
+prebuild only happens on a cache miss, and the user's native dirs are moved aside first,
+never deleted.
 
 ## Environment contract (flows)
 
