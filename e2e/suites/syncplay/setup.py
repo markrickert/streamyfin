@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -16,6 +17,8 @@ IDENTITY = {
     "SYNCPLAY_PROJECT": "streamyfin-syncplay-e2e",
     "SYNCPLAY_CONTAINER": "streamyfin-syncplay-e2e-jellyfin",
     "SYNCPLAY_PORT": "18096",
+    "SYNCPLAY_SEERR_CONTAINER": "streamyfin-syncplay-e2e-seerr",
+    "SYNCPLAY_SEERR_PORT": "15055",
 }
 
 
@@ -146,11 +149,12 @@ def generate_media():
 def main():
     owned = identity()
     refuse_foreign_container(owned["SYNCPLAY_CONTAINER"])
+    refuse_foreign_container(owned["SYNCPLAY_SEERR_CONTAINER"])
     refuse_foreign_project(owned["SYNCPLAY_PROJECT"])
     ENV_FILE.write_text("".join(f"{key}={value}\n" for key, value in owned.items()))
     generate_media()
     # Docker creates a missing bind source as root, which the seed then cannot write into on Linux.
-    for folder in ("config", "config/plugins", "cache", "catalog/movies", "catalog/shows", "catalog/music"):
+    for folder in ("config", "config/plugins", "cache", "catalog/movies", "catalog/shows", "catalog/music", "seerr"):
         path = STATE / folder
         try:
             path.mkdir(parents=True, exist_ok=True)
@@ -158,6 +162,17 @@ def main():
             raise RuntimeError(f"Cannot create {path}; fix its parent's ownership or remove it first") from error
         if not os.access(path, os.W_OK):
             raise RuntimeError(f"{path} is not writable; fix its ownership or remove it first")
+    # Seerr runs as uid 1000: the bind-mounted config must be writable by it on Linux too.
+    # Only widen a directory uid 1000 cannot already write (owned by uid 1000 or
+    # world-writable+executable); a tighter preexisting mode is left alone.
+    seerr_dir = STATE / "seerr"
+    stat = seerr_dir.stat()
+    uid_can_write = stat.st_uid == 1000 or (stat.st_mode & 0o003) == 0o003
+    if not uid_can_write:
+        try:
+            seerr_dir.chmod(0o777)
+        except PermissionError as error:
+            raise RuntimeError(f"Cannot open {seerr_dir} for the Seerr container's uid 1000; fix its ownership or remove it first") from error
     subprocess.run(
         ["docker", "compose", "-p", owned["SYNCPLAY_PROJECT"], "-f", str(ROOT / "compose.yml"), "up", "-d"],
         check=True, env={**os.environ, **owned},
@@ -210,6 +225,9 @@ def main():
         time.sleep(2)
     if len(items) != 3 or {item.get("Name") for item in items} != clip_names:
         raise RuntimeError(f"Expected the three SyncPlay clips in 'SyncPlay Fixtures', got {[item.get('Name') for item in items]}")
+    from suites.syncplay import seerr
+
+    seerr.ensure_ready(owned, username="syncplay-host", password=PASSWORD)
     guest_auth = api("/Users/AuthenticateByName", "POST", {"Username": "syncplay-guest", "Pw": PASSWORD}, device_id="syncplay-guest-setup")
     credentials = {
         "url": URL, "serverVersion": info["Version"], "password": PASSWORD,
@@ -224,4 +242,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(ROOT.parents[1]))
     main()

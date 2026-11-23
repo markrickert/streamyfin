@@ -20,6 +20,7 @@ from suites.syncplay import setup  # noqa: E402
 def teardown():
     owned = setup.identity()
     setup.refuse_foreign_container(owned["SYNCPLAY_CONTAINER"])
+    setup.refuse_foreign_container(owned["SYNCPLAY_SEERR_CONTAINER"])
     setup.refuse_foreign_project(owned["SYNCPLAY_PROJECT"])
     subprocess.run(
         ["docker", "compose", "-p", owned["SYNCPLAY_PROJECT"], "-f", str(setup.ROOT / "compose.yml"), "down", "--remove-orphans"],

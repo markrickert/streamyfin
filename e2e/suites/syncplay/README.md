@@ -109,6 +109,22 @@ Fetched posters may have copyright separate from the underlying film; keep
 Jellyfin's downloaded artwork in ignored `.state/`, not in the repository.
 This command requires internet access; `setup.py` and `e2e:seed` do not.
 
+### Seerr service
+
+`compose.yml` also starts `ghcr.io/seerr-team/seerr:v3.5.0` as
+`streamyfin-syncplay-e2e-seerr` on `127.0.0.1:15055` (config in `.state/seerr/`).
+`setup.py` onboards it against the Jellyfin container (`seerr.ensure_ready`) and enables
+the `SyncPlay Fixtures` library. After `e2e:seed` and `e2e:enrich`, the screenshot
+runner calls `seerr.enable_catalog_libraries` to enable `Movies` and `Shows`
+(Seerr never syncs `Music`: its library sync excludes the music CollectionType), and
+`seerr.provision_client_access` to push `jellyseerrServerUrl`/`jellyseerrApiKey` into the
+Streamyfin plugin config so TV builds, which have no Seerr settings screen, sign in at
+Jellyfin login. The Seerr API key stays inside the fixture: it is readable by the
+fixture's own users, never logged.
+
+Enrichment is strict: `e2e:enrich` must exit 0 before screenshots run — the runner
+treats a non-zero enrich as fatal.
+
 ## Controller against a live server
 
 ```sh

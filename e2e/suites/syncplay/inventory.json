@@ -349,34 +349,6 @@
   ],
   "tracks": [
     {
-      "key": "track:017c494d7aeb9036bc0ff228bc4eb2cb",
-      "title": "Maple Leaf Rag",
-      "track": 1,
-      "artistKey": "artist:3205c1792ad5e4d0dc93bd53db57df2f",
-      "artist": "Scott Joplin",
-      "artistProviderIds": {
-        "MusicBrainzArtist": "aec8a328-d2e8-4780-b2ea-318c7f8d6f75"
-      },
-      "albumKey": "album:cb322bd14b1d72184f1e99b89da09109",
-      "album": "Maple Leaf Rag and Other Rags",
-      "albumProviderIds": {},
-      "providerIds": {}
-    },
-    {
-      "key": "track:05ac48961de76fde3dbfc10f356f9a55",
-      "title": "The Entertainer",
-      "track": 2,
-      "artistKey": "artist:3205c1792ad5e4d0dc93bd53db57df2f",
-      "artist": "Scott Joplin",
-      "artistProviderIds": {
-        "MusicBrainzArtist": "aec8a328-d2e8-4780-b2ea-318c7f8d6f75"
-      },
-      "albumKey": "album:cb322bd14b1d72184f1e99b89da09109",
-      "album": "Maple Leaf Rag and Other Rags",
-      "albumProviderIds": {},
-      "providerIds": {}
-    },
-    {
       "key": "track:05ce2ea5a5c8d93da01e7eacffc8067c",
       "title": "Spring: Allegro",
       "track": 1,
@@ -510,20 +482,6 @@
         "MusicBrainzAlbum": "fd407f41-837e-459a-b27c-a915254e4a79",
         "MusicBrainzReleaseGroup": "ccbab28a-5f19-4288-93f3-ed06c04f4c0a"
       },
-      "providerIds": {}
-    },
-    {
-      "key": "track:42e9657a39f7a07846a6603fc341abf0",
-      "title": "Elite Syncopations",
-      "track": 3,
-      "artistKey": "artist:3205c1792ad5e4d0dc93bd53db57df2f",
-      "artist": "Scott Joplin",
-      "artistProviderIds": {
-        "MusicBrainzArtist": "aec8a328-d2e8-4780-b2ea-318c7f8d6f75"
-      },
-      "albumKey": "album:cb322bd14b1d72184f1e99b89da09109",
-      "album": "Maple Leaf Rag and Other Rags",
-      "albumProviderIds": {},
       "providerIds": {}
     },
     {
