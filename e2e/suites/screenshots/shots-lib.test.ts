@@ -16,6 +16,7 @@ import {
   MAESTRO_TAG,
   parseArgs,
   platformSpec,
+  prepareAndroidDevice,
   runComparison,
   ShotError,
   type SpawnHandle,
@@ -248,6 +249,8 @@ function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     ["pm clear", ok],
     ["push /tmp/streamyfin-shots-fast-refresh-off.xml", ok],
     ["push /tmp/streamyfin-shots-dev-menu-fab-off.xml", ok],
+    ["settings put", ok],
+    ["com.android.systemui.demo", ok],
     ["run-as", ok],
     // The phone emulator reports no leanback — pm exits 1 for "absent", which is the
     // real answer, not a failure.
@@ -609,6 +612,107 @@ describe("runComparison ordering", () => {
     expect(f.execLog.flat().join(" ")).toContain(
       `MAESTRO_JELLYFIN_PASS=${PASSWORD}`,
     );
+  });
+});
+
+describe("Android device setup", () => {
+  const demo = (f: Fake) =>
+    execs(f, "com.android.systemui.demo").map((argv) => argv.join(" "));
+
+  // Gboard's "Try out your stylus" tutorial opened over the login screen once typing
+  // started, and hid the Connect button from the flow.
+  it("turns stylus handwriting off and freezes the status bar before the first pass", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const trace = f.execLog.map((argv) => argv.join(" "));
+    const stylus = trace.findIndex((a) =>
+      a.includes(
+        "adb -s emulator-5554 shell settings put secure stylus_handwriting_enabled 0",
+      ),
+    );
+    const allowed = trace.findIndex((a) =>
+      a.includes("settings put global sysui_demo_allowed 1"),
+    );
+    const firstClear = trace.findIndex((a) => a.includes("pm clear"));
+    expect(stylus).toBeGreaterThanOrEqual(0);
+    expect(stylus).toBeLessThan(firstClear);
+    expect(allowed).toBeGreaterThanOrEqual(0);
+    const commands = demo(f);
+    expect(commands[0]).toContain("-e command enter");
+    for (const value of [
+      "-e command clock -e hhmm 1200",
+      "-e command battery -e level 100 -e plugged false",
+      "-e command network -e wifi show -e level 4",
+      "-e command network -e mobile show -e datatype none -e level 4",
+      "-e command notifications -e visible false",
+    ])
+      expect(commands.some((c) => c.includes(value))).toBe(true);
+    expect(trace.findIndex((a) => a.includes("-e command enter"))).toBeLessThan(
+      firstClear,
+    );
+  });
+
+  it("leaves demo mode when the run ends", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    expect(demo(f).at(-1)).toContain("-e command exit");
+  });
+
+  it("leaves demo mode when a flow fails", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "seerr-mobile.yml",
+      { code: 1, stdout: "", stderr: "boom" },
+    ]);
+    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
+    expect(demo(f).at(-1)).toContain("-e command exit");
+  });
+
+  it("leaves demo mode when the status bar setup fails after entering it", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "com.android.systemui.demo -e command clock",
+      { code: 1, stdout: "", stderr: "boom" },
+    ]);
+    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
+    expect(demo(f).at(-1)).toContain("-e command exit");
+  });
+
+  it("fails the run when the stylus setting cannot be written", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "stylus_handwriting_enabled",
+      { code: 1, stdout: "", stderr: "denied" },
+    ]);
+    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
+      /stylus handwriting/,
+    );
+    expect(execs(f, "pm clear")).toHaveLength(0);
+  });
+
+  it("turns stylus handwriting off on Android TV but leaves its status bar alone", () => {
+    const f = new Fake();
+    f.routes.push(["settings put", ok]);
+    prepareAndroidDevice(f, "android-tv", "emulator-5556");
+    expect(execs(f, "stylus_handwriting_enabled")).toHaveLength(1);
+    expect(execs(f, "com.android.systemui.demo")).toHaveLength(0);
+    expect(execs(f, "sysui_demo_allowed")).toHaveLength(0);
+  });
+
+  it("does nothing on iOS", () => {
+    const f = new Fake();
+    prepareAndroidDevice(f, "ios", "UDID");
+    expect(f.execLog).toHaveLength(0);
   });
 });
 

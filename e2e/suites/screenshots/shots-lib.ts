@@ -336,6 +336,101 @@ export function selectDevice(
   return serial;
 }
 
+const DEMO_BROADCAST = "com.android.systemui.demo";
+
+/** The status bar values every Android phone shot is taken with. */
+const DEMO_STATUS_BAR: string[][] = [
+  ["clock", "-e", "hhmm", "1200"],
+  ["battery", "-e", "level", "100", "-e", "plugged", "false"],
+  ["network", "-e", "wifi", "show", "-e", "level", "4"],
+  [
+    "network",
+    "-e",
+    "mobile",
+    "show",
+    "-e",
+    "datatype",
+    "none",
+    "-e",
+    "level",
+    "4",
+  ],
+  ["notifications", "-e", "visible", "false"],
+];
+
+const demoCommand = (device: string, command: string[]) => [
+  "adb",
+  "-s",
+  device,
+  "shell",
+  "am",
+  "broadcast",
+  "-a",
+  DEMO_BROADCAST,
+  "-e",
+  "command",
+  ...command,
+];
+
+/**
+ * Prepares the selected emulator for capture. Stylus handwriting goes off on every
+ * Android emulator: Gboard's "Try out your stylus" tutorial can open over a field as
+ * typing starts and hide the controls below it. The setting is written on every run,
+ * because a wiped or new emulator starts with the default. The phone's status bar is
+ * frozen in demo mode, so the clock, signal, battery and notification icons are the
+ * same in every shot, and the run's cleanup exits it. TV has no status bar. Only
+ * emulators reach here: selectDevice refuses anything else.
+ */
+export function prepareAndroidDevice(
+  d: Deps,
+  platform: Platform,
+  device: string,
+): void {
+  if (platform !== "android" && platform !== "android-tv") return;
+  must(
+    d.exec([
+      "adb",
+      "-s",
+      device,
+      "shell",
+      "settings",
+      "put",
+      "secure",
+      "stylus_handwriting_enabled",
+      "0",
+    ]),
+    "turn stylus handwriting off",
+  );
+  if (platform !== "android") return;
+  must(
+    d.exec([
+      "adb",
+      "-s",
+      device,
+      "shell",
+      "settings",
+      "put",
+      "global",
+      "sysui_demo_allowed",
+      "1",
+    ]),
+    "allow status bar demo mode",
+  );
+  must(d.exec(demoCommand(device, ["enter"])), "enter status bar demo mode");
+  for (const command of DEMO_STATUS_BAR)
+    must(d.exec(demoCommand(device, command)), "set demo status bar");
+}
+
+/**
+ * Best effort: it runs in the run's cleanup, where a throw would hide the run's error.
+ * Sent on every phone run, even one that never got into demo mode: an exit outside demo
+ * mode changes nothing, and a setup that failed halfway still gets undone.
+ */
+function exitAndroidDemoMode(d: Deps, device: string): void {
+  if (d.exec(demoCommand(device, ["exit"])).code !== 0)
+    d.log(`could not exit status bar demo mode on ${device}`);
+}
+
 export function ensurePortFree(d: Deps, port: number): void {
   const result = d.exec(["lsof", "-nP", `-iTCP:${port}`, "-sTCP:LISTEN"]);
   if (result.stdout.trim())
@@ -1132,6 +1227,7 @@ export async function runComparison(
   const cleanup = (): void => {
     metro?.kill();
     metro = undefined;
+    if (cli.platform === "android") exitAndroidDemoMode(d, device);
     try {
       restoreGit(d, repo, start);
       // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
@@ -1152,6 +1248,7 @@ export async function runComparison(
   };
   setInterruptCleanup(cleanup);
   try {
+    prepareAndroidDevice(d, cli.platform!, device);
     // App ids this run installed itself: only these may be reinstalled or
     // state-cleared — anything else on the device is user data.
     const ownedAppIds = new Set<string>();
