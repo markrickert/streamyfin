@@ -1,0 +1,86 @@
+# Seerr screens on TV (Android TV, and Apple TV through the tvOS Maestro fork): the Discover switch, a search and a title's page. Needs the
+# plugin-pushed Seerr connection bootstrap-seerr-tv.yml verifies. Discover rows are live
+# TMDB data, so the noise floor decides whether they count; "Iron Man" is a fixed title
+# for the pages below.
+# Read-only: nothing here may create a request, which would change the Seerr server, and
+# on TV never Center/Select a title card anywhere except the search result this flow
+# opens — elsewhere Select can start playback.
+# The seeded catalog has no Continue Watching, so the wait is on the Recently added row.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: "Discover"
+    timeout: 30000
+- tapOn: "Discover"
+- extendedWaitUntil:
+    visible: ".*Trending.*|.*Popular.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 10-seerr-discover
+
+# The search field sits at the top of the page. Android TV taps the "Search..." placeholder.
+# Apple TV has the native tvOS search bar: Center opens its keyboard, Enter commits.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: '.*Search\.\.\..*'
+      - inputText: "Iron Man"
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Up
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+      - pressKey: Remote Dpad Center
+      - inputText: "Iron Man"
+      - pressKey: Enter
+- extendedWaitUntil:
+    visible: ".*Iron Man.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 11-seerr-search
+
+# Iron Man (1931), TMDB id 194310, a public-domain film with a stable id across runs. On
+# TV a tap lands as a click on the card, which opens the Seerr detail page rather than
+# playing anything. The request button is never touched: it creates a request on the
+# Seerr server.
+# Refs before the SeerrPoster testID fall back to the card's label, which ends in the
+# title and year on every ref and clicks through to its pressable on all three platforms.
+# The fallback comes first. Each branch is its own check, so a testID tap that runs first
+# leaves the detail page open, the poster is gone, and the fallback would run there too.
+- runFlow:
+    when:
+      notVisible:
+        id: "seerr-poster-194310"
+    commands:
+      - tapOn: ".*Iron Man, 1931"
+- runFlow:
+    when:
+      visible:
+        id: "seerr-poster-194310"
+    commands:
+      - tapOn:
+          id: "seerr-poster-194310"
+- extendedWaitUntil:
+    visible: ".*Iron Man.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 12-seerr-detail

@@ -214,7 +214,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger
           name='(more)'
           hidden={Platform.isTV}
-          testID='screenshots-more-tab'
+          testID='more-tab'
         >
           <NativeTabs.Trigger.Label>{t("tabs.more")}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon

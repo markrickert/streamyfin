@@ -40,11 +40,18 @@ def resolve_java_home(env: dict[str, str], candidates: list[Path] | tuple[Path, 
     return None
 
 
-def build_command(flow: Path, device: str | None, env: dict[str, str], maestro: Path | None = None) -> list[str]:
+def build_command(flow: Path, device: str | None, env: dict[str, str], maestro: Path | None = None, out: Path | None = None, platform: str | None = None) -> list[str]:
     command = [str(maestro or maestro_path())]
     if device:
         command += ["--device", device]
+    if platform:
+        # Both --device and --platform are global options on upstream and on the
+        # plexinc fork the tvOS driver ships in, so they precede `test`.
+        command += ["--platform", platform]
     command.append("test")
+    if out:
+        # Without this, Maestro files screenshots under a timestamped folder in ~/.maestro/tests.
+        command += ["--debug-output", str(out), "--flatten-debug-output"]
     for key, value in env.items():
         command += ["-e", f"{key}={value}"]
     command.append(str(flow))
@@ -108,8 +115,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--flow", required=True, type=Path)
     parser.add_argument("--device", help="adb serial or simulator udid; the one emulator or simulator running otherwise, never a phone")
     parser.add_argument("--env", action="append", default=[], metavar="KEY=VALUE")
+    parser.add_argument("--maestro", type=Path, help="a specific maestro binary, e.g. the screenshot suite's pinned plexinc fork")
+    parser.add_argument("--platform", help="forwarded to `maestro --platform` (the fork's tvOS driver)")
     parser.add_argument("--syncplay", action="store_true", help="also pass SERVER_URL, ANDROID_SERVER_URL, USERNAME, GUEST_USERNAME and PASSWORD for the throwaway server from suites/syncplay/setup.py")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SECONDS, help="seconds before a stalled Maestro is stopped")
+    parser.add_argument("--out", type=Path, help="folder that receives the flow's screenshots, flat, instead of ~/.maestro/tests")
     args = parser.parse_args(argv)
     env = dict(entry.split("=", 1) for entry in args.env)
     if args.syncplay:
@@ -126,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
             for problem in problems:
                 print(f"maestro: {problem}", file=sys.stderr)
             return 2
-    command = build_command(args.flow, device, env)
+    command = build_command(args.flow, device, env, maestro=args.maestro, out=args.out, platform=args.platform)
     process_env = dict(os.environ)
     java_home = resolve_java_home(process_env)
     if java_home:

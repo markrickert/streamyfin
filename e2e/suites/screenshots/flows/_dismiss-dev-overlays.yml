@@ -1,0 +1,37 @@
+# Dismisses the Expo dev client's first-run overlays so the app underneath is reachable.
+# On iOS the runner's dev-client deep link also raises the system "Open in <app>?"
+# confirmation, which covers the app until it is accepted.
+# Connecting a dev client to Metro for the first time can surface its onboarding sheet
+# ("Continue") and then the dev menu (Reload / Go home / Tools) open over the app. Both
+# block every selector below them, so bootstrap-login flows call this right after
+# launchApp. Each step is guarded on the exact dev-menu labels and does nothing when the
+# overlay never appeared.
+# A dev client that exits after the runner's deep link comes back on launchApp with no
+# Metro URL, on the server picker. The picker step re-opens the runner's link from
+# MAESTRO_DEV_CLIENT_URL, and on iOS the "Open in" step below accepts that link too.
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      visible: "Fetch development servers"
+    commands:
+      - openLink: ${MAESTRO_DEV_CLIENT_URL}
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Open in .*"
+    commands:
+      - tapOn: "Open"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Go home"
+    commands:
+      - tapOn: "Close"
+      - waitForAnimationToEnd

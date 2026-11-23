@@ -1,0 +1,35 @@
+# Opens the More tab. On iOS the Library header menu button is also labelled "More", so
+# the label is ambiguous there and the tab is tapped by the testID on its NativeTabs
+# trigger instead; Android keeps the text tap.
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: "more-tab"
+          optional: true
+      # Refs before the trigger testID show two "More" labels on the Library screen — the
+      # tab and the header menu — and the tab bar sits after the page content in the a11y
+      # tree, so index 1 is the tab. Elsewhere only the tab carries the label, so index 1
+      # matches nothing and the plain tap follows. Each is guarded on the More screen's
+      # Sessions row, so once one landed the rest do nothing.
+      - runFlow:
+          when:
+            notVisible: ".*Sessions.*"
+          commands:
+            - tapOn:
+                text: "More"
+                index: 1
+                optional: true
+      - runFlow:
+          when:
+            notVisible: ".*Sessions.*"
+          commands:
+            - tapOn: "More"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "More"
