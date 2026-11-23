@@ -5,8 +5,9 @@ checkout between the refs, serves each with its own Metro, captures the same sho
 times — before, a fresh "noise" pass on the before build, after — and scores them with
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
 The runner uses local debug clients, never CI release artifacts, and runs locally only,
-never in CI: it needs a simulator or emulator, Java for Maestro, and Docker for the
-fixture.
+never in CI: it needs a simulator or emulator, Java for Maestro, and the SyncPlay
+fixture on either backend, Docker or native (`SYNCPLAY_BACKEND=native`, see
+`e2e/suites/syncplay/README.md`).
 
 ## Commands
 

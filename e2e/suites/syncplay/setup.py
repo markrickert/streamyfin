@@ -19,7 +19,9 @@ IDENTITY = {
     "SYNCPLAY_PORT": "18096",
     "SYNCPLAY_SEERR_CONTAINER": "streamyfin-syncplay-e2e-seerr",
     "SYNCPLAY_SEERR_PORT": "15055",
+    "SYNCPLAY_BACKEND": "docker",
 }
+BACKEND_NAMES = ("docker", "native")
 
 
 def saved_identity():
@@ -48,20 +50,32 @@ def api(path, method="GET", data=None, token=None, device_id=None):
 
 
 def identity():
-    """The compose project, container and port this checkout owns.
+    """The backend, compose project, containers and ports this checkout owns.
 
     .env (next to compose.yml, so compose reads it too) persists them from the first
     setup, so later commands never need the variables retyped. An explicit variable
     that disagrees with .env is refused: it would target another instance.
     """
     saved = saved_identity()
+    if ENV_FILE.is_file():
+        # A .env written before SYNCPLAY_BACKEND existed belongs to a Docker instance.
+        saved.setdefault("SYNCPLAY_BACKEND", "docker")
     resolved = {}
     for key, default in IDENTITY.items():
         explicit = os.environ.get(key)
         if explicit and saved.get(key) and explicit != saved[key]:
             raise RuntimeError(f"{key}={explicit} conflicts with {saved[key]} in {ENV_FILE}; run e2e:down first, or unset it")
         resolved[key] = explicit or saved.get(key) or default
+    if resolved["SYNCPLAY_BACKEND"] not in BACKEND_NAMES:
+        raise RuntimeError(f"SYNCPLAY_BACKEND={resolved['SYNCPLAY_BACKEND']} is not one of {', '.join(BACKEND_NAMES)}")
     return resolved
+
+
+def backend(owned=None):
+    """The backend that runs this checkout's servers, Docker Compose or host processes."""
+    from suites.syncplay import backend as backends
+
+    return backends.for_identity(owned or identity())
 
 
 def refuse_foreign_container(name):
@@ -148,9 +162,8 @@ def generate_media():
 
 def main():
     owned = identity()
-    refuse_foreign_container(owned["SYNCPLAY_CONTAINER"])
-    refuse_foreign_container(owned["SYNCPLAY_SEERR_CONTAINER"])
-    refuse_foreign_project(owned["SYNCPLAY_PROJECT"])
+    servers = backend(owned)
+    servers.refuse_foreign(owned)
     ENV_FILE.write_text("".join(f"{key}={value}\n" for key, value in owned.items()))
     generate_media()
     # Docker creates a missing bind source as root, which the seed then cannot write into on Linux.
@@ -162,21 +175,7 @@ def main():
             raise RuntimeError(f"Cannot create {path}; fix its parent's ownership or remove it first") from error
         if not os.access(path, os.W_OK):
             raise RuntimeError(f"{path} is not writable; fix its ownership or remove it first")
-    # Seerr runs as uid 1000: the bind-mounted config must be writable by it on Linux too.
-    # Only widen a directory uid 1000 cannot already write (owned by uid 1000 or
-    # world-writable+executable); a tighter preexisting mode is left alone.
-    seerr_dir = STATE / "seerr"
-    stat = seerr_dir.stat()
-    uid_can_write = stat.st_uid == 1000 or (stat.st_mode & 0o003) == 0o003
-    if not uid_can_write:
-        try:
-            seerr_dir.chmod(0o777)
-        except PermissionError as error:
-            raise RuntimeError(f"Cannot open {seerr_dir} for the Seerr container's uid 1000; fix its ownership or remove it first") from error
-    subprocess.run(
-        ["docker", "compose", "-p", owned["SYNCPLAY_PROJECT"], "-f", str(ROOT / "compose.yml"), "up", "-d"],
-        check=True, env={**os.environ, **owned},
-    )
+    servers.up(owned)
     info = wait_for_server()
     if not info.get("StartupWizardCompleted"):
         api("/Startup/Configuration", "POST", {
@@ -205,7 +204,7 @@ def main():
         query = urllib.parse.urlencode({"name": "SyncPlay Fixtures", "collectionType": "movies", "refreshLibrary": "true"})
         api("/Library/VirtualFolders?" + query, "POST", {
             "LibraryOptions": {
-                "PathInfos": [{"Path": "/media"}], "EnableRealtimeMonitor": False,
+                "PathInfos": [{"Path": servers.host_path("/media")}], "EnableRealtimeMonitor": False,
                 "EnableInternetProviders": False, "EnableChapterImageExtraction": False,
                 "EnableTrickplayImageExtraction": False,
                 "TypeOptions": [{"Type": "Movie", "MetadataFetchers": [], "ImageFetchers": []}],
