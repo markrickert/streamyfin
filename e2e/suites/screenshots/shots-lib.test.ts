@@ -19,8 +19,8 @@ import {
   selectDevice,
 } from "./shots-lib";
 
-// js-yaml is a transitive dep without bundled types; keep the require (typed) rather
-// than adding @types/js-yaml for one test block.
+// js-yaml ships no types; keep the require (typed) rather than adding @types/js-yaml
+// for one test block.
 const { loadAll: loadAllYaml } = require("js-yaml") as {
   loadAll: (src: string) => unknown[];
 };

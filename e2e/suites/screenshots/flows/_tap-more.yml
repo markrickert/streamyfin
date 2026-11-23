@@ -8,7 +8,7 @@ appId: ${MAESTRO_APP_ID}
       platform: iOS
     commands:
       - tapOn:
-          id: "screenshots-more-tab"
+          id: "more-tab"
           optional: true
       # Refs before the trigger testID show two "More" labels on the Library screen — the
       # tab and the header menu — and the tab bar sits after the page content in the a11y

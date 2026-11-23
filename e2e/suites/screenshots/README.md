@@ -95,7 +95,7 @@ no stable selector for a flow). Run it once per simulator, while it is booted.
 
 - `e2e:enrich` must exit 0 before screenshots run; `run` treats a non-zero enrich as
   fatal.
-- Flows prefer the screenshot `testID`s (`screenshots-more-tab`, `seerr-poster-*`,
+- Flows prefer the screenshot `testID`s (`more-tab`, `seerr-poster-*`,
   `seerr-server-url`, `intro-done`) and use text/index fallbacks for refs without them.
   Those fallbacks are less precise; no flow uses coordinate taps.
 - The fixture's Jellyfin and Seerr are shared, running services: the runner reuses them,
