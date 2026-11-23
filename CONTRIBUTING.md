@@ -38,6 +38,28 @@ bun run ios               # or: bun run android, bun run ios:tv, bun run android
 If an iOS build fails with `missing Metal Toolchain`, run
 `bun run ios:install-metal-toolchain` once.
 
+### Build cache
+
+`bun run ios` and `bun run android` reuse an earlier build when the native project
+has not changed, keyed by its `@expo/fingerprint` hash. The provider is
+`expo-build-disk-cache` behind `scripts/build-cache-provider.js`. The local
+provider adds the connected device's ordered ABI list to the filename of
+single-ABI Android debug cache entries.
+
+- Builds go to `~/.expo-build-disk-cache`, shared by every worktree. A build unused for
+  7 days is deleted.
+- iOS caches simulator builds only. A physical device always builds.
+- An Android debug build carries only the connected device's ABI, so the filename
+  includes its ordered ABI list. With no device attached, or devices reporting
+  different ABI lists, the run builds and does not use the cache. Attach the
+  one target device before you run.
+- `--no-build-cache` cleans the native build, but it does not skip this cache. Set
+  `DISK_CACHE_ENABLE=false` to skip it, e.g. `DISK_CACHE_ENABLE=false bun run ios`.
+- Override any option per machine with `disk-cache.json` in the repo root or the
+  environment variables listed in the
+  [configuration guide](https://github.com/WookieFPV/expo-build-disk-cache/blob/main/Configuration.md).
+  Keep options out of `app.json`: the Expo config is part of the fingerprint.
+
 ## While you work
 
 The conventions live next to the code they govern:

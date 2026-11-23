@@ -104,3 +104,6 @@ e2e/**/__pycache__/
 # state, config and logs out of git until the folder is deleted.
 e2e/syncplay/.state/
 e2e/syncplay/artifacts/
+
+# Per-machine expo-build-disk-cache options, see CONTRIBUTING.md
+disk-cache.json
