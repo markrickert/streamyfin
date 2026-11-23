@@ -74,7 +74,9 @@ appId: ${MAESTRO_APP_ID}
 # is deliberately not opened: its button creates a request on the Seerr server, and a
 # mistimed tap would submit one.
 # Refs before the SeerrPoster testID fall back to the card's title text, which sits
-# inside the card and clicks through to its pressable on all three platforms.
+# inside the card and clicks through to its pressable on all three platforms. The title
+# is matched only in the movies row: a bare "Iron Man" also matches the search field
+# holding the query, and a tap there never leaves the search screen.
 # The Popular movies row sits at the bottom edge, partly under the search bar, so the card
 # is brought to the centre first: at the edge the tap target can fall outside the screen.
 - runFlow:
@@ -94,9 +96,15 @@ appId: ${MAESTRO_APP_ID}
         id: "seerr-poster-1726"
     commands:
       - scrollUntilVisible:
-          element: "Iron Man"
+          element:
+            text: "Iron Man"
+            below: "Request movies"
+            above: "Request series"
           centerElement: true
-      - tapOn: "Iron Man"
+      - tapOn:
+          text: "Iron Man"
+          below: "Request movies"
+          above: "Request series"
 - extendedWaitUntil:
     visible: ".*Iron Man.*"
     timeout: 30000
