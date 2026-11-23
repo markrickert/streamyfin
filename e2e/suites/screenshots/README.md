@@ -64,6 +64,7 @@ arguments to `maestro.py`, which masks them when it echoes its command line.
 | Variable | ios / apple-tv | android / android-tv |
 | --- | --- | --- |
 | `MAESTRO_APP_ID` | the built app's bundle id | the built APK's applicationId (`.debug` on current refs, may be unsuffixed on older ones) |
+| `MAESTRO_DEV_CLIENT_URL` | the dev-client deep link to `http://127.0.0.1:<port>` | the dev-client deep link to `http://10.0.2.2:<port>` |
 | `MAESTRO_JELLYFIN_URL` | `http://127.0.0.1:<SYNCPLAY_PORT>` | `http://10.0.2.2:<SYNCPLAY_PORT>` |
 | `MAESTRO_JELLYFIN_USER` | `syncplay-host` | same |
 | `MAESTRO_JELLYFIN_PASS` | the fixture password | same |

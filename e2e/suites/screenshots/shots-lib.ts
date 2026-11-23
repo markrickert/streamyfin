@@ -794,6 +794,12 @@ function disableFastRefresh(d: Deps, device: string, appId: string): void {
     must(d.exec(argv), "disable fast refresh");
 }
 
+// SDK 58 dev-client deep link: __expo_url pins Metro, the disable flags skip the
+// one-time onboarding sheet and hide the dev client's floating menu button
+// (expo.dev/changelog/sdk-58). The app's scheme is `streamyfin`.
+const devClientUrl = (platform: Platform, port: number) =>
+  `streamyfin://?__expo_url=${encodeURIComponent(`http://${hostFor(platform)}:${port}`)}&__expo_disable_onboarding=1&__expo_disable_fab=1`;
+
 function launchDevClient(
   d: Deps,
   platform: Platform,
@@ -801,11 +807,7 @@ function launchDevClient(
   appId: string,
   port: number,
 ): void {
-  const host = hostFor(platform);
-  // SDK 58 dev-client deep link: __expo_url pins Metro, the disable flags skip the
-  // one-time onboarding sheet and hide the dev client's floating menu button
-  // (expo.dev/changelog/sdk-58). The app's scheme is `streamyfin`.
-  const url = `streamyfin://?__expo_url=${encodeURIComponent(`http://${host}:${port}`)}&__expo_disable_onboarding=1&__expo_disable_fab=1`;
+  const url = devClientUrl(platform, port);
   // adb joins argv into one remote shell command — the & in the URL would split it
   // and turn -p into a second command, so the -d value must be remote-quoted.
   const quotedUrl = `'${url.replaceAll("'", "'\\''")}'`;
@@ -1182,7 +1184,11 @@ export async function runComparison(
             "adb reverse seerr",
           );
       }
-      const env = { ...baseEnv, MAESTRO_APP_ID: appId };
+      const env = {
+        ...baseEnv,
+        MAESTRO_APP_ID: appId,
+        MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
+      };
       metro = await startMetro(d, repo, spec, port);
       try {
         // Prove this Metro serves the checked-out ref's JS — /status alone says only

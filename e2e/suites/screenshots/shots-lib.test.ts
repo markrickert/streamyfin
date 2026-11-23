@@ -1027,6 +1027,30 @@ describe("fresh-state capture sequence", () => {
   });
 });
 
+describe("dev-client deep link in the flow env", () => {
+  // A deep-linked dev client that exits before Maestro starts comes back on a bare
+  // launchApp with no Metro URL, and waits on the server picker. The flows re-open the
+  // runner's link from this variable, so it must be the exact link the runner sent.
+  it("hands every flow the same link the runner deep-linked with", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const sent = execs(f, "am start").map((argv) =>
+      argv[argv.indexOf("-d") + 1].slice(1, -1),
+    );
+    expect(sent).toHaveLength(3);
+    const flows = execs(f, "maestro.py");
+    expect(flows.length).toBeGreaterThan(0);
+    for (const argv of flows) {
+      const entry = argv.find((arg) =>
+        arg.startsWith("MAESTRO_DEV_CLIENT_URL="),
+      );
+      expect(sent).toContain(entry?.slice("MAESTRO_DEV_CLIENT_URL=".length));
+    }
+  });
+});
+
 describe("dev-client deep link quoting", () => {
   it("single-quotes the URL so adb's remote shell cannot split on &", async () => {
     const f = new Fake();

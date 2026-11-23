@@ -6,8 +6,17 @@
 # block every selector below them, so bootstrap-login flows call this right after
 # launchApp. Each step is guarded on the exact dev-menu labels and does nothing when the
 # overlay never appeared.
+# A dev client that exits after the runner's deep link comes back on launchApp with no
+# Metro URL, on the server picker. The picker step re-opens the runner's link from
+# MAESTRO_DEV_CLIENT_URL, and on iOS the "Open in" step below accepts that link too.
 appId: ${MAESTRO_APP_ID}
 ---
+- runFlow:
+    when:
+      visible: "Fetch development servers"
+    commands:
+      - openLink: ${MAESTRO_DEV_CLIENT_URL}
+      - waitForAnimationToEnd
 - runFlow:
     when:
       visible: "Open in .*"
