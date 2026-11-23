@@ -729,7 +729,6 @@ function appIdOnDevice(
   platform: Platform,
   device: string,
   artifact: string,
-  ownedAppIds: Set<string>,
 ): string {
   if (platform === "android" || platform === "android-tv") {
     const badging = must(
@@ -739,31 +738,24 @@ function appIdOnDevice(
     const id = badging.match(/package: name='([^']+)'/)?.[1];
     if (!id)
       throw new ShotError("aapt could not read the built APK's applicationId");
-    // SAFETY INVARIANT: never replace or clear a package that already exists. The
-    // runner clears app data per capture, so an installed copy — release or a
-    // same-id debug build — is user data UNLESS this run installed it (a same-id
-    // after-ref rebuild is ours to update). `pm path` answers package:… lines for
-    // an installed id, exits 1 with empty output for an absent one; anything else
-    // is undetermined and refuses too.
-    const path = d.exec(["adb", "-s", device, "shell", "pm", "path", id]);
-    if (path.stdout.includes("package:")) {
-      if (!ownedAppIds.has(id))
-        throw new ShotError(
-          `app ${id} already installed; use a fresh dedicated emulator: refusing to replace or clear user data`,
-        );
-    } else if (path.code !== 1 || path.stdout.trim() !== "")
-      throw new ShotError(
-        `cannot determine whether ${id} is installed (pm path exit ${path.code}): ${path.stderr.trim()}`,
-      );
-    must(
-      d.exec(["adb", "-s", device, "install", "-r", artifact]),
-      "adb install",
-    );
-    ownedAppIds.add(id);
+    // Overwrites whatever copy of the id is on the emulator, a leftover from an earlier
+    // run included: the runner clears the app's data on every pass anyway. A copy
+    // signed with another key refuses the update, so it is removed and installed again.
+    const install = () =>
+      d.exec(["adb", "-s", device, "install", "-r", artifact]);
+    let installed = install();
+    if (
+      installed.code !== 0 &&
+      `${installed.stdout}${installed.stderr}`.includes(
+        "INSTALL_FAILED_UPDATE_INCOMPATIBLE",
+      )
+    ) {
+      must(d.exec(["adb", "-s", device, "uninstall", id]), "adb uninstall");
+      installed = install();
+    }
+    must(installed, "adb install");
     return id;
   }
-  // Read the bundle id BEFORE touching the device: installing first would already
-  // have overwritten a user's app, and resetTestAppState uninstalls per pass.
   const plist = `${artifact}/Info.plist`;
   const plistResult = d.exec([
     "/usr/libexec/PlistBuddy",
@@ -774,29 +766,10 @@ function appIdOnDevice(
   if (plistResult.code !== 0)
     throw new ShotError(`cannot read the built app's bundle id from ${plist}`);
   const id = plistResult.stdout.trim();
-  // SAFETY INVARIANT: same as Android — an exact-id install that this run did not
-  // create is user data; refuse before any install/uninstall. `simctl listapps`
-  // prints `CFBundleIdentifier = "<id>";` lines; a nonzero result is undetermined
-  // and fails closed.
-  const apps = d.exec(["xcrun", "simctl", "listapps", device]);
-  if (apps.code !== 0)
-    throw new ShotError(
-      `cannot determine whether ${id} is installed (simctl listapps exit ${apps.code}): ${apps.stderr.trim()}`,
-    );
-  if (
-    apps.stdout
-      .split("\n")
-      .some((line) => line.trim() === `CFBundleIdentifier = "${id}";`) &&
-    !ownedAppIds.has(id)
-  )
-    throw new ShotError(
-      `app ${id} already installed; use a fresh dedicated simulator: refusing to replace or clear user data`,
-    );
   must(
     d.exec(["xcrun", "simctl", "install", device, artifact]),
     "simctl install",
   );
-  ownedAppIds.add(id);
   return id;
 }
 
@@ -1249,9 +1222,6 @@ export async function runComparison(
   setInterruptCleanup(cleanup);
   try {
     prepareAndroidDevice(d, cli.platform!, device);
-    // App ids this run installed itself: only these may be reinstalled or
-    // state-cleared — anything else on the device is user data.
-    const ownedAppIds = new Set<string>();
     const refs: { label: string; sha: string; captures: string[] }[] = [
       { label: "before", sha: beforeSha, captures: ["before", "noise"] },
       { label: "after", sha: afterSha, captures: ["after"] },
@@ -1298,13 +1268,7 @@ export async function runComparison(
         hash,
         sessionDir,
       );
-      const appId = appIdOnDevice(
-        d,
-        cli.platform!,
-        device,
-        artifact,
-        ownedAppIds,
-      );
+      const appId = appIdOnDevice(d, cli.platform!, device, artifact);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator
       // means the emulator's own loopback — both phone and TV need the reverse mapping
       // to reach the host fixture. Reuse an identical mapping, abort on a conflicting

@@ -243,8 +243,6 @@ function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
       },
     ],
     ["node --version", { code: 0, stdout: "v22.14.0\n", stderr: "" }],
-    // pm path absent = code 1 + empty output, the only answer that lets install run.
-    ["pm path", { code: 1, stdout: "", stderr: "" }],
     ["install -r", ok],
     ["pm clear", ok],
     ["push /tmp/streamyfin-shots-fast-refresh-off.xml", ok],
@@ -1190,69 +1188,64 @@ describe("dev-client deep link quoting", () => {
   });
 });
 
-describe("preinstalled package safety invariant", () => {
-  it("refuses to install or clear when the exact appId already exists on device", async () => {
+describe("existing Android install", () => {
+  // A run that fails after installing leaves the app behind, and the next run used to
+  // refuse to start until it was uninstalled by hand.
+  it("installs over whatever is on the emulator, without checking for it", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    // Exact id installed (e.g. a release build sharing the debug applicationId):
-    // pm path answers a real package line.
-    // Longer needle than the happy "pm path" route so it wins.
-    f.routes.push([
-      "pm path com.example",
-      {
-        code: 0,
-        stdout:
-          "package:/data/app/~~xyz==/com.example.streamyfin.debug-abc==/base.apk\n",
-        stderr: "",
-      },
-    ]);
-    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
-      /already installed.*refusing/i,
-    );
-    expect(execs(f, "install -r")).toHaveLength(0);
-    expect(execs(f, "pm clear")).toHaveLength(0);
-    expect(execs(f, "maestro.py")).toHaveLength(0);
-    // The before-ref switch already happened, so the run must have restored.
-    expect(execs(f, "git switch feat/dev")).toHaveLength(1);
-  });
-
-  it("refuses when pm path answers an unexpected result", async () => {
-    const f = new Fake();
-    seed(f);
-    happyRoutes(f);
-    f.routes.push(["pm path com.example", { code: 0, stdout: "", stderr: "" }]);
-    // code 0 with empty output is not "absent" (absent is code 1 + empty) — refuse.
-    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
-    expect(execs(f, "install -r")).toHaveLength(0);
-    expect(execs(f, "pm clear")).toHaveLength(0);
-  });
-
-  it("allows a same-id reinstall on the after ref only because this run owns it", async () => {
-    const f = new Fake();
-    seed(f);
-    happyRoutes(f);
-    // The before ref installs the id; when the after ref's pm path runs the
-    // package is therefore present — allowed because the run owns the install.
-    f.routes.push([
-      "pm path com.example",
-      (fake) =>
-        fake.execLog.some((a) => a.join(" ").includes("install -r"))
-          ? {
-              code: 0,
-              stdout:
-                "package:/data/app/~~x==/com.example.streamyfin.debug-y==/base.apk\n",
-              stderr: "",
-            }
-          : { code: 1, stdout: "", stderr: "" },
-    ]);
     await runComparison(f, runCli, REPO);
+    expect(execs(f, "pm path")).toHaveLength(0);
     expect(execs(f, "install -r")).toHaveLength(2);
     expect(execs(f, "pm clear")).toHaveLength(3);
   });
+
+  it("uninstalls and installs again when the existing install has another signature", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "emulator-5554 install -r",
+      (fake) =>
+        fake.execLog.some((argv) => argv.join(" ").includes(" uninstall "))
+          ? ok
+          : {
+              code: 1,
+              stdout: "",
+              stderr:
+                "adb: failed to install app.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match]",
+            },
+    ]);
+    f.routes.push(["uninstall com.example.streamyfin.debug", ok]);
+    await runComparison(f, runCli, REPO);
+    expect(execs(f, "uninstall com.example.streamyfin.debug")).toHaveLength(1);
+    const trace = f.execLog.map((argv) => argv.join(" "));
+    const removed = trace.findIndex((a) => a.includes(" uninstall "));
+    expect(
+      trace.findIndex((a, i) => i > removed && a.includes("install -r")),
+    ).toBeGreaterThan(removed);
+  });
+
+  it("fails the run when the install fails for another reason", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "emulator-5554 install -r",
+      {
+        code: 1,
+        stdout: "",
+        stderr: "Failure [INSTALL_FAILED_INSUFFICIENT_STORAGE]",
+      },
+    ]);
+    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(/adb install/);
+    expect(execs(f, " uninstall ")).toHaveLength(0);
+    expect(execs(f, "pm clear")).toHaveLength(0);
+  });
 });
 
-describe("iOS preinstalled app guard", () => {
+describe("iOS install", () => {
   const iosCli: Cli = {
     command: "run",
     platform: "ios",
@@ -1261,7 +1254,7 @@ describe("iOS preinstalled app guard", () => {
     device: "UDID-PHONE",
   };
 
-  function iosHappyRoutes(f: Fake, listapps: ExecResult) {
+  function iosHappyRoutes(f: Fake) {
     happyRoutes(f);
     f.routes.push(
       [
@@ -1296,32 +1289,32 @@ describe("iOS preinstalled app guard", () => {
         "PlistBuddy",
         { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
       ],
-      ["listapps", listapps],
     );
   }
 
-  it("refuses before any install when the exact bundle id is already installed", async () => {
+  it("installs over an app it finds on the simulator, without checking for one", async () => {
     const f = new Fake();
     seed(f);
-    iosHappyRoutes(f, {
-      code: 0,
-      stdout:
-        'com.example.streamyfin = {\n    CFBundleIdentifier = "com.example.streamyfin";\n};\n',
-      stderr: "",
-    });
-    await expect(runComparison(f, iosCli, REPO)).rejects.toThrow(
-      /already installed.*refusing/i,
+    iosHappyRoutes(f);
+    f.routes.push(
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
     );
-    expect(execs(f, "simctl install")).toHaveLength(0);
-    expect(execs(f, "simctl uninstall")).toHaveLength(0);
-    // The before-ref switch already happened, so the run must have restored.
-    expect(execs(f, "git switch feat/dev")).toHaveLength(1);
+    await runComparison(f, iosCli, REPO);
+    expect(execs(f, "listapps")).toHaveLength(0);
+    expect(execs(f, "simctl install").length).toBeGreaterThan(0);
   });
 
   it("turns Fast Refresh off in each fresh install before the deep link", async () => {
     const f = new Fake();
     seed(f);
-    iosHappyRoutes(f, { code: 0, stdout: "{\n}\n", stderr: "" });
+    iosHappyRoutes(f);
     f.routes.push(
       ["simctl uninstall", ok],
       ["simctl install", ok],
@@ -1368,15 +1361,6 @@ describe("iOS preinstalled app guard", () => {
     const open = trace.findIndex((a) => a.includes("simctl openurl"));
     expect(install).toBeLessThan(write);
     expect(write).toBeLessThan(open);
-  });
-
-  it("fails closed when simctl listapps cannot answer", async () => {
-    const f = new Fake();
-    seed(f);
-    iosHappyRoutes(f, { code: 2, stdout: "", stderr: "error" });
-    await expect(runComparison(f, iosCli, REPO)).rejects.toThrow(ShotError);
-    expect(execs(f, "simctl install")).toHaveLength(0);
-    expect(execs(f, "simctl uninstall")).toHaveLength(0);
   });
 });
 

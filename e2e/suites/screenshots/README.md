@@ -26,13 +26,14 @@ fixture the way `run` does (step 2 below) and installs the pinned Maestro. It ne
 touches a dirty tree: commit or stash yourself.
 `run` refuses a dirty tree, identical refs, a physical device, or a busy port, then:
 
-**Device safety**: use a fresh, dedicated emulator/simulator. Before installing, the
-runner checks whether the built app's exact id already exists on the device (`pm path`
-on Android, `simctl listapps` on iOS/tvOS) and **refuses unless this run installed it**
-— every capture clears the test app's data, so a preexisting install (release or debug)
-is user data the runner never replaces or wipes. A same-id reinstall for the after ref
-is allowed only because the run itself owns the install from the before ref. On iOS the
-per-pass reset uninstalls and reinstalls only the built app, never the whole simulator.
+**Device use**: point the runner at an emulator or simulator kept for screenshots. Each
+run installs over any copy of the app with the built app's exact id, and every capture
+pass clears that app's data, so a copy you sign in to on the same device loses its data.
+On Android a copy signed with another key is uninstalled and installed again. On iOS
+the per-pass reset uninstalls and reinstalls only the built app, never the whole
+simulator. Physical devices are refused. On Android every run also turns stylus
+handwriting off, and a phone run freezes the status bar in System UI demo mode (12:00,
+full signal and battery, no notification icons) and exits demo mode when it ends.
 
 1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`,
    this runner) into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot
