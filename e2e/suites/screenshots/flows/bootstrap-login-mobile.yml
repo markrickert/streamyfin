@@ -76,6 +76,16 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: "Username"
     timeout: 30000
+# Capture before typing secrets. Android has already hidden the keyboard after
+# Connect; hideKeyboard there sends Back and can close the app.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - hideKeyboard:
+          optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 00-login-connected
 - tapOn: "Username"
 - inputText: ${MAESTRO_JELLYFIN_USER}
 - tapOn: "Password"

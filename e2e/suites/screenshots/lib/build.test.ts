@@ -231,7 +231,7 @@ describe("iOS install", () => {
       ],
       ["plutil", ok],
       ["simctl openurl", ok],
-      ["seerr-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
+      ["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
     );
     await expect(runComparison(f, iosCli, REPO)).rejects.toThrow(ShotError);
     expect(execs(f, "status_bar UDID-PHONE clear")).toHaveLength(1);

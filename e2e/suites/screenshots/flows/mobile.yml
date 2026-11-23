@@ -129,3 +129,97 @@ appId: ${MAESTRO_APP_ID}
     timeout: 5000
     optional: true
 - takeScreenshot: 09-item-details
+
+# The library filter sheet: the Movies library's Genres chip opens a bottom sheet over
+# the grid. The chip renders before its options arrive, and a tap while the genre list
+# is still loading opens nothing, so retry until the sheet is visible. iOS exposes only
+# the "Bottom Sheet" container to Maestro, not its visible option count; Android exposes
+# the count. The Blacksmith wait proves the page loaded; scrolling would hide the chip.
+# Nothing is selected, and the swipe dismisses the sheet before the next section.
+# Maestro's full text match needs a wildcard for the chip's merged iOS icon label.
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000
+- tapOn: "Library"
+- tapOn: ".*Movies.*"
+- extendedWaitUntil:
+    visible: "The Blacksmith.*"
+    timeout: 15000
+    optional: true
+- tapOn: ".*Genres.*"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - repeat:
+          while:
+            notVisible: "Bottom Sheet"
+          times: 4
+          commands:
+            - extendedWaitUntil:
+                visible: "Bottom Sheet"
+                timeout: 4000
+                optional: true
+            - runFlow:
+                when:
+                  notVisible: "Bottom Sheet"
+                commands:
+                  - tapOn: ".*Genres.*"
+      - extendedWaitUntil:
+          visible: "Bottom Sheet"
+          timeout: 30000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          while:
+            notVisible: ".* items"
+          times: 4
+          commands:
+            - extendedWaitUntil:
+                visible: ".* items"
+                timeout: 4000
+                optional: true
+            - runFlow:
+                when:
+                  notVisible: ".* items"
+                commands:
+                  - tapOn: ".*Genres.*"
+      - extendedWaitUntil:
+          visible: ".* items"
+          timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 5000
+    optional: true
+- takeScreenshot: 14-library-filter-sheet
+- swipe:
+    direction: DOWN
+
+# Series details: the seeded "Show" series in the Shows library. iOS merges the
+# unplayed count before the title ("2, Show") and may append a year. The anchor
+# still rejects "Shows" (the library header). A series page plays nothing.
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000
+- tapOn: "Library"
+- tapOn: ".*Shows.*"
+- extendedWaitUntil:
+    visible: "^(.*, )?Show(,.*)?$"
+    timeout: 15000
+    optional: true
+- scrollUntilVisible:
+    element: "^(.*, )?Show(,.*)?$"
+- tapOn: "^(.*, )?Show(,.*)?$"
+# The season dropdown and the Pilot episode card are what only a series page shows.
+- extendedWaitUntil:
+    visible: ".*Season.*|.*Pilot.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 5000
+    optional: true
+- takeScreenshot: 15-series-details

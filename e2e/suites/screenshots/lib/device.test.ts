@@ -63,10 +63,7 @@ describe("device setup", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    f.routes.push([
-      "seerr-mobile.yml",
-      { code: 1, stdout: "", stderr: "boom" },
-    ]);
+    f.routes.push(["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }]);
     await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
     expect(demo(f).at(-1)).toContain("-e command exit");
   });

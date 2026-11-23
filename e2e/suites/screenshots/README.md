@@ -49,7 +49,8 @@ every run also turns stylus handwriting off.
    cached debug client in `e2e/reports/shots/build-cache/<platform>/<hash>` or a local
    debug build (`./gradlew assembleDebug` / `xcodebuild … Debug`), install on the chosen
    simulator/emulator, a runner-owned `expo start --dev-client --clear` on a port it proved
-   free first, then the capture flows with `--env` forwarded by `run.sh`.
+   free first, then each capture pass as one parent Maestro invocation with `--env`
+   forwarded by `run.sh`.
 4. `compare.ts --before … --noise … --after …` with the platform masks; the report and
    changed-screen evidence land in the session directory.
 
@@ -74,12 +75,22 @@ arguments to `maestro.py`, which masks them when it echoes its command line.
 | `MAESTRO_SEERR_URL` | `http://127.0.0.1:<SYNCPLAY_SEERR_PORT>` | `http://10.0.2.2:<SYNCPLAY_SEERR_PORT>` |
 | `MAESTRO_SEERR_PASS` | the fixture password | same |
 
-Flows are keyed by platform: `bootstrap-login-mobile|tv`, `mobile|tv`,
-`bootstrap-seerr-mobile|tv`, `seerr-mobile|tv`; Apple TV shares the `tv` flows and branches on
-`MAESTRO_TVOS`. Screenshot names are the
-pairing key for compare.ts — `00-login`, `00-intro` (phones only: `Home.tv.tsx` never
-presents the sheet), `01`–`09`, `10`–`12` for Seerr. `10-seerr-discover` is scored
-informational: its TMDB feed is live data.
+Each before/noise/after pass is one parent flow — `pass-mobile.yml` or `pass-tv.yml` —
+that runs the platform's flows in a fixed order: `bootstrap-login-*`, `mobile|tv`, the
+Seerr bootstrap (`ensure-seerr-mobile` connects only when Discover is missing;
+`bootstrap-seerr-tv` verifies the plugin-pushed sign-in), then `seerr-*`. Order is
+load-bearing: the login must come first on the freshly-reset app and the Seerr screens
+only exist once connected, so state is reset between passes, never inside one. Apple TV
+shares the `tv` flows and branches on `MAESTRO_TVOS`.
+
+Screenshot names are the pairing key for compare.ts — `00-login`, `00-login-connected`,
+`00-intro` (phones only: `Home.tv.tsx` never presents the sheet), `01`–`09` for app
+screens, `10`–`12` for Seerr with `13-seerr-settings` on phones (captured by
+`ensure-seerr-mobile.yml` on either connection path), `14-library-filter-sheet`
+and `15-series-details` on phones, `08-library-filters` and `09-series-details` on TV.
+`10-seerr-discover` is scored informational: its TMDB feed is live data. Item pages are
+opened read-only and nothing plays anywhere: on TV a card press can start playback, so
+only routes that push a detail page are tapped.
 
 ## Every platform uses the pinned Maestro
 

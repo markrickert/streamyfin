@@ -127,6 +127,11 @@ export function seed(f: Fake) {
   ])
     f.files.set(`${suite}/${name}`, "x");
   for (const flow of [
+    // The parents the runner invokes; the nested names stay listed so the snapshot's
+    // flow dir mirrors the real one. A route needle of a nested name must never shadow
+    // a parent: "mobile.yml" alone would also match ".../pass-mobile.yml".
+    "pass-mobile.yml",
+    "pass-tv.yml",
     "bootstrap-login-mobile.yml",
     "mobile.yml",
     "ensure-seerr-mobile.yml",

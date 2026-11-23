@@ -19,3 +19,26 @@ appId: ${MAESTRO_APP_ID}
     when:
       notVisible: "Discover"
     file: bootstrap-seerr-mobile.yml
+
+# The connected Seerr settings page, shot once no matter which path connected it —
+# placing this inside the bootstrap would skip the shot whenever the plugin-pushed
+# sign-in already exposed Discover. Read-only: Reset is waited on, never tapped, so
+# the connection is untouched. The wait names the full "Reset Seerr config" label:
+# a bare "Reset" could also match other settings rows.
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000
+- runFlow: _tap-more.yml
+- tapOn: ".*Settings.*"
+- scrollUntilVisible:
+    element: ".*Plugins.*"
+- tapOn: ".*Plugins.*"
+- tapOn: ".*Seerr.*"
+- extendedWaitUntil:
+    visible: ".*Reset Seerr config.*"
+    timeout: 30000
+- hideKeyboard:
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 13-seerr-settings

@@ -150,20 +150,16 @@ export function runCapture(
   env: Record<string, string>,
   maestro: string,
 ): void {
-  for (const flow of [
-    spec.login,
-    spec.screens,
-    spec.seerrBootstrap,
-    spec.seerr,
-  ])
-    runFlow(
-      d,
-      tooling,
-      flow,
-      device,
-      outDir,
-      env,
-      maestro,
-      spec.maestroPlatform,
-    );
+  // One parent flow per pass: a failing nested flow then aborts the whole pass, and the
+  // capture order lives in the YAML next to the flows it sequences, not in two places.
+  runFlow(
+    d,
+    tooling,
+    spec.tv ? "pass-tv" : "pass-mobile",
+    device,
+    outDir,
+    env,
+    maestro,
+    spec.maestroPlatform,
+  );
 }

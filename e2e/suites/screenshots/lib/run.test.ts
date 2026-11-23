@@ -290,6 +290,38 @@ describe("runComparison ordering", () => {
     }
   });
 
+  // A pass is one parent invocation: splitting it back into per-flow maestro runs
+  // would reset nothing between flows and break the order the parent enforces.
+  it("runs the phone pass as exactly three maestro invocations, one parent per capture dir", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows).toHaveLength(3);
+    const passes = ["before", "noise", "after"];
+    flows.forEach((argv, index) => {
+      expect(argv[argv.indexOf("--flow") + 1]).toContain(
+        "flows/pass-mobile.yml",
+      );
+      expect(argv[argv.indexOf("--out") + 1]).toContain(`/${passes[index]}`);
+    });
+  });
+
+  it("runs the TV pass as the tv parent flow on android-tv", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    // selectDevice asks for leanback on android-tv; the phone answer would reject it.
+    f.routes = f.routes.filter(([needle]) => needle !== "has-feature");
+    f.routes.push(["has-feature", { code: 0, stdout: "true\n", stderr: "" }]);
+    await runComparison(f, { ...runCli, platform: "android-tv" }, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows).toHaveLength(3);
+    for (const argv of flows)
+      expect(argv[argv.indexOf("--flow") + 1]).toContain("flows/pass-tv.yml");
+  });
+
   it("never logs the fixture password", async () => {
     const f = new Fake();
     seed(f);
@@ -308,10 +340,7 @@ describe("runComparison failure path", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    f.routes.push([
-      "seerr-mobile.yml",
-      { code: 1, stdout: "", stderr: "boom" },
-    ]);
+    f.routes.push(["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }]);
     await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
 
     // Back on the starting branch, user's android/ dir restored with its file.
@@ -363,7 +392,7 @@ describe("runComparison boundaries", () => {
     seed(f);
     happyRoutes(f);
     f.routes.push([
-      "seerr-mobile.yml",
+      "pass-mobile.yml",
       { code: 1, stdout: "", stderr: `flow failed: ${PASSWORD} rejected` },
     ]);
     const error = await runComparison(f, runCli, REPO).catch((e) => e);

@@ -18,6 +18,8 @@ describe("tooling snapshot", () => {
       "maestro.py",
       "masks-android-phone.json",
       "flows/mobile.yml",
+      "flows/pass-mobile.yml",
+      "flows/pass-tv.yml",
     ])
       expect(f.files.has(`${tooling}/${file}`)).toBe(true);
     expect(f.files.has(`${tooling}/shots.ts`)).toBe(false);

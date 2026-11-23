@@ -4,8 +4,9 @@
 # Maestro fork clicks like a D-pad select: a remote press that follows another too fast is
 # dropped, and a tap does not depend on where the focus was. The app still draws its own
 # focus ring on whatever it focuses on arrival, so that shows in the shots.
-# Never open a title: on TV, Center/Select on a card starts playback, which changes the
-# fixture account. Screenshot names are the pairing key for compare.ts, so keep them stable.
+# Never open a Home title: on TV, Center/Select on a Home card starts playback, which
+# changes the fixture account. A card in the Shows library is safe — it pushes the
+# series route. Screenshot names are the pairing key for compare.ts, so keep them stable.
 appId: ${MAESTRO_APP_ID}
 ---
 - launchApp
@@ -53,13 +54,28 @@ appId: ${MAESTRO_APP_ID}
     timeout: 8000
     optional: true
 - takeScreenshot: 06-library-movies
+
+# The toolbar's Filters action opens the library sheet as a pushed modal route. The
+# "Genres" group card only exists inside it, so its visibility proves the sheet opened.
+# Nothing is selected — read-only — and the two Backs walk out of it: the first closes
+# the sheet, the second leaves the library.
+- tapOn: ".*Filters.*"
+- extendedWaitUntil:
+    visible: ".*Genres.*"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 2000
+    optional: true
+- takeScreenshot: 08-library-filters
+- pressKey: Back
 - pressKey: Back
 
 # The Inactivity timeout modal: the TV modal panel is where a color change shows most. Rows
 # ignore touch, so the D-pad moves the focus (two Downs from the tab bar) and Center opens
 # it. Each press waits, because one that follows another too fast is dropped. The modal is
-# only opened: no option is chosen, so no setting changes. No item page is opened anywhere
-# in this flow: Center/Select on a Home card starts playback, and the fixture account must
+# only opened: no option is chosen, so no setting changes. No Home card is opened anywhere
+# in this flow: Center/Select on one starts playback, and the fixture account must
 # not play.
 - tapOn: "Settings"
 - extendedWaitUntil:
@@ -86,3 +102,30 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 07-settings-modal
 - pressKey: Back
+
+# A series page: the seeded "Show" in the Shows library. Tapping the card clicks it
+# like a remote Center, and the library's renderTVItem pushes the series route — unlike
+# a Home poster, where Select would start playback. The anchor accepts the
+# unplayed badge before "Show" and a possible year after it, but not "Shows".
+# The season heading or Pilot episode proves the series page loaded.
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- tapOn: "Library"
+- tapOn: "Shows"
+- extendedWaitUntil:
+    visible: "^(.*, )?Show(,.*)?$"
+    timeout: 15000
+    optional: true
+- scrollUntilVisible:
+    element: "^(.*, )?Show(,.*)?$"
+- tapOn: "^(.*, )?Show(,.*)?$"
+- extendedWaitUntil:
+    visible: ".*Season.*|.*Pilot.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 4000
+    optional: true
+- takeScreenshot: 09-series-details
