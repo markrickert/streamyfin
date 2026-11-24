@@ -1,6 +1,7 @@
 import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import ignore from "ignore";
+import { PLATFORMS } from "./e2e/suites/screenshots/lib/core";
 
 // The CI workflows name modules, paths and commands by hand, and nothing fails
 // when one of those lists falls behind the tree: the workflow stays green while
@@ -362,7 +363,7 @@ const { load: loadYaml } = require("js-yaml") as {
 describe.each([
   "native-tests.yml",
   "e2e-tier1-android.yml",
-  "e2e-screenshots-ios.yml",
+  "e2e-screenshots.yml",
 ])("%s checkouts", (name) => {
   // Every job installs and builds the pull request's own code after its
   // checkout, which would otherwise leave a usable token in .git/config, as
@@ -379,12 +380,26 @@ describe.each([
   });
 });
 
-describe("e2e-screenshots-ios.yml", () => {
-  const workflow = loadYaml(readWorkflow("e2e-screenshots-ios.yml")) as {
+describe("e2e-screenshots.yml", () => {
+  type Step = {
+    name?: string;
+    uses?: string;
+    run?: string;
+    with?: Record<string, unknown>;
+  };
+  type Job = {
+    if?: string;
+    needs?: string | string[];
+    "runs-on"?: string;
+    strategy?: { "fail-fast"?: boolean; matrix?: string };
+    steps?: Step[];
+  };
+  const rawWorkflow = readWorkflow("e2e-screenshots.yml");
+  const workflow = loadYaml(rawWorkflow) as {
     on: Record<string, unknown>;
     permissions: Record<string, string>;
     concurrency: { group: string };
-    jobs: Record<string, { if?: string; "runs-on"?: string }>;
+    jobs: Record<string, Job>;
   };
 
   test("triggers only on demand (PR label or manual dispatch)", () => {
@@ -398,26 +413,77 @@ describe("e2e-screenshots-ios.yml", () => {
     };
     expect(pr.types).toEqual(["labeled"]);
     expect(pr.branches).toEqual(["develop", "master"]);
-    expect(workflow.jobs["screenshots-ios"].if).toContain(
+    expect(workflow.jobs.plan.if).toContain(
       "github.event.label.name == 'run-screenshots'",
     );
     const dispatch = workflow.on.workflow_dispatch as {
-      inputs?: { before?: { required?: boolean }; after?: unknown };
+      inputs?: {
+        before?: { required?: boolean };
+        after?: unknown;
+        platforms?: { default?: string };
+      };
     };
     expect(dispatch.inputs?.before?.required).toBe(true);
     expect(dispatch.inputs?.after).toBeDefined();
+    expect(
+      dispatch.inputs?.platforms?.default
+        ?.split(",")
+        .map((p) => p.trim())
+        .sort(),
+    ).toEqual([...PLATFORMS].sort());
   });
 
-  test("uses minimal read permissions on a standard GitHub macOS runner", () => {
-    // The native fixture exists so this runs where Docker cannot; build-apps.yml's
-    // xcode-27 runners serve only this repository's own pull requests.
+  test("uses minimal read permissions and the expected runner per job", () => {
+    // Apple jobs use the native fixture on macos-latest because Apple silicon
+    // runners cannot run Docker or an Android emulator.
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(workflow.jobs["screenshots-ios"]["runs-on"]).toBe("macos-latest");
+    expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
+    expect(workflow.jobs.apple["runs-on"]).toBe("macos-latest");
+    expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
   });
 
   test("another label never cancels a running comparison", () => {
     // Every label fires a run; one sharing the group would cancel the screenshot job.
     expect(workflow.concurrency.group).toContain("github.event.label.name");
+  });
+
+  test("plan job covers every suite platform", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const appleBlock = planScript.match(/APPLE\s*=\s*\{([\s\S]*?)\n\}/)?.[1];
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(appleBlock).toBeDefined();
+    expect(androidBlock).toBeDefined();
+
+    const extractKeys = (block: string) =>
+      [...block.matchAll(/^\s*"([^"]+)":\s*\{/gm)].map((m) => m[1]);
+    const planned = [
+      ...extractKeys(appleBlock!),
+      ...extractKeys(androidBlock!),
+    ];
+    expect(planned.sort()).toEqual([...PLATFORMS].sort());
+
+    expect(workflow.jobs.apple.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.apple.strategy?.matrix).toContain(
+      "needs.plan.outputs.apple",
+    );
+    expect(workflow.jobs.android.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.android.strategy?.matrix).toContain(
+      "needs.plan.outputs.android",
+    );
+  });
+
+  test("android emulator step pins the same action SHA as e2e-tier1-android.yml", () => {
+    const tier1Pin = readWorkflow("e2e-tier1-android.yml").match(
+      /uses:\s*(reactivecircus\/android-emulator-runner@[0-9a-f]{40})/,
+    )?.[1];
+    expect(tier1Pin).toBeDefined();
+
+    const emulatorStep = workflow.jobs.android.steps?.find((step) =>
+      step.uses?.startsWith("reactivecircus/android-emulator-runner@"),
+    );
+    expect(emulatorStep?.uses).toBe(tier1Pin);
   });
 });
 

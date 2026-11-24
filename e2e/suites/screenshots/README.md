@@ -6,27 +6,39 @@ times — before, a fresh "noise" pass on the before build, after — and scores
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
 The runner uses local debug clients, never CI release artifacts: it needs a simulator or
 emulator, Java for Maestro, and the SyncPlay fixture on either backend, Docker or native
-(`SYNCPLAY_BACKEND=native`, see `e2e/suites/syncplay/README.md`). Android and TV suites
-run locally; iOS also runs on demand in `.github/workflows/e2e-screenshots-ios.yml`.
+(`SYNCPLAY_BACKEND=native`, see `e2e/suites/syncplay/README.md`). All four platforms
+(`ios`, `apple-tv`, `android`, `android-tv`) run locally and on demand in
+`.github/workflows/e2e-screenshots.yml`.
 
-## CI (iOS)
+## CI
 
-`.github/workflows/e2e-screenshots-ios.yml` runs the iOS suite on a standard
-`macos-latest` runner with its newest Xcode, `SYNCPLAY_BACKEND=native` (those runners
-cannot run Docker), a fresh booted iPhone simulator, and `e2e:down` cleanup.
+`.github/workflows/e2e-screenshots.yml` runs on demand (never on `push`, `synchronize`,
+or `schedule`):
 
-Trigger it on demand (never on `push`, `synchronize`, or `schedule`):
+- Apply the `run-screenshots` label to a pull request targeting `develop` or `master` to
+  run all four platforms (`origin/<base_ref>` against the PR head SHA; remove and re-add
+  the label to rerun).
+- Dispatch manually (`workflow_dispatch`) with `before` (required ref), optional `after`
+  (defaults to the dispatched ref), and `platforms` (comma-separated subset of
+  `ios,apple-tv,android,android-tv`, defaulting to all four).
 
-- Apply the `run-screenshots` label to a pull request targeting `develop` or `master`
-  (compares the PR head SHA against `origin/<base_ref>`; remove and re-add the label to
-  rerun).
-- Dispatch the workflow manually with `before` (required ref) and optional `after`
-  (defaults to the dispatched ref).
+The `plan` job on `ubuntu-26.04` validates `platforms` and emits separate `apple` and
+`android` matrices, skipping either job when its list is empty:
 
-The job fails only when the runner, build, or capture fails (including blank screenshots);
-changed screens are reported in `$GITHUB_STEP_SUMMARY` (`summary.md`) and uploaded with
-the `report/`, `evidence/`, and per-pass capture directories (`e2e-screenshots-ios-report`)
-alongside `e2e/suites/syncplay/.state/logs/` (`e2e-screenshots-ios-fixture-logs`).
+- **`ios` and `apple-tv` (`apple` job on `macos-latest`)**: uses the newest Xcode,
+  `SYNCPLAY_BACKEND=native`, and a fresh simulator. Apple silicon runners lack nested
+  virtualization, so they cannot run Docker or an Android emulator. `ios` runs
+  `ios-disable-autofill.sh` after boot; `apple-tv` does not.
+- **`android` and `android-tv` (`android` job on `ubuntu-26.04`)**: uses KVM, the
+  Docker fixture, and `reactivecircus/android-emulator-runner` on API 34 `x86_64`
+  (`google_apis` for `android`; `android-tv` with profile `tv_1080p` for `android-tv`).
+  Teardown runs `e2e:down` under `always()`, falling back to `sudo rm -rf` on
+  `e2e/suites/syncplay/.state` if Linux Docker wrote root-owned files there.
+
+Each platform uses its own `build-cache` cache prefix, pruned to the newest four entries.
+Jobs fail only on runner, build, or capture errors (including blank screenshots). Changed
+screens go to `$GITHUB_STEP_SUMMARY` (`summary.md`) and upload as
+`e2e-screenshots-<platform>-report` alongside `e2e-screenshots-<platform>-fixture-logs`.
 
 ## Commands
 
