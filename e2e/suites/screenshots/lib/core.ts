@@ -40,7 +40,11 @@ export interface FsOps {
 export interface Deps {
   exec(
     argv: string[],
-    opts?: { cwd?: string; env?: Record<string, string | undefined> },
+    opts?: {
+      cwd?: string;
+      env?: Record<string, string | undefined>;
+      timeoutMs?: number;
+    },
   ): ExecResult;
   spawn(
     argv: string[],

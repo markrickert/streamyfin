@@ -382,15 +382,19 @@ describe.each([
 
 describe("e2e-screenshots.yml", () => {
   type Step = {
+    id?: string;
     name?: string;
+    if?: string;
     uses?: string;
     run?: string;
+    env?: Record<string, string>;
     with?: Record<string, unknown>;
   };
   type Job = {
     if?: string;
     needs?: string | string[];
     "runs-on"?: string;
+    permissions?: Record<string, string>;
     strategy?: { "fail-fast"?: boolean; matrix?: string };
     steps?: Step[];
   };
@@ -437,6 +441,14 @@ describe("e2e-screenshots.yml", () => {
     // Apple jobs use the native fixture on macos-latest because Apple silicon
     // runners cannot run Docker or an Android emulator.
     expect(workflow.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs.apple.permissions).toEqual({
+      contents: "read",
+      actions: "read",
+    });
+    expect(workflow.jobs.android.permissions).toEqual({
+      contents: "read",
+      actions: "read",
+    });
     expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
     expect(workflow.jobs.apple["runs-on"]).toBe("macos-latest");
     expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
@@ -485,6 +497,46 @@ describe("e2e-screenshots.yml", () => {
     );
     expect(emulatorStep?.uses).toBe(tier1Pin);
   });
+
+  test.each(["apple", "android"] as const)(
+    "%s shares dev clients via fingerprint artifacts instead of actions/cache",
+    (jobName) => {
+      const steps = workflow.jobs[jobName].steps ?? [];
+      expect(
+        steps.some(
+          (step) =>
+            step.uses?.startsWith("actions/cache@") &&
+            String(step.with?.path ?? "").includes("build-cache"),
+        ),
+      ).toBe(false);
+      expect(rawWorkflow).not.toContain("prune-build-cache");
+
+      const runStep = steps.find(
+        (step) =>
+          step.run?.includes("e2e:shots") ||
+          String(step.with?.script ?? "").includes("e2e:shots"),
+      );
+      expect(runStep?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
+      expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
+        "fetch-dev-client.py",
+      );
+
+      const clientUploads = steps.filter(
+        (step) =>
+          step.uses?.startsWith("actions/upload-artifact@") &&
+          String(step.with?.name ?? "").startsWith("shots-dev-client-"),
+      );
+      expect(clientUploads).toHaveLength(2);
+      for (const upload of clientUploads) {
+        expect(upload.with?.["retention-days"]).toBe(30);
+        expect(upload.if).toContain(
+          "github.event.pull_request.head.repo.id == github.repository_id",
+        );
+        expect(upload.if).toContain("workflow_dispatch");
+        expect(upload.if).toContain("push");
+      }
+    },
+  );
 });
 
 describe("linting.yml", () => {

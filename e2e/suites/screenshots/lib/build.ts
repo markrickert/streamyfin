@@ -33,14 +33,67 @@ export function nativeFingerprint(
   return parsed.hash as string;
 }
 
+/** Env var naming an optional executable that populates a missing local build-cache entry. */
+export const BUILD_CACHE_FETCH_ENV = "SHOTS_BUILD_CACHE_FETCH";
+
+/** Bound on the remote cache fetch hook so a stalled download falls back to a local build. */
+export const BUILD_CACHE_FETCH_TIMEOUT_MS = 300_000;
+
+export type BuildSource = "local" | "fetched" | "built";
+
 export interface BuildResult {
   artifact: string;
   built: boolean;
+  source: BuildSource;
+}
+
+function findCachedArtifact(
+  d: Deps,
+  platform: Platform,
+  cacheDir: string,
+): string | undefined {
+  if (!d.fs.exists(cacheDir)) return undefined;
+  const entries = d.fs.list(cacheDir);
+  const ext =
+    platform === "android" || platform === "android-tv" ? ".apk" : ".app";
+  const matches = entries.filter((name) => name.endsWith(ext));
+  return matches.length === 1 ? `${cacheDir}/${matches[0]}` : undefined;
+}
+
+function tryFetchCachedBuild(
+  d: Deps,
+  platform: Platform,
+  hash: string,
+  cacheDir: string,
+): string | undefined {
+  const fetchExe = d.env[BUILD_CACHE_FETCH_ENV]?.trim();
+  if (!fetchExe) return undefined;
+  const result = d.exec([fetchExe, platform, hash, cacheDir], {
+    timeoutMs: BUILD_CACHE_FETCH_TIMEOUT_MS,
+  });
+  if (result.code !== 0) {
+    const detail =
+      (result.stderr || result.stdout).trim().split("\n")[0] ||
+      `exit ${result.code}`;
+    d.log(
+      `build cache fetch failed for ${platform}/${hash} (${detail}); building locally`,
+    );
+    if (d.fs.exists(cacheDir)) d.fs.rm(cacheDir);
+    return undefined;
+  }
+  const artifact = findCachedArtifact(d, platform, cacheDir);
+  if (artifact) return artifact;
+  d.log(
+    `build cache fetch exited 0 for ${platform}/${hash} without a valid artifact; building locally`,
+  );
+  if (d.fs.exists(cacheDir)) d.fs.rm(cacheDir);
+  return undefined;
 }
 
 /**
  * A debug client is native code: reuse the cached artifact for the same native
- * fingerprint, rebuild otherwise. Never a CI release artifact.
+ * fingerprint (locally, else via the fetch hook), rebuild otherwise. Never a CI release
+ * artifact.
  */
 export function ensureDebugBuild(
   d: Deps,
@@ -49,10 +102,14 @@ export function ensureDebugBuild(
   spec: PlatformSpec,
   hash: string,
   sessionDir: string,
+  onBeforeBuild?: () => void,
 ): BuildResult {
   const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${platform}/${hash}`;
-  const cached = d.fs.exists(cacheDir) ? d.fs.list(cacheDir)[0] : undefined;
-  if (cached) return { artifact: `${cacheDir}/${cached}`, built: false };
+  const cached = findCachedArtifact(d, platform, cacheDir);
+  if (cached) return { artifact: cached, built: false, source: "local" };
+  const fetched = tryFetchCachedBuild(d, platform, hash, cacheDir);
+  if (fetched) return { artifact: fetched, built: false, source: "fetched" };
+  onBeforeBuild?.();
   if (platform === "android" || platform === "android-tv") {
     // Gradle's codegen shells out to `node` inside module dirs; where node is an asdf
     // shim and a module ships a .tool-versions without nodejs, the shim aborts. The
@@ -77,7 +134,11 @@ export function ensureDebugBuild(
       throw new ShotError(`gradle built but ${apk} is missing`);
     d.fs.mkdir(cacheDir);
     d.fs.cp(apk, `${cacheDir}/app-debug.apk`);
-    return { artifact: `${cacheDir}/app-debug.apk`, built: true };
+    return {
+      artifact: `${cacheDir}/app-debug.apk`,
+      built: true,
+      source: "built",
+    };
   }
   const sdk = platform === "apple-tv" ? "appletvsimulator" : "iphonesimulator";
   const derived = `${sessionDir}/DerivedData`;
@@ -119,7 +180,11 @@ export function ensureDebugBuild(
     `${derived}/Build/Products/Debug-${sdk}/${apps[0]}`,
     `${cacheDir}/${apps[0]}`,
   );
-  return { artifact: `${cacheDir}/${apps[0]}`, built: true };
+  return {
+    artifact: `${cacheDir}/${apps[0]}`,
+    built: true,
+    source: "built",
+  };
 }
 
 /** Latest aapt in the Android SDK build-tools — reads the APK's real applicationId. */

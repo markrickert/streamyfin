@@ -1,5 +1,10 @@
 import { resetTestAppState } from "./app-state";
-import { appIdOnDevice, ensureDebugBuild, nativeFingerprint } from "./build";
+import {
+  appIdOnDevice,
+  type BuildSource,
+  ensureDebugBuild,
+  nativeFingerprint,
+} from "./build";
 import {
   devClientUrl,
   launchDevClient,
@@ -7,7 +12,14 @@ import {
   startMetro,
 } from "./capture";
 import { platformSpec } from "./cli";
-import { type Cli, type Deps, must, ShotError, type SpawnHandle } from "./core";
+import {
+  type Cli,
+  type Deps,
+  must,
+  type Platform,
+  ShotError,
+  type SpawnHandle,
+} from "./core";
 import {
   ensurePortFree,
   prepareDevice,
@@ -32,6 +44,14 @@ import {
   REPORTS_DIR,
   snapshotTooling,
 } from "./tooling";
+
+export interface BuildCacheManifestEntry {
+  ref: string;
+  platform: Platform;
+  hash: string;
+  source: BuildSource;
+  path: string;
+}
 
 export interface RunReport {
   sessionDir: string;
@@ -107,6 +127,7 @@ export async function runComparison(
       { label: "before", sha: beforeSha, captures: ["before", "noise"] },
       { label: "after", sha: afterSha, captures: ["after"] },
     ];
+    const buildCacheManifest: BuildCacheManifestEntry[] = [];
     for (const ref of refs) {
       must(
         d.exec(["git", "switch", "--detach", ref.sha], { cwd: repo }),
@@ -123,31 +144,40 @@ export async function runComparison(
         )
         .join("\n---\n");
       const hash = nativeFingerprint(d, repo, spec);
-      const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${cli.platform}/${hash}`;
-      const needsBuild = !d.fs.exists(cacheDir);
-      if (needsBuild && !nativeMoved.length)
-        nativeMoved = backupNativeDirs(d, repo, sessionDir);
-      if (needsBuild) {
-        must(
-          d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
-            cwd: repo,
-          }),
-          "expo prebuild",
-        );
-        // `expo prebuild` writes the ios project but does not run pod install.
-        if (spec.fingerprintPlatform === "ios")
-          must(
-            d.exec(["pod", "install"], { cwd: `${repo}/ios` }),
-            "pod install",
-          );
-      }
-      const { artifact } = ensureDebugBuild(
+      const { artifact, source } = ensureDebugBuild(
         d,
         repo,
         cli.platform!,
         spec,
         hash,
         sessionDir,
+        () => {
+          if (!nativeMoved.length)
+            nativeMoved = backupNativeDirs(d, repo, sessionDir);
+          must(
+            d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
+              cwd: repo,
+            }),
+            "expo prebuild",
+          );
+          // `expo prebuild` writes the ios project but does not run pod install.
+          if (spec.fingerprintPlatform === "ios")
+            must(
+              d.exec(["pod", "install"], { cwd: `${repo}/ios` }),
+              "pod install",
+            );
+        },
+      );
+      buildCacheManifest.push({
+        ref: ref.label,
+        platform: cli.platform!,
+        hash,
+        source,
+        path: artifact,
+      });
+      d.fs.write(
+        `${sessionDir}/build-cache.json`,
+        JSON.stringify(buildCacheManifest, null, 2),
       );
       const appId = appIdOnDevice(d, cli.platform!, device, artifact);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator

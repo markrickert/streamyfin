@@ -47,7 +47,7 @@ export class Fake implements Deps {
     return typeof outcome === "function" ? outcome(this, argv) : outcome;
   }
 
-  exec(argv: string[]): ExecResult {
+  exec(argv: string[], _opts?: Parameters<Deps["exec"]>[1]): ExecResult {
     this.execLog.push(argv);
     return this.result(argv);
   }

@@ -35,7 +35,14 @@ The `plan` job on `ubuntu-26.04` validates `platforms` and emits separate `apple
   Teardown runs `e2e:down` under `always()`, falling back to `sudo rm -rf` on
   `e2e/suites/syncplay/.state` if Linux Docker wrote root-owned files there.
 
-Each platform uses its own `build-cache` cache prefix, pruned to the newest four entries.
+Dev clients are shared across pull requests and branches as GitHub Actions artifacts named
+`shots-dev-client-<platform>-<hash>`, instead of per-branch `actions/cache` entries.
+Each client is uploaded as a tar so `.app` bundles keep their permissions and symlinks.
+The fetch hook downloads only non-expired artifacts whose `workflow_run.head_repository_id`
+matches this repository, so a fork PR cannot plant a binary under another run's fingerprint.
+Only trusted runs (same-repository pull requests, `push`, and `workflow_dispatch`) upload
+newly built clients; fork PRs reuse trusted artifacts and upload nothing.
+Built clients stay for 30 days because weekly native churn makes longer retention pointless.
 Jobs fail only on runner, build, or capture errors (including blank screenshots). Changed
 screens go to `$GITHUB_STEP_SUMMARY` (`summary.md`) and upload as
 `e2e-screenshots-<platform>-report` alongside `e2e-screenshots-<platform>-fixture-logs`.
@@ -77,12 +84,15 @@ every run also turns stylus handwriting off.
    `e2e:down` — the fixture stays up afterwards.
 3. For the before ref, then the after ref: `git switch --detach` (never `--force`),
    `bun install --frozen-lockfile` when the lockfile changed, `@expo/fingerprint` with the
-   platform's `EXPO_TV` (same recipe as `.github/workflows/build-apps.yml`), reuse of the
-   cached debug client in `e2e/reports/shots/build-cache/<platform>/<hash>` or a local
-   debug build (`./gradlew assembleDebug` / `xcodebuild … Debug`), install on the chosen
-   simulator/emulator, a runner-owned `expo start --dev-client --clear` on a port it proved
-   free first, then each capture pass as one parent Maestro invocation with `--env`
-   forwarded by `run.sh`.
+   platform's `EXPO_TV` (same recipe as `.github/workflows/build-apps.yml`), and resolving
+   the debug client in three steps: check the local cache at
+   `e2e/reports/shots/build-cache/<platform>/<hash>`, run `SHOTS_BUILD_CACHE_FETCH` as
+   `<exe> <platform> <hash> <cacheDir>` on a miss (falling back to a local build on any
+   failure), or prebuild and build locally (`./gradlew assembleDebug` / `xcodebuild … Debug`).
+   Each ref's `{ ref, platform, hash, source, path }` is written to `<session>/build-cache.json`.
+   Then install on the chosen simulator/emulator, start a runner-owned
+   `expo start --dev-client --clear` on a port it proved free first, and run each capture
+   pass as one parent Maestro invocation with `--env` forwarded by `run.sh`.
 4. `compare.ts --before … --noise … --after …` with the platform masks; the report and
    changed-screen evidence land in the session directory.
 

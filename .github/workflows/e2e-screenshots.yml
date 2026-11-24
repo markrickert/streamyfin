@@ -102,6 +102,9 @@ jobs:
     name: 📸 Screenshot comparison (${{ matrix.platform }})
     needs: plan
     if: needs.plan.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
+    permissions:
+      contents: read
+      actions: read # list and download debug dev-client artifacts across runs
     # A standard runner on purpose: the native fixture exists so this runs where Docker
     # cannot. build-apps.yml's xcode-27 runners serve only this repository's own PRs.
     runs-on: macos-latest
@@ -181,16 +184,6 @@ jobs:
           path: e2e/reports/shots/tools
           key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
 
-      - name: 💾 Cache debug dev clients
-        # Fingerprint hashes are computed per ref at runtime, so restore the latest
-        # cache set by prefix and save the pruned set under this run's unique key.
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: e2e/reports/shots/build-cache
-          key: ${{ runner.os }}-${{ runner.arch }}-shots-${{ matrix.platform }}-build-cache-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-shots-${{ matrix.platform }}-build-cache-
-
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
 
@@ -228,7 +221,12 @@ jobs:
         env:
           SYNCPLAY_BACKEND: native
           GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
         run: |
+          # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
+          cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
           bun run e2e:shots \
             --platform "${{ matrix.platform }}" \
             --before "$BEFORE_REF" \
@@ -236,11 +234,40 @@ jobs:
             --device "$SIMULATOR_UDID" \
             --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
-      - name: 🧹 Prune unused debug build cache
-        # The runner does not report which cache hashes it read, so keep the newest 4
-        # entries by mtime (two before/after pairs) so the cache cannot grow without bound.
-        if: success()
-        run: python3 e2e/suites/screenshots/ci/prune-build-cache.py
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless.
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
 
       - name: 📝 Job summary
         if: always()
@@ -292,6 +319,9 @@ jobs:
     name: 📸 Screenshot comparison (${{ matrix.platform }})
     needs: plan
     if: needs.plan.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
+    permissions:
+      contents: read
+      actions: read # list and download debug dev-client artifacts across runs
     runs-on: ubuntu-26.04
     # Cold prebuild, up to two Gradle assembleDebug builds, Docker fixture setup, and three Maestro passes.
     timeout-minutes: 150
@@ -375,16 +405,6 @@ jobs:
           path: e2e/reports/shots/tools
           key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
 
-      - name: 💾 Cache debug dev clients
-        # Fingerprint hashes are computed per ref at runtime, so restore the latest
-        # cache set by prefix and save the pruned set under this run's unique key.
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: e2e/reports/shots/build-cache
-          key: ${{ runner.os }}-${{ runner.arch }}-shots-${{ matrix.platform }}-build-cache-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-shots-${{ matrix.platform }}-build-cache-
-
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
 
@@ -403,6 +423,9 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         env:
           GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
         with:
           api-level: 34
           arch: x86_64
@@ -410,13 +433,42 @@ jobs:
           profile: ${{ matrix.profile }}
           emulator-boot-timeout: 900
           disable-animations: true
-          script: bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
+          script: cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH" && bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
-      - name: 🧹 Prune unused debug build cache
-        # The runner does not report which cache hashes it read, so keep the newest 4
-        # entries by mtime (two before/after pairs) so the cache cannot grow without bound.
-        if: success()
-        run: python3 e2e/suites/screenshots/ci/prune-build-cache.py
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless.
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
 
       - name: 📝 Job summary
         if: always()

@@ -438,3 +438,87 @@ describe("runComparison boundaries", () => {
     expect(f.files.get(`${REPO}/android/user-file.txt`)).toBe("mine");
   });
 });
+
+describe("runComparison build-cache manifest", () => {
+  const outDir = `${REPO}/e2e/reports/shots/test-session`;
+
+  it("records built then local when before and after share a fingerprint", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest).toEqual([
+      {
+        ref: "before",
+        platform: "android",
+        hash: "fp-1",
+        source: "built",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+      },
+      {
+        ref: "after",
+        platform: "android",
+        hash: "fp-1",
+        source: "local",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+      },
+    ]);
+  });
+
+  it("skips prebuild and records fetched when the fetch hook populates the cache", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const cacheDir = argv[3];
+        fake.dirs.add(cacheDir);
+        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    expect(execs(f, "bun run prebuild")).toHaveLength(0);
+    expect(execs(f, "assembleDebug")).toHaveLength(0);
+    expect(execs(f, "fetch-dev-client.py")).toHaveLength(1);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest).toEqual([
+      {
+        ref: "before",
+        platform: "android",
+        hash: "fp-1",
+        source: "fetched",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+      },
+      {
+        ref: "after",
+        platform: "android",
+        hash: "fp-1",
+        source: "local",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+      },
+    ]);
+  });
+
+  it("falls back to prebuild and build when the fetch hook fails", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      { code: 1, stdout: "", stderr: "no artifact\n" },
+    ]);
+
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    expect(execs(f, "bun run prebuild")).toHaveLength(1);
+    expect(execs(f, "assembleDebug")).toHaveLength(1);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest[0].source).toBe("built");
+    expect(manifest[1].source).toBe("local");
+  });
+});

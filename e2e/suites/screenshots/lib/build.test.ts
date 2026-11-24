@@ -1,4 +1,8 @@
-import { ensureDebugBuild } from "./build";
+import {
+  BUILD_CACHE_FETCH_ENV,
+  BUILD_CACHE_FETCH_TIMEOUT_MS,
+  ensureDebugBuild,
+} from "./build";
 import { platformSpec } from "./cli";
 import { type Cli, ShotError } from "./core";
 import { runComparison } from "./run";
@@ -42,6 +46,7 @@ describe("ensureDebugBuild cache", () => {
       `${REPO}/session`,
     );
     expect(first.built).toBe(true);
+    expect(first.source).toBe("built");
     const again = ensureDebugBuild(
       f,
       REPO,
@@ -51,6 +56,7 @@ describe("ensureDebugBuild cache", () => {
       `${REPO}/session`,
     );
     expect(again.built).toBe(false);
+    expect(again.source).toBe("local");
     expect(again.artifact).toBe(first.artifact);
     const other = ensureDebugBuild(
       f,
@@ -61,7 +67,177 @@ describe("ensureDebugBuild cache", () => {
       `${REPO}/session`,
     );
     expect(other.built).toBe(true);
+    expect(other.source).toBe("built");
     expect(builds).toBe(2);
+  });
+
+  it("uses the fetch hook on a local miss and skips building when an APK arrives", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    let observedTimeout: number | undefined;
+    const origExec = f.exec.bind(f);
+    f.exec = (argv, opts) => {
+      if (argv[0] === "/ci/fetch-dev-client.py")
+        observedTimeout = opts?.timeoutMs;
+      return origExec(argv);
+    };
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const [, platform, hash, cacheDir] = argv;
+        expect(platform).toBe("android");
+        expect(hash).toBe("fp-fetch");
+        fake.dirs.add(cacheDir);
+        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+
+    const res = ensureDebugBuild(
+      f,
+      REPO,
+      "android",
+      spec,
+      "fp-fetch",
+      `${REPO}/session`,
+    );
+    expect(res).toEqual({
+      artifact: `${REPO}/e2e/reports/shots/build-cache/android/fp-fetch/app-debug.apk`,
+      built: false,
+      source: "fetched",
+    });
+    expect(observedTimeout).toBe(BUILD_CACHE_FETCH_TIMEOUT_MS);
+    expect(execs(f, "assembleDebug")).toHaveLength(0);
+  });
+
+  it("uses a single fetched .app for Apple and skips xcodebuild", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const [, platform, hash, cacheDir] = argv;
+        expect(platform).toBe("ios");
+        expect(hash).toBe("fp-ios");
+        fake.dirs.add(cacheDir);
+        fake.dirs.add(`${cacheDir}/Streamyfin.app`);
+        return ok;
+      },
+    ]);
+
+    const res = ensureDebugBuild(
+      f,
+      REPO,
+      "ios",
+      platformSpec("ios"),
+      "fp-ios",
+      `${REPO}/session`,
+    );
+    expect(res).toEqual({
+      artifact: `${REPO}/e2e/reports/shots/build-cache/ios/fp-ios/Streamyfin.app`,
+      built: false,
+      source: "fetched",
+    });
+    expect(execs(f, "xcodebuild")).toHaveLength(0);
+  });
+
+  it("skips the fetch hook when the local cache already holds the artifact", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    const cacheDir = `${REPO}/e2e/reports/shots/build-cache/android/fp-hit`;
+    f.dirs.add(cacheDir);
+    f.files.set(`${cacheDir}/app-debug.apk`, "apk");
+
+    const res = ensureDebugBuild(
+      f,
+      REPO,
+      "android",
+      spec,
+      "fp-hit",
+      `${REPO}/session`,
+    );
+    expect(res).toEqual({
+      artifact: `${cacheDir}/app-debug.apk`,
+      built: false,
+      source: "local",
+    });
+    expect(execs(f, "fetch-dev-client.py")).toHaveLength(0);
+  });
+
+  it("logs one line and builds locally when the fetch hook fails", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    f.routes.push(
+      ["/ci/fetch-dev-client.py", { code: 1, stdout: "", stderr: "miss\n" }],
+      ["node --version", { code: 0, stdout: "v22.14.0\n", stderr: "" }],
+      [
+        "assembleDebug",
+        (fake) => {
+          fake.files.set(
+            `${REPO}/android/app/build/outputs/apk/debug/app-debug.apk`,
+            "apk",
+          );
+          return ok;
+        },
+      ],
+    );
+
+    const res = ensureDebugBuild(
+      f,
+      REPO,
+      "android",
+      spec,
+      "fp-miss",
+      `${REPO}/session`,
+    );
+    expect(res.built).toBe(true);
+    expect(res.source).toBe("built");
+    expect(f.logs).toHaveLength(1);
+    expect(f.logs[0]).toContain("miss");
+    expect(execs(f, "assembleDebug")).toHaveLength(1);
+  });
+
+  it("logs one line and builds locally when fetch exits 0 without a valid Apple .app", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    f.dirs.add(`${REPO}/ios`);
+    f.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+    f.routes.push(
+      [
+        "/ci/fetch-dev-client.py",
+        (fake, argv) => {
+          const cacheDir = argv[3];
+          fake.dirs.add(cacheDir);
+          fake.dirs.add(`${cacheDir}/A.app`);
+          fake.dirs.add(`${cacheDir}/B.app`);
+          return ok;
+        },
+      ],
+      [
+        "xcodebuild",
+        (fake, argv) => {
+          const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+          fake.dirs.add(`${derived}/Build/Products/Debug-iphonesimulator`);
+          fake.dirs.add(
+            `${derived}/Build/Products/Debug-iphonesimulator/Streamyfin.app`,
+          );
+          return ok;
+        },
+      ],
+    );
+
+    const res = ensureDebugBuild(
+      f,
+      REPO,
+      "ios",
+      platformSpec("ios"),
+      "fp-bad",
+      `${REPO}/session`,
+    );
+    expect(res.built).toBe(true);
+    expect(res.source).toBe("built");
+    expect(f.logs).toHaveLength(1);
+    expect(execs(f, "xcodebuild")).toHaveLength(1);
   });
 });
 

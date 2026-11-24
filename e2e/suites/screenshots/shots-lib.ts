@@ -15,8 +15,10 @@
  * - Secrets ride process env into run.sh/maestro.py; they are never logged or echoed.
  */
 
-export type { BuildResult } from "./lib/build";
+export type { BuildResult, BuildSource } from "./lib/build";
 export {
+  BUILD_CACHE_FETCH_ENV,
+  BUILD_CACHE_FETCH_TIMEOUT_MS,
   ensureDebugBuild,
   nativeFingerprint,
 } from "./lib/build";
@@ -51,7 +53,7 @@ export {
   gitStart,
   preflight,
 } from "./lib/git";
-export type { RunReport } from "./lib/run";
+export type { BuildCacheManifestEntry, RunReport } from "./lib/run";
 export {
   doctor,
   interruptCleanup,
