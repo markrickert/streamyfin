@@ -145,10 +145,10 @@ describe("capture pass parents", () => {
     },
   );
 
-  // On Android TV, TVPosterCard renders the title TextView outside its Pressable, so
-  // tapping the title does nothing. Tap the element above it, inside the poster, on
-  // Android TV while leaving Apple TV's direct tap unchanged.
-  it("tv.yml taps the poster above the Show title on Android TV without changing Apple TV", () => {
+  // On Android TV, TVPosterCard renders the title TextView outside its unlabeled
+  // Pressable, so neither the title nor `above:` reaches the card (`above:` picked the
+  // focused toolbar button). Focus the card with the D-pad, leaving Apple TV's tap.
+  it("tv.yml focuses the Show card with the D-pad on Android TV without changing Apple TV", () => {
     const cmds = commandsOf("tv.yml");
     const branches = cmds.filter((cmd) =>
       String(cmd.runFlow?.when?.true ?? "").includes("MAESTRO_TVOS"),
@@ -160,13 +160,17 @@ describe("capture pass parents", () => {
     const appleTv = branches.find((cmd) =>
       cmd.runFlow.when.true.includes("== '1'"),
     );
-    expect(androidTv?.runFlow.commands).toEqual([
-      {
-        tapOn: {
-          above: "^(.*, )?Show(,.*)?$",
-        },
-      },
-    ]);
+    const androidCmds = androidTv?.runFlow.commands as Command[];
+    expect(androidCmds[0]).toEqual({ pressKey: "Remote Dpad Down" });
+    const moveRight = androidCmds.find((cmd) => cmd.repeat)?.repeat;
+    expect(moveRight.while.notVisible).toEqual({
+      focused: true,
+      above: "^(.*, )?Show(,.*)?$",
+      rightOf: "Rocky Jones, Space Ranger",
+    });
+    expect(moveRight.commands[0]).toEqual({ pressKey: "Remote Dpad Right" });
+    expect(androidCmds.at(-1)).toEqual({ pressKey: "Remote Dpad Center" });
+    expect(JSON.stringify(androidCmds)).not.toContain("tapOn");
     expect(appleTv?.runFlow.commands).toEqual([
       { tapOn: "^(.*, )?Show(,.*)?$" },
     ]);
