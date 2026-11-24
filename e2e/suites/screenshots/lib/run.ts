@@ -194,7 +194,12 @@ export async function runComparison(
           // `expo prebuild` writes the ios project but does not run pod install.
           if (spec.fingerprintPlatform === "ios")
             must(
-              d.exec(["pod", "install"], { cwd: `${repo}/ios` }),
+              // `react-native.config.js` drops iOS-only pods only under EXPO_TV=1;
+              // without it a tvOS app crashes at launch on their missing classes.
+              d.exec(["pod", "install"], {
+                cwd: `${repo}/ios`,
+                env: { EXPO_TV: spec.tv ? "1" : "0" },
+              }),
               "pod install",
             );
         },

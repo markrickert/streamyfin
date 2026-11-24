@@ -514,6 +514,15 @@ describe("runComparison boundaries", () => {
 
       await runComparison(f, { ...runCli, platform, device, outDir }, REPO);
 
+      // Without EXPO_TV=1, `react-native.config.js` autolinks iOS-only pods into a
+      // tvOS build, and the app crashes at launch on their missing Fabric classes.
+      const podInstalls = f.execLog
+        .map((argv, i) => ({ argv, opts: f.execOpts[i] }))
+        .filter(({ argv }) => argv.join(" ") === "pod install");
+      expect(podInstalls.length).toBeGreaterThan(0);
+      for (const { opts } of podInstalls)
+        expect(opts?.env?.EXPO_TV).toBe(platform === "apple-tv" ? "1" : "0");
+
       const expectedWarmUrl = metroBundleUrl("ios", DEFAULT_PORT);
       expect(expectedWarmUrl).toBe(
         `http://127.0.0.1:${DEFAULT_PORT}/index.ts.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`,
