@@ -62,8 +62,9 @@ jobs:
               "apple-tv": {"platform": "apple-tv", "family": "tvOS"},
           }
           ANDROID = {
-              "android": {"platform": "android", "target": "google_apis", "profile": ""},
-              "android-tv": {"platform": "android-tv", "target": "android-tv", "profile": "tv_1080p"},
+              # Google publishes the API 34 Android TV image only as x86, not x86_64.
+              "android": {"platform": "android", "target": "google_apis", "arch": "x86_64", "profile": ""},
+              "android-tv": {"platform": "android-tv", "target": "android-tv", "arch": "x86", "profile": "tv_1080p"},
           }
           KNOWN = {**APPLE, **ANDROID}
 
@@ -428,7 +429,7 @@ jobs:
           SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
         with:
           api-level: 34
-          arch: x86_64
+          arch: ${{ matrix.arch }}
           target: ${{ matrix.target }}
           profile: ${{ matrix.profile }}
           emulator-boot-timeout: 900
