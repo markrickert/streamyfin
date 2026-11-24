@@ -239,6 +239,9 @@ jobs:
           SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
           # Software-rendered CI devices run a pass several times slower.
           SHOTS_PASS_TIMEOUT_SECONDS: "2700"
+          # Spike branch only: the Mac mini builds Maestro's XCTest driver on first use and
+          # misses the default 120s startup window.
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "600000"
         run: |
           # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
           cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
