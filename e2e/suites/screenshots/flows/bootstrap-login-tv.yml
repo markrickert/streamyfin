@@ -52,10 +52,34 @@ appId: ${MAESTRO_APP_ID}
 - pressKey: Remote Dpad Down
 - pressKey: Remote Dpad Center
 - inputText: ${MAESTRO_JELLYFIN_PASS}
-- pressKey: Enter
-# Down then Center after the password turned "Save this account" on and never reached Log in, so the
-# button is tapped instead, which the TV emulator accepts like a click.
-- tapOn: "Log in"
+# tvOS keeps the secure input staged until its on-screen Done button is selected.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Center
+      - assertNotVisible: "Keyboard"
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Enter
+# The username's preferred focus used to steal Down from the Save toggle on tvOS.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Center
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Log in"
 - extendedWaitUntil:
     visible: "Home"
     timeout: 60000

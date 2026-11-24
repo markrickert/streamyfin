@@ -1,0 +1,123 @@
+# XCTest touch taps report success without activating tvOS controls. Focus selects
+# tabs; Center selects content. See docs/tv-focus-guide.md for focus navigation.
+# Never select a Home or movie card: that starts playback and mutates the fixture.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- runFlow: _focus-home-tab.yml
+- takeScreenshot: 01-home
+
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Search"
+    focused: true
+- takeScreenshot: 02-search
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Favorites"
+    focused: true
+- takeScreenshot: 03-favorites
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Library"
+    focused: true
+- takeScreenshot: 04-library
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Settings"
+    focused: true
+- takeScreenshot: 05-settings
+
+- pressKey: Remote Dpad Left
+- assertVisible:
+    text: "Library"
+    focused: true
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Movies.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Filters.*"
+    timeout: 15000
+- takeScreenshot: 06-library-movies
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: ".*Filters.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Genres.*"
+    timeout: 10000
+- takeScreenshot: 08-library-filters
+- pressKey: Remote Menu
+- pressKey: Remote Menu
+
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Settings"
+    focused: true
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Inactivity timeout.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "24 hours"
+    timeout: 10000
+- takeScreenshot: 07-settings-modal
+- pressKey: Remote Menu
+
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Library"
+    focused: true
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Shows.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Filters.*"
+    timeout: 15000
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- assertVisible:
+    focused: true
+    above: "^(.*, )?Show(,.*)?$"
+    rightOf: "Rocky Jones, Space Ranger"
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Season.*|.*Pilot.*"
+    timeout: 30000
+- takeScreenshot: 09-series-details

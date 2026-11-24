@@ -7,6 +7,24 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - runFlow: bootstrap-login-tv.yml
-- runFlow: tv.yml
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - runFlow: tv-apple.yml
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - runFlow: tv.yml
 - runFlow: bootstrap-seerr-tv.yml
-- runFlow: seerr-tv.yml
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - runFlow: seerr-apple.yml
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - runFlow: seerr-tv.yml

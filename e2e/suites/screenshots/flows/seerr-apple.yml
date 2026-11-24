@@ -1,0 +1,62 @@
+# tvOS XCTest taps do not activate controls. D-pad focus selects tabs and
+# Center selects the Discover pill or the verified 1931 detail card only.
+# Never press Request: it mutates the Seerr fixture.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Search"
+    focused: true
+- extendedWaitUntil:
+    visible: "Discover"
+    timeout: 30000
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: "Discover"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Trending.*|.*Popular.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 10-seerr-discover
+
+- pressKey: Remote Dpad Up
+- pressKey: Remote Dpad Up
+- inputText: "Iron Man"
+- pressKey: Enter
+# A query-field match is premature: 1931 appears only once result cards load.
+- extendedWaitUntil:
+    visible: "1931"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 11-seerr-search
+
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- assertVisible:
+    focused: true
+    above: "1931"
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "Request"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 12-seerr-detail

@@ -114,15 +114,6 @@ describe("capture pass parents", () => {
         "seerr-mobile.yml",
       ],
     ],
-    [
-      "pass-tv.yml",
-      [
-        "bootstrap-login-tv.yml",
-        "tv.yml",
-        "bootstrap-seerr-tv.yml",
-        "seerr-tv.yml",
-      ],
-    ],
   ])(
     "%s runs its flows in the order the capture state needs",
     (file, flows) => {
@@ -130,6 +121,60 @@ describe("capture pass parents", () => {
       expect(cmds.map((cmd) => cmd.runFlow)).toEqual(flows);
     },
   );
+
+  // tv.yml and seerr-tv.yml drive Android TV with taps, which XCTest silently drops
+  // on tvOS, so the pass gates D-pad twins for Apple TV instead of making the
+  // Android flows platform-aware.
+  it("pass-tv.yml gates tv-apple and seerr-apple on tvOS", () => {
+    const cmds = commandsOf("pass-tv.yml");
+    expect(cmds[0].runFlow).toBe("bootstrap-login-tv.yml");
+    expect(cmds[1].runFlow).toEqual({
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      when: { true: "${MAESTRO_TVOS == '1'}" },
+      commands: [{ runFlow: "tv-apple.yml" }],
+    });
+    expect(cmds[2].runFlow).toEqual({
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      when: { true: "${MAESTRO_TVOS != '1'}" },
+      commands: [{ runFlow: "tv.yml" }],
+    });
+    expect(cmds[3].runFlow).toBe("bootstrap-seerr-tv.yml");
+    expect(cmds[4].runFlow).toEqual({
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      when: { true: "${MAESTRO_TVOS == '1'}" },
+      commands: [{ runFlow: "seerr-apple.yml" }],
+    });
+    expect(cmds[5].runFlow).toEqual({
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      when: { true: "${MAESTRO_TVOS != '1'}" },
+      commands: [{ runFlow: "seerr-tv.yml" }],
+    });
+    expect(cmds).toHaveLength(6);
+  });
+
+  // Relaunching on tvOS can resume a stale tab focus, so each tv-apple section
+  // resets to the Home tab before its counted Right presses.
+  it("tv-apple.yml normalizes to the Home tab after every launchApp", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const launches = cmds.flatMap((cmd, index) =>
+      String(cmd) === "launchApp" ? [index] : [],
+    );
+    const normalizations = cmds.flatMap((cmd, index) =>
+      cmd.runFlow === "_focus-home-tab.yml" ? [index] : [],
+    );
+    expect(launches).toHaveLength(3);
+    expect(normalizations).toHaveLength(launches.length);
+    for (const [i, launch] of launches.entries()) {
+      const normalized = normalizations[i];
+      const end = launches[i + 1] ?? cmds.length;
+      const firstRight = cmds.findIndex(
+        (cmd, index) =>
+          index > launch && index < end && cmd.pressKey === "Remote Dpad Right",
+      );
+      expect(normalized).toBeGreaterThan(launch);
+      expect(normalized).toBeLessThan(firstRight);
+    }
+  });
 
   // Names are the before/noise/after pairing key: a flow that captures one of the new
   // shots twice, or not at all, silently un-pairs a screen. Screenshots nested under
@@ -147,6 +192,11 @@ describe("capture pass parents", () => {
     ["ensure-seerr-mobile.yml", ["13-seerr-settings"]],
     ["mobile.yml", ["14-library-filter-sheet", "15-series-details"]],
     ["tv.yml", ["08-library-filters", "09-series-details"]],
+    ["tv-apple.yml", ["08-library-filters", "09-series-details"]],
+    [
+      "seerr-apple.yml",
+      ["10-seerr-discover", "11-seerr-search", "12-seerr-detail"],
+    ],
   ])("%s captures each of %s exactly once", (file, names) => {
     const shots = screenshotNames(commandsOf(file));
     for (const name of names)
@@ -248,6 +298,30 @@ describe("capture pass parents", () => {
         ".*Recently added.*",
       );
     }
+  });
+
+  // The bootstrap's Search tab is the same inert-tapOn case as the login's done
+  // key: tvOS must focus it (which selects the tab), Android TV keeps tapOn.
+  it("bootstrap-seerr-tv selects Search by D-pad on tvOS and tapOn on Android", () => {
+    const cmds = commandsOf("bootstrap-seerr-tv.yml");
+    const branches = cmds.filter((cmd) =>
+      cmd.runFlow?.when?.true?.includes("MAESTRO_TVOS"),
+    );
+    const tvos = branches.find((cmd) =>
+      cmd.runFlow.when.true.includes("== '1'"),
+    );
+    const android = branches.find((cmd) =>
+      cmd.runFlow.when.true.includes("!= '1'"),
+    );
+    expect(tvos?.runFlow.commands).toEqual([
+      { runFlow: "_focus-home-tab.yml" },
+      { pressKey: "Remote Dpad Right" },
+      { assertVisible: { text: "Search", focused: true } },
+    ]);
+    expect(android?.runFlow.commands).toEqual([{ tapOn: "Search" }]);
+    expect(
+      cmds.some((cmd) => cmd.extendedWaitUntil?.visible === "Discover"),
+    ).toBe(true);
   });
 
   it("the parents take no screenshots themselves", () => {
@@ -354,5 +428,40 @@ describe("bootstrap-login first-run overlays", () => {
       true,
     );
     expect(new RegExp(`^(?:${selector})$`).test("Add server")).toBe(true);
+  });
+
+  it("bootstrap-login-tv commits the tvOS password on its done key and presses Log in by D-pad", () => {
+    // tvOS tapOn misreports success on the keyboard's done and on the Log in button,
+    // so the flow walks the D-pad for both; keyed off the password input, not
+    // hardcoded positions.
+    const cmds = commandsOf("bootstrap-login-tv.yml");
+    const password = cmds.findIndex(
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      (cmd) => cmd.inputText === "${MAESTRO_JELLYFIN_PASS}",
+    );
+    expect(password).toBeGreaterThanOrEqual(0);
+    const branches = cmds
+      .slice(password + 1)
+      .filter((cmd) => cmd.runFlow?.when?.true?.includes("MAESTRO_TVOS"));
+    const tvos = branches.filter((cmd) =>
+      cmd.runFlow.when.true.includes("== '1'"),
+    );
+    const android = branches.filter((cmd) =>
+      cmd.runFlow.when.true.includes("!= '1'"),
+    );
+    expect(tvos[0]?.runFlow.commands).toEqual([
+      { pressKey: "Remote Dpad Down" },
+      { pressKey: "Remote Dpad Down" },
+      { pressKey: "Remote Dpad Down" },
+      { pressKey: "Remote Dpad Center" },
+      { assertNotVisible: "Keyboard" },
+    ]);
+    expect(android[0]?.runFlow.commands).toEqual([{ pressKey: "Enter" }]);
+    expect(tvos[1]?.runFlow.commands).toEqual([
+      { pressKey: "Remote Dpad Down" },
+      { pressKey: "Remote Dpad Down" },
+      { pressKey: "Remote Dpad Center" },
+    ]);
+    expect(android[1]?.runFlow.commands).toEqual([{ tapOn: "Log in" }]);
   });
 });

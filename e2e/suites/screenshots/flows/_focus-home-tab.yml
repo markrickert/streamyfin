@@ -1,0 +1,16 @@
+# tvOS restores the last focus after launchApp, so reset to the Home tab
+# before counting Right presses. Focus alone selects the tab.
+appId: ${MAESTRO_APP_ID}
+---
+- pressKey: Remote Dpad Up
+- repeat:
+    times: 5
+    while:
+      notVisible:
+        text: "Home"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Left
+- assertVisible:
+    text: "Home"
+    focused: true

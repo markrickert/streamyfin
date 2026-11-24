@@ -12,7 +12,21 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Recently added.*"
     timeout: 60000
-- tapOn: "Search"
+# tvOS focus selects the Search tab; XCTest tapOn reports success without selecting it.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - runFlow: _focus-home-tab.yml
+      - pressKey: Remote Dpad Right
+      - assertVisible:
+          text: "Search"
+          focused: true
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Search"
 - extendedWaitUntil:
     visible: "Discover"
     timeout: 30000
