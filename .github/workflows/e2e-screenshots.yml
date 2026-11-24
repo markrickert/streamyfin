@@ -221,6 +221,48 @@ jobs:
 
           bash e2e/suites/screenshots/ios-disable-autofill.sh "$SIMULATOR_UDID"
 
+      - name: 🛠️ Build fixed Maestro tvOS driver
+        if: matrix.platform == 'apple-tv'
+        env:
+          SYNCPLAY_BACKEND: native
+        run: |
+          # The pinned CLI queries a nonexistent tvOS status bar on every hierarchy
+          # request, killing XCTest. The fork fixed this after its last release:
+          # https://github.com/plexinc/Maestro/commit/7d5552724318d96857669e083e83d2ec29d91a43
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform apple-tv
+          source="$RUNNER_TEMP/maestro-tvos-source"
+          git clone --quiet --filter=blob:none --no-checkout https://github.com/plexinc/Maestro.git "$source"
+          git -C "$source" fetch --quiet --depth 1 origin 7d5552724318d96857669e083e83d2ec29d91a43
+          git -C "$source" checkout --quiet --detach 7d5552724318d96857669e083e83d2ec29d91a43
+
+          build="$RUNNER_TEMP/maestro-tvos-build"
+          xcodebuild build-for-testing \
+            -project "$source/maestro-ios-xctest-runner/maestro-driver-ios.xcodeproj" \
+            -scheme maestro-driver-tvos \
+            -destination 'generic/platform=tvOS Simulator' \
+            -derivedDataPath "$build" \
+            ARCHS=arm64 IPHONEOS_DEPLOYMENT_TARGET=15.0 CODE_SIGNING_ALLOWED=NO \
+            > "$RUNNER_TEMP/maestro-tvos-build.log" 2>&1 || {
+              tail -n 80 "$RUNNER_TEMP/maestro-tvos-build.log"
+              exit 1
+            }
+
+          products="$build/Build/Products"
+          stage="$RUNNER_TEMP/maestro-tvos-patch/driver-appletvSimulator"
+          mkdir -p "$stage/Debug-appletvsimulator"
+          xctestrun=("$products"/maestro-driver-tvos_*.xctestrun)
+          [ "${#xctestrun[@]}" -eq 1 ] || { echo "::error::Expected one tvOS xctestrun"; exit 1; }
+          cp "${xctestrun[0]}" "$stage/maestro-driver-tvos-config.xctestrun"
+          (
+            cd "$products/Debug-appletvsimulator"
+            zip -qr "$stage/Debug-appletvsimulator/maestro-driver-tvosUITests-Runner.zip" maestro-driver-tvosUITests-Runner.app
+            zip -qr "$stage/Debug-appletvsimulator/maestro-driver-tvos.zip" maestro-driver-tvos.app
+          )
+          tag="$(bun -e 'import { MAESTRO_TAG } from "./e2e/suites/screenshots/lib/tooling.ts"; console.log(MAESTRO_TAG)')"
+          jar="e2e/reports/shots/tools/$tag/maestro/lib/maestro-ios-driver.jar"
+          jar uf "$jar" -C "$RUNNER_TEMP/maestro-tvos-patch" driver-appletvSimulator
+          echo "Maestro tvOS driver rebuilt from 7d5552724318"
+
       - name: 📸 Run screenshot comparison
         # `shots.ts` exits 0 when screens change (changes are reported in summary.md) and
         # exits non-zero only on runner, build, capture, or blank-screenshot failures.
