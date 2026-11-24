@@ -312,6 +312,24 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      # Spike branch only: Maestro's timeout hides an early XCTest runner exit.
+      # Preserve the result bundle so its launch failure can be diagnosed off-runner.
+      - name: 🔎 Collect Maestro XCTest result
+        if: failure() && matrix.platform == 'apple-tv'
+        run: |
+          mkdir -p "$RUNNER_TEMP/maestro-xcresults"
+          find "$TMPDIR" -type d -name '*.xcresult' -path '*maestro_xctestrunner_xcodebuild_output*/Logs/Test/*' -print -exec cp -R {} "$RUNNER_TEMP/maestro-xcresults/" \;
+          ls -la "$RUNNER_TEMP/maestro-xcresults"
+
+      - name: 📤 Upload Maestro XCTest result
+        if: failure() && matrix.platform == 'apple-tv'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots-apple-tv-xcresult
+          path: ${{ runner.temp }}/maestro-xcresults/
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: 📤 Upload fixture logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
