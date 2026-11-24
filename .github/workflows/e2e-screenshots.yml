@@ -110,7 +110,8 @@ jobs:
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
-    runs-on: macos-latest
+    # Spike branch only: macos-latest arm64 was never acquired due to hosted capacity.
+    runs-on: macos-26-intel
     # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
     # build twice plus native fixture setup and three Maestro passes.
     timeout-minutes: 180
