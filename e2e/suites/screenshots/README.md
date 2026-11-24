@@ -4,10 +4,29 @@ Compares two refs screen-for-screen on a development client: the runner switches
 checkout between the refs, serves each with its own Metro, captures the same shots three
 times — before, a fresh "noise" pass on the before build, after — and scores them with
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
-The runner uses local debug clients, never CI release artifacts, and runs locally only,
-never in CI: it needs a simulator or emulator, Java for Maestro, and the SyncPlay
-fixture on either backend, Docker or native (`SYNCPLAY_BACKEND=native`, see
-`e2e/suites/syncplay/README.md`).
+The runner uses local debug clients, never CI release artifacts: it needs a simulator or
+emulator, Java for Maestro, and the SyncPlay fixture on either backend, Docker or native
+(`SYNCPLAY_BACKEND=native`, see `e2e/suites/syncplay/README.md`). Android and TV suites
+run locally; iOS also runs on demand in `.github/workflows/e2e-screenshots-ios.yml`.
+
+## CI (iOS)
+
+`.github/workflows/e2e-screenshots-ios.yml` runs the iOS suite on a standard
+`macos-latest` runner with its newest Xcode, `SYNCPLAY_BACKEND=native` (those runners
+cannot run Docker), a fresh booted iPhone simulator, and `e2e:down` cleanup.
+
+Trigger it on demand (never on `push`, `synchronize`, or `schedule`):
+
+- Apply the `run-screenshots` label to a pull request targeting `develop` or `master`
+  (compares the PR head SHA against `origin/<base_ref>`; remove and re-add the label to
+  rerun).
+- Dispatch the workflow manually with `before` (required ref) and optional `after`
+  (defaults to the dispatched ref).
+
+The job fails only when the runner, build, or capture fails (including blank screenshots);
+changed screens are reported in `$GITHUB_STEP_SUMMARY` (`summary.md`) and uploaded with
+the `report/`, `evidence/`, and per-pass capture directories (`e2e-screenshots-ios-report`)
+alongside `e2e/suites/syncplay/.state/logs/` (`e2e-screenshots-ios-fixture-logs`).
 
 ## Commands
 

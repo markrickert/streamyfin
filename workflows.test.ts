@@ -355,24 +355,71 @@ describe("e2e-tier1-android.yml", () => {
   });
 });
 
-describe.each(["native-tests.yml", "e2e-tier1-android.yml"])(
-  "%s checkouts",
-  (name) => {
-    // Every job installs and builds the pull request's own code after its
-    // checkout, which would otherwise leave a usable token in .git/config, as
-    // build-apps.yml already avoids.
-    const checkouts = withoutComments(readWorkflow(name))
-      .split(/\n(?=[ \t]*- (?:name|uses): )/)
-      .filter((step) => /uses: actions\/checkout@/.test(step));
+const { load: loadYaml } = require("js-yaml") as {
+  load: (src: string) => Record<string, unknown>;
+};
 
-    test("none keeps the token after the checkout", () => {
-      expect(checkouts).not.toEqual([]);
-      expect(
-        checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
-      ).toEqual([]);
-    });
-  },
-);
+describe.each([
+  "native-tests.yml",
+  "e2e-tier1-android.yml",
+  "e2e-screenshots-ios.yml",
+])("%s checkouts", (name) => {
+  // Every job installs and builds the pull request's own code after its
+  // checkout, which would otherwise leave a usable token in .git/config, as
+  // build-apps.yml already avoids.
+  const checkouts = withoutComments(readWorkflow(name))
+    .split(/\n(?=[ \t]*- (?:name|uses): )/)
+    .filter((step) => /uses: actions\/checkout@/.test(step));
+
+  test("none keeps the token after the checkout", () => {
+    expect(checkouts).not.toEqual([]);
+    expect(
+      checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
+    ).toEqual([]);
+  });
+});
+
+describe("e2e-screenshots-ios.yml", () => {
+  const workflow = loadYaml(readWorkflow("e2e-screenshots-ios.yml")) as {
+    on: Record<string, unknown>;
+    permissions: Record<string, string>;
+    concurrency: { group: string };
+    jobs: Record<string, { if?: string; "runs-on"?: string }>;
+  };
+
+  test("triggers only on demand (PR label or manual dispatch)", () => {
+    expect(Object.keys(workflow.on).sort()).toEqual([
+      "pull_request",
+      "workflow_dispatch",
+    ]);
+    const pr = workflow.on.pull_request as {
+      types?: string[];
+      branches?: string[];
+    };
+    expect(pr.types).toEqual(["labeled"]);
+    expect(pr.branches).toEqual(["develop", "master"]);
+    expect(workflow.jobs["screenshots-ios"].if).toContain(
+      "github.event.label.name == 'run-screenshots'",
+    );
+    const dispatch = workflow.on.workflow_dispatch as {
+      inputs?: { before?: { required?: boolean }; after?: unknown };
+    };
+    expect(dispatch.inputs?.before?.required).toBe(true);
+    expect(dispatch.inputs?.after).toBeDefined();
+  });
+
+  test("uses minimal read permissions on a standard GitHub macOS runner", () => {
+    // The native fixture exists so this runs where Docker cannot; build-apps.yml's
+    // xcode-27 runners serve only this repository's own pull requests.
+    expect(workflow.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs["screenshots-ios"]["runs-on"]).toBe("macos-latest");
+  });
+
+  test("another label never cancels a running comparison", () => {
+    // Every label fires a run; one sharing the group would cancel the screenshot job.
+    expect(workflow.concurrency.group).toContain("github.event.label.name");
+  });
+});
 
 describe("linting.yml", () => {
   // CONTRIBUTING.md asks for `bun run test` before a pull request, and CI runs
