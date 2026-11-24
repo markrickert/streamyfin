@@ -189,16 +189,22 @@ describe("capture pass parents", () => {
       when: { visible: { text: "Library", focused: true } },
       commands: [{ pressKey: "Remote Dpad Down" }],
     });
-    expect(cmds.slice(shot + 2, shot + 6).map((cmd) => cmd.pressKey)).toEqual([
-      "Remote Dpad Right",
-      "Remote Dpad Right",
-      "Remote Dpad Right",
-      "Remote Dpad Right",
-    ]);
-    expect(cmds[shot + 6].assertVisible).toEqual({
-      text: ".*Filters.*",
+    expect(cmds[shot + 2].assertVisible).toEqual({
+      text: ".*Play all.*",
       focused: true,
     });
+    for (const [offset, label] of [
+      [3, ".*Shuffle.*"],
+      [5, ".*A.Z.*"],
+      [7, ".*Sort.*"],
+      [9, ".*Filters.*"],
+    ] as const) {
+      expect(cmds[shot + offset].pressKey).toBe("Remote Dpad Right");
+      expect(cmds[shot + offset + 1].assertVisible).toEqual({
+        text: label,
+        focused: true,
+      });
+    }
   });
 
   // Names are the before/noise/after pairing key: a flow that captures one of the new

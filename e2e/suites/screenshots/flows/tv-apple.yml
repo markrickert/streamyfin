@@ -57,9 +57,21 @@ appId: ${MAESTRO_APP_ID}
         focused: true
     commands:
       - pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Play all.*"
+    focused: true
 - pressKey: Remote Dpad Right
+- assertVisible:
+    text: ".*Shuffle.*"
+    focused: true
 - pressKey: Remote Dpad Right
+- assertVisible:
+    text: ".*A.Z.*"
+    focused: true
 - pressKey: Remote Dpad Right
+- assertVisible:
+    text: ".*Sort.*"
+    focused: true
 - pressKey: Remote Dpad Right
 - assertVisible:
     text: ".*Filters.*"
