@@ -29,16 +29,8 @@ appId: ${MAESTRO_APP_ID}
     text: "Library"
     focused: true
 - takeScreenshot: 04-library
-- pressKey: Remote Dpad Right
-- assertVisible:
-    text: "Settings"
-    focused: true
-- takeScreenshot: 05-settings
-
-- pressKey: Remote Dpad Left
-- assertVisible:
-    text: "Library"
-    focused: true
+# Use this loaded Library tab directly. Returning from Settings can leave native
+# tab focus unsettled before Movies is selected (docs/conventions/tv.md).
 - pressKey: Remote Dpad Down
 - assertVisible:
     text: ".*Movies.*"
@@ -101,6 +93,7 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     text: "Settings"
     focused: true
+- takeScreenshot: 05-settings
 - pressKey: Remote Dpad Down
 - pressKey: Remote Dpad Down
 - assertVisible:

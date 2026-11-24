@@ -211,6 +211,30 @@ describe("capture pass parents", () => {
     }
   });
 
+  // Returning to Library from Settings can leave native tab focus unsettled, so
+  // Movies opens from the first already-loaded visit (docs/conventions/tv.md).
+  it("tv-apple.yml opens Movies from the first Library visit", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const library = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "04-library",
+    );
+    const movies = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "06-library-movies",
+    );
+    const settings = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "05-settings",
+    );
+    expect(library).toBeGreaterThanOrEqual(0);
+    expect(cmds[library + 1]).toEqual({ pressKey: "Remote Dpad Down" });
+    expect(cmds[library + 2].assertVisible).toEqual({
+      text: ".*Movies.*",
+      focused: true,
+    });
+    expect(cmds[library + 3]).toEqual({ pressKey: "Remote Dpad Center" });
+    expect(movies).toBeGreaterThan(library);
+    expect(settings).toBeGreaterThan(movies);
+  });
+
   // Names are the before/noise/after pairing key: a flow that captures one of the new
   // shots twice, or not at all, silently un-pairs a screen. Screenshots nested under
   // runFlow/repeat guards count too.
