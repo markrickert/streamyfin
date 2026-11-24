@@ -70,10 +70,24 @@ run installs over any copy of the app with the built app's exact id, and every c
 pass clears that app's data, so a copy you sign in to on the same device loses its data.
 On Android a copy signed with another key is uninstalled and installed again. On iOS
 the per-pass reset uninstalls and reinstalls only the built app, never the whole
-simulator. Physical devices are refused. A phone run freezes the status bar at 12:00
-with full signal and battery, and puts it back when it ends: System UI demo mode on
-Android (which also hides notification icons), `simctl status_bar` on iOS. On Android
-every run also turns stylus handwriting off.
+simulator. Physical devices are refused. Phone status bars are overridden for the run:
+Android System UI demo mode fixes the clock to 12:00, battery (100%, unplugged),
+Wi-Fi and cellular signal, hides notifications, Bluetooth, alarm, location and volume
+icons; iOS `simctl status_bar` fixes a UTC timestamp, Wi-Fi, cellular, operator and
+battery (the iOS status bar is also masked in comparisons). Android navigation bars
+are masked at the bottom of phone captures. Android phone and TV runs disable the
+window, transition and animator animation scales and stylus handwriting. iOS runs
+enable Reduce Motion. The runner reads these settings first and restores their
+previous values after success, a failed flow, or an interrupted run. Android demo
+mode and the iOS status bar override are cleared on cleanup.
+
+Phone search input bands are masked to hide the blinking caret. The Android flows
+also check that the bottom tab bar is visible after dismissing the keyboard before
+capturing search; a covered bar fails the pass. The Settings version/SHA band is
+widened to tolerate small vertical shifts. Masks do not cover the rest of a keyboard
+or changes outside those regions. Blank frames fail comparison before any masks are
+applied. Any persisted baseline recipe must include `lib/device.ts` as well as the
+flows and masks, so a change to these settings invalidates prior captures.
 
 1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`)
    into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot change the

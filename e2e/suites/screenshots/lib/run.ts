@@ -24,6 +24,7 @@ import {
 } from "./core";
 import {
   ensurePortFree,
+  newDeviceState,
   prepareDevice,
   restoreDevice,
   selectDevice,
@@ -118,12 +119,13 @@ export async function runComparison(
   let metro: SpawnHandle | undefined;
   let nativeMoved: string[] = [];
   let buildDeps = "";
+  const deviceState = newDeviceState();
   // Nested: a refused git restore (new user edits mid-run) must not strand the
   // native dirs in the backup.
   const cleanup = (): void => {
     metro?.kill();
     metro = undefined;
-    restoreDevice(d, cli.platform!, device);
+    restoreDevice(d, cli.platform!, device, deviceState);
     try {
       restoreGit(d, repo, start);
       // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
@@ -144,7 +146,7 @@ export async function runComparison(
   };
   setInterruptCleanup(cleanup);
   try {
-    prepareDevice(d, cli.platform!, device);
+    prepareDevice(d, cli.platform!, device, deviceState);
     const abi =
       cli.platform === "android" || cli.platform === "android-tv"
         ? deviceAbi(d, device)

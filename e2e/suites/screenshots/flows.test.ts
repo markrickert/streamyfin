@@ -1,6 +1,29 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// Compare masks must cover the device chrome and volatile text without hiding the
+// rest of a captured screen. Blank detection happens before masks are applied.
+describe("phone capture masks", () => {
+  it.each(["ios", "android"])(
+    "%s hides search carets and shifted Settings version text",
+    (platform) => {
+      const masks = JSON.parse(
+        readFileSync(join(__dirname, `masks-${platform}-phone.json`), "utf8"),
+      );
+      expect(masks["02-search"].length).toBeGreaterThan(0);
+      expect(masks["11-seerr-search"].length).toBeGreaterThan(0);
+      const settings = masks["05-settings"][0];
+      expect(settings[3]).toBeGreaterThan(0.1);
+    },
+  );
+  it("Android navigation bar cannot drift into a report", () => {
+    const masks = JSON.parse(
+      readFileSync(join(__dirname, "masks-android-phone.json"), "utf8"),
+    );
+    expect(masks["*"]).toContainEqual([0, 0.96, 1, 0.04]);
+  });
+});
+
 // js-yaml ships no types; keep the require (typed) rather than adding @types/js-yaml
 // for one test block.
 const { loadAll: loadAllYaml } = require("js-yaml") as {
@@ -160,7 +183,11 @@ describe("capture pass parents", () => {
     ).toBe("Bottom Sheet");
     expect(
       branches
-        .find((command) => command.runFlow.when.platform === "Android")
+        .find(
+          (command) =>
+            command.runFlow.when.platform === "Android" &&
+            command.runFlow.commands.at(-1)?.extendedWaitUntil,
+        )
         ?.runFlow.commands.at(-1)?.extendedWaitUntil?.visible,
     ).toBe(".* items");
   });
