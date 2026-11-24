@@ -120,16 +120,15 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - scrollUntilVisible:
     element: "^(.*, )?Show(,.*)?$"
-# Android TV's TVPosterCard puts the title TextView outside the clickable Pressable, so
-# tapping the title does nothing; target the clickable poster above it. Apple TV keeps
-# the direct tap (tvOS hierarchies do not carry a clickable attribute).
+# Android TV's TVPosterCard puts the title TextView outside its Pressable, so tapping
+# the title does nothing. Tap the nearest element above the title instead: it lies
+# inside the poster, and Maestro taps its center. Apple TV keeps the direct tap.
 - runFlow:
     when:
       true: ${MAESTRO_TVOS != '1'}
     commands:
       - tapOn:
           above: "^(.*, )?Show(,.*)?$"
-          clickable: true
 - runFlow:
     when:
       true: ${MAESTRO_TVOS == '1'}

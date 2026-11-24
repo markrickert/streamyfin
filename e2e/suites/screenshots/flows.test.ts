@@ -145,10 +145,10 @@ describe("capture pass parents", () => {
     },
   );
 
-  // On Android TV, TVPosterCard renders the title TextView outside the clickable
-  // Pressable, so tapping the title does nothing. Target the clickable poster above it
-  // on Android TV while leaving Apple TV's direct tap unchanged.
-  it("tv.yml taps the clickable poster above the Show title on Android TV without changing Apple TV", () => {
+  // On Android TV, TVPosterCard renders the title TextView outside its Pressable, so
+  // tapping the title does nothing. Tap the element above it, inside the poster, on
+  // Android TV while leaving Apple TV's direct tap unchanged.
+  it("tv.yml taps the poster above the Show title on Android TV without changing Apple TV", () => {
     const cmds = commandsOf("tv.yml");
     const branches = cmds.filter((cmd) =>
       String(cmd.runFlow?.when?.true ?? "").includes("MAESTRO_TVOS"),
@@ -164,7 +164,6 @@ describe("capture pass parents", () => {
       {
         tapOn: {
           above: "^(.*, )?Show(,.*)?$",
-          clickable: true,
         },
       },
     ]);
