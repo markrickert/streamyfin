@@ -185,6 +185,10 @@ describe("capture pass parents", () => {
       (cmd) => cmd.takeScreenshot === "06-library-movies",
     );
     expect(shot).toBeGreaterThanOrEqual(0);
+    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
+      visible: "The Blacksmith.*",
+      timeout: 60000,
+    });
     expect(cmds[shot + 1].runFlow).toEqual({
       when: { visible: { text: "Library", focused: true } },
       commands: [{ pressKey: "Remote Dpad Down" }],

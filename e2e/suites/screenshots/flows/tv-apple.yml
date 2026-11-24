@@ -47,6 +47,11 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Filters.*"
     timeout: 15000
+# The toolbar appears before the fixture's movie grid finishes loading.
+# Wait for seeded content before moving focus (see e2e/suites/screenshots/flows/mobile.yml).
+- extendedWaitUntil:
+    visible: "The Blacksmith.*"
+    timeout: 60000
 - takeScreenshot: 06-library-movies
 # A native tab may keep focus as the Movies page opens; Down enters its toolbar.
 # Center is reserved for Filters, never a library card (docs/conventions/tv.md).
