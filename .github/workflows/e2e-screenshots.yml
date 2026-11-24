@@ -150,7 +150,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
+          INPUT_BEFORE: ${{ inputs.before || '44ade68e4a9e81e0206abb17e7deaeac2df4b5b1' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
@@ -375,7 +375,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
+          INPUT_BEFORE: ${{ inputs.before || '44ade68e4a9e81e0206abb17e7deaeac2df4b5b1' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
