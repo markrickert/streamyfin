@@ -6,6 +6,10 @@ name: 📸 E2E Screenshots
 # per platform.
 
 on:
+  # Spike branch only: a push runs the TV platforms so the workflow can be tried before it
+  # reaches the default branch.
+  push:
+    branches: [spike/native-fixture, spike/native-fixture-mac]
   pull_request:
     # `labeled` fires once per application, so later pushes do not rerun this workflow;
     # remove and re-add the `run-screenshots` label to rerun.
@@ -40,7 +44,7 @@ concurrency:
 jobs:
   plan:
     name: 🧭 Plan platform matrix
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run-screenshots')
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run-screenshots')
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
@@ -71,7 +75,7 @@ jobs:
           raw = (
               os.environ.get("INPUT_PLATFORMS") or "ios,apple-tv,android,android-tv"
               if os.environ.get("EVENT_NAME") == "workflow_dispatch"
-              else "ios,apple-tv,android,android-tv"
+              else ("apple-tv" if "${{ github.ref_name }}" == "spike/native-fixture-mac" else "apple-tv,android-tv")
           )
           requested = [p.strip() for p in raw.split(",") if p.strip()]
           if not requested:
@@ -106,9 +110,8 @@ jobs:
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
-    # A standard runner on purpose: the native fixture exists so this runs where Docker
-    # cannot. build-apps.yml's xcode-27 runners serve only this repository's own PRs.
-    runs-on: macos-latest
+    # Spike branch only: the self-hosted Mac mini, while hosted macOS arm64 capacity is short.
+    runs-on: [self-hosted, macOS, ARM64]
     # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
     # build twice plus native fixture setup and three Maestro passes.
     timeout-minutes: 180
@@ -117,7 +120,15 @@ jobs:
       matrix: ${{ fromJSON(needs.plan.outputs.apple) }}
 
     steps:
+      # Spike branch only: the Mac mini's runner PATH starts at the system Python 3.9.
+      - name: 🐍 Use Homebrew's Python on the self-hosted Mac
+        if: runner.environment != 'github-hosted'
+        run: |
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+          /opt/homebrew/bin/python3 --version
+
       - name: 🛠️ Select the newest Xcode
+        if: runner.environment == 'github-hosted'
         run: |
           xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
           [ -n "$xcode" ] || { echo "::error::No Xcode on this image"; exit 1; }
@@ -139,7 +150,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
@@ -364,7 +375,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
