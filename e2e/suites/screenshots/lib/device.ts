@@ -111,6 +111,21 @@ const DEMO_STATUS_BAR: string[][] = [
     "4",
   ],
   ["notifications", "-e", "visible", "false"],
+  [
+    "status",
+    "-e",
+    "bluetooth",
+    "hide",
+    "-e",
+    "alarm",
+    "hide",
+    "-e",
+    "location",
+    "hide",
+    "-e",
+    "volume",
+    "hide",
+  ],
 ];
 
 const demoCommand = (device: string, command: string[]) => [
@@ -130,11 +145,12 @@ const demoCommand = (device: string, command: string[]) => [
 /**
  * The iPhone counterpart of DEMO_STATUS_BAR. `simctl` accepts only an ISO 8601 time
  * with fractional seconds (a bare "12:00" is refused), and the simulator shows it in the
- * Mac's time zone, so the time is local noon: the clock reads 12:00 on any Mac.
+ * Mac's time zone. Use a fixed UTC instant rather than constructing a different
+ * instant from each host's local clock.
  */
 const IOS_STATUS_BAR = [
   "--time",
-  new Date(2026, 0, 1, 12).toISOString(),
+  "2026-01-01T12:00:00.000Z",
   "--dataNetwork",
   "wifi",
   "--wifiMode",
@@ -153,6 +169,35 @@ const IOS_STATUS_BAR = [
   "100",
 ];
 
+export interface DeviceState {
+  settings: { namespace: string; key: string; value: string | null }[];
+  reduceMotion?: string | null;
+}
+
+export const newDeviceState = (): DeviceState => ({ settings: [] });
+
+const androidSetting = (
+  d: Deps,
+  device: string,
+  state: DeviceState,
+  namespace: string,
+  key: string,
+  value: string,
+) => {
+  const prefix = ["adb", "-s", device, "shell", "settings"];
+  const label = key.replaceAll("_", " ");
+  const previous = must(
+    d.exec([...prefix, "get", namespace, key]),
+    `read ${label}`,
+  );
+  state.settings.push({
+    namespace,
+    key,
+    value: previous === "null" || !previous ? null : previous,
+  });
+  must(d.exec([...prefix, "put", namespace, key, value]), `set ${label}`);
+};
+
 /**
  * Prepares the selected emulator or simulator for capture. The phone's status bar is
  * frozen, so the clock, signal, battery and notification icons are the same in every
@@ -167,8 +212,32 @@ export function prepareDevice(
   d: Deps,
   platform: Platform,
   device: string,
+  state: DeviceState = newDeviceState(),
 ): void {
   if (platform === "ios") {
+    const prefix = ["xcrun", "simctl", "spawn", device, "defaults"];
+    const previous = d.exec([
+      ...prefix,
+      "read",
+      "com.apple.Accessibility",
+      "ReduceMotionEnabled",
+    ]);
+    if (previous.code !== 0 && previous.code !== 1)
+      throw new ShotError(
+        `read Reduce Motion failed (${previous.code}): ${previous.stderr.trim()}`,
+      );
+    state.reduceMotion = previous.code === 1 ? null : previous.stdout.trim();
+    must(
+      d.exec([
+        ...prefix,
+        "write",
+        "com.apple.Accessibility",
+        "ReduceMotionEnabled",
+        "-bool",
+        "YES",
+      ]),
+      "enable Reduce Motion",
+    );
     must(
       d.exec([
         "xcrun",
@@ -183,35 +252,15 @@ export function prepareDevice(
     return;
   }
   if (platform !== "android" && platform !== "android-tv") return;
-  must(
-    d.exec([
-      "adb",
-      "-s",
-      device,
-      "shell",
-      "settings",
-      "put",
-      "secure",
-      "stylus_handwriting_enabled",
-      "0",
-    ]),
-    "turn stylus handwriting off",
-  );
+  androidSetting(d, device, state, "secure", "stylus_handwriting_enabled", "0");
+  for (const key of [
+    "window_animation_scale",
+    "transition_animation_scale",
+    "animator_duration_scale",
+  ])
+    androidSetting(d, device, state, "global", key, "0");
   if (platform !== "android") return;
-  must(
-    d.exec([
-      "adb",
-      "-s",
-      device,
-      "shell",
-      "settings",
-      "put",
-      "global",
-      "sysui_demo_allowed",
-      "1",
-    ]),
-    "allow status bar demo mode",
-  );
+  androidSetting(d, device, state, "global", "sysui_demo_allowed", "1");
   must(d.exec(demoCommand(device, ["enter"])), "enter status bar demo mode");
   for (const command of DEMO_STATUS_BAR)
     must(d.exec(demoCommand(device, command)), "set demo status bar");
@@ -227,6 +276,7 @@ export function restoreDevice(
   d: Deps,
   platform: Platform,
   device: string,
+  state: DeviceState = newDeviceState(),
 ): void {
   const argv =
     platform === "android"
@@ -236,6 +286,41 @@ export function restoreDevice(
         : undefined;
   if (argv && d.exec(argv).code !== 0)
     d.log(`could not restore the status bar on ${device}`);
+  if (platform === "ios" && state.reduceMotion !== undefined) {
+    const prefix = ["xcrun", "simctl", "spawn", device, "defaults"];
+    const restore =
+      state.reduceMotion === null
+        ? [
+            ...prefix,
+            "delete",
+            "com.apple.Accessibility",
+            "ReduceMotionEnabled",
+          ]
+        : [
+            ...prefix,
+            "write",
+            "com.apple.Accessibility",
+            "ReduceMotionEnabled",
+            "-bool",
+            state.reduceMotion === "1" ? "YES" : "NO",
+          ];
+    if (d.exec(restore).code !== 0)
+      d.log(`could not restore Reduce Motion on ${device}`);
+  }
+  for (const { namespace, key, value } of [...state.settings].reverse()) {
+    const argv = [
+      "adb",
+      "-s",
+      device,
+      "shell",
+      "settings",
+      value === null ? "delete" : "put",
+      namespace,
+      key,
+    ];
+    if (value !== null) argv.push(value);
+    if (d.exec(argv).code !== 0) d.log(`could not restore ${key} on ${device}`);
+  }
 }
 
 export function ensurePortFree(d: Deps, port: number): void {

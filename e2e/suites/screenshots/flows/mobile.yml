@@ -33,6 +33,11 @@ appId: ${MAESTRO_APP_ID}
 - waitForAnimationToEnd
 - hideKeyboard:
     optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible: "More"
 - takeScreenshot: 02-search
 # On iOS 26 the open Search tab collapses the tab bar to a Home button and the field; Home
 # brings the other tabs back. On Android it is the Home tab itself.
