@@ -6,6 +6,10 @@ name: 📸 E2E Screenshots
 # per platform.
 
 on:
+  # Spike branch only: a push runs the TV platforms so the workflow can be tried before it
+  # reaches the default branch.
+  push:
+    branches: [spike/native-fixture]
   pull_request:
     # `labeled` fires once per application, so later pushes do not rerun this workflow;
     # remove and re-add the `run-screenshots` label to rerun.
@@ -40,7 +44,7 @@ concurrency:
 jobs:
   plan:
     name: 🧭 Plan platform matrix
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run-screenshots')
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run-screenshots')
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
@@ -71,7 +75,7 @@ jobs:
           raw = (
               os.environ.get("INPUT_PLATFORMS") or "ios,apple-tv,android,android-tv"
               if os.environ.get("EVENT_NAME") == "workflow_dispatch"
-              else "ios,apple-tv,android,android-tv"
+              else "apple-tv,android-tv"
           )
           requested = [p.strip() for p in raw.split(",") if p.strip()]
           if not requested:
@@ -139,7 +143,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
@@ -364,7 +368,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_BEFORE: ${{ inputs.before || '3f0b081d068fa4798028d2c2668293d37419652a' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
