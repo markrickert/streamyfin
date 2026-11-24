@@ -34,6 +34,12 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: '.*Search\.\.\..*'
       - inputText: "Iron Man"
+      # The on-screen keyboard covers the results, and the typed query alone satisfies
+      # the wait below. Close it (Back) and wait for a result's year instead.
+      - hideKeyboard
+      - extendedWaitUntil:
+          visible: "1931"
+          timeout: 30000
 - runFlow:
     when:
       true: ${MAESTRO_TVOS == '1'}
@@ -67,8 +73,45 @@ appId: ${MAESTRO_APP_ID}
     when:
       notVisible:
         id: "seerr-poster-194310"
+      true: ${MAESTRO_TVOS == '1'}
     commands:
       - tapOn: ".*Iron Man, 1931"
+# Android TV's TVPosterCard leaves its Pressable unlabeled, with the title and year as
+# siblings below it, and TMDB orders the results live. Focus the card by the D-pad:
+# Down twice from the search field (toolbar, then the movies row), then Right while
+# the focused card is leftOf "1931". Maestro compares left edges and the year text is
+# inset in its card, so that card still counts as leftOf: Right stops one card past
+# it, and Left steps back.
+- runFlow:
+    when:
+      notVisible:
+        id: "seerr-poster-194310"
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+      - repeat:
+          times: 10
+          while:
+            visible:
+              focused: true
+              leftOf: "1931"
+          commands:
+            - pressKey: Remote Dpad Right
+            - extendedWaitUntil:
+                visible: "__settle__"
+                timeout: 1500
+                optional: true
+      - pressKey: Remote Dpad Left
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+      - pressKey: Remote Dpad Center
 - runFlow:
     when:
       visible:

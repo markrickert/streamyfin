@@ -17,6 +17,40 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
     )[1] as Command[];
   const poster = { id: "seerr-poster-194310" };
 
+  // Android TV's result cards carry no title label and TMDB orders them live, so the
+  // flow focuses the 1931 card with the D-pad: Right while the focused card is leftOf
+  // the "1931" year (the year text is inset in its own card), then one Left. The
+  // keyboard must be closed first, or it hides the results.
+  it("seerr-tv.yml focuses the 1931 result by the D-pad on Android TV only", () => {
+    const cmds = commandsOf("seerr-tv.yml");
+    const androidSearch = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.true?.includes("!= '1'") &&
+        cmd.runFlow.commands.some((c: Command) => c.inputText),
+    );
+    expect(androidSearch?.runFlow.commands).toContainEqual("hideKeyboard");
+    const androidPick = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.notVisible?.id === poster.id &&
+        cmd.runFlow.when.true?.includes("!= '1'"),
+    );
+    const picks = androidPick?.runFlow.commands as Command[];
+    expect(picks.find((c) => c.repeat)?.repeat.while.visible).toEqual({
+      focused: true,
+      leftOf: "1931",
+    });
+    expect(picks.slice(-1)).toEqual([{ pressKey: "Remote Dpad Center" }]);
+    expect(JSON.stringify(picks)).not.toContain("tapOn");
+    const appleFallback = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.notVisible?.id === poster.id &&
+        cmd.runFlow.when.true?.includes("== '1'"),
+    );
+    expect(appleFallback?.runFlow.commands).toEqual([
+      { tapOn: ".*Iron Man, 1931" },
+    ]);
+  });
+
   // The two branches are separate checks, run one after the other. With the testID
   // branch first, its tap opens the detail page, where the poster is gone, so the
   // fallback ran there too and failed to find the movies row.
