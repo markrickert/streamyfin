@@ -401,6 +401,44 @@ describe("runComparison boundaries", () => {
     expect(error.message).not.toContain(PASSWORD);
   });
 
+  it("includes the masked tail of stdout when a flow fails with empty stderr", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "pass-mobile.yml",
+      {
+        code: 1,
+        stdout: `${"prefix-".repeat(120)}\nElement not found: Done (${PASSWORD})`,
+        stderr: "",
+      },
+    ]);
+    const error = await runComparison(f, runCli, REPO).catch((e) => e);
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("Element not found: Done (***)");
+    expect(error.message).not.toContain(PASSWORD);
+    expect(error.message.length).toBeLessThan(700);
+  });
+
+  it("includes both stderr and stdout tail when both are present, both masked", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "pass-mobile.yml",
+      {
+        code: 1,
+        stdout: `${"line\n".repeat(150)}stdout tail ${PASSWORD}`,
+        stderr: `stderr head ${PASSWORD}`,
+      },
+    ]);
+    const error = await runComparison(f, runCli, REPO).catch((e) => e);
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("stderr head ***");
+    expect(error.message).toContain("stdout tail ***");
+    expect(error.message).not.toContain(PASSWORD);
+  });
+
   it("launches Android through an explicit -p package and warms the JS bundle first", async () => {
     const f = new Fake();
     seed(f);
@@ -520,5 +558,71 @@ describe("runComparison build-cache manifest", () => {
     const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
     expect(manifest[0].source).toBe("built");
     expect(manifest[1].source).toBe("local");
+  });
+});
+
+describe("runComparison progress", () => {
+  it("logs one line at each phase boundary with short fingerprint, build source, and elapsed time", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "@expo/fingerprint fingerprint:generate",
+      {
+        code: 0,
+        stdout: JSON.stringify({
+          hash: "abcdef0123456789deadbeef",
+          sources: [{ id: "expoConfig" }],
+        }),
+        stderr: "",
+      },
+    ]);
+
+    await runComparison(f, runCli, REPO);
+
+    expect(f.logs).toEqual([
+      "building before (android, fingerprint abcdef01)",
+      expect.stringMatching(
+        /^building before \(android, fingerprint abcdef01\): built \(\d+(?:m\d+)?s\)$/,
+      ),
+      "installing",
+      "starting Metro",
+      "capturing before",
+      "capturing noise",
+      "building after (android, fingerprint abcdef01)",
+      expect.stringMatching(
+        /^building after \(android, fingerprint abcdef01\): local \(\d+(?:m\d+)?s\)$/,
+      ),
+      "installing",
+      "starting Metro",
+      "capturing after",
+      "comparing",
+    ]);
+  });
+
+  it("reports fetched as the build source when the remote build cache hits", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const cacheDir = argv[3];
+        fake.dirs.add(cacheDir);
+        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+
+    await runComparison(f, runCli, REPO);
+
+    expect(
+      f.logs.some((line) =>
+        /^building before \(android, fingerprint fp-1\): fetched \(\d+(?:m\d+)?s\)$/.test(
+          line,
+        ),
+      ),
+    ).toBe(true);
   });
 });

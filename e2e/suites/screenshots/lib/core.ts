@@ -72,17 +72,23 @@ export function must(result: ExecResult, what: string): string {
   return result.stdout.trim();
 }
 
-/** must() for flows: Maestro stderr can echo -e values, so secrets are masked first. */
+/** must() for flows: Maestro prints errors to stdout and may echo -e values, so secrets are masked first. */
 export function mustSanitized(
   result: ExecResult,
   what: string,
   secrets: string[],
 ): string {
   if (result.code !== 0) {
-    let stderr = result.stderr.trim().slice(0, 500);
-    for (const secret of new Set(secrets))
-      if (secret) stderr = stderr.split(secret).join("***");
-    throw new ShotError(`${what} failed (${result.code}): ${stderr}`);
+    const mask = (text: string) => {
+      let out = text;
+      for (const secret of new Set(secrets))
+        if (secret) out = out.split(secret).join("***");
+      return out;
+    };
+    const stderr = mask(result.stderr.trim()).slice(0, 500);
+    const stdout = mask(result.stdout.trim()).slice(-500);
+    const detail = [stderr, stdout].filter(Boolean).join("\n");
+    throw new ShotError(`${what} failed (${result.code}): ${detail}`);
   }
   return result.stdout.trim();
 }

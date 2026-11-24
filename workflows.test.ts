@@ -486,6 +486,24 @@ describe("e2e-screenshots.yml", () => {
     );
   });
 
+  test("every Android matrix entry has a non-empty emulator profile", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(androidBlock).toBeDefined();
+
+    const entries = [...androidBlock!.matchAll(/"([^"]+)":\s*\{([^}]+)\}/g)];
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [, name, body] of entries) {
+      const profile = body.match(/"profile":\s*"([^"]*)"/)?.[1] ?? "";
+      expect({ name, hasProfile: profile.trim().length > 0 }).toEqual({
+        name,
+        hasProfile: true,
+      });
+    }
+  });
+
   test("android emulator step pins the same action SHA as e2e-tier1-android.yml", () => {
     const tier1Pin = readWorkflow("e2e-tier1-android.yml").match(
       /uses:\s*(reactivecircus\/android-emulator-runner@[0-9a-f]{40})/,
@@ -521,6 +539,15 @@ describe("e2e-screenshots.yml", () => {
         "fetch-dev-client.py",
       );
 
+      const prepareStep = steps.find((step) => step.id === "dev-clients");
+      expect(prepareStep).toBeDefined();
+      expect(prepareStep?.if).toMatch(/^always\(\)\s*&&\s*\(/);
+      expect(prepareStep?.if).toContain(
+        "github.event.pull_request.head.repo.id == github.repository_id",
+      );
+      expect(prepareStep?.if).toContain("workflow_dispatch");
+      expect(prepareStep?.if).toContain("push");
+
       const clientUploads = steps.filter(
         (step) =>
           step.uses?.startsWith("actions/upload-artifact@") &&
@@ -529,6 +556,7 @@ describe("e2e-screenshots.yml", () => {
       expect(clientUploads).toHaveLength(2);
       for (const upload of clientUploads) {
         expect(upload.with?.["retention-days"]).toBe(30);
+        expect(upload.if).toMatch(/^always\(\)\s*&&\s*\(/);
         expect(upload.if).toContain(
           "github.event.pull_request.head.repo.id == github.repository_id",
         );

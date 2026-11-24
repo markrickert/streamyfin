@@ -63,7 +63,7 @@ jobs:
           }
           ANDROID = {
               # Google publishes the API 34 Android TV image only as x86, not x86_64.
-              "android": {"platform": "android", "target": "google_apis", "arch": "x86_64", "profile": ""},
+              "android": {"platform": "android", "target": "google_apis", "arch": "x86_64", "profile": "pixel_6"},
               "android-tv": {"platform": "android-tv", "target": "android-tv", "arch": "x86", "profile": "tv_1080p"},
           }
           KNOWN = {**APPLE, **ANDROID}
@@ -109,8 +109,9 @@ jobs:
     # A standard runner on purpose: the native fixture exists so this runs where Docker
     # cannot. build-apps.yml's xcode-27 runners serve only this repository's own PRs.
     runs-on: macos-latest
-    # Up to two Debug dev-client builds plus native fixture setup and three Maestro passes.
-    timeout-minutes: 120
+    # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
+    # build twice plus native fixture setup and three Maestro passes.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.apple) }}
@@ -237,19 +238,21 @@ jobs:
 
       - name: 📦 Prepare built dev clients for upload
         id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
         # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
         # that another run will install.
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id))
         run: |
           python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
             "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
             >> "$GITHUB_OUTPUT"
 
       - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when capture fails or the run is cancelled.
         # A later PR or develop run with the same native fingerprint reuses it;
         # the weekly native churn makes longer pointless. Leave default compression so
         # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
@@ -259,9 +262,10 @@ jobs:
           overwrite: true
 
       - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when capture fails or the run is cancelled.
         # A later PR or develop run with the same native fingerprint reuses it;
         # the weekly native churn makes longer pointless.
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
@@ -438,19 +442,21 @@ jobs:
 
       - name: 📦 Prepare built dev clients for upload
         id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
         # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
         # that another run will install.
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id))
         run: |
           python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
             "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
             >> "$GITHUB_OUTPUT"
 
       - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when capture fails or the run is cancelled.
         # A later PR or develop run with the same native fingerprint reuses it;
         # the weekly native churn makes longer pointless. Leave default compression so
         # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
@@ -460,9 +466,10 @@ jobs:
           overwrite: true
 
       - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when capture fails or the run is cancelled.
         # A later PR or develop run with the same native fingerprint reuses it;
         # the weekly native churn makes longer pointless.
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}

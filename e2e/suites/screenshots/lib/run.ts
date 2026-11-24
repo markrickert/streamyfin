@@ -67,6 +67,12 @@ export function setInterruptCleanup(fn: (() => void) | undefined): void {
   interruptCleanup = fn;
 }
 
+function formatElapsed(ms: number): string {
+  const totalSec = Math.max(0, Math.round(ms / 1000));
+  if (totalSec < 60) return `${totalSec}s`;
+  return `${Math.floor(totalSec / 60)}m${totalSec % 60}s`;
+}
+
 /**
  * before → noise → after, on one checkout. The before and noise passes share the before
  * ref's switch (noise is a fresh capture of the same build — never cached, never
@@ -144,6 +150,11 @@ export async function runComparison(
         )
         .join("\n---\n");
       const hash = nativeFingerprint(d, repo, spec);
+      const shortHash = hash.slice(0, 8);
+      const buildStarted = Date.now();
+      d.log(
+        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash})`,
+      );
       const { artifact, source } = ensureDebugBuild(
         d,
         repo,
@@ -168,6 +179,9 @@ export async function runComparison(
             );
         },
       );
+      d.log(
+        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash}): ${source} (${formatElapsed(Date.now() - buildStarted)})`,
+      );
       buildCacheManifest.push({
         ref: ref.label,
         platform: cli.platform!,
@@ -179,6 +193,7 @@ export async function runComparison(
         `${sessionDir}/build-cache.json`,
         JSON.stringify(buildCacheManifest, null, 2),
       );
+      d.log("installing");
       const appId = appIdOnDevice(d, cli.platform!, device, artifact);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator
       // means the emulator's own loopback — both phone and TV need the reverse mapping
@@ -218,6 +233,7 @@ export async function runComparison(
         MAESTRO_APP_ID: appId,
         MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
       };
+      d.log("starting Metro");
       metro = await startMetro(d, repo, spec, port);
       try {
         // Prove this Metro serves the checked-out ref's JS — /status alone says only
@@ -233,6 +249,7 @@ export async function runComparison(
             `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref`,
           );
         for (const capture of ref.captures) {
+          d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
           d.fs.mkdir(outDir);
           // Every pass is a first run: fresh state, then the deep link that points the
@@ -248,6 +265,7 @@ export async function runComparison(
       }
     }
     const spec_masks = `${tooling}/${spec.masks}`;
+    d.log("comparing");
     must(
       d.exec(
         [
