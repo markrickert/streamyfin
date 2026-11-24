@@ -44,23 +44,6 @@ appId: ${MAESTRO_APP_ID}
     text: ".*Movies.*"
     focused: true
 - pressKey: Remote Dpad Center
-# If focus returns to the Library tab during navigation, reselect only the
-# focused Movies row; Filters below still proves the page actually opened.
-- extendedWaitUntil:
-    visible: "__settle__"
-    timeout: 1500
-    optional: true
-- runFlow:
-    when:
-      visible:
-        text: "Library"
-        focused: true
-    commands:
-      - pressKey: Remote Dpad Down
-      - assertVisible:
-          text: ".*Movies.*"
-          focused: true
-      - pressKey: Remote Dpad Center
 - extendedWaitUntil:
     visible: ".*Filters.*"
     timeout: 15000
