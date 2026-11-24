@@ -143,9 +143,9 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          # Apple TV needs both login and tab focus fixes on the baseline app:
-          # preferred focus must not reclaim it from page content (docs/conventions/tv.md).
-          INPUT_BEFORE: ${{ inputs.before || '33f5512601707a29e0b6e0a06f64efd72a8931ba' }}
+          # Apple TV needs login focus and native Library tab reselection fixed on
+          # its baseline app; see https://docs.expo.dev/router/advanced/native-tabs/#dismiss-behavior.
+          INPUT_BEFORE: ${{ inputs.before || '562fb06dee81267b62b0ebe920489f13e3cc1356' }}
           INPUT_AFTER: ${{ inputs.after }}
           DISPATCH_SHA: ${{ github.sha }}
         run: bash e2e/suites/screenshots/ci/resolve-refs.sh
