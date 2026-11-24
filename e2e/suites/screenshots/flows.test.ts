@@ -176,6 +176,37 @@ describe("capture pass parents", () => {
     }
   });
 
+  // Hosted tvOS showed the Movies-row Center landing while focus had returned to
+  // the Library tab, so the flow retries the row select only when that state is
+  // observed — never blindly, since Center on a poster would start playback.
+  it("tv-apple.yml retries the Movies row Center only when focus bounced to the Library tab", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const moviesRow = cmds.findIndex(
+      (cmd) =>
+        cmd.assertVisible?.text === ".*Movies.*" &&
+        cmd.assertVisible?.focused === true,
+    );
+    expect(moviesRow).toBeGreaterThanOrEqual(0);
+    expect(cmds[moviesRow + 1].pressKey).toBe("Remote Dpad Center");
+    expect(cmds[moviesRow + 2].extendedWaitUntil).toEqual({
+      visible: "__settle__",
+      timeout: 1500,
+      optional: true,
+    });
+    expect(cmds[moviesRow + 3].runFlow).toEqual({
+      when: { visible: { text: "Library", focused: true } },
+      commands: [
+        { pressKey: "Remote Dpad Down" },
+        { assertVisible: { text: ".*Movies.*", focused: true } },
+        { pressKey: "Remote Dpad Center" },
+      ],
+    });
+    expect(cmds[moviesRow + 4].extendedWaitUntil).toEqual({
+      visible: ".*Filters.*",
+      timeout: 15000,
+    });
+  });
+
   // Names are the before/noise/after pairing key: a flow that captures one of the new
   // shots twice, or not at all, silently un-pairs a screen. Screenshots nested under
   // runFlow/repeat guards count too.
