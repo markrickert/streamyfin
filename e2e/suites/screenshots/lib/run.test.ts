@@ -1,3 +1,4 @@
+import { DEV_CLIENT_RECIPE } from "./build";
 import { type Cli, ShotError } from "./core";
 import { doctor, metroBundleUrl, runComparison } from "./run";
 import {
@@ -530,9 +531,9 @@ describe("runComparison boundaries", () => {
       expect(f.waits.filter((w) => w.url === expectedWarmUrl)).toHaveLength(2);
       expect(execs(f, "ro.product.cpu.abilist")).toHaveLength(0);
       const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
-      expect(manifest[0].hash).toBe("fp-1");
+      expect(manifest[0].hash).toBe(`fp-1-${DEV_CLIENT_RECIPE}`);
       expect(manifest[0].path).toBe(
-        `${REPO}/e2e/reports/shots/build-cache/${platform}/fp-1/Streamyfin.app`,
+        `${REPO}/e2e/reports/shots/build-cache/${platform}/fp-1-${DEV_CLIENT_RECIPE}/Streamyfin.app`,
       );
     }
   });
@@ -583,16 +584,16 @@ describe("runComparison build-cache manifest", () => {
       {
         ref: "before",
         platform: "android-tv",
-        hash: "fp-1-x86",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
         source: "built",
-        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-x86/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
       },
       {
         ref: "after",
         platform: "android-tv",
-        hash: "fp-1-x86",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-x86/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
       },
     ]);
   });
@@ -605,7 +606,7 @@ describe("runComparison build-cache manifest", () => {
     f.routes.push([
       "/ci/fetch-dev-client.py",
       (fake, argv) => {
-        expect(argv[2]).toBe("fp-1-arm64-v8a");
+        expect(argv[2]).toBe(`fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`);
         const cacheDir = argv[3];
         fake.dirs.add(cacheDir);
         fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
@@ -622,16 +623,16 @@ describe("runComparison build-cache manifest", () => {
       {
         ref: "before",
         platform: "android",
-        hash: "fp-1-arm64-v8a",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
         source: "fetched",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-arm64-v8a/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
       },
       {
         ref: "after",
         platform: "android",
-        hash: "fp-1-arm64-v8a",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-arm64-v8a/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
       },
     ]);
   });

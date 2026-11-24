@@ -106,9 +106,16 @@ function tryFetchCachedBuild(
 }
 
 /**
+ * Version of how this runner produces a debug client. The app's fingerprint cannot see
+ * runner changes such as the env of `pod install`, so bump this whenever one changes the
+ * native output, or every cache keeps serving clients built the old way.
+ */
+export const DEV_CLIENT_RECIPE = "r2";
+
+/**
  * A debug client is native code: reuse the cached artifact for the same native
- * fingerprint (locally, else via the fetch hook), rebuild otherwise. Never a CI release
- * artifact.
+ * fingerprint and recipe (locally, else via the fetch hook), rebuild otherwise. Never a
+ * CI release artifact.
  */
 export function ensureDebugBuild(
   d: Deps,
@@ -123,7 +130,8 @@ export function ensureDebugBuild(
   const isAndroid = platform === "android" || platform === "android-tv";
   if (isAndroid && !abi)
     throw new ShotError(`ABI is required to build or cache ${platform}`);
-  const hash = isAndroid ? `${fingerprint}-${abi}` : fingerprint;
+  const keyed = `${fingerprint}-${DEV_CLIENT_RECIPE}`;
+  const hash = isAndroid ? `${keyed}-${abi}` : keyed;
   const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${platform}/${hash}`;
   const cached = findCachedArtifact(d, platform, cacheDir);
   if (cached) return { artifact: cached, built: false, source: "local", hash };

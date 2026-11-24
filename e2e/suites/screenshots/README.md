@@ -90,7 +90,8 @@ every run also turns stylus handwriting off.
    `<exe> <platform> <hash> <cacheDir>` on a miss (falling back to a local build on any
    failure), or prebuild and build locally (`./gradlew assembleDebug` / `xcodebuild … Debug`).
    Each ref's `{ ref, platform, hash, source, path }` is written to `<session>/build-cache.json`.
-   On Android, the runner reads the emulator's first ABI from `ro.product.cpu.abilist`, passes `-PreactNativeArchitectures=<abi>` to Gradle, and uses `<fingerprint>-<abi>` as `<hash>` so clients never cross ABIs.
+   `<hash>` is `<fingerprint>-<recipe>`, where `DEV_CLIENT_RECIPE` in `lib/build.ts` versions how the runner builds; bump it when a runner change alters the native output, since the fingerprint cannot see it.
+   On Android, the runner reads the emulator's first ABI from `ro.product.cpu.abilist`, passes `-PreactNativeArchitectures=<abi>` to Gradle, and appends `-<abi>` to `<hash>` so clients never cross ABIs.
    Then install on the chosen simulator/emulator, start a runner-owned
    `expo start --dev-client --clear` on a port it proved free first, and run each capture
    pass as one parent Maestro invocation with `--env` forwarded by `run.sh`.
