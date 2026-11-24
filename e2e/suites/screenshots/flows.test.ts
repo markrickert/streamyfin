@@ -181,6 +181,7 @@ describe("bootstrap-login first-run overlays", () => {
     ]);
     expect(cmds[3].runFlow.when.visible).toBe("Go home");
     expect(cmds[3].runFlow.commands).toEqual([
+      { extendedWaitUntil: { visible: "Close", timeout: 10000 } },
       { tapOn: "Close" },
       "waitForAnimationToEnd",
     ]);

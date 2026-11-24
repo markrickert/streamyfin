@@ -33,5 +33,10 @@ appId: ${MAESTRO_APP_ID}
     when:
       visible: "Go home"
     commands:
+      # "Go home" shows while the sheet still slides up; its ✕ (accessibility label
+      # "Close") is not hittable until the sheet settles.
+      - extendedWaitUntil:
+          visible: "Close"
+          timeout: 10000
       - tapOn: "Close"
       - waitForAnimationToEnd
