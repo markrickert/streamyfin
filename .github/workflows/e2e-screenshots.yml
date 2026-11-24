@@ -110,8 +110,7 @@ jobs:
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
-    # Spike branch only: the self-hosted Mac mini, while hosted macOS arm64 capacity is short.
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: macos-latest
     # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
     # build twice plus native fixture setup and three Maestro passes.
     timeout-minutes: 180
@@ -120,15 +119,7 @@ jobs:
       matrix: ${{ fromJSON(needs.plan.outputs.apple) }}
 
     steps:
-      # Spike branch only: the Mac mini's runner PATH starts at the system Python 3.9.
-      - name: 🐍 Use Homebrew's Python on the self-hosted Mac
-        if: runner.environment != 'github-hosted'
-        run: |
-          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
-          /opt/homebrew/bin/python3 --version
-
       - name: 🛠️ Select the newest Xcode
-        if: runner.environment == 'github-hosted'
         run: |
           xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
           [ -n "$xcode" ] || { echo "::error::No Xcode on this image"; exit 1; }
@@ -239,9 +230,6 @@ jobs:
           SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
           # Software-rendered CI devices run a pass several times slower.
           SHOTS_PASS_TIMEOUT_SECONDS: "2700"
-          # Spike branch only: the Mac mini builds Maestro's XCTest driver on first use and
-          # misses the default 120s startup window.
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: "600000"
         run: |
           # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
           cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
@@ -317,9 +305,19 @@ jobs:
       - name: 🔎 Collect Maestro XCTest result
         if: failure() && matrix.platform == 'apple-tv'
         run: |
-          mkdir -p "$RUNNER_TEMP/maestro-xcresults"
-          find "$TMPDIR" -type d -name '*.xcresult' -path '*maestro_xctestrunner_xcodebuild_output*/Logs/Test/*' -print -exec cp -R {} "$RUNNER_TEMP/maestro-xcresults/" \;
-          ls -la "$RUNNER_TEMP/maestro-xcresults"
+          python3 - <<'PY'
+          import os
+          import shutil
+          from pathlib import Path
+
+          results = list(Path(os.environ["TMPDIR"]).glob("maestro_xctestrunner_xcodebuild_output*/Logs/Test/*.xcresult"))
+          if results:
+              result = max(results, key=lambda path: path.stat().st_mtime)
+              shutil.copytree(result, Path(os.environ["RUNNER_TEMP"]) / "maestro-xcresults" / result.name)
+              print("Copied latest Maestro XCTest result")
+          else:
+              print("No Maestro XCTest result found")
+          PY
 
       - name: 📤 Upload Maestro XCTest result
         if: failure() && matrix.platform == 'apple-tv'
