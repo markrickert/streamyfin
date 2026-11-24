@@ -23,8 +23,9 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - launchApp
 - runFlow: _dismiss-dev-overlays.yml
+# tvOS includes the icon glyph before "Add server" in the focused button's label.
 - extendedWaitUntil:
-    visible: "Add server"
+    visible: ".*Add server"
     timeout: 60000
 - extendedWaitUntil:
     visible: "__settle__"

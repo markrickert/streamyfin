@@ -345,4 +345,14 @@ describe("bootstrap-login first-run overlays", () => {
     expect(cmds[1].runFlow.commands).toEqual(["launchApp"]);
     expect(cmds[2].runFlow).toBe("_dismiss-dev-overlays.yml");
   });
+
+  it("bootstrap-login-tv finds the server button with or without its icon in the label", () => {
+    // The tvOS hierarchy exposes the focused button as an icon glyph plus "Add server".
+    const cmds = commandsOf("bootstrap-login-tv.yml");
+    const selector = cmds[3].extendedWaitUntil.visible;
+    expect(new RegExp(`^(?:${selector})$`).test("\uf103, Add server")).toBe(
+      true,
+    );
+    expect(new RegExp(`^(?:${selector})$`).test("Add server")).toBe(true);
+  });
 });
