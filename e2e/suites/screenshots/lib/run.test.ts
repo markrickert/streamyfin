@@ -1,5 +1,5 @@
 import { type Cli, ShotError } from "./core";
-import { doctor, runComparison } from "./run";
+import { doctor, metroBundleUrl, runComparison } from "./run";
 import {
   execs,
   Fake,
@@ -10,9 +10,10 @@ import {
   PASSWORD,
   REPO,
   runCli,
+  SIMCTL_JSON,
   seed,
 } from "./testing";
-import { MAESTRO_SHA256, MAESTRO_TAG } from "./tooling";
+import { DEFAULT_PORT, MAESTRO_SHA256, MAESTRO_TAG } from "./tooling";
 
 describe("doctor", () => {
   const doctorCli: Cli = { command: "doctor", platform: "android" };
@@ -439,7 +440,7 @@ describe("runComparison boundaries", () => {
     expect(error.message).not.toContain(PASSWORD);
   });
 
-  it("launches Android through an explicit -p package and warms the JS bundle first", async () => {
+  it("launches Android through an explicit -p package and warms the exact dev-client JS bundle first", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
@@ -453,10 +454,78 @@ describe("runComparison boundaries", () => {
       expect(joined).toContain("-p com.example.streamyfin.debug");
       expect(joined).not.toMatch(/VIEW -d \S+ com\.example/);
     }
-    const bundleWaits = f.waits.filter((w) =>
-      w.url.includes("index.bundle?platform=android"),
+    const expectedWarmUrl = metroBundleUrl("android", DEFAULT_PORT);
+    expect(expectedWarmUrl).toBe(
+      `http://127.0.0.1:${DEFAULT_PORT}/index.ts.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`,
     );
-    expect(bundleWaits.length).toBeGreaterThanOrEqual(2);
+    const bundleWaits = f.waits.filter((w) => w.url === expectedWarmUrl);
+    expect(bundleWaits).toHaveLength(2);
+    for (const wait of bundleWaits)
+      expect(wait.needle).toBe("__BUNDLE_START_TIME__");
+  });
+
+  it("warms the exact iOS dev-client bundle URL for both ios and apple-tv and leaves Apple cache keys unchanged", async () => {
+    for (const [platform, device, sdk] of [
+      ["ios", "UDID-PHONE", "iphonesimulator"],
+      ["apple-tv", "UDID-TV", "appletvsimulator"],
+    ] as const) {
+      const f = new Fake();
+      seed(f);
+      happyRoutes(f);
+      const outDir = `${REPO}/e2e/reports/shots/test-${platform}`;
+      f.routes.push(
+        [
+          "list devices",
+          { code: 0, stdout: JSON.stringify(SIMCTL_JSON), stderr: "" },
+        ],
+        [
+          "pod install",
+          (fake) => {
+            fake.dirs.add(`${REPO}/ios`);
+            fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+            return ok;
+          },
+        ],
+        [
+          "xcodebuild",
+          (fake, argv) => {
+            const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+            fake.dirs.add(`${derived}/Build/Products/Debug-${sdk}`);
+            fake.dirs.add(
+              `${derived}/Build/Products/Debug-${sdk}/Streamyfin.app`,
+            );
+            return ok;
+          },
+        ],
+        [
+          "PlistBuddy",
+          { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+        ],
+        ["status_bar", ok],
+        ["simctl uninstall", ok],
+        ["simctl install", ok],
+        [
+          "get_app_container",
+          { code: 0, stdout: "/sim/container\n", stderr: "" },
+        ],
+        ["plutil", ok],
+        ["simctl openurl", ok],
+      );
+
+      await runComparison(f, { ...runCli, platform, device, outDir }, REPO);
+
+      const expectedWarmUrl = metroBundleUrl("ios", DEFAULT_PORT);
+      expect(expectedWarmUrl).toBe(
+        `http://127.0.0.1:${DEFAULT_PORT}/index.ts.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`,
+      );
+      expect(f.waits.filter((w) => w.url === expectedWarmUrl)).toHaveLength(2);
+      expect(execs(f, "ro.product.cpu.abilist")).toHaveLength(0);
+      const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+      expect(manifest[0].hash).toBe("fp-1");
+      expect(manifest[0].path).toBe(
+        `${REPO}/e2e/reports/shots/build-cache/${platform}/fp-1/Streamyfin.app`,
+      );
+    }
   });
 
   it("restores native dirs even when the git restore itself is refused", async () => {
@@ -480,31 +549,46 @@ describe("runComparison boundaries", () => {
 describe("runComparison build-cache manifest", () => {
   const outDir = `${REPO}/e2e/reports/shots/test-session`;
 
-  it("records built then local when before and after share a fingerprint", async () => {
+  it("records built then local with <fingerprint>-<abi> when before and after share a fingerprint on Android", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, { ...runCli, outDir }, REPO);
+    f.routes = f.routes.filter(
+      ([needle]) =>
+        needle !== "has-feature" && needle !== "ro.product.cpu.abilist",
+    );
+    f.routes.push(
+      ["has-feature", { code: 0, stdout: "true\n", stderr: "" }],
+      [
+        "ro.product.cpu.abilist",
+        { code: 0, stdout: "x86,armeabi-v7a\n", stderr: "" },
+      ],
+    );
+    await runComparison(f, { ...runCli, platform: "android-tv", outDir }, REPO);
+    expect(execs(f, "ro.product.cpu.abilist")).toHaveLength(1);
+    expect(execs(f, "assembleDebug")[0]).toContain(
+      "-PreactNativeArchitectures=x86",
+    );
     const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
     expect(manifest).toEqual([
       {
         ref: "before",
-        platform: "android",
-        hash: "fp-1",
+        platform: "android-tv",
+        hash: "fp-1-x86",
         source: "built",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-x86/app-debug.apk`,
       },
       {
         ref: "after",
-        platform: "android",
-        hash: "fp-1",
+        platform: "android-tv",
+        hash: "fp-1-x86",
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-x86/app-debug.apk`,
       },
     ]);
   });
 
-  it("skips prebuild and records fetched when the fetch hook populates the cache", async () => {
+  it("skips prebuild and records fetched with <fingerprint>-<abi> when the fetch hook populates the cache", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
@@ -512,6 +596,7 @@ describe("runComparison build-cache manifest", () => {
     f.routes.push([
       "/ci/fetch-dev-client.py",
       (fake, argv) => {
+        expect(argv[2]).toBe("fp-1-arm64-v8a");
         const cacheDir = argv[3];
         fake.dirs.add(cacheDir);
         fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
@@ -528,16 +613,16 @@ describe("runComparison build-cache manifest", () => {
       {
         ref: "before",
         platform: "android",
-        hash: "fp-1",
+        hash: "fp-1-arm64-v8a",
         source: "fetched",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-arm64-v8a/app-debug.apk`,
       },
       {
         ref: "after",
         platform: "android",
-        hash: "fp-1",
+        hash: "fp-1-arm64-v8a",
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-arm64-v8a/app-debug.apk`,
       },
     ]);
   });

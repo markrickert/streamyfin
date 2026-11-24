@@ -2,6 +2,7 @@ import { resetTestAppState } from "./app-state";
 import {
   appIdOnDevice,
   type BuildSource,
+  deviceAbi,
   ensureDebugBuild,
   nativeFingerprint,
 } from "./build";
@@ -67,6 +68,19 @@ export function setInterruptCleanup(fn: (() => void) | undefined): void {
   interruptCleanup = fn;
 }
 
+/**
+ * Exact bundle URL that expo-dev-launcher requests from Metro's manifest
+ * (`ManifestMiddleware._getBundleUrl` / `createBundleUrlPath` in `@expo/cli`). Warming
+ * any shorter query populates a different Metro cache entry and leaves the client with
+ * a cold Hermes compile.
+ */
+export function metroBundleUrl(
+  platform: "ios" | "android",
+  port: number,
+): string {
+  return `http://127.0.0.1:${port}/index.ts.bundle?platform=${platform}&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`;
+}
+
 function formatElapsed(ms: number): string {
   const totalSec = Math.max(0, Math.round(ms / 1000));
   if (totalSec < 60) return `${totalSec}s`;
@@ -129,6 +143,10 @@ export async function runComparison(
   setInterruptCleanup(cleanup);
   try {
     prepareDevice(d, cli.platform!, device);
+    const abi =
+      cli.platform === "android" || cli.platform === "android-tv"
+        ? deviceAbi(d, device)
+        : undefined;
     const refs: { label: string; sha: string; captures: string[] }[] = [
       { label: "before", sha: beforeSha, captures: ["before", "noise"] },
       { label: "after", sha: afterSha, captures: ["after"] },
@@ -149,18 +167,18 @@ export async function runComparison(
           d.fs.exists(`${repo}/${n}`) ? d.fs.read(`${repo}/${n}`) : "",
         )
         .join("\n---\n");
-      const hash = nativeFingerprint(d, repo, spec);
-      const shortHash = hash.slice(0, 8);
+      const fingerprint = nativeFingerprint(d, repo, spec);
+      const shortHash = fingerprint.slice(0, 8);
       const buildStarted = Date.now();
       d.log(
         `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash})`,
       );
-      const { artifact, source } = ensureDebugBuild(
+      const { artifact, source, hash } = ensureDebugBuild(
         d,
         repo,
         cli.platform!,
         spec,
-        hash,
+        fingerprint,
         sessionDir,
         () => {
           if (!nativeMoved.length)
@@ -178,6 +196,7 @@ export async function runComparison(
               "pod install",
             );
         },
+        abi,
       );
       d.log(
         `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash}): ${source} (${formatElapsed(Date.now() - buildStarted)})`,
@@ -240,7 +259,7 @@ export async function runComparison(
         // that a packager answers. A compile error in the switched ref fails here,
         // before any screenshot is taken.
         const bundled = await d.waitFor(
-          `http://127.0.0.1:${port}/index.bundle?platform=${spec.fingerprintPlatform}&dev=true`,
+          metroBundleUrl(spec.fingerprintPlatform, port),
           "__BUNDLE_START_TIME__",
           300_000,
         );

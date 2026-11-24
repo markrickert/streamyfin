@@ -1,6 +1,7 @@
 import {
   BUILD_CACHE_FETCH_ENV,
   BUILD_CACHE_FETCH_TIMEOUT_MS,
+  deviceAbi,
   ensureDebugBuild,
 } from "./build";
 import { platformSpec } from "./cli";
@@ -17,9 +18,29 @@ import {
   seed,
 } from "./testing";
 
+describe("deviceAbi", () => {
+  it("reads the first ABI from ro.product.cpu.abilist", () => {
+    const f = new Fake();
+    f.routes.push([
+      "emulator-5554 shell getprop ro.product.cpu.abilist",
+      { code: 0, stdout: "x86,armeabi-v7a\n", stderr: "" },
+    ]);
+    expect(deviceAbi(f, "emulator-5554")).toBe("x86");
+  });
+
+  it("throws when ro.product.cpu.abilist is empty", () => {
+    const f = new Fake();
+    f.routes.push([
+      "emulator-5554 shell getprop ro.product.cpu.abilist",
+      { code: 0, stdout: " \n", stderr: "" },
+    ]);
+    expect(() => deviceAbi(f, "emulator-5554")).toThrow(ShotError);
+  });
+});
+
 describe("ensureDebugBuild cache", () => {
   const spec = platformSpec("android");
-  it("rebuilds on a new fingerprint, reuses the cache on the same one", () => {
+  it("rebuilds on a new fingerprint or ABI, reuses the cache on the same one", () => {
     const f = new Fake();
     f.routes.push([
       "node --version",
@@ -44,9 +65,15 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-a",
       `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
     );
     expect(first.built).toBe(true);
     expect(first.source).toBe("built");
+    expect(first.hash).toBe("fp-a-arm64-v8a");
+    expect(execs(f, "assembleDebug")[0]).toContain(
+      "-PreactNativeArchitectures=arm64-v8a",
+    );
     const again = ensureDebugBuild(
       f,
       REPO,
@@ -54,10 +81,26 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-a",
       `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
     );
     expect(again.built).toBe(false);
     expect(again.source).toBe("local");
     expect(again.artifact).toBe(first.artifact);
+    const otherAbi = ensureDebugBuild(
+      f,
+      REPO,
+      "android",
+      spec,
+      "fp-a",
+      `${REPO}/session`,
+      undefined,
+      "x86",
+    );
+    expect(otherAbi.built).toBe(true);
+    expect(otherAbi.source).toBe("built");
+    expect(otherAbi.hash).toBe("fp-a-x86");
+    expect(otherAbi.artifact).not.toBe(first.artifact);
     const other = ensureDebugBuild(
       f,
       REPO,
@@ -65,13 +108,15 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-b",
       `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
     );
     expect(other.built).toBe(true);
     expect(other.source).toBe("built");
-    expect(builds).toBe(2);
+    expect(builds).toBe(3);
   });
 
-  it("uses the fetch hook on a local miss and skips building when an APK arrives", () => {
+  it("uses the fetch hook on a local miss with <fingerprint>-<abi> and skips building when an APK arrives", () => {
     const f = new Fake();
     f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
     let observedTimeout: number | undefined;
@@ -86,7 +131,7 @@ describe("ensureDebugBuild cache", () => {
       (fake, argv) => {
         const [, platform, hash, cacheDir] = argv;
         expect(platform).toBe("android");
-        expect(hash).toBe("fp-fetch");
+        expect(hash).toBe("fp-fetch-x86_64");
         fake.dirs.add(cacheDir);
         fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
         return ok;
@@ -100,11 +145,14 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-fetch",
       `${REPO}/session`,
+      undefined,
+      "x86_64",
     );
     expect(res).toEqual({
-      artifact: `${REPO}/e2e/reports/shots/build-cache/android/fp-fetch/app-debug.apk`,
+      artifact: `${REPO}/e2e/reports/shots/build-cache/android/fp-fetch-x86_64/app-debug.apk`,
       built: false,
       source: "fetched",
+      hash: "fp-fetch-x86_64",
     });
     expect(observedTimeout).toBe(BUILD_CACHE_FETCH_TIMEOUT_MS);
     expect(execs(f, "assembleDebug")).toHaveLength(0);
@@ -137,6 +185,7 @@ describe("ensureDebugBuild cache", () => {
       artifact: `${REPO}/e2e/reports/shots/build-cache/ios/fp-ios/Streamyfin.app`,
       built: false,
       source: "fetched",
+      hash: "fp-ios",
     });
     expect(execs(f, "xcodebuild")).toHaveLength(0);
   });
@@ -144,7 +193,7 @@ describe("ensureDebugBuild cache", () => {
   it("skips the fetch hook when the local cache already holds the artifact", () => {
     const f = new Fake();
     f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
-    const cacheDir = `${REPO}/e2e/reports/shots/build-cache/android/fp-hit`;
+    const cacheDir = `${REPO}/e2e/reports/shots/build-cache/android/fp-hit-arm64-v8a`;
     f.dirs.add(cacheDir);
     f.files.set(`${cacheDir}/app-debug.apk`, "apk");
 
@@ -155,11 +204,14 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-hit",
       `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
     );
     expect(res).toEqual({
       artifact: `${cacheDir}/app-debug.apk`,
       built: false,
       source: "local",
+      hash: "fp-hit-arm64-v8a",
     });
     expect(execs(f, "fetch-dev-client.py")).toHaveLength(0);
   });
@@ -189,6 +241,8 @@ describe("ensureDebugBuild cache", () => {
       spec,
       "fp-miss",
       `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
     );
     expect(res.built).toBe(true);
     expect(res.source).toBe("built");

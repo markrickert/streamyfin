@@ -145,6 +145,19 @@ describe("capture pass parents", () => {
     },
   );
 
+  it("waits for rendered Home content after every relaunch in mobile.yml instead of the racy Home label", () => {
+    const cmds = commandsOf("mobile.yml");
+    const relaunches = cmds
+      .map((cmd, index) => ({ cmd, index }))
+      .filter(({ cmd }) => String(cmd) === "launchApp");
+    expect(relaunches.length).toBeGreaterThan(1);
+    for (const { index } of relaunches.slice(1)) {
+      expect(cmds[index + 1].extendedWaitUntil?.visible).toBe(
+        ".*Recently added.*",
+      );
+    }
+  });
+
   it("the parents take no screenshots themselves", () => {
     for (const file of ["pass-mobile.yml", "pass-tv.yml"])
       expect(screenshotNames(commandsOf(file))).toHaveLength(0);
@@ -163,7 +176,13 @@ describe("bootstrap-login first-run overlays", () => {
   it("reconnects from the server picker, accepts the open-in prompt, then dismisses the onboarding sheet and dev menu in order", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
     expect(cmds).toHaveLength(4);
-    expect(cmds[0].runFlow.when.visible).toBe("Fetch development servers");
+    expect(cmds[0].runFlow.when.visible).toBe(
+      "Fetch development servers|Searching for development servers.*",
+    );
+    const picker = new RegExp(cmds[0].runFlow.when.visible);
+    expect(picker.test("Fetch development servers")).toBe(true);
+    expect(picker.test("Searching for development servers...")).toBe(true);
+    expect(picker.test("Home")).toBe(false);
     expect(cmds[0].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
       { openLink: "${MAESTRO_DEV_CLIENT_URL}" },

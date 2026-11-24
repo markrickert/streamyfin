@@ -12,8 +12,9 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - runFlow:
+    # Phone clients show "Fetch development servers"; tvOS shows "Searching for development servers...".
     when:
-      visible: "Fetch development servers"
+      visible: "Fetch development servers|Searching for development servers.*"
     commands:
       - openLink: ${MAESTRO_DEV_CLIENT_URL}
       - waitForAnimationToEnd

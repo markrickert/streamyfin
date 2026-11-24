@@ -235,6 +235,10 @@ export function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     // The phone emulator reports no leanback — pm exits 1 for "absent", which is the
     // real answer, not a failure.
     ["has-feature", { code: 1, stdout: "false\n", stderr: "" }],
+    [
+      "ro.product.cpu.abilist",
+      { code: 0, stdout: "arm64-v8a,armeabi-v7a,armeabi\n", stderr: "" },
+    ],
     ["reverse --list", { code: 0, stdout: "", stderr: "" }],
     ["reverse tcp:", ok],
     ["am start", ok],

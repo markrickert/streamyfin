@@ -19,6 +19,7 @@ export type { BuildResult, BuildSource } from "./lib/build";
 export {
   BUILD_CACHE_FETCH_ENV,
   BUILD_CACHE_FETCH_TIMEOUT_MS,
+  deviceAbi,
   ensureDebugBuild,
   nativeFingerprint,
 } from "./lib/build";
