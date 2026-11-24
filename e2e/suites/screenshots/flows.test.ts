@@ -176,6 +176,31 @@ describe("capture pass parents", () => {
     }
   });
 
+  // Hosted tvOS showed the Library tab retaining focus as the Movies page opened,
+  // so Rights on the tab bar instead of the toolbar missed Filters. The single
+  // guarded Down re-enters the toolbar; Center is only ever pressed on Filters.
+  it("tv-apple.yml enters the Movies toolbar with one guarded Down when the Library tab keeps focus", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const shot = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "06-library-movies",
+    );
+    expect(shot).toBeGreaterThanOrEqual(0);
+    expect(cmds[shot + 1].runFlow).toEqual({
+      when: { visible: { text: "Library", focused: true } },
+      commands: [{ pressKey: "Remote Dpad Down" }],
+    });
+    expect(cmds.slice(shot + 2, shot + 6).map((cmd) => cmd.pressKey)).toEqual([
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+    ]);
+    expect(cmds[shot + 6].assertVisible).toEqual({
+      text: ".*Filters.*",
+      focused: true,
+    });
+  });
+
   // Names are the before/noise/after pairing key: a flow that captures one of the new
   // shots twice, or not at all, silently un-pairs a screen. Screenshots nested under
   // runFlow/repeat guards count too.

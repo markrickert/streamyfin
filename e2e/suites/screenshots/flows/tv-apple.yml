@@ -48,6 +48,15 @@ appId: ${MAESTRO_APP_ID}
     visible: ".*Filters.*"
     timeout: 15000
 - takeScreenshot: 06-library-movies
+# A native tab may keep focus as the Movies page opens; Down enters its toolbar.
+# Center is reserved for Filters, never a library card (docs/conventions/tv.md).
+- runFlow:
+    when:
+      visible:
+        text: "Library"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Down
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
