@@ -226,6 +226,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
           SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # Software-rendered CI devices run a pass several times slower.
+          SHOTS_PASS_TIMEOUT_SECONDS: "2700"
         run: |
           # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
           cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
@@ -431,6 +433,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
           SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # Software-rendered CI devices run a pass several times slower.
+          SHOTS_PASS_TIMEOUT_SECONDS: "2700"
         with:
           api-level: 34
           arch: ${{ matrix.arch }}

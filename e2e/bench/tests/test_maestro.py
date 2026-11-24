@@ -70,6 +70,43 @@ class RunTests(unittest.TestCase):
 
         self.assertEqual(run_flow(["true"], dict(os.environ), timeout=5), 0)
 
+    # With piped stdout (as the screenshot runner spawns maestro.py), an unflushed
+    # "$ ..." line stays buffered until exit and lands after Maestro's error output,
+    # pushing the actual failure out of the runner's stdout tail.
+    def test_main_flushes_echoed_command_before_maestro_output_when_piped(self):
+        import os
+        import subprocess
+        import sys
+        import tempfile
+
+        e2e_root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_maestro = Path(tmp) / "fake-maestro"
+            fake_maestro.write_text("#!/bin/sh\necho 'MAESTRO_ERROR_LINE'\nexit 1\n")
+            fake_maestro.chmod(0o755)
+            flow = Path(tmp) / "flow.yml"
+            flow.write_text("appId: x\n---\n[]\n")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(e2e_root / "bench" / "maestro.py"),
+                    "--flow",
+                    str(flow),
+                    "--device",
+                    "emulator-5554",
+                    "--maestro",
+                    str(fake_maestro),
+                ],
+                env={**os.environ, "PYTHONPATH": str(e2e_root)},
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 1)
+        lines = result.stdout.splitlines()
+        cmd_idx = next(i for i, line in enumerate(lines) if line.startswith("$ "))
+        err_idx = lines.index("MAESTRO_ERROR_LINE")
+        self.assertLess(cmd_idx, err_idx)
+
 
 class JavaHomeTests(unittest.TestCase):
     # Maestro is a JVM program; on a Mac whose JDK comes from Homebrew or Android Studio,

@@ -136,3 +136,47 @@ describe("dev-client deep link quoting", () => {
     }
   });
 });
+
+describe("pass timeout configuration", () => {
+  it("passes the default 900s --timeout to maestro.py when SHOTS_PASS_TIMEOUT_SECONDS is unset", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows.length).toBeGreaterThan(0);
+    for (const argv of flows) {
+      const idx = argv.indexOf("--timeout");
+      expect(idx).toBeGreaterThan(-1);
+      expect(argv[idx + 1]).toBe("900");
+    }
+  });
+
+  it("forwards SHOTS_PASS_TIMEOUT_SECONDS to maestro.py --timeout", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_PASS_TIMEOUT_SECONDS = "2700";
+    await runComparison(f, runCli, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows.length).toBeGreaterThan(0);
+    for (const argv of flows) {
+      const idx = argv.indexOf("--timeout");
+      expect(idx).toBeGreaterThan(-1);
+      expect(argv[idx + 1]).toBe("2700");
+    }
+  });
+
+  it.each(["0", "-5", "abc", "Infinity"])(
+    "refuses invalid SHOTS_PASS_TIMEOUT_SECONDS=%s",
+    async (bad) => {
+      const f = new Fake();
+      seed(f);
+      happyRoutes(f);
+      f.env.SHOTS_PASS_TIMEOUT_SECONDS = bad;
+      await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
+        /SHOTS_PASS_TIMEOUT_SECONDS/,
+      );
+    },
+  );
+});

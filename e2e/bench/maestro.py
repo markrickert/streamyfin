@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     java_home = resolve_java_home(process_env)
     if java_home:
         process_env["JAVA_HOME"] = java_home
-    print("$", describe_command(command))
+    print("$", describe_command(command), flush=True)
     return run_flow(command, process_env, args.timeout)
 
 

@@ -9,6 +9,7 @@ import {
 import {
   devClientUrl,
   launchDevClient,
+  passTimeoutSeconds,
   runCapture,
   startMetro,
 } from "./capture";
@@ -102,6 +103,7 @@ export async function runComparison(
   const device = selectDevice(d, cli.platform!, cli.device);
   const port = cli.port ?? DEFAULT_PORT;
   ensurePortFree(d, port);
+  passTimeoutSeconds(d);
   const sessionDir = cli.outDir ?? `${repo}/${REPORTS_DIR}/${Date.now()}`;
   ensureOutIgnored(d, repo, sessionDir);
   d.fs.mkdir(sessionDir);

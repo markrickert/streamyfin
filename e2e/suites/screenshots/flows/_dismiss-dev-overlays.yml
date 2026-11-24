@@ -11,6 +11,13 @@
 # MAESTRO_DEV_CLIENT_URL, and on iOS the "Open in" step below accepts that link too.
 appId: ${MAESTRO_APP_ID}
 ---
+# A slow CI emulator raises ANR dialogs for the launcher over the dev menu.
+- runFlow:
+    when:
+      visible: ".*isn't responding.*"
+    commands:
+      - tapOn: "Wait"
+      - waitForAnimationToEnd
 - runFlow:
     # Phone clients show "Fetch development servers"; tvOS shows "Searching for development servers...".
     when:
@@ -18,11 +25,21 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - openLink: ${MAESTRO_DEV_CLIENT_URL}
       - waitForAnimationToEnd
+# iOS taps "Open"; tvOS's PineBoard alert focuses "Open" by default and ignores tapOn,
+# so press Select instead.
 - runFlow:
     when:
       visible: "Open in .*"
+      true: ${MAESTRO_TVOS != '1'}
     commands:
       - tapOn: "Open"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Open in .*"
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Center
       - waitForAnimationToEnd
 - runFlow:
     when:

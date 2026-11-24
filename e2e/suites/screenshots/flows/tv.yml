@@ -120,7 +120,21 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - scrollUntilVisible:
     element: "^(.*, )?Show(,.*)?$"
-- tapOn: "^(.*, )?Show(,.*)?$"
+# Android TV's TVPosterCard puts the title TextView outside the clickable Pressable, so
+# tapping the title does nothing; target the clickable poster above it. Apple TV keeps
+# the direct tap (tvOS hierarchies do not carry a clickable attribute).
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn:
+          above: "^(.*, )?Show(,.*)?$"
+          clickable: true
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - tapOn: "^(.*, )?Show(,.*)?$"
 - extendedWaitUntil:
     visible: ".*Season.*|.*Pilot.*"
     timeout: 30000

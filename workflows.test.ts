@@ -538,6 +538,7 @@ describe("e2e-screenshots.yml", () => {
       expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
         "fetch-dev-client.py",
       );
+      expect(runStep?.env?.SHOTS_PASS_TIMEOUT_SECONDS).toBe("2700");
 
       const prepareStep = steps.find((step) => step.id === "dev-clients");
       expect(prepareStep).toBeDefined();
