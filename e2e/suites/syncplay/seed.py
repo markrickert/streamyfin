@@ -116,11 +116,19 @@ def catalog_files():
     return changed
 
 
+REPORTED_FIELDS = ("Name", "Type", "ParentIndexNumber", "IndexNumber")
+
+
+def matches(item, want):
+    return all(item.get(key) == value for key, value in want.items())
+
+
+def unmatched(items, expected):
+    return [want for want in expected if not any(matches(item, want) for item in items)]
+
+
 def covered(items, expected):
-    return len(items) == len(expected) and all(
-        any(all(item.get(key) == value for key, value in want.items()) for item in items)
-        for want in expected
-    )
+    return len(items) == len(expected) and not unmatched(items, expected)
 
 
 def seed(inventory_path=ROOT / "inventory.json"):
@@ -177,9 +185,16 @@ def seed(inventory_path=ROOT / "inventory.json"):
             )
             expected = [*spec["expected"], *catalog_expected[spec["name"]]]
             if not covered(result["Items"], expected):
+                missing = unmatched(result["Items"], expected)
+                names = {want.get("Name") for want in missing}
                 pending[spec["name"]] = {
                     "expected": len(expected), "observed": len(result["Items"]),
                     "sample": [item.get("Name") for item in result["Items"][:5]],
+                    "unmatched": missing,
+                    "candidates": [
+                        {key: item.get(key) for key in REPORTED_FIELDS}
+                        for item in result["Items"] if item.get("Name") in names
+                    ],
                 }
         return pending
 

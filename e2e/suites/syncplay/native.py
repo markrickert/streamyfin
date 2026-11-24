@@ -42,6 +42,13 @@ NODE_MAJOR = 22
 NODE_MIN_MINOR = 19
 SEERR_BUILT_MARKER = ".streamyfin-built"
 
+# Jellyfin 10.11 parses season and episode numbers out of the full media path, so a digit
+# run such as `5b17-4d99` in a checkout path overrides every NFO. Jellyfin reads media
+# through a link whose path holds no digit, one per checkout.
+MEDIA_LINK_BASE = Path("/tmp")
+MEDIA_LINK_PREFIX = "streamyfin-media-"
+MEDIA_LINK_TAG_LENGTH = 16
+
 LOOPBACK = "127.0.0.1"
 DOWNLOAD_TIMEOUT_SECONDS = 300
 STOP_TIMEOUT_SECONDS = 30
@@ -198,6 +205,27 @@ def install_seerr():
     return folder
 
 
+def media_link():
+    """This checkout's link path: a sha256 of ROOT with each hex digit mapped to a letter."""
+    digest = hashlib.sha256(str(setup.ROOT.resolve()).encode()).hexdigest()
+    tag = "".join(chr(ord("a") + int(digit, 16)) for digit in digest[:MEDIA_LINK_TAG_LENGTH])
+    return MEDIA_LINK_BASE / f"{MEDIA_LINK_PREFIX}{tag}"
+
+
+def owns_media_link(link):
+    return link.is_symlink() and Path(os.readlink(link)) == setup.STATE
+
+
+def ensure_media_link():
+    """Link media_link() to STATE; refuse a path that is anything else."""
+    link = media_link()
+    with suppress(FileExistsError):
+        link.symlink_to(setup.STATE, target_is_directory=True)
+    if not owns_media_link(link):
+        raise RuntimeError(f"{link} exists and is not this checkout's link to {setup.STATE}; remove it, then rerun setup")
+    return link
+
+
 def pid_file(name):
     return setup.STATE / f"{name}.pid"
 
@@ -317,6 +345,7 @@ def up(owned):
     install_jellyfin()
     install_ffmpeg()
     install_seerr()
+    ensure_media_link()
     start_jellyfin(owned)
     start_seerr(owned)
 
@@ -324,6 +353,9 @@ def up(owned):
 def down(owned):
     stop("seerr")
     stop("jellyfin")
+    link = media_link()
+    if owns_media_link(link):
+        link.unlink()
 
 
 def restart_jellyfin(owned):

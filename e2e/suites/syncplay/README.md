@@ -42,13 +42,17 @@ the same Python, FFmpeg and Bun as above. Docker is not used. `setup.py` refuses
 platform or Node version.
 
 It runs the same Jellyfin 10.11.11 and Seerr v3.5.0 as host processes on `127.0.0.1`,
-with the same ports, users, libraries and `.state/` layout as the containers. Library
-paths are the host folders the containers mount, so `/media` becomes
-`.state/media`. The first setup downloads the pinned Jellyfin and jellyfin-ffmpeg
-tarballs, checks each sha256 before extracting it, signs Jellyfin's Mach-O files ad hoc
-(Apple silicon kills unsigned arm64 code), then clones Seerr at its pinned commit and
-builds it. All of that lands in `e2e/suites/syncplay/.tools/` (ignored) and is reused by
-later setups, so CI can cache that folder. Logs are in `.state/logs/`.
+with the same ports, users, libraries and `.state/` layout as the containers. Jellyfin
+reads media through `/tmp/streamyfin-media-<tag>`, a link to `.state/` unique to this
+checkout, so `/media` becomes `/tmp/streamyfin-media-<tag>/media`. Jellyfin parses
+season and episode numbers out of the full media path, and the link keeps digits in the
+checkout path out of it. `setup.py` refuses that path when it is anything but this
+checkout's link, and `e2e:down` removes it. The first setup downloads the pinned
+Jellyfin and jellyfin-ffmpeg tarballs, checks each sha256 before extracting it, signs
+Jellyfin's Mach-O files ad hoc (Apple silicon kills unsigned arm64 code), then clones
+Seerr at its pinned commit and builds it. All of that lands in
+`e2e/suites/syncplay/.tools/` (ignored) and is reused by later setups, so CI can cache
+that folder. Logs are in `.state/logs/`.
 
 The processes run detached, with their PIDs in `.state/jellyfin.pid` and
 `.state/seerr.pid`. `setup.py` refuses a fixture port that any other process listens

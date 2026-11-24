@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import signal
 from subprocess import CompletedProcess
 from tempfile import TemporaryDirectory
@@ -42,6 +43,7 @@ def native_checkout(root, environ=None):
         mock.patch.object(setup, "STATE", root / ".state"),
         mock.patch.object(setup, "ENV_FILE", root / ".env"),
         mock.patch.object(native, "TOOLS", root / ".tools"),
+        mock.patch.object(native, "MEDIA_LINK_BASE", root),
         mock.patch.dict(os.environ, environ or {}, clear=True),
     ):
         yield
@@ -118,10 +120,11 @@ class SelectionTest(unittest.TestCase):
                 contextlib.redirect_stdout(io.StringIO()),
             ):
                 setup.main()
+                link = native.media_link()
             self.assertIn("SYNCPLAY_BACKEND=native\n", (root / ".env").read_text())
             refuse.assert_called_once()
             up.assert_called_once()
-            self.assertEqual(posts[0]["LibraryOptions"]["PathInfos"], [{"Path": str(root / ".state" / "media")}])
+            self.assertEqual(posts[0]["LibraryOptions"]["PathInfos"], [{"Path": str(link / "media")}])
 
     def test_a_backend_that_disagrees_with_env_is_refused(self):
         with TemporaryDirectory() as directory:
@@ -152,11 +155,23 @@ class SelectionTest(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "podman"):
                     setup.identity()
 
-    def test_host_paths_follow_the_compose_volume_mapping(self):
+    def test_host_paths_follow_the_compose_volume_mapping_through_the_media_link(self):
         self.assertEqual(backend.DockerBackend().host_path("/catalog/movies"), "/catalog/movies")
-        with mock.patch.object(setup, "STATE", Path("/checkout/.state")):
-            self.assertEqual(backend.NativeBackend().host_path("/media"), "/checkout/.state/media")
-            self.assertEqual(backend.NativeBackend().host_path("/catalog/movies"), "/checkout/.state/catalog/movies")
+        with mock.patch.object(setup, "ROOT", Path("/checkout")), mock.patch.object(setup, "STATE", Path("/checkout/.state")):
+            link = native.media_link()
+            self.assertEqual(backend.NativeBackend().host_path("/media"), str(link / "media"))
+            self.assertEqual(backend.NativeBackend().host_path("/catalog/movies"), str(link / "catalog" / "movies"))
+
+    def test_host_paths_hide_a_checkout_path_jellyfin_would_parse_as_an_episode(self):
+        # A self-hosted runner's workspace held `5b17-4d99`; Jellyfin's catch-all episode
+        # pattern `([0-9]+)-([0-9]+)` read it from the full path as S17E04 for every episode.
+        root = Path("/Users/someone/.homerun/runners/22b8179c-5b17-4d99-9a3e/_work/streamyfin/e2e/suites/syncplay")
+        with mock.patch.object(setup, "ROOT", root), mock.patch.object(setup, "STATE", root / ".state"):
+            for mount in ("/media", "/catalog/shows"):
+                path = backend.NativeBackend().host_path(mount)
+                self.assertIsNone(re.search(r"[0-9]+-[0-9]+", path), path)
+                self.assertFalse(any(character.isdigit() for character in path), path)
+                self.assertTrue(path.startswith(str(native.MEDIA_LINK_BASE) + "/"), path)
 
     def test_seerr_reaches_jellyfin_by_service_name_or_loopback(self):
         self.assertEqual(backend.DockerBackend().jellyfin_address_for_seerr(OWNED), ("jellyfin", 8096))
@@ -329,6 +344,76 @@ class OwnershipTest(unittest.TestCase):
                 self.assertIn("rewritten by Jellyfin", path.read_text())
 
 
+class MediaLinkTest(unittest.TestCase):
+    def test_the_tag_has_no_digit_and_differs_per_checkout(self):
+        tags = set()
+        for root in ("/Users/a/22b8179c-5b17-4d99", "/Users/b/streamyfin"):
+            with mock.patch.object(setup, "ROOT", Path(root)):
+                name = native.media_link().name
+            self.assertTrue(name.startswith(native.MEDIA_LINK_PREFIX), name)
+            self.assertFalse(any(character.isdigit() for character in name), name)
+            self.assertEqual(len(name), len(native.MEDIA_LINK_PREFIX) + native.MEDIA_LINK_TAG_LENGTH)
+            tags.add(name)
+        self.assertEqual(len(tags), 2)
+
+    def test_the_link_is_created_then_reused(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with native_checkout(root):
+                link = native.ensure_media_link()
+                self.assertEqual(link, native.media_link())
+                self.assertEqual(link.parent, root)
+                self.assertEqual(Path(os.readlink(link)), setup.STATE)
+                self.assertEqual(native.ensure_media_link(), link)
+                self.assertEqual(Path(os.readlink(link)), setup.STATE)
+
+    def test_a_link_to_elsewhere_or_a_real_folder_is_refused_and_kept(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with native_checkout(root):
+                link = native.media_link()
+                link.symlink_to(root / "another-checkout" / ".state")
+                with self.assertRaisesRegex(RuntimeError, str(link)):
+                    native.ensure_media_link()
+                self.assertEqual(Path(os.readlink(link)), root / "another-checkout" / ".state")
+                link.unlink()
+                link.mkdir()
+                with self.assertRaisesRegex(RuntimeError, str(link)):
+                    native.ensure_media_link()
+                self.assertTrue(link.is_dir() and not link.is_symlink())
+
+    def test_up_creates_the_link_before_jellyfin_starts(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with native_checkout(root), on_apple_silicon():
+                seen = []
+                with (
+                    mock.patch.object(native, "require_node"),
+                    mock.patch.object(native, "install_jellyfin"),
+                    mock.patch.object(native, "install_ffmpeg"),
+                    mock.patch.object(native, "install_seerr"),
+                    mock.patch.object(native, "start_jellyfin", side_effect=lambda owned: seen.append(native.media_link().is_symlink())),
+                    mock.patch.object(native, "start_seerr"),
+                ):
+                    backend.NativeBackend().up(NATIVE)
+                self.assertEqual(seen, [True])
+
+    def test_down_removes_only_this_checkouts_link(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with native_checkout(root), Processes({}).installed():
+                link = native.ensure_media_link()
+                backend.NativeBackend().down(NATIVE)
+                self.assertFalse(link.is_symlink())
+                link.symlink_to(root / "another-checkout" / ".state")
+                backend.NativeBackend().down(NATIVE)
+                self.assertTrue(link.is_symlink())
+                link.unlink()
+                link.mkdir()
+                backend.NativeBackend().down(NATIVE)
+                self.assertTrue(link.is_dir())
+
+
 class InstallTest(unittest.TestCase):
     def test_a_tampered_download_installs_nothing(self):
         with TemporaryDirectory() as directory:
@@ -474,25 +559,25 @@ class MappedPathsTest(unittest.TestCase):
             ):
                 seed.seed(inventory_path=inventory_path)
                 seed.seed(inventory_path=inventory_path)
+                link = native.media_link()
             self.assertEqual(
                 {name: data["LibraryOptions"]["PathInfos"] for name, data in posts},
                 {
-                    "Movies": [{"Path": str(state / "catalog" / "movies")}],
-                    "Shows": [{"Path": str(state / "catalog" / "shows")}],
-                    "Music": [{"Path": str(state / "catalog" / "music")}],
+                    "Movies": [{"Path": str(link / "catalog" / "movies")}],
+                    "Shows": [{"Path": str(link / "catalog" / "shows")}],
+                    "Music": [{"Path": str(link / "catalog" / "music")}],
                 },
             )
 
     def test_enrich_accepts_only_the_host_path_libraries(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            state = root / ".state"
 
             def folders(mapped):
                 return [
                     {
                         "Name": spec["name"], "CollectionType": spec["collectionType"], "ItemId": spec["name"],
-                        "Locations": [str(state / spec["mount"].lstrip("/")) if mapped else spec["mount"]],
+                        "Locations": [str(native.media_link() / spec["mount"].lstrip("/")) if mapped else spec["mount"]],
                     }
                     for spec in seed.LIBRARIES
                 ]

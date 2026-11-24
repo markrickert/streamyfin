@@ -100,8 +100,9 @@ class NativeBackend:
         native.restart_jellyfin(owned)
 
     def host_path(self, container_path):
-        """The host folder compose.yml mounts at container_path: /media is .state/media."""
-        return str(setup.STATE / container_path.lstrip("/"))
+        """The host path of the folder compose.yml mounts at container_path, read through the
+        media link: /media is <media link>/media, which resolves to .state/media."""
+        return str(native.media_link() / container_path.lstrip("/"))
 
     def jellyfin_address_for_seerr(self, owned):
         return (native.LOOPBACK, int(owned["SYNCPLAY_PORT"]))
