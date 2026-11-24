@@ -47,8 +47,11 @@ export class Fake implements Deps {
     return typeof outcome === "function" ? outcome(this, argv) : outcome;
   }
 
-  exec(argv: string[]): ExecResult {
+  execOpts: (Parameters<Deps["exec"]>[1] | undefined)[] = [];
+
+  exec(argv: string[], opts?: Parameters<Deps["exec"]>[1]): ExecResult {
     this.execLog.push(argv);
+    this.execOpts.push(opts);
     return this.result(argv);
   }
 
@@ -230,11 +233,23 @@ export function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     ["push /tmp/streamyfin-shots-fast-refresh-off.xml", ok],
     ["push /tmp/streamyfin-shots-dev-menu-fab-off.xml", ok],
     ["settings put", ok],
+    ["settings get", { code: 0, stdout: "null\n", stderr: "" }],
+    ["settings delete", ok],
+    [
+      "defaults read com.apple.Accessibility ReduceMotionEnabled",
+      { code: 1, stdout: "", stderr: "not found" },
+    ],
+    ["defaults write com.apple.Accessibility ReduceMotionEnabled", ok],
+    ["defaults delete com.apple.Accessibility ReduceMotionEnabled", ok],
     ["com.android.systemui.demo", ok],
     ["run-as", ok],
     // The phone emulator reports no leanback — pm exits 1 for "absent", which is the
     // real answer, not a failure.
     ["has-feature", { code: 1, stdout: "false\n", stderr: "" }],
+    [
+      "ro.product.cpu.abilist",
+      { code: 0, stdout: "arm64-v8a,armeabi-v7a,armeabi\n", stderr: "" },
+    ],
     ["reverse --list", { code: 0, stdout: "", stderr: "" }],
     ["reverse tcp:", ok],
     ["am start", ok],

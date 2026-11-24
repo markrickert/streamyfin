@@ -4,10 +4,48 @@ Compares two refs screen-for-screen on a development client: the runner switches
 checkout between the refs, serves each with its own Metro, captures the same shots three
 times — before, a fresh "noise" pass on the before build, after — and scores them with
 `compare.ts`, which judges a change only when it beats the run's own noise floor.
-The runner uses local debug clients, never CI release artifacts, and runs locally only,
-never in CI: it needs a simulator or emulator, Java for Maestro, and the SyncPlay
-fixture on either backend, Docker or native (`SYNCPLAY_BACKEND=native`, see
-`e2e/suites/syncplay/README.md`).
+The runner uses local debug clients, never CI release artifacts: it needs a simulator or
+emulator, Java for Maestro, and the SyncPlay fixture on either backend, Docker or native
+(`SYNCPLAY_BACKEND=native`, see `e2e/suites/syncplay/README.md`). All four platforms
+(`ios`, `apple-tv`, `android`, `android-tv`) run locally and on demand in
+`.github/workflows/e2e-screenshots.yml`.
+
+## CI
+
+`.github/workflows/e2e-screenshots.yml` runs on demand (never on `push`, `synchronize`,
+or `schedule`):
+
+- Apply the `run-screenshots` label to a pull request targeting `develop` or `master` to
+  run all four platforms (`origin/<base_ref>` against the PR head SHA; remove and re-add
+  the label to rerun).
+- Dispatch manually (`workflow_dispatch`) with `before` (required ref), optional `after`
+  (defaults to the dispatched ref), and `platforms` (comma-separated subset of
+  `ios,apple-tv,android,android-tv`, defaulting to all four).
+
+The `plan` job on `ubuntu-26.04` validates `platforms` and emits separate `apple` and
+`android` matrices, skipping either job when its list is empty:
+
+- **`ios` and `apple-tv` (`apple` job on `macos-latest`)**: uses the newest Xcode,
+  `SYNCPLAY_BACKEND=native`, and a fresh simulator. Apple silicon runners lack nested
+  virtualization, so they cannot run Docker or an Android emulator. `ios` runs
+  `ios-disable-autofill.sh` after boot; `apple-tv` does not.
+- **`android` and `android-tv` (`android` job on `ubuntu-26.04`)**: uses KVM, the
+  Docker fixture, and `reactivecircus/android-emulator-runner` on API 34 `x86_64`
+  (`google_apis` for `android`; `android-tv` with profile `tv_1080p` for `android-tv`).
+  Teardown runs `e2e:down` under `always()`, falling back to `sudo rm -rf` on
+  `e2e/suites/syncplay/.state` if Linux Docker wrote root-owned files there.
+
+Dev clients are shared across pull requests and branches as GitHub Actions artifacts named
+`shots-dev-client-<platform>-<hash>`, instead of per-branch `actions/cache` entries.
+Each client is uploaded as a tar so `.app` bundles keep their permissions and symlinks.
+The fetch hook downloads only non-expired artifacts whose `workflow_run.head_repository_id`
+matches this repository, so a fork PR cannot plant a binary under another run's fingerprint.
+Only trusted runs (same-repository pull requests, `push`, and `workflow_dispatch`) upload
+newly built clients; fork PRs reuse trusted artifacts and upload nothing.
+Built clients stay for 30 days because weekly native churn makes longer retention pointless.
+Jobs fail only on runner, build, or capture errors (including blank screenshots). Changed
+screens go to `$GITHUB_STEP_SUMMARY` (`summary.md`) and upload as
+`e2e-screenshots-<platform>-report` alongside `e2e-screenshots-<platform>-fixture-logs`.
 
 ## Commands
 
@@ -32,10 +70,24 @@ run installs over any copy of the app with the built app's exact id, and every c
 pass clears that app's data, so a copy you sign in to on the same device loses its data.
 On Android a copy signed with another key is uninstalled and installed again. On iOS
 the per-pass reset uninstalls and reinstalls only the built app, never the whole
-simulator. Physical devices are refused. A phone run freezes the status bar at 12:00
-with full signal and battery, and puts it back when it ends: System UI demo mode on
-Android (which also hides notification icons), `simctl status_bar` on iOS. On Android
-every run also turns stylus handwriting off.
+simulator. Physical devices are refused. Phone status bars are overridden for the run:
+Android System UI demo mode fixes the clock to 12:00, battery (100%, unplugged),
+Wi-Fi and cellular signal, hides notifications, Bluetooth, alarm, location and volume
+icons; iOS `simctl status_bar` fixes a UTC timestamp, Wi-Fi, cellular, operator and
+battery (the iOS status bar is also masked in comparisons). Android navigation bars
+are masked at the bottom of phone captures. Android phone and TV runs disable the
+window, transition and animator animation scales and stylus handwriting. iOS runs
+enable Reduce Motion. The runner reads these settings first and restores their
+previous values after success, a failed flow, or an interrupted run. Android demo
+mode and the iOS status bar override are cleared on cleanup.
+
+Phone search input bands are masked to hide the blinking caret. The Android flows
+also check that the bottom tab bar is visible after dismissing the keyboard before
+capturing search; a covered bar fails the pass. The Settings version/SHA band is
+widened to tolerate small vertical shifts. Masks do not cover the rest of a keyboard
+or changes outside those regions. Blank frames fail comparison before any masks are
+applied. Any persisted baseline recipe must include `lib/device.ts` as well as the
+flows and masks, so a change to these settings invalidates prior captures.
 
 1. Snapshots the suite's tooling (flows, run.sh, compare.ts, masks, `e2e/bench/maestro.py`)
    into `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot change the
@@ -46,12 +98,17 @@ every run also turns stylus handwriting off.
    `e2e:down` — the fixture stays up afterwards.
 3. For the before ref, then the after ref: `git switch --detach` (never `--force`),
    `bun install --frozen-lockfile` when the lockfile changed, `@expo/fingerprint` with the
-   platform's `EXPO_TV` (same recipe as `.github/workflows/build-apps.yml`), reuse of the
-   cached debug client in `e2e/reports/shots/build-cache/<platform>/<hash>` or a local
-   debug build (`./gradlew assembleDebug` / `xcodebuild … Debug`), install on the chosen
-   simulator/emulator, a runner-owned `expo start --dev-client --clear` on a port it proved
-   free first, then each capture pass as one parent Maestro invocation with `--env`
-   forwarded by `run.sh`.
+   platform's `EXPO_TV` (same recipe as `.github/workflows/build-apps.yml`), and resolving
+   the debug client in three steps: check the local cache at
+   `e2e/reports/shots/build-cache/<platform>/<hash>`, run `SHOTS_BUILD_CACHE_FETCH` as
+   `<exe> <platform> <hash> <cacheDir>` on a miss (falling back to a local build on any
+   failure), or prebuild and build locally (`./gradlew assembleDebug` / `xcodebuild … Debug`).
+   Each ref's `{ ref, platform, hash, source, path }` is written to `<session>/build-cache.json`.
+   `<hash>` is `<fingerprint>-<recipe>`, where `DEV_CLIENT_RECIPE` in `lib/build.ts` versions how the runner builds; bump it when a runner change alters the native output, since the fingerprint cannot see it.
+   On Android, the runner reads the emulator's first ABI from `ro.product.cpu.abilist`, passes `-PreactNativeArchitectures=<abi>` to Gradle, and appends `-<abi>` to `<hash>` so clients never cross ABIs.
+   Then install on the chosen simulator/emulator, start a runner-owned
+   `expo start --dev-client --clear` on a port it proved free first, and run each capture
+   pass as one parent Maestro invocation with `--env` forwarded by `run.sh`.
 4. `compare.ts --before … --noise … --after …` with the platform masks; the report and
    changed-screen evidence land in the session directory.
 

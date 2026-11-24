@@ -33,11 +33,12 @@ const deps: Deps = {
       env: { ...process.env, ...opts?.env },
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
+      ...(opts?.timeoutMs !== undefined ? { timeout: opts.timeoutMs } : {}),
     });
     return {
       code: result.status ?? 1,
       stdout: result.stdout ?? "",
-      stderr: result.stderr ?? "",
+      stderr: result.stderr || result.error?.message || "",
     };
   },
   spawn(argv, opts) {

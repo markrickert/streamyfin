@@ -64,6 +64,11 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Iron Man.*"
     timeout: 30000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible: "More"
 - extendedWaitUntil:
     visible: "__settle__"
     timeout: 6000

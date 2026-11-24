@@ -1,5 +1,6 @@
+import { DEV_CLIENT_RECIPE } from "./build";
 import { type Cli, ShotError } from "./core";
-import { doctor, runComparison } from "./run";
+import { doctor, metroBundleUrl, runComparison } from "./run";
 import {
   execs,
   Fake,
@@ -10,9 +11,10 @@ import {
   PASSWORD,
   REPO,
   runCli,
+  SIMCTL_JSON,
   seed,
 } from "./testing";
-import { MAESTRO_SHA256, MAESTRO_TAG } from "./tooling";
+import { DEFAULT_PORT, MAESTRO_SHA256, MAESTRO_TAG } from "./tooling";
 
 describe("doctor", () => {
   const doctorCli: Cli = { command: "doctor", platform: "android" };
@@ -401,7 +403,45 @@ describe("runComparison boundaries", () => {
     expect(error.message).not.toContain(PASSWORD);
   });
 
-  it("launches Android through an explicit -p package and warms the JS bundle first", async () => {
+  it("includes the masked tail of stdout when a flow fails with empty stderr", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "pass-mobile.yml",
+      {
+        code: 1,
+        stdout: `${"prefix-".repeat(120)}\nElement not found: Done (${PASSWORD})`,
+        stderr: "",
+      },
+    ]);
+    const error = await runComparison(f, runCli, REPO).catch((e) => e);
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("Element not found: Done (***)");
+    expect(error.message).not.toContain(PASSWORD);
+    expect(error.message.length).toBeLessThan(700);
+  });
+
+  it("includes both stderr and stdout tail when both are present, both masked", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "pass-mobile.yml",
+      {
+        code: 1,
+        stdout: `${"line\n".repeat(150)}stdout tail ${PASSWORD}`,
+        stderr: `stderr head ${PASSWORD}`,
+      },
+    ]);
+    const error = await runComparison(f, runCli, REPO).catch((e) => e);
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("stderr head ***");
+    expect(error.message).toContain("stdout tail ***");
+    expect(error.message).not.toContain(PASSWORD);
+  });
+
+  it("launches Android through an explicit -p package and warms the exact dev-client JS bundle first", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
@@ -415,10 +455,87 @@ describe("runComparison boundaries", () => {
       expect(joined).toContain("-p com.example.streamyfin.debug");
       expect(joined).not.toMatch(/VIEW -d \S+ com\.example/);
     }
-    const bundleWaits = f.waits.filter((w) =>
-      w.url.includes("index.bundle?platform=android"),
+    const expectedWarmUrl = metroBundleUrl("android", DEFAULT_PORT);
+    expect(expectedWarmUrl).toBe(
+      `http://127.0.0.1:${DEFAULT_PORT}/index.ts.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`,
     );
-    expect(bundleWaits.length).toBeGreaterThanOrEqual(2);
+    const bundleWaits = f.waits.filter((w) => w.url === expectedWarmUrl);
+    expect(bundleWaits).toHaveLength(2);
+    for (const wait of bundleWaits)
+      expect(wait.needle).toBe("__BUNDLE_START_TIME__");
+  });
+
+  it("warms the exact iOS dev-client bundle URL for both ios and apple-tv and leaves Apple cache keys unchanged", async () => {
+    for (const [platform, device, sdk] of [
+      ["ios", "UDID-PHONE", "iphonesimulator"],
+      ["apple-tv", "UDID-TV", "appletvsimulator"],
+    ] as const) {
+      const f = new Fake();
+      seed(f);
+      happyRoutes(f);
+      const outDir = `${REPO}/e2e/reports/shots/test-${platform}`;
+      f.routes.push(
+        [
+          "list devices",
+          { code: 0, stdout: JSON.stringify(SIMCTL_JSON), stderr: "" },
+        ],
+        [
+          "pod install",
+          (fake) => {
+            fake.dirs.add(`${REPO}/ios`);
+            fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+            return ok;
+          },
+        ],
+        [
+          "xcodebuild",
+          (fake, argv) => {
+            const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+            fake.dirs.add(`${derived}/Build/Products/Debug-${sdk}`);
+            fake.dirs.add(
+              `${derived}/Build/Products/Debug-${sdk}/Streamyfin.app`,
+            );
+            return ok;
+          },
+        ],
+        [
+          "PlistBuddy",
+          { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+        ],
+        ["status_bar", ok],
+        ["simctl uninstall", ok],
+        ["simctl install", ok],
+        [
+          "get_app_container",
+          { code: 0, stdout: "/sim/container\n", stderr: "" },
+        ],
+        ["plutil", ok],
+        ["simctl openurl", ok],
+      );
+
+      await runComparison(f, { ...runCli, platform, device, outDir }, REPO);
+
+      // Without EXPO_TV=1, `react-native.config.js` autolinks iOS-only pods into a
+      // tvOS build, and the app crashes at launch on their missing Fabric classes.
+      const podInstalls = f.execLog
+        .map((argv, i) => ({ argv, opts: f.execOpts[i] }))
+        .filter(({ argv }) => argv.join(" ") === "pod install");
+      expect(podInstalls.length).toBeGreaterThan(0);
+      for (const { opts } of podInstalls)
+        expect(opts?.env?.EXPO_TV).toBe(platform === "apple-tv" ? "1" : "0");
+
+      const expectedWarmUrl = metroBundleUrl("ios", DEFAULT_PORT);
+      expect(expectedWarmUrl).toBe(
+        `http://127.0.0.1:${DEFAULT_PORT}/index.ts.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`,
+      );
+      expect(f.waits.filter((w) => w.url === expectedWarmUrl)).toHaveLength(2);
+      expect(execs(f, "ro.product.cpu.abilist")).toHaveLength(0);
+      const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+      expect(manifest[0].hash).toBe(`fp-1-${DEV_CLIENT_RECIPE}`);
+      expect(manifest[0].path).toBe(
+        `${REPO}/e2e/reports/shots/build-cache/${platform}/fp-1-${DEV_CLIENT_RECIPE}/Streamyfin.app`,
+      );
+    }
   });
 
   it("restores native dirs even when the git restore itself is refused", async () => {
@@ -436,5 +553,171 @@ describe("runComparison boundaries", () => {
       /could not switch back/,
     );
     expect(f.files.get(`${REPO}/android/user-file.txt`)).toBe("mine");
+  });
+});
+
+describe("runComparison build-cache manifest", () => {
+  const outDir = `${REPO}/e2e/reports/shots/test-session`;
+
+  it("records built then local with <fingerprint>-<abi> when before and after share a fingerprint on Android", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes = f.routes.filter(
+      ([needle]) =>
+        needle !== "has-feature" && needle !== "ro.product.cpu.abilist",
+    );
+    f.routes.push(
+      ["has-feature", { code: 0, stdout: "true\n", stderr: "" }],
+      [
+        "ro.product.cpu.abilist",
+        { code: 0, stdout: "x86,armeabi-v7a\n", stderr: "" },
+      ],
+    );
+    await runComparison(f, { ...runCli, platform: "android-tv", outDir }, REPO);
+    expect(execs(f, "ro.product.cpu.abilist")).toHaveLength(1);
+    expect(execs(f, "assembleDebug")[0]).toContain(
+      "-PreactNativeArchitectures=x86",
+    );
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest).toEqual([
+      {
+        ref: "before",
+        platform: "android-tv",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        source: "built",
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+      },
+      {
+        ref: "after",
+        platform: "android-tv",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        source: "local",
+        path: `${REPO}/e2e/reports/shots/build-cache/android-tv/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+      },
+    ]);
+  });
+
+  it("skips prebuild and records fetched with <fingerprint>-<abi> when the fetch hook populates the cache", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        expect(argv[2]).toBe(`fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`);
+        const cacheDir = argv[3];
+        fake.dirs.add(cacheDir);
+        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    expect(execs(f, "bun run prebuild")).toHaveLength(0);
+    expect(execs(f, "assembleDebug")).toHaveLength(0);
+    expect(execs(f, "fetch-dev-client.py")).toHaveLength(1);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest).toEqual([
+      {
+        ref: "before",
+        platform: "android",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
+        source: "fetched",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
+      },
+      {
+        ref: "after",
+        platform: "android",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
+        source: "local",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
+      },
+    ]);
+  });
+
+  it("falls back to prebuild and build when the fetch hook fails", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      { code: 1, stdout: "", stderr: "no artifact\n" },
+    ]);
+
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    expect(execs(f, "bun run prebuild")).toHaveLength(1);
+    expect(execs(f, "assembleDebug")).toHaveLength(1);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest[0].source).toBe("built");
+    expect(manifest[1].source).toBe("local");
+  });
+});
+
+describe("runComparison progress", () => {
+  it("logs one line at each phase boundary with short fingerprint, build source, and elapsed time", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "@expo/fingerprint fingerprint:generate",
+      {
+        code: 0,
+        stdout: JSON.stringify({
+          hash: "abcdef0123456789deadbeef",
+          sources: [{ id: "expoConfig" }],
+        }),
+        stderr: "",
+      },
+    ]);
+
+    await runComparison(f, runCli, REPO);
+
+    expect(f.logs).toEqual([
+      "building before (android, fingerprint abcdef01)",
+      expect.stringMatching(
+        /^building before \(android, fingerprint abcdef01\): built \(\d+(?:m\d+)?s\)$/,
+      ),
+      "installing",
+      "starting Metro",
+      "capturing before",
+      "capturing noise",
+      "building after (android, fingerprint abcdef01)",
+      expect.stringMatching(
+        /^building after \(android, fingerprint abcdef01\): local \(\d+(?:m\d+)?s\)$/,
+      ),
+      "installing",
+      "starting Metro",
+      "capturing after",
+      "comparing",
+    ]);
+  });
+
+  it("reports fetched as the build source when the remote build cache hits", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.env.SHOTS_BUILD_CACHE_FETCH = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const cacheDir = argv[3];
+        fake.dirs.add(cacheDir);
+        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+
+    await runComparison(f, runCli, REPO);
+
+    expect(
+      f.logs.some((line) =>
+        /^building before \(android, fingerprint fp-1\): fetched \(\d+(?:m\d+)?s\)$/.test(
+          line,
+        ),
+      ),
+    ).toBe(true);
   });
 });

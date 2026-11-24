@@ -120,7 +120,39 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - scrollUntilVisible:
     element: "^(.*, )?Show(,.*)?$"
-- tapOn: "^(.*, )?Show(,.*)?$"
+# Android TV's TVPosterCard puts the title TextView outside its unlabeled Pressable, as
+# a sibling in one flat grid, so no selector reaches the card. Focus it with the D-pad
+# instead: Down leaves the toolbar for the one seeded row, then Right moves until the
+# focused card sits right of "Rocky Jones, Space Ranger", the show sorted before
+# "Show". Apple TV keeps the direct tap.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+      - repeat:
+          times: 4
+          while:
+            notVisible:
+              focused: true
+              above: "^(.*, )?Show(,.*)?$"
+              rightOf: "Rocky Jones, Space Ranger"
+          commands:
+            - pressKey: Remote Dpad Right
+            - extendedWaitUntil:
+                visible: "__settle__"
+                timeout: 1500
+                optional: true
+      - pressKey: Remote Dpad Center
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - tapOn: "^(.*, )?Show(,.*)?$"
 - extendedWaitUntil:
     visible: ".*Season.*|.*Pilot.*"
     timeout: 30000

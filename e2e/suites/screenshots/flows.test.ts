@@ -1,6 +1,29 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// Compare masks must cover the device chrome and volatile text without hiding the
+// rest of a captured screen. Blank detection happens before masks are applied.
+describe("phone capture masks", () => {
+  it.each(["ios", "android"])(
+    "%s hides search carets and shifted Settings version text",
+    (platform) => {
+      const masks = JSON.parse(
+        readFileSync(join(__dirname, `masks-${platform}-phone.json`), "utf8"),
+      );
+      expect(masks["02-search"].length).toBeGreaterThan(0);
+      expect(masks["11-seerr-search"].length).toBeGreaterThan(0);
+      const settings = masks["05-settings"][0];
+      expect(settings[3]).toBeGreaterThan(0.1);
+    },
+  );
+  it("Android navigation bar cannot drift into a report", () => {
+    const masks = JSON.parse(
+      readFileSync(join(__dirname, "masks-android-phone.json"), "utf8"),
+    );
+    expect(masks["*"]).toContainEqual([0, 0.96, 1, 0.04]);
+  });
+});
+
 // js-yaml ships no types; keep the require (typed) rather than adding @types/js-yaml
 // for one test block.
 const { loadAll: loadAllYaml } = require("js-yaml") as {
@@ -16,6 +39,40 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
       readFileSync(join(__dirname, "flows", file), "utf8"),
     )[1] as Command[];
   const poster = { id: "seerr-poster-194310" };
+
+  // Android TV's result cards carry no title label and TMDB orders them live, so the
+  // flow focuses the 1931 card with the D-pad: Right while the focused card is leftOf
+  // the "1931" year (the year text is inset in its own card), then one Left. The
+  // keyboard must be closed first, or it hides the results.
+  it("seerr-tv.yml focuses the 1931 result by the D-pad on Android TV only", () => {
+    const cmds = commandsOf("seerr-tv.yml");
+    const androidSearch = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.true?.includes("!= '1'") &&
+        cmd.runFlow.commands.some((c: Command) => c.inputText),
+    );
+    expect(androidSearch?.runFlow.commands).toContainEqual("hideKeyboard");
+    const androidPick = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.notVisible?.id === poster.id &&
+        cmd.runFlow.when.true?.includes("!= '1'"),
+    );
+    const picks = androidPick?.runFlow.commands as Command[];
+    expect(picks.find((c) => c.repeat)?.repeat.while.visible).toEqual({
+      focused: true,
+      leftOf: "1931",
+    });
+    expect(picks.slice(-1)).toEqual([{ pressKey: "Remote Dpad Center" }]);
+    expect(JSON.stringify(picks)).not.toContain("tapOn");
+    const appleFallback = cmds.find(
+      (cmd) =>
+        cmd.runFlow?.when?.notVisible?.id === poster.id &&
+        cmd.runFlow.when.true?.includes("== '1'"),
+    );
+    expect(appleFallback?.runFlow.commands).toEqual([
+      { tapOn: ".*Iron Man, 1931" },
+    ]);
+  });
 
   // The two branches are separate checks, run one after the other. With the testID
   // branch first, its tap opens the detail page, where the poster is gone, so the
@@ -126,7 +183,11 @@ describe("capture pass parents", () => {
     ).toBe("Bottom Sheet");
     expect(
       branches
-        .find((command) => command.runFlow.when.platform === "Android")
+        .find(
+          (command) =>
+            command.runFlow.when.platform === "Android" &&
+            command.runFlow.commands.at(-1)?.extendedWaitUntil,
+        )
         ?.runFlow.commands.at(-1)?.extendedWaitUntil?.visible,
     ).toBe(".* items");
   });
@@ -145,6 +206,50 @@ describe("capture pass parents", () => {
     },
   );
 
+  // On Android TV, TVPosterCard renders the title TextView outside its unlabeled
+  // Pressable, so neither the title nor `above:` reaches the card (`above:` picked the
+  // focused toolbar button). Focus the card with the D-pad, leaving Apple TV's tap.
+  it("tv.yml focuses the Show card with the D-pad on Android TV without changing Apple TV", () => {
+    const cmds = commandsOf("tv.yml");
+    const branches = cmds.filter((cmd) =>
+      String(cmd.runFlow?.when?.true ?? "").includes("MAESTRO_TVOS"),
+    );
+    expect(branches).toHaveLength(2);
+    const androidTv = branches.find((cmd) =>
+      cmd.runFlow.when.true.includes("!= '1'"),
+    );
+    const appleTv = branches.find((cmd) =>
+      cmd.runFlow.when.true.includes("== '1'"),
+    );
+    const androidCmds = androidTv?.runFlow.commands as Command[];
+    expect(androidCmds[0]).toEqual({ pressKey: "Remote Dpad Down" });
+    const moveRight = androidCmds.find((cmd) => cmd.repeat)?.repeat;
+    expect(moveRight.while.notVisible).toEqual({
+      focused: true,
+      above: "^(.*, )?Show(,.*)?$",
+      rightOf: "Rocky Jones, Space Ranger",
+    });
+    expect(moveRight.commands[0]).toEqual({ pressKey: "Remote Dpad Right" });
+    expect(androidCmds.at(-1)).toEqual({ pressKey: "Remote Dpad Center" });
+    expect(JSON.stringify(androidCmds)).not.toContain("tapOn");
+    expect(appleTv?.runFlow.commands).toEqual([
+      { tapOn: "^(.*, )?Show(,.*)?$" },
+    ]);
+  });
+
+  it("waits for rendered Home content after every relaunch in mobile.yml instead of the racy Home label", () => {
+    const cmds = commandsOf("mobile.yml");
+    const relaunches = cmds
+      .map((cmd, index) => ({ cmd, index }))
+      .filter(({ cmd }) => String(cmd) === "launchApp");
+    expect(relaunches.length).toBeGreaterThan(1);
+    for (const { index } of relaunches.slice(1)) {
+      expect(cmds[index + 1].extendedWaitUntil?.visible).toBe(
+        ".*Recently added.*",
+      );
+    }
+  });
+
   it("the parents take no screenshots themselves", () => {
     for (const file of ["pass-mobile.yml", "pass-tv.yml"])
       expect(screenshotNames(commandsOf(file))).toHaveLength(0);
@@ -158,29 +263,55 @@ describe("bootstrap-login first-run overlays", () => {
       readFileSync(join(__dirname, "flows", file), "utf8"),
     )[1] as Command[];
 
-  // The picker step comes first: the link it opens raises the iOS "Open in" prompt,
-  // which the next step accepts.
-  it("reconnects from the server picker, accepts the open-in prompt, then dismisses the onboarding sheet and dev menu in order", () => {
+  // The ANR step runs first so an Android system dialog never blocks the dev overlays,
+  // then the picker step opens the runner's link, and the open-in alert branches on
+  // tvOS (where PineBoard focuses Open and ignores tapOn).
+  it("dismisses Android ANRs, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
-    expect(cmds).toHaveLength(4);
-    expect(cmds[0].runFlow.when.visible).toBe("Fetch development servers");
+    expect(cmds).toHaveLength(6);
+    expect(cmds[0].runFlow.when.visible).toBe(".*isn't responding.*");
     expect(cmds[0].runFlow.commands).toEqual([
+      { tapOn: "Wait" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[1].runFlow.when.visible).toBe(
+      "Fetch development servers|Searching for development servers.*",
+    );
+    const picker = new RegExp(cmds[1].runFlow.when.visible);
+    expect(picker.test("Fetch development servers")).toBe(true);
+    expect(picker.test("Searching for development servers...")).toBe(true);
+    expect(picker.test("Home")).toBe(false);
+    expect(cmds[1].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
       { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[1].runFlow.when.visible).toBe("Open in .*");
-    expect(cmds[1].runFlow.commands).toEqual([
+    expect(cmds[2].runFlow.when).toEqual({
+      visible: "Open in .*",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      true: "${MAESTRO_TVOS != '1'}",
+    });
+    expect(cmds[2].runFlow.commands).toEqual([
       { tapOn: "Open" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[2].runFlow.when.visible).toBe("Continue");
-    expect(cmds[2].runFlow.commands).toEqual([
+    expect(cmds[3].runFlow.when).toEqual({
+      visible: "Open in .*",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      true: "${MAESTRO_TVOS == '1'}",
+    });
+    expect(cmds[3].runFlow.commands).toEqual([
+      { pressKey: "Remote Dpad Center" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[4].runFlow.when.visible).toBe("Continue");
+    expect(cmds[4].runFlow.commands).toEqual([
       { tapOn: "Continue" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[3].runFlow.when.visible).toBe("Go home");
-    expect(cmds[3].runFlow.commands).toEqual([
+    expect(cmds[5].runFlow.when.visible).toBe("Go home");
+    expect(cmds[5].runFlow.commands).toEqual([
+      { extendedWaitUntil: { visible: "Close", timeout: 10000 } },
       { tapOn: "Close" },
       "waitForAnimationToEnd",
     ]);

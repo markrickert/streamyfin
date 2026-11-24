@@ -44,6 +44,7 @@ describe("device setup", () => {
       "-e command network -e wifi show -e level 4",
       "-e command network -e mobile show -e datatype none -e level 4",
       "-e command notifications -e visible false",
+      "-e command status -e bluetooth hide -e alarm hide -e location hide -e volume hide",
     ])
       expect(commands.some((c) => c.includes(value))).toBe(true);
     expect(trace.findIndex((a) => a.includes("-e command enter"))).toBeLessThan(
@@ -57,6 +58,78 @@ describe("device setup", () => {
     happyRoutes(f);
     await runComparison(f, runCli, REPO);
     expect(demo(f).at(-1)).toContain("-e command exit");
+  });
+
+  // Local runs must leave the emulator's animation and input settings as they found them.
+  it.each([false, true])(
+    "restores Android device settings after flow failure=%s",
+    async (fail) => {
+      const f = new Fake();
+      seed(f);
+      happyRoutes(f);
+      f.routes.unshift([
+        "settings get",
+        (_f, argv) => ({
+          code: 0,
+          stdout:
+            argv.at(-1) === "stylus_handwriting_enabled" ? "1\n" : "0.5\n",
+          stderr: "",
+        }),
+      ]);
+      if (fail)
+        f.routes.push([
+          "pass-mobile.yml",
+          { code: 1, stdout: "", stderr: "boom" },
+        ]);
+      if (fail)
+        await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
+      else await runComparison(f, runCli, REPO);
+      const trace = f.execLog.map((a) => a.join(" "));
+      for (const scale of [
+        "window_animation_scale",
+        "transition_animation_scale",
+        "animator_duration_scale",
+      ]) {
+        expect(trace).toContain(
+          `adb -s emulator-5554 shell settings put global ${scale} 0`,
+        );
+        expect(trace).toContain(
+          `adb -s emulator-5554 shell settings put global ${scale} 0.5`,
+        );
+      }
+      expect(trace).toContain(
+        "adb -s emulator-5554 shell settings put secure stylus_handwriting_enabled 1",
+      );
+      expect(trace).toContain(
+        "adb -s emulator-5554 shell settings put global sysui_demo_allowed 0.5",
+      );
+      expect(
+        trace.indexOf(
+          `adb -s emulator-5554 shell settings put global window_animation_scale 0`,
+        ),
+      ).toBeLessThan(trace.findIndex((s) => s.includes("pm clear")));
+    },
+  );
+
+  it("restores Android TV animation scales even when setup fails halfway", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.unshift([
+      "has-feature",
+      { code: 0, stdout: "true\n", stderr: "" },
+    ]);
+    f.routes.push(["settings get", { code: 0, stdout: "null\n", stderr: "" }]);
+    f.routes.push([
+      "settings put global transition_animation_scale 0",
+      { code: 1, stdout: "", stderr: "denied" },
+    ]);
+    await expect(
+      runComparison(f, { ...runCli, platform: "android-tv" }, REPO),
+    ).rejects.toThrow(/animation/);
+    expect(
+      execs(f, "settings delete global window_animation_scale"),
+    ).toHaveLength(1);
   });
 
   it("leaves demo mode when a flow fails", async () => {
@@ -96,45 +169,136 @@ describe("device setup", () => {
 
   it("turns stylus handwriting off on Android TV but leaves its status bar alone", () => {
     const f = new Fake();
-    f.routes.push(["settings put", ok]);
+    f.routes.push(
+      ["settings put", ok],
+      ["settings get", { code: 0, stdout: "null\n", stderr: "" }],
+    );
     prepareDevice(f, "android-tv", "emulator-5556");
-    expect(execs(f, "stylus_handwriting_enabled")).toHaveLength(1);
+    expect(
+      execs(f, "settings put secure stylus_handwriting_enabled"),
+    ).toHaveLength(1);
     expect(execs(f, "com.android.systemui.demo")).toHaveLength(0);
     expect(execs(f, "sysui_demo_allowed")).toHaveLength(0);
   });
 
   it("freezes the iPhone status bar with the same values as the Android phone", () => {
     const f = new Fake();
-    f.routes.push(["status_bar", ok]);
+    f.routes.push(
+      ["status_bar", ok],
+      ["defaults read", { code: 1, stdout: "", stderr: "not found" }],
+      ["defaults write", ok],
+    );
     prepareDevice(f, "ios", "UDID");
-    expect(f.execLog).toEqual([
-      [
-        "xcrun",
-        "simctl",
-        "status_bar",
-        "UDID",
-        "override",
-        "--time",
-        new Date(2026, 0, 1, 12).toISOString(),
-        "--dataNetwork",
-        "wifi",
-        "--wifiMode",
-        "active",
-        "--wifiBars",
-        "3",
-        "--cellularMode",
-        "active",
-        "--cellularBars",
-        "4",
-        "--operatorName",
-        "",
-        "--batteryState",
-        "charged",
-        "--batteryLevel",
-        "100",
-      ],
+    expect(f.execLog.at(-1)).toEqual([
+      "xcrun",
+      "simctl",
+      "status_bar",
+      "UDID",
+      "override",
+      "--time",
+      "2026-01-01T12:00:00.000Z",
+      "--dataNetwork",
+      "wifi",
+      "--wifiMode",
+      "active",
+      "--wifiBars",
+      "3",
+      "--cellularMode",
+      "active",
+      "--cellularBars",
+      "4",
+      "--operatorName",
+      "",
+      "--batteryState",
+      "charged",
+      "--batteryLevel",
+      "100",
     ]);
   });
+
+  it.each([false, true])(
+    "restores iOS Reduce Motion after flow failure=%s",
+    async (fail) => {
+      const f = simctlFake();
+      seed(f);
+      happyRoutes(f);
+      f.routes.push(["status_bar", ok]);
+      f.routes.unshift([
+        "defaults read com.apple.Accessibility ReduceMotionEnabled",
+        { code: 0, stdout: "0\n", stderr: "" },
+      ]);
+      f.routes.push([
+        "defaults write com.apple.Accessibility ReduceMotionEnabled",
+        ok,
+      ]);
+      f.routes.push(
+        [
+          "pod install",
+          (fake) => {
+            fake.dirs.add(`${REPO}/ios`);
+            fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+            return ok;
+          },
+        ],
+        [
+          "xcodebuild",
+          (fake, argv) => {
+            const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+            fake.dirs.add(`${derived}/Build/Products/Debug-iphonesimulator`);
+            fake.dirs.add(
+              `${derived}/Build/Products/Debug-iphonesimulator/Streamyfin.app`,
+            );
+            return ok;
+          },
+        ],
+        [
+          "PlistBuddy",
+          { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+        ],
+        ["simctl uninstall", ok],
+        ["simctl install", ok],
+        [
+          "get_app_container",
+          { code: 0, stdout: "/sim/container\n", stderr: "" },
+        ],
+        ["plutil", ok],
+        ["simctl openurl", ok],
+      );
+      if (fail)
+        f.routes.push([
+          "pass-mobile.yml",
+          { code: 1, stdout: "", stderr: "boom" },
+        ]);
+      if (fail)
+        await expect(
+          runComparison(
+            f,
+            { ...runCli, platform: "ios", device: "UDID-PHONE" },
+            REPO,
+          ),
+        ).rejects.toThrow(ShotError);
+      else
+        await runComparison(
+          f,
+          { ...runCli, platform: "ios", device: "UDID-PHONE" },
+          REPO,
+        );
+      const trace = f.execLog.map((a) => a.join(" "));
+      expect(trace).toContain(
+        "xcrun simctl spawn UDID-PHONE defaults write com.apple.Accessibility ReduceMotionEnabled -bool YES",
+      );
+      expect(trace).toContain(
+        "xcrun simctl spawn UDID-PHONE defaults write com.apple.Accessibility ReduceMotionEnabled -bool NO",
+      );
+      expect(
+        trace.indexOf(
+          "xcrun simctl spawn UDID-PHONE defaults write com.apple.Accessibility ReduceMotionEnabled -bool YES",
+        ),
+      ).toBeLessThan(
+        trace.findIndex((s) => s.includes("status_bar UDID-PHONE override")),
+      );
+    },
+  );
 
   it("does nothing on Apple TV, which has no status bar", () => {
     const f = new Fake();

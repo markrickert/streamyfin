@@ -1,6 +1,7 @@
 import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import ignore from "ignore";
+import { PLATFORMS } from "./e2e/suites/screenshots/lib/core";
 
 // The CI workflows name modules, paths and commands by hand, and nothing fails
 // when one of those lists falls behind the tree: the workflow stays green while
@@ -355,24 +356,217 @@ describe("e2e-tier1-android.yml", () => {
   });
 });
 
-describe.each(["native-tests.yml", "e2e-tier1-android.yml"])(
-  "%s checkouts",
-  (name) => {
-    // Every job installs and builds the pull request's own code after its
-    // checkout, which would otherwise leave a usable token in .git/config, as
-    // build-apps.yml already avoids.
-    const checkouts = withoutComments(readWorkflow(name))
-      .split(/\n(?=[ \t]*- (?:name|uses): )/)
-      .filter((step) => /uses: actions\/checkout@/.test(step));
+const { load: loadYaml } = require("js-yaml") as {
+  load: (src: string) => Record<string, unknown>;
+};
 
-    test("none keeps the token after the checkout", () => {
-      expect(checkouts).not.toEqual([]);
-      expect(
-        checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
-      ).toEqual([]);
+describe.each([
+  "native-tests.yml",
+  "e2e-tier1-android.yml",
+  "e2e-screenshots.yml",
+])("%s checkouts", (name) => {
+  // Every job installs and builds the pull request's own code after its
+  // checkout, which would otherwise leave a usable token in .git/config, as
+  // build-apps.yml already avoids.
+  const checkouts = withoutComments(readWorkflow(name))
+    .split(/\n(?=[ \t]*- (?:name|uses): )/)
+    .filter((step) => /uses: actions\/checkout@/.test(step));
+
+  test("none keeps the token after the checkout", () => {
+    expect(checkouts).not.toEqual([]);
+    expect(
+      checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
+    ).toEqual([]);
+  });
+});
+
+describe("e2e-screenshots.yml", () => {
+  type Step = {
+    id?: string;
+    name?: string;
+    if?: string;
+    uses?: string;
+    run?: string;
+    env?: Record<string, string>;
+    with?: Record<string, unknown>;
+  };
+  type Job = {
+    if?: string;
+    needs?: string | string[];
+    "runs-on"?: string;
+    permissions?: Record<string, string>;
+    strategy?: { "fail-fast"?: boolean; matrix?: string };
+    steps?: Step[];
+  };
+  const rawWorkflow = readWorkflow("e2e-screenshots.yml");
+  const workflow = loadYaml(rawWorkflow) as {
+    on: Record<string, unknown>;
+    permissions: Record<string, string>;
+    concurrency: { group: string };
+    jobs: Record<string, Job>;
+  };
+
+  test("triggers only on demand (PR label or manual dispatch)", () => {
+    expect(Object.keys(workflow.on).sort()).toEqual([
+      "pull_request",
+      "workflow_dispatch",
+    ]);
+    const pr = workflow.on.pull_request as {
+      types?: string[];
+      branches?: string[];
+    };
+    expect(pr.types).toEqual(["labeled"]);
+    expect(pr.branches).toEqual(["develop", "master"]);
+    expect(workflow.jobs.plan.if).toContain(
+      "github.event.label.name == 'run-screenshots'",
+    );
+    const dispatch = workflow.on.workflow_dispatch as {
+      inputs?: {
+        before?: { required?: boolean };
+        after?: unknown;
+        platforms?: { default?: string };
+      };
+    };
+    expect(dispatch.inputs?.before?.required).toBe(true);
+    expect(dispatch.inputs?.after).toBeDefined();
+    expect(
+      dispatch.inputs?.platforms?.default
+        ?.split(",")
+        .map((p) => p.trim())
+        .sort(),
+    ).toEqual([...PLATFORMS].sort());
+  });
+
+  test("uses minimal read permissions and the expected runner per job", () => {
+    // Apple jobs use the native fixture on macos-latest because Apple silicon
+    // runners cannot run Docker or an Android emulator.
+    expect(workflow.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs.apple.permissions).toEqual({
+      contents: "read",
+      actions: "read",
     });
-  },
-);
+    expect(workflow.jobs.android.permissions).toEqual({
+      contents: "read",
+      actions: "read",
+    });
+    expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
+    expect(workflow.jobs.apple["runs-on"]).toBe("macos-latest");
+    expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
+  });
+
+  test("another label never cancels a running comparison", () => {
+    // Every label fires a run; one sharing the group would cancel the screenshot job.
+    expect(workflow.concurrency.group).toContain("github.event.label.name");
+  });
+
+  test("plan job covers every suite platform", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const appleBlock = planScript.match(/APPLE\s*=\s*\{([\s\S]*?)\n\}/)?.[1];
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(appleBlock).toBeDefined();
+    expect(androidBlock).toBeDefined();
+
+    const extractKeys = (block: string) =>
+      [...block.matchAll(/^\s*"([^"]+)":\s*\{/gm)].map((m) => m[1]);
+    const planned = [
+      ...extractKeys(appleBlock!),
+      ...extractKeys(androidBlock!),
+    ];
+    expect(planned.sort()).toEqual([...PLATFORMS].sort());
+
+    expect(workflow.jobs.apple.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.apple.strategy?.matrix).toContain(
+      "needs.plan.outputs.apple",
+    );
+    expect(workflow.jobs.android.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.android.strategy?.matrix).toContain(
+      "needs.plan.outputs.android",
+    );
+  });
+
+  test("every Android matrix entry has a non-empty emulator profile", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(androidBlock).toBeDefined();
+
+    const entries = [...androidBlock!.matchAll(/"([^"]+)":\s*\{([^}]+)\}/g)];
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [, name, body] of entries) {
+      const profile = body.match(/"profile":\s*"([^"]*)"/)?.[1] ?? "";
+      expect({ name, hasProfile: profile.trim().length > 0 }).toEqual({
+        name,
+        hasProfile: true,
+      });
+    }
+  });
+
+  test("android emulator step pins the same action SHA as e2e-tier1-android.yml", () => {
+    const tier1Pin = readWorkflow("e2e-tier1-android.yml").match(
+      /uses:\s*(reactivecircus\/android-emulator-runner@[0-9a-f]{40})/,
+    )?.[1];
+    expect(tier1Pin).toBeDefined();
+
+    const emulatorStep = workflow.jobs.android.steps?.find((step) =>
+      step.uses?.startsWith("reactivecircus/android-emulator-runner@"),
+    );
+    expect(emulatorStep?.uses).toBe(tier1Pin);
+  });
+
+  test.each(["apple", "android"] as const)(
+    "%s shares dev clients via fingerprint artifacts instead of actions/cache",
+    (jobName) => {
+      const steps = workflow.jobs[jobName].steps ?? [];
+      expect(
+        steps.some(
+          (step) =>
+            step.uses?.startsWith("actions/cache@") &&
+            String(step.with?.path ?? "").includes("build-cache"),
+        ),
+      ).toBe(false);
+      expect(rawWorkflow).not.toContain("prune-build-cache");
+
+      const runStep = steps.find(
+        (step) =>
+          step.run?.includes("e2e:shots") ||
+          String(step.with?.script ?? "").includes("e2e:shots"),
+      );
+      expect(runStep?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
+      expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
+        "fetch-dev-client.py",
+      );
+      expect(runStep?.env?.SHOTS_PASS_TIMEOUT_SECONDS).toBe("2700");
+
+      const prepareStep = steps.find((step) => step.id === "dev-clients");
+      expect(prepareStep).toBeDefined();
+      expect(prepareStep?.if).toMatch(/^always\(\)\s*&&\s*\(/);
+      expect(prepareStep?.if).toContain(
+        "github.event.pull_request.head.repo.id == github.repository_id",
+      );
+      expect(prepareStep?.if).toContain("workflow_dispatch");
+      expect(prepareStep?.if).toContain("push");
+
+      const clientUploads = steps.filter(
+        (step) =>
+          step.uses?.startsWith("actions/upload-artifact@") &&
+          String(step.with?.name ?? "").startsWith("shots-dev-client-"),
+      );
+      expect(clientUploads).toHaveLength(2);
+      for (const upload of clientUploads) {
+        expect(upload.with?.["retention-days"]).toBe(30);
+        expect(upload.if).toMatch(/^always\(\)\s*&&\s*\(/);
+        expect(upload.if).toContain(
+          "github.event.pull_request.head.repo.id == github.repository_id",
+        );
+        expect(upload.if).toContain("workflow_dispatch");
+        expect(upload.if).toContain("push");
+      }
+    },
+  );
+});
 
 describe("linting.yml", () => {
   // CONTRIBUTING.md asks for `bun run test` before a pull request, and CI runs

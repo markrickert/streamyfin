@@ -33,6 +33,11 @@ appId: ${MAESTRO_APP_ID}
 - waitForAnimationToEnd
 - hideKeyboard:
     optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible: "More"
 - takeScreenshot: 02-search
 # On iOS 26 the open Search tab collapses the tab bar to a Home button and the field; Home
 # brings the other tabs back. On Android it is the Home tab itself.
@@ -67,9 +72,11 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 05-settings
 
+# "Home" can pass on a stale frame during relaunch; wait for a Home row so the tab bar
+# is live before tapping More or Library.
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - runFlow: _tap-more.yml
 - tapOn: ".*Sessions.*"
@@ -81,7 +88,7 @@ appId: ${MAESTRO_APP_ID}
 
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
@@ -93,7 +100,7 @@ appId: ${MAESTRO_APP_ID}
 
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Music.*"
@@ -108,7 +115,7 @@ appId: ${MAESTRO_APP_ID}
 # in a row that is empty on the fixture account.
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
@@ -139,7 +146,7 @@ appId: ${MAESTRO_APP_ID}
 # Maestro's full text match needs a wildcard for the chip's merged iOS icon label.
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
@@ -203,7 +210,7 @@ appId: ${MAESTRO_APP_ID}
 # still rejects "Shows" (the library header). A series page plays nothing.
 - launchApp
 - extendedWaitUntil:
-    visible: "Home"
+    visible: ".*Recently added.*"
     timeout: 60000
 - tapOn: "Library"
 - tapOn: ".*Shows.*"

@@ -16,6 +16,23 @@ import { ensurePortFree } from "./device";
 export const devClientUrl = (platform: Platform, port: number) =>
   `streamyfin://?__expo_url=${encodeURIComponent(`http://${hostFor(platform)}:${port}`)}&__expo_disable_onboarding=1&__expo_disable_fab=1`;
 
+/** Env var overriding Maestro's per-pass timeout in seconds. */
+export const PASS_TIMEOUT_ENV = "SHOTS_PASS_TIMEOUT_SECONDS";
+
+/** Default per-pass timeout in seconds, matching maestro.py's bound for local runs. */
+export const DEFAULT_PASS_TIMEOUT_SECONDS = 900;
+
+export function passTimeoutSeconds(d: Deps): number {
+  const raw = d.env[PASS_TIMEOUT_ENV]?.trim();
+  if (!raw) return DEFAULT_PASS_TIMEOUT_SECONDS;
+  const seconds = Number(raw);
+  if (!Number.isFinite(seconds) || seconds <= 0)
+    throw new ShotError(
+      `${PASS_TIMEOUT_ENV} must be a positive number of seconds (got '${raw}')`,
+    );
+  return seconds;
+}
+
 export function launchDevClient(
   d: Deps,
   platform: Platform,
@@ -59,6 +76,7 @@ function flowArgv(
   outDir: string,
   env: Record<string, string>,
   maestro: string,
+  timeoutSeconds: number,
   maestroPlatform?: "tvos",
 ): string[] {
   const argv = [
@@ -70,6 +88,8 @@ function flowArgv(
     outDir,
     "--device",
     device,
+    "--timeout",
+    String(timeoutSeconds),
   ];
   argv.push("--maestro", maestro);
   if (maestroPlatform) argv.push("--platform", maestroPlatform);
@@ -87,13 +107,23 @@ function runFlow(
   outDir: string,
   env: Record<string, string>,
   maestro: string,
+  timeoutSeconds: number,
   maestroPlatform?: "tvos",
 ): void {
   // The env map reaches maestro.py through argv; it is never printed by this runner,
   // and a failing flow's stderr is stripped of credentials before it is thrown.
   mustSanitized(
     d.exec(
-      flowArgv(tooling, flow, device, outDir, env, maestro, maestroPlatform),
+      flowArgv(
+        tooling,
+        flow,
+        device,
+        outDir,
+        env,
+        maestro,
+        timeoutSeconds,
+        maestroPlatform,
+      ),
     ),
     `flow ${flow}`,
     [env.MAESTRO_JELLYFIN_PASS, env.MAESTRO_SEERR_PASS],
@@ -160,6 +190,7 @@ export function runCapture(
     outDir,
     env,
     maestro,
+    passTimeoutSeconds(d),
     spec.maestroPlatform,
   );
 }

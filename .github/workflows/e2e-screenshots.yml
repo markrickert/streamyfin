@@ -1,0 +1,524 @@
+name: 📸 E2E Screenshots
+
+# Compares two refs screen-for-screen on debug dev clients across iOS, Apple TV,
+# Android, and Android TV. Runs only on demand (PR label or manual dispatch)
+# because a full run can compile two Debug clients and execute three Maestro passes
+# per platform.
+
+on:
+  pull_request:
+    # `labeled` fires once per application, so later pushes do not rerun this workflow;
+    # remove and re-add the `run-screenshots` label to rerun.
+    types: [labeled]
+    branches: [develop, master]
+  workflow_dispatch:
+    inputs:
+      before:
+        description: Base ref or commit to compare against
+        required: true
+        type: string
+      after:
+        description: Target ref or commit to compare (defaults to the dispatched ref)
+        required: false
+        type: string
+        default: ""
+      platforms:
+        description: Comma-separated platforms (ios, apple-tv, android, android-tv)
+        required: false
+        type: string
+        default: "ios,apple-tv,android,android-tv"
+
+permissions:
+  contents: read
+
+concurrency:
+  # Every label fires this workflow; keyed by label, another label's skipped run can
+  # never cancel a running comparison.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event.label.name || 'dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: 🧭 Plan platform matrix
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run-screenshots')
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      apple: ${{ steps.matrix.outputs.apple }}
+      android: ${{ steps.matrix.outputs.android }}
+    steps:
+      - name: 🧭 Resolve target platforms
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          python3 - <<'EOF'
+          import json
+          import os
+
+          APPLE = {
+              "ios": {"platform": "ios", "family": "iOS"},
+              "apple-tv": {"platform": "apple-tv", "family": "tvOS"},
+          }
+          ANDROID = {
+              # Google publishes the API 34 Android TV image only as x86, not x86_64.
+              "android": {"platform": "android", "target": "google_apis", "arch": "x86_64", "profile": "pixel_6"},
+              "android-tv": {"platform": "android-tv", "target": "android-tv", "arch": "x86", "profile": "tv_1080p"},
+          }
+          KNOWN = {**APPLE, **ANDROID}
+
+          raw = (
+              os.environ.get("INPUT_PLATFORMS") or "ios,apple-tv,android,android-tv"
+              if os.environ.get("EVENT_NAME") == "workflow_dispatch"
+              else "ios,apple-tv,android,android-tv"
+          )
+          requested = [p.strip() for p in raw.split(",") if p.strip()]
+          if not requested:
+              raise SystemExit("::error::No platforms specified; choose from: " + ", ".join(KNOWN))
+          unknown = [p for p in requested if p not in KNOWN]
+          if unknown:
+              raise SystemExit(
+                  f"::error::Unknown platform(s): {', '.join(unknown)}. Valid platforms: {', '.join(KNOWN)}"
+              )
+
+          seen = set()
+          apple = []
+          android = []
+          for p in requested:
+              if p in seen:
+                  continue
+              seen.add(p)
+              if p in APPLE:
+                  apple.append(APPLE[p])
+              else:
+                  android.append(ANDROID[p])
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"apple={json.dumps({'include': apple}, separators=(',', ':'))}\n")
+              out.write(f"android={json.dumps({'include': android}, separators=(',', ':'))}\n")
+          EOF
+
+  apple:
+    name: 📸 Screenshot comparison (${{ matrix.platform }})
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
+    permissions:
+      contents: read
+      actions: read # list and download debug dev-client artifacts across runs
+    # A standard runner on purpose: the native fixture exists so this runs where Docker
+    # cannot. build-apps.yml's xcode-27 runners serve only this repository's own PRs.
+    runs-on: macos-latest
+    # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
+    # build twice plus native fixture setup and three Maestro passes.
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.apple) }}
+
+    steps:
+      - name: 🛠️ Select the newest Xcode
+        run: |
+          xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+          [ -n "$xcode" ] || { echo "::error::No Xcode on this image"; exit 1; }
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🔎 Ensure comparison refs exist locally
+        # The runner switches the checkout between `before` and `after` with `git switch --detach`.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_AFTER: ${{ inputs.after }}
+          DISPATCH_SHA: ${{ github.sha }}
+        run: bash e2e/suites/screenshots/ci/resolve-refs.sh
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Seerr v3.5.0 sets engine-strict with node ^22.19.0.
+          node-version: "22"
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        # Maestro requires Java 17 on PATH.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 🎞️ Install ffmpeg
+        run: command -v ffmpeg >/dev/null || brew install ffmpeg
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache native fixture tools
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/suites/syncplay/.tools
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-tools-${{ hashFiles('e2e/suites/syncplay/native.py') }}
+
+      - name: 💾 Cache pinned Maestro
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/reports/shots/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 📱 Create and boot ${{ matrix.family }} simulator
+        run: |
+          udid="$(python3 e2e/suites/screenshots/ci/create-simulator.py "${{ matrix.platform }}")"
+          echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"
+          xcrun simctl bootstatus "$udid" -b
+
+      - name: 🔐 Disable Password AutoFill (iOS)
+        if: matrix.platform == 'ios'
+        run: |
+          # Wait for first-boot ConfigurationProfiles plists before disabling AutoFill.
+          dev="$HOME/Library/Developer/CoreSimulator/Devices/$SIMULATOR_UDID/data"
+          plists=(
+            "$dev/Containers/Shared/SystemGroup/systemgroup.com.apple.configurationprofiles/Library/ConfigurationProfiles/UserSettings.plist"
+            "$dev/Library/UserConfigurationProfiles/EffectiveUserSettings.plist"
+            "$dev/Library/UserConfigurationProfiles/PublicInfo/PublicEffectiveUserSettings.plist"
+          )
+          deadline=$((SECONDS + 60))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            missing=0
+            for f in "${plists[@]}"; do
+              [ -f "$f" ] || { missing=1; break; }
+            done
+            [ "$missing" -eq 0 ] && break
+            sleep 1
+          done
+
+          bash e2e/suites/screenshots/ios-disable-autofill.sh "$SIMULATOR_UDID"
+
+      - name: 📸 Run screenshot comparison
+        # `shots.ts` exits 0 when screens change (changes are reported in summary.md) and
+        # exits non-zero only on runner, build, capture, or blank-screenshot failures.
+        env:
+          SYNCPLAY_BACKEND: native
+          GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # Software-rendered CI devices run a pass several times slower.
+          SHOTS_PASS_TIMEOUT_SECONDS: "2700"
+        run: |
+          # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
+          cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
+          bun run e2e:shots \
+            --platform "${{ matrix.platform }}" \
+            --before "$BEFORE_REF" \
+            --after "$AFTER_REF" \
+            --device "$SIMULATOR_UDID" \
+            --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
+
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id))
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when capture fails or the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when capture fails or the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless.
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📝 Job summary
+        if: always()
+        run: |
+          if [ -f "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" ]; then
+            cat "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: 📤 Upload screenshot report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots-${{ matrix.platform }}-report
+          # Upload reports, changed-screen evidence, and raw pass captures while omitting DerivedData.
+          path: |
+            e2e/reports/shots/ci-${{ matrix.platform }}/report/
+            e2e/reports/shots/ci-${{ matrix.platform }}/evidence/
+            e2e/reports/shots/ci-${{ matrix.platform }}/before/
+            e2e/reports/shots/ci-${{ matrix.platform }}/noise/
+            e2e/reports/shots/ci-${{ matrix.platform }}/after/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 📤 Upload fixture logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs
+          path: e2e/suites/syncplay/.state/logs/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 🧹 Tear down fixture
+        if: always()
+        env:
+          SYNCPLAY_BACKEND: native
+        run: |
+          if [ -f e2e/suites/syncplay/.env ]; then
+            bun run e2e:down
+          fi
+
+      - name: 🧹 Delete simulator
+        if: always() && env.SIMULATOR_UDID != ''
+        run: |
+          xcrun simctl shutdown "$SIMULATOR_UDID" || true
+          xcrun simctl delete "$SIMULATOR_UDID" || true
+
+  android:
+    name: 📸 Screenshot comparison (${{ matrix.platform }})
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
+    permissions:
+      contents: read
+      actions: read # list and download debug dev-client artifacts across runs
+    runs-on: ubuntu-26.04
+    # Cold prebuild, up to two Gradle assembleDebug builds, Docker fixture setup, and three Maestro passes.
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.android) }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🗑️ Free Disk Space
+        uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
+        with:
+          tool-cache: false
+          mandb: true
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
+
+      - name: 🔎 Ensure comparison refs exist locally
+        # The runner switches the checkout between `before` and `after` with `git switch --detach`.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_AFTER: ${{ inputs.after }}
+          DISPATCH_SHA: ${{ github.sha }}
+        run: bash e2e/suites/screenshots/ci/resolve-refs.sh
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        # Maestro and Gradle require Java 17 on PATH.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 🧰 Install ffmpeg and lsof
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v lsof >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y ffmpeg lsof
+          fi
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache Gradle global
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ runner.arch }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-gradle-
+
+      - name: 💾 Cache pinned Maestro
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/reports/shots/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🧰 Enable KVM for the emulator
+        # Linux runners expose /dev/kvm to root only; without this the emulator runs unaccelerated and misses its boot timeout.
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: 📸 Run screenshot comparison on emulator
+        # `shots.ts` exits 0 when screens change (changes are reported in summary.md) and
+        # exits non-zero only on runner, build, capture, or blank-screenshot failures.
+        # android-emulator-runner runs each script line with `sh -c`, so keep one command line.
+        timeout-minutes: 120
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # Software-rendered CI devices run a pass several times slower.
+          SHOTS_PASS_TIMEOUT_SECONDS: "2700"
+        with:
+          api-level: 34
+          arch: ${{ matrix.arch }}
+          target: ${{ matrix.target }}
+          profile: ${{ matrix.profile }}
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH" && bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
+
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id))
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when capture fails or the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when capture fails or the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it;
+        # the weekly native churn makes longer pointless.
+        if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id)) && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📝 Job summary
+        if: always()
+        run: |
+          if [ -f "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" ]; then
+            cat "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: 📤 Upload screenshot report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots-${{ matrix.platform }}-report
+          path: |
+            e2e/reports/shots/ci-${{ matrix.platform }}/report/
+            e2e/reports/shots/ci-${{ matrix.platform }}/evidence/
+            e2e/reports/shots/ci-${{ matrix.platform }}/before/
+            e2e/reports/shots/ci-${{ matrix.platform }}/noise/
+            e2e/reports/shots/ci-${{ matrix.platform }}/after/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 📤 Upload fixture logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs
+          path: e2e/suites/syncplay/.state/logs/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 🧹 Tear down fixture
+        if: always()
+        run: |
+          if [ -f e2e/suites/syncplay/.env ]; then
+            if ! bun run e2e:down; then
+              # On Linux, Docker writes root-owned files into .state/config (see e2e/suites/syncplay/README.md).
+              sudo rm -rf e2e/suites/syncplay/.state e2e/suites/syncplay/artifacts
+              rm -f e2e/suites/syncplay/.env
+            fi
+          fi

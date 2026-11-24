@@ -1,15 +1,30 @@
 import { resetTestAppState } from "./app-state";
-import { appIdOnDevice, ensureDebugBuild, nativeFingerprint } from "./build";
+import {
+  appIdOnDevice,
+  type BuildSource,
+  deviceAbi,
+  ensureDebugBuild,
+  nativeFingerprint,
+} from "./build";
 import {
   devClientUrl,
   launchDevClient,
+  passTimeoutSeconds,
   runCapture,
   startMetro,
 } from "./capture";
 import { platformSpec } from "./cli";
-import { type Cli, type Deps, must, ShotError, type SpawnHandle } from "./core";
+import {
+  type Cli,
+  type Deps,
+  must,
+  type Platform,
+  ShotError,
+  type SpawnHandle,
+} from "./core";
 import {
   ensurePortFree,
+  newDeviceState,
   prepareDevice,
   restoreDevice,
   selectDevice,
@@ -33,6 +48,14 @@ import {
   snapshotTooling,
 } from "./tooling";
 
+export interface BuildCacheManifestEntry {
+  ref: string;
+  platform: Platform;
+  hash: string;
+  source: BuildSource;
+  path: string;
+}
+
 export interface RunReport {
   sessionDir: string;
   beforeSha: string;
@@ -45,6 +68,25 @@ export let interruptCleanup: (() => void) | undefined;
 
 export function setInterruptCleanup(fn: (() => void) | undefined): void {
   interruptCleanup = fn;
+}
+
+/**
+ * Exact bundle URL that expo-dev-launcher requests from Metro's manifest
+ * (`ManifestMiddleware._getBundleUrl` / `createBundleUrlPath` in `@expo/cli`). Warming
+ * any shorter query populates a different Metro cache entry and leaves the client with
+ * a cold Hermes compile.
+ */
+export function metroBundleUrl(
+  platform: "ios" | "android",
+  port: number,
+): string {
+  return `http://127.0.0.1:${port}/index.ts.bundle?platform=${platform}&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`;
+}
+
+function formatElapsed(ms: number): string {
+  const totalSec = Math.max(0, Math.round(ms / 1000));
+  if (totalSec < 60) return `${totalSec}s`;
+  return `${Math.floor(totalSec / 60)}m${totalSec % 60}s`;
 }
 
 /**
@@ -62,6 +104,7 @@ export async function runComparison(
   const device = selectDevice(d, cli.platform!, cli.device);
   const port = cli.port ?? DEFAULT_PORT;
   ensurePortFree(d, port);
+  passTimeoutSeconds(d);
   const sessionDir = cli.outDir ?? `${repo}/${REPORTS_DIR}/${Date.now()}`;
   ensureOutIgnored(d, repo, sessionDir);
   d.fs.mkdir(sessionDir);
@@ -76,12 +119,13 @@ export async function runComparison(
   let metro: SpawnHandle | undefined;
   let nativeMoved: string[] = [];
   let buildDeps = "";
+  const deviceState = newDeviceState();
   // Nested: a refused git restore (new user edits mid-run) must not strand the
   // native dirs in the backup.
   const cleanup = (): void => {
     metro?.kill();
     metro = undefined;
-    restoreDevice(d, cli.platform!, device);
+    restoreDevice(d, cli.platform!, device, deviceState);
     try {
       restoreGit(d, repo, start);
       // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
@@ -102,11 +146,16 @@ export async function runComparison(
   };
   setInterruptCleanup(cleanup);
   try {
-    prepareDevice(d, cli.platform!, device);
+    prepareDevice(d, cli.platform!, device, deviceState);
+    const abi =
+      cli.platform === "android" || cli.platform === "android-tv"
+        ? deviceAbi(d, device)
+        : undefined;
     const refs: { label: string; sha: string; captures: string[] }[] = [
       { label: "before", sha: beforeSha, captures: ["before", "noise"] },
       { label: "after", sha: afterSha, captures: ["after"] },
     ];
+    const buildCacheManifest: BuildCacheManifestEntry[] = [];
     for (const ref of refs) {
       must(
         d.exec(["git", "switch", "--detach", ref.sha], { cwd: repo }),
@@ -122,33 +171,57 @@ export async function runComparison(
           d.fs.exists(`${repo}/${n}`) ? d.fs.read(`${repo}/${n}`) : "",
         )
         .join("\n---\n");
-      const hash = nativeFingerprint(d, repo, spec);
-      const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${cli.platform}/${hash}`;
-      const needsBuild = !d.fs.exists(cacheDir);
-      if (needsBuild && !nativeMoved.length)
-        nativeMoved = backupNativeDirs(d, repo, sessionDir);
-      if (needsBuild) {
-        must(
-          d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
-            cwd: repo,
-          }),
-          "expo prebuild",
-        );
-        // `expo prebuild` writes the ios project but does not run pod install.
-        if (spec.fingerprintPlatform === "ios")
-          must(
-            d.exec(["pod", "install"], { cwd: `${repo}/ios` }),
-            "pod install",
-          );
-      }
-      const { artifact } = ensureDebugBuild(
+      const fingerprint = nativeFingerprint(d, repo, spec);
+      const shortHash = fingerprint.slice(0, 8);
+      const buildStarted = Date.now();
+      d.log(
+        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash})`,
+      );
+      const { artifact, source, hash } = ensureDebugBuild(
         d,
         repo,
         cli.platform!,
         spec,
-        hash,
+        fingerprint,
         sessionDir,
+        () => {
+          if (!nativeMoved.length)
+            nativeMoved = backupNativeDirs(d, repo, sessionDir);
+          must(
+            d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
+              cwd: repo,
+            }),
+            "expo prebuild",
+          );
+          // `expo prebuild` writes the ios project but does not run pod install.
+          if (spec.fingerprintPlatform === "ios")
+            must(
+              // `react-native.config.js` drops iOS-only pods only under EXPO_TV=1;
+              // without it a tvOS app crashes at launch on their missing classes.
+              d.exec(["pod", "install"], {
+                cwd: `${repo}/ios`,
+                env: { EXPO_TV: spec.tv ? "1" : "0" },
+              }),
+              "pod install",
+            );
+        },
+        abi,
       );
+      d.log(
+        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash}): ${source} (${formatElapsed(Date.now() - buildStarted)})`,
+      );
+      buildCacheManifest.push({
+        ref: ref.label,
+        platform: cli.platform!,
+        hash,
+        source,
+        path: artifact,
+      });
+      d.fs.write(
+        `${sessionDir}/build-cache.json`,
+        JSON.stringify(buildCacheManifest, null, 2),
+      );
+      d.log("installing");
       const appId = appIdOnDevice(d, cli.platform!, device, artifact);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator
       // means the emulator's own loopback — both phone and TV need the reverse mapping
@@ -188,13 +261,14 @@ export async function runComparison(
         MAESTRO_APP_ID: appId,
         MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
       };
+      d.log("starting Metro");
       metro = await startMetro(d, repo, spec, port);
       try {
         // Prove this Metro serves the checked-out ref's JS — /status alone says only
         // that a packager answers. A compile error in the switched ref fails here,
         // before any screenshot is taken.
         const bundled = await d.waitFor(
-          `http://127.0.0.1:${port}/index.bundle?platform=${spec.fingerprintPlatform}&dev=true`,
+          metroBundleUrl(spec.fingerprintPlatform, port),
           "__BUNDLE_START_TIME__",
           300_000,
         );
@@ -203,6 +277,7 @@ export async function runComparison(
             `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref`,
           );
         for (const capture of ref.captures) {
+          d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
           d.fs.mkdir(outDir);
           // Every pass is a first run: fresh state, then the deep link that points the
@@ -218,6 +293,7 @@ export async function runComparison(
       }
     }
     const spec_masks = `${tooling}/${spec.masks}`;
+    d.log("comparing");
     must(
       d.exec(
         [
