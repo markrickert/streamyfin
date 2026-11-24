@@ -43,6 +43,12 @@ const TVNavBarTabItem: React.FC<{
       duration: 120,
     });
 
+  const [hasLeftTab, setHasLeftTab] = React.useState(false);
+  const handleTabBlur = () => {
+    handleBlur();
+    setHasLeftTab(true);
+  };
+
   const bg = focused
     ? "rgba(255, 255, 255, 0.95)"
     : isActive
@@ -59,8 +65,10 @@ const TVNavBarTabItem: React.FC<{
     <Pressable
       onPress={onSelect}
       onFocus={handleFocus}
-      onBlur={handleBlur}
-      hasTVPreferredFocus={hasTVPreferredFocus}
+      onBlur={handleTabBlur}
+      // A preferred tab must not reclaim focus from page content on later tvOS layouts.
+      // See docs/conventions/tv.md and .claude/learned-facts/tv-preferred-focus-grabs-on-mount.md.
+      hasTVPreferredFocus={hasTVPreferredFocus && !hasLeftTab}
       onLayout={onLayout}
     >
       <Animated.View
