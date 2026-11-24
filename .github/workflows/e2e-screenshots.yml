@@ -110,8 +110,9 @@ jobs:
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
-    # Spike branch only: macos-latest arm64 was never acquired due to hosted capacity.
-    runs-on: macos-26-intel
+    # Spike branch only: Intel cannot run the arm64 native fixture; this image has
+    # Xcode 27.2 for the tvOS 27.2 simulator (github.com/actions/runner-images).
+    runs-on: xcode-27
     # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
     # build twice plus native fixture setup and three Maestro passes.
     timeout-minutes: 180
