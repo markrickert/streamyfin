@@ -107,15 +107,29 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Filters.*"
     timeout: 15000
+# Filters appears before the grid is focusable; wait for seeded Show first.
+- extendedWaitUntil:
+    visible: "^(.*, )?Show(,.*)?$"
+    timeout: 60000
 - pressKey: Remote Dpad Down
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
+# On hosted tvOS the last Right may still be on Filters. Only then enter the
+# grid with Down; the card must be below Filters (docs/tv-focus-guide.md).
+- runFlow:
+    when:
+      visible:
+        text: ".*Filters.*"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Down
 - assertVisible:
     focused: true
     above: "^(.*, )?Show(,.*)?$"
     rightOf: "Rocky Jones, Space Ranger"
+    below: ".*Filters.*"
 - pressKey: Remote Dpad Center
 - extendedWaitUntil:
     visible: ".*Season.*|.*Pilot.*"

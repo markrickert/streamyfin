@@ -201,6 +201,48 @@ describe("capture pass parents", () => {
     expect(cmds[shot + 4]).toEqual({ pressKey: "Remote Dpad Center" });
   });
 
+  // Hosted tvOS left focus on the Filters toolbar after the Rights, and the
+  // poster card is unlabeled, so the geometric assert must also be below
+  // Filters before the only Center may press a Show (docs/tv-focus-guide.md).
+  it("tv-apple.yml enters the Shows poster grid before selecting the seeded Show", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const showRow = cmds.findIndex(
+      (cmd) =>
+        cmd.assertVisible?.text === ".*Shows.*" &&
+        cmd.assertVisible?.focused === true,
+    );
+    expect(showRow).toBeGreaterThanOrEqual(0);
+    expect(cmds[showRow + 1]).toEqual({ pressKey: "Remote Dpad Center" });
+    expect(cmds[showRow + 2].extendedWaitUntil).toEqual({
+      visible: ".*Filters.*",
+      timeout: 15000,
+    });
+    expect(cmds[showRow + 3].extendedWaitUntil).toEqual({
+      visible: "^(.*, )?Show(,.*)?$",
+      timeout: 60000,
+    });
+    expect(
+      cmds.slice(showRow + 4, showRow + 9).map((cmd) => cmd.pressKey),
+    ).toEqual([
+      "Remote Dpad Down",
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+      "Remote Dpad Right",
+    ]);
+    expect(cmds[showRow + 9].runFlow).toEqual({
+      when: { visible: { text: ".*Filters.*", focused: true } },
+      commands: [{ pressKey: "Remote Dpad Down" }],
+    });
+    expect(cmds[showRow + 10].assertVisible).toEqual({
+      focused: true,
+      above: "^(.*, )?Show(,.*)?$",
+      rightOf: "Rocky Jones, Space Ranger",
+      below: ".*Filters.*",
+    });
+    expect(cmds[showRow + 11]).toEqual({ pressKey: "Remote Dpad Center" });
+  });
+
   // The loaded first Library visit supplies Movies; Settings is captured later,
   // before its modal (docs/conventions/tv.md).
   it("tv-apple.yml opens Movies from the first Library visit", () => {
