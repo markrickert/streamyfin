@@ -12,6 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, posix } from "node:path";
 import ignore from "ignore";
+import { PLATFORMS } from "./e2e/suites/screenshots/lib/core";
 
 // The CI workflows name modules, paths and commands by hand, and nothing fails
 // when one of those lists falls behind the tree: the workflow stays green while
@@ -251,6 +252,16 @@ describe("e2e-tier1-android.yml", () => {
       expect(rules).toContain(".github/workflows/e2e-tier1-android.yml");
     });
 
+    test("covers every file `shots.ts maestro-path` loads", () => {
+      for (const file of [
+        "e2e/suites/screenshots/lib/tooling.ts",
+        "e2e/suites/screenshots/shots.ts",
+        "scripts/reassure-baseline.ts",
+      ]) {
+        expect(rules.some((rule) => matches(rule, file))).toBe(true);
+      }
+    });
+
     // The TV font size rule's test writes a probe under components/tv/ and
     // removes it, and Jest runs the two files at once: the walk listed the
     // probe, then reading it failed with ENOENT (seen 2026-11-03).
@@ -386,27 +397,259 @@ describe("e2e-tier1-android.yml", () => {
         minutes(job) - MINUTES_BEFORE_THE_EMULATOR,
       );
     });
+
+    test.each(emulatorSteps)(
+      "$name passes the pinned binary to maestro.py",
+      ({ step }) => {
+        expect(step).toMatch(
+          /e2e\/bench\/maestro\.py\s+.*--maestro\s+"\$MAESTRO_BIN"/,
+        );
+      },
+    );
+  });
+
+  describe("the pinned Maestro", () => {
+    const clean = withoutComments(workflow);
+
+    test("installs via shots.ts maestro-path rather than get.maestro.mobile.dev", () => {
+      expect(clean).not.toContain("get.maestro.mobile.dev");
+      expect(clean).toContain("e2e/suites/screenshots/shots.ts maestro-path");
+    });
+
+    test("is installed before the first emulator step", () => {
+      expect(clean.indexOf("shots.ts maestro-path")).toBeGreaterThan(-1);
+      expect(clean.indexOf("shots.ts maestro-path")).toBeLessThan(
+        clean.indexOf("reactivecircus/android-emulator-runner"),
+      );
+    });
+
+    test("passes the pinned binary to both smoke attempts", () => {
+      expect(clean.match(/--maestro "\$MAESTRO_BIN"/g)).toHaveLength(2);
+    });
   });
 });
 
-describe.each(["native-tests.yml", "e2e-tier1-android.yml"])(
-  "%s checkouts",
-  (name) => {
-    // Every job installs and builds the pull request's own code after its
-    // checkout, which would otherwise leave a usable token in .git/config, as
-    // build-apps.yml already avoids.
-    const checkouts = withoutComments(readWorkflow(name))
-      .split(/\n(?=[ \t]*- (?:name|uses): )/)
-      .filter((step) => /uses: actions\/checkout@/.test(step));
+const { load: loadYaml } = require("js-yaml") as {
+  load: (src: string) => Record<string, unknown>;
+};
 
-    test("none keeps the token after the checkout", () => {
-      expect(checkouts).not.toEqual([]);
-      expect(
-        checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
-      ).toEqual([]);
+describe.each([
+  "native-tests.yml",
+  "e2e-tier1-android.yml",
+  "e2e-screenshots.yml",
+])("%s checkouts", (name) => {
+  // Every job installs and builds the pull request's own code after its
+  // checkout, which would otherwise leave a usable token in .git/config, as
+  // build-apps.yml already avoids.
+  const checkouts = withoutComments(readWorkflow(name))
+    .split(/\n(?=[ \t]*- (?:name|uses): )/)
+    .filter((step) => /uses: actions\/checkout@/.test(step));
+
+  test("none keeps the token after the checkout", () => {
+    expect(checkouts).not.toEqual([]);
+    expect(
+      checkouts.filter((step) => !/persist-credentials: false\b/.test(step)),
+    ).toEqual([]);
+  });
+});
+
+describe("e2e-screenshots.yml", () => {
+  type Step = {
+    id?: string;
+    name?: string;
+    if?: string;
+    uses?: string;
+    run?: string;
+    env?: Record<string, string>;
+    with?: Record<string, unknown>;
+  };
+  type Job = {
+    if?: string;
+    needs?: string | string[];
+    "runs-on"?: string;
+    outputs?: Record<string, string>;
+    permissions?: Record<string, string>;
+    strategy?: { "fail-fast"?: boolean; matrix?: string };
+    steps?: Step[];
+  };
+  const rawWorkflow = readWorkflow("e2e-screenshots.yml");
+  const workflow = loadYaml(rawWorkflow) as {
+    on: Record<string, unknown>;
+    permissions: Record<string, string>;
+    concurrency: { group: string; "cancel-in-progress": string | boolean };
+    jobs: Record<string, Job>;
+  };
+
+  test("triggers on develop pushes and on demand", () => {
+    expect(Object.keys(workflow.on).sort()).toEqual([
+      "pull_request",
+      "push",
+      "workflow_dispatch",
+    ]);
+    expect((workflow.on.push as { branches?: string[] }).branches).toEqual([
+      "develop",
+    ]);
+    const pr = workflow.on.pull_request as {
+      types?: string[];
+      branches?: string[];
+    };
+    expect(pr.types).toEqual(["labeled"]);
+    expect(pr.branches).toEqual(["develop", "master"]);
+    expect(workflow.jobs.plan.if).toContain(
+      "github.event.label.name == 'run-screenshots'",
+    );
+    const dispatch = workflow.on.workflow_dispatch as {
+      inputs?: {
+        before?: { required?: boolean };
+        after?: unknown;
+        platforms?: { default?: string };
+      };
+    };
+    expect(dispatch.inputs?.before?.required).toBe(true);
+    expect(dispatch.inputs?.after).toBeDefined();
+    expect(
+      dispatch.inputs?.platforms?.default
+        ?.split(",")
+        .map((p) => p.trim())
+        .sort(),
+    ).toEqual([...PLATFORMS].sort());
+  });
+
+  test("uses minimal read permissions and the expected runner per job", () => {
+    // The native Apple silicon fixture and tvOS 27.2 simulator require xcode-27;
+    // Intel runners cannot run the arm64 fixture.
+    expect(workflow.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs.apple.permissions).toEqual({
+      contents: "read",
+      actions: "read",
     });
-  },
-);
+    expect(workflow.jobs.android.permissions).toEqual({
+      contents: "read",
+      actions: "read",
+    });
+    expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
+    expect(workflow.jobs.apple["runs-on"]).toBe("xcode-27");
+    expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
+  });
+
+  test("another label never cancels a running comparison", () => {
+    // Every label fires a run; one sharing the group would cancel the screenshot job.
+    expect(workflow.concurrency.group).toContain("github.event.label.name");
+  });
+
+  test("a develop push never cancels the comparison of the push before it", () => {
+    expect(workflow.concurrency["cancel-in-progress"]).toContain(
+      "github.event_name != 'push'",
+    );
+  });
+
+  test("plan job covers every suite platform", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const appleBlock = planScript.match(/APPLE\s*=\s*\{([\s\S]*?)\n\}/)?.[1];
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(appleBlock).toBeDefined();
+    expect(androidBlock).toBeDefined();
+
+    const extractKeys = (block: string) =>
+      [...block.matchAll(/^\s*"([^"]+)":\s*\{/gm)].map((m) => m[1]);
+    const planned = [
+      ...extractKeys(appleBlock!),
+      ...extractKeys(androidBlock!),
+    ];
+    expect(planned.sort()).toEqual([...PLATFORMS].sort());
+
+    expect(workflow.jobs.apple.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.apple.strategy?.matrix).toContain(
+      "needs.plan.outputs.apple",
+    );
+    expect(workflow.jobs.android.strategy?.["fail-fast"]).toBe(false);
+    expect(workflow.jobs.android.strategy?.matrix).toContain(
+      "needs.plan.outputs.android",
+    );
+  });
+
+  test("every Android matrix entry has a non-empty emulator profile", () => {
+    const planScript = workflow.jobs.plan.steps?.[0]?.run ?? "";
+    const androidBlock = planScript.match(
+      /ANDROID\s*=\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    expect(androidBlock).toBeDefined();
+
+    const entries = [...androidBlock!.matchAll(/"([^"]+)":\s*\{([^}]+)\}/g)];
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [, name, body] of entries) {
+      const profile = body.match(/"profile":\s*"([^"]*)"/)?.[1] ?? "";
+      expect({ name, hasProfile: profile.trim().length > 0 }).toEqual({
+        name,
+        hasProfile: true,
+      });
+    }
+  });
+
+  test("android emulator step pins the same action SHA as e2e-tier1-android.yml", () => {
+    const tier1Pin = readWorkflow("e2e-tier1-android.yml").match(
+      /uses:\s*(reactivecircus\/android-emulator-runner@[0-9a-f]{40})/,
+    )?.[1];
+    expect(tier1Pin).toBeDefined();
+
+    const emulatorStep = workflow.jobs.android.steps?.find((step) =>
+      step.uses?.startsWith("reactivecircus/android-emulator-runner@"),
+    );
+    expect(emulatorStep?.uses).toBe(tier1Pin);
+  });
+
+  test.each(["apple", "android"] as const)(
+    "%s shares dev clients via fingerprint artifacts instead of actions/cache",
+    (jobName) => {
+      const steps = workflow.jobs[jobName].steps ?? [];
+      expect(
+        steps.some(
+          (step) =>
+            step.uses?.startsWith("actions/cache@") &&
+            String(step.with?.path ?? "").includes("build-cache"),
+        ),
+      ).toBe(false);
+      expect(rawWorkflow).not.toContain("prune-build-cache");
+
+      const runStep = steps.find(
+        (step) =>
+          step.run?.includes("e2e:shots") ||
+          String(step.with?.script ?? "").includes("e2e:shots"),
+      );
+      expect(runStep?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
+      expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
+        "fetch-dev-client.py",
+      );
+      expect(runStep?.env?.SHOTS_PASS_TIMEOUT_SECONDS).toBe("2700");
+
+      expect(workflow.jobs.plan.outputs?.trusted).toBe(
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a GitHub Actions expression, not a JS template
+        "${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id) }}",
+      );
+
+      const prepareStep = steps.find((step) => step.id === "dev-clients");
+      expect(prepareStep).toBeDefined();
+      expect(prepareStep?.if).toBe(
+        "always() && needs.plan.outputs.trusted == 'true'",
+      );
+
+      const clientUploads = steps.filter(
+        (step) =>
+          step.uses?.startsWith("actions/upload-artifact@") &&
+          String(step.with?.name ?? "").startsWith("shots-dev-client-"),
+      );
+      expect(clientUploads).toHaveLength(2);
+      for (const upload of clientUploads) {
+        expect(upload.with?.["retention-days"]).toBe(30);
+        expect(upload.if).toMatch(
+          /^always\(\) && needs\.plan\.outputs\.trusted == 'true' && steps\.dev-clients\.outputs\.(before|after)_hash != ''$/,
+        );
+      }
+    },
+  );
+});
 
 /** The script of the step named `name`, as bash is given it. */
 const runOf = (text: string, name: string) => {
