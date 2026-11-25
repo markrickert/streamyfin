@@ -1,0 +1,12 @@
+# One phone capture pass as a single Maestro invocation, so a pass is one command for
+# the runner to fail or finish. Order is load-bearing: bootstrap-login signs the
+# freshly-reset install in, and the Seerr screens only exist once ensure-seerr-mobile
+# has connected the app (it runs the Seerr bootstrap itself when Discover is missing),
+# so the Seerr flows come last. The nested flows keep their own launchApp — state is
+# reset between passes by the runner, never inside one.
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: bootstrap-login-mobile.yml
+- runFlow: mobile.yml
+- runFlow: ensure-seerr-mobile.yml
+- runFlow: seerr-mobile.yml

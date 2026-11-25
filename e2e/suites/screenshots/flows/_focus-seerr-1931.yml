@@ -1,0 +1,43 @@
+# A relayout can send focus back to Search. Only move through the movie row;
+# the year starts just inside its card, so step past it, then Left before Center.
+# See docs/tv-focus-guide.md for TV focus navigation.
+appId: ${MAESTRO_APP_ID}
+---
+- repeat:
+    times: 5
+    while:
+      notVisible:
+        focused: true
+        below: "Request movies"
+        above: "1931"
+    commands:
+      - pressKey: Remote Dpad Down
+- assertVisible:
+    focused: true
+    below: "Request movies"
+    above: "1931"
+- repeat:
+    times: 10
+    while:
+      visible:
+        focused: true
+        below: "Request movies"
+        leftOf: "1931"
+    commands:
+      - pressKey: Remote Dpad Right
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1500
+          optional: true
+- assertVisible:
+    focused: true
+    below: "Request movies"
+    above: "1931"
+    rightOf: "1931"
+- pressKey: Remote Dpad Left
+- assertVisible:
+    focused: true
+    below: "Request movies"
+    above: "1931"
+    leftOf: "1931"
+- pressKey: Remote Dpad Center

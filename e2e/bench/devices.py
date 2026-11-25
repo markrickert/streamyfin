@@ -2,6 +2,23 @@
 
 Apple TV and other AirPlay receivers are not listed: AirPlay does not expose a device list,
 the system route picker does the choosing.
+
+Counterpart: `e2e/suites/screenshots/lib/device.ts` (`selectDevice`). These two files cannot
+share code because they are in Python and TypeScript. Keep these behaviors aligned:
+- Simulators: both apply `isAvailable`. `inventory()` here lists every available simulator,
+  shut down ones included, because it always passes `booted_only=False`. `selectDevice` reads
+  `xcrun simctl list devices booted -j`, so it sees only booted ones.
+- Runtime platforms: this module derives `platform` from the runtime prefix (`ios`, `tvos`,
+  `watchos`, `xros`). `selectDevice` checks only `runtime.includes("tvOS")` to separate
+  `apple-tv` from `ios` and does not exclude Vision or Watch runtimes.
+- Android: this module runs `adb devices -l`, keeps every state (`offline` and `unauthorized`
+  included), labels a serial starting with `emulator-` an emulator, and finds `adb` through
+  `ANDROID_HOME` or `ANDROID_SDK_ROOT`. `selectDevice` runs `adb` from `PATH`, keeps only
+  `device`-state emulators, and checks `pm has-feature android.software.leanback` for
+  `android-tv` vs `android`.
+- Physical devices: this module lists physical Android (`adb`) and Apple (`devicectl` with
+  `reality == "physical"`) devices. `selectDevice` refuses physical devices and accepts only
+  booted simulators or running emulators.
 """
 
 from __future__ import annotations

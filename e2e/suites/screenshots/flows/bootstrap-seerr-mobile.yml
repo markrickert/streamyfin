@@ -1,0 +1,48 @@
+# Connects the signed-in phone app to Seerr, so the Seerr screens exist for the screenshot
+# pass. Run after bootstrap-login-mobile.yml, once per build: the runner resets the app's
+# state before linking, and the Seerr settings go with it. The Seerr sign-in posts the Jellyfin username
+# and this password, so the Seerr server's own Jellyfin needs a user with the same name
+# and password — the SyncPlay fixture's syncplay-host account is exactly that.
+# Reads MAESTRO_SEERR_URL and MAESTRO_SEERR_PASS from the environment: see run.sh.
+# Run: e2e/suites/screenshots/run.sh bootstrap-seerr-mobile <out dir> [device]
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000
+- runFlow: _tap-more.yml
+- tapOn: ".*Settings.*"
+- scrollUntilVisible:
+    element: ".*Plugins.*"
+- tapOn: ".*Plugins.*"
+- tapOn: ".*Seerr.*"
+# The field binds the local seerrServerUrl setting, which is empty on a fresh app state
+# (the plugin-pushed URL lives in plugin settings, not this field), so the erase is a
+# no-op guard for a rerun that left one behind. The testID is on the Input itself.
+# Refs before the testID fall back to the placeholder text "Seerr URL" (the field's
+# label reads "Server URL", a different string), which Maestro matches on Android hint
+# and iOS placeholderValue. If neither lands the inputText below fails loudly.
+- tapOn:
+    id: "seerr-server-url"
+    optional: true
+- tapOn:
+    text: "Seerr URL"
+    optional: true
+- eraseText: 100
+- inputText: ${MAESTRO_SEERR_URL}
+- hideKeyboard:
+    optional: true
+# The first Login checks the address (the button reads Connect on iOS once the fields show); the password field only appears after it.
+- tapOn: "Login|Connect"
+- extendedWaitUntil:
+    visible: "Enter password for Jellyfin user.*"
+    timeout: 20000
+- tapOn: "Enter password for Jellyfin user.*"
+- inputText: ${MAESTRO_SEERR_PASS}
+- hideKeyboard:
+    optional: true
+- tapOn: "Login|Connect"
+- extendedWaitUntil:
+    visible: ".*Reset.*"
+    timeout: 30000

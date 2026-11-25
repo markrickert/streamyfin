@@ -1,0 +1,338 @@
+# TV screenshot pass (Apple TV and Android TV): one D-pad-driven flow runs on both
+# platforms and on the before and after builds. XCTest silently drops touch taps on tvOS,
+# and focus selects tabs there, while Android TV's JS TVNavBar switches tabs on Center.
+# See docs/tv-focus-guide.md for focus navigation.
+# Never select a Home or movie card: that starts playback and mutates the fixture.
+# Screenshot names are the pairing key for compare.ts, so keep them stable.
+appId: ${MAESTRO_APP_ID}
+---
+# A relaunch can return to Expo's server picker on hosted tvOS. The guarded helper
+# reopens Metro's dev-client link before Home is asserted.
+- launchApp
+- runFlow: _dismiss-dev-overlays.yml
+# Google TV can put its first-run Shop dialog over any relaunch.
+- extendedWaitUntil:
+    visible: ".*Recently added.*|Buy and rent movies on your TV"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Buy and rent movies on your TV"
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Dismiss"
+      - launchApp
+      - runFlow: _dismiss-dev-overlays.yml
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- runFlow: _focus-home-tab.yml
+- takeScreenshot: 01-home
+
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Search"
+      TAB_ID: tv-nav-search
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 4000
+          optional: true
+- takeScreenshot: 02-search
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - runFlow:
+          file: _refocus-tab.yml
+          env:
+            TAB_ID: tv-nav-search
+
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Favorites"
+      TAB_ID: tv-nav-tv-favorites
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 4000
+          optional: true
+- takeScreenshot: 03-favorites
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - runFlow:
+          file: _refocus-tab.yml
+          env:
+            TAB_ID: tv-nav-tv-favorites
+
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Library"
+      TAB_ID: tv-nav-libraries
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Movies.*"
+    timeout: 15000
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 5000
+          optional: true
+- takeScreenshot: 04-library
+# Use this loaded Library tab directly. Returning from Settings can leave native
+# tab focus unsettled before Movies is selected (docs/conventions/tv.md).
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Movies.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Filters.*"
+    timeout: 15000
+# The toolbar appears before the fixture's movie grid finishes loading.
+# Wait for seeded content before moving focus (see e2e/suites/screenshots/flows/mobile.yml).
+- extendedWaitUntil:
+    visible: "The Blacksmith.*"
+    timeout: 60000
+- takeScreenshot: 06-library-movies
+# On tvOS, disabled Play all hands preferred focus to Sort (one Right to Filters).
+# Android TV leaves focus on the tab bar after Center opens a page, so Right would walk
+# the tabs: press Down into the toolbar first. tvOS draws no `tv-nav-*` item, so this
+# only runs there. Then walk Right until Filters is focused; Center may only open
+# Filters (docs/conventions/tv.md).
+- runFlow:
+    when:
+      visible:
+        id: "tv-nav-.*"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Down
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1000
+          optional: true
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: ".*Filters.*"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Right
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1000
+          optional: true
+- assertVisible:
+    text: ".*Filters.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Genres.*"
+    timeout: 10000
+# The Genres focus tile and Filters button animate after the sheet appears;
+# settle focus before capture (docs/tv-focus-guide.md).
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 2000
+    optional: true
+- takeScreenshot: 08-library-filters
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Menu
+      - pressKey: Remote Menu
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Back
+      - pressKey: Back
+
+- launchApp
+- runFlow: _dismiss-dev-overlays.yml
+# Google TV can put its first-run Shop dialog over any relaunch.
+- extendedWaitUntil:
+    visible: ".*Recently added.*|Buy and rent movies on your TV"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Buy and rent movies on your TV"
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Dismiss"
+      - launchApp
+      - runFlow: _dismiss-dev-overlays.yml
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Settings"
+      TAB_ID: tv-nav-tv-settings
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 4000
+          optional: true
+- takeScreenshot: 05-settings
+- pressKey: Remote Dpad Down
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1500
+    optional: true
+- pressKey: Remote Dpad Down
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1500
+    optional: true
+- assertVisible:
+    text: ".*Inactivity timeout.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "24 hours"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 2000
+    optional: true
+- takeScreenshot: 07-settings-modal
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Menu
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Back
+
+- launchApp
+- runFlow: _dismiss-dev-overlays.yml
+# Google TV can put its first-run Shop dialog over a relaunch after Settings.
+# Dismiss only that OS dialog, then start the app again before the Shows capture.
+- extendedWaitUntil:
+    visible: ".*Recently added.*|Buy and rent movies on your TV"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Buy and rent movies on your TV"
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Dismiss"
+      - launchApp
+      - runFlow: _dismiss-dev-overlays.yml
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Library"
+      TAB_ID: tv-nav-libraries
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Shows.*"
+    timeout: 15000
+- pressKey: Remote Dpad Down
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 1000
+    optional: true
+- pressKey: Remote Dpad Down
+- assertVisible:
+    text: ".*Shows.*"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Filters.*"
+    timeout: 15000
+# Filters appears before the grid is focusable; wait for seeded Show first.
+- extendedWaitUntil:
+    visible: "^(.*, )?Show(,.*)?$"
+    timeout: 60000
+- pressKey: Remote Dpad Down
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        focused: true
+        above: "^(.*, )?Show(,.*)?$"
+        rightOf: "Rocky Jones, Space Ranger"
+        below: ".*Filters.*"
+    commands:
+      - pressKey: Remote Dpad Right
+      - extendedWaitUntil:
+          visible: "__settle__"
+          timeout: 1000
+          optional: true
+# On hosted tvOS the last Right may still be on Filters. Only then enter the
+# grid with Down; the card must be below Filters (docs/tv-focus-guide.md).
+- runFlow:
+    when:
+      visible:
+        text: ".*Filters.*"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Down
+- assertVisible:
+    focused: true
+    above: "^(.*, )?Show(,.*)?$"
+    rightOf: "Rocky Jones, Space Ranger"
+    below: ".*Filters.*"
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Season.*|.*Pilot.*"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 4000
+    optional: true
+- takeScreenshot: 09-series-details

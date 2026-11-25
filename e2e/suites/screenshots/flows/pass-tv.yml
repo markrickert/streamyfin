@@ -1,0 +1,12 @@
+# One TV capture pass as a single Maestro invocation, so a pass is one command for the
+# runner to fail or finish. Order is load-bearing: bootstrap-login signs the
+# freshly-reset install in, and the Seerr screens only exist once bootstrap-seerr-tv
+# has proven the plugin-pushed connection, so the Seerr flows come last. The nested
+# flows keep their own launchApp — state is reset between passes by the runner, never
+# inside one.
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: bootstrap-login-tv.yml
+- runFlow: tv.yml
+- runFlow: bootstrap-seerr-tv.yml
+- runFlow: seerr-tv.yml
