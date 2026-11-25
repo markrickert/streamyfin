@@ -45,27 +45,8 @@ appId: ${MAESTRO_APP_ID}
     visible: "The Blacksmith.*"
     timeout: 60000
 - takeScreenshot: 06-library-movies
-# A native tab may keep focus as the Movies page opens; Down enters its toolbar.
-# Center is reserved for Filters, never a library card (docs/conventions/tv.md).
-- runFlow:
-    when:
-      visible:
-        text: "Library"
-        focused: true
-    commands:
-      - pressKey: Remote Dpad Down
-- assertVisible:
-    text: ".*Play all.*"
-    focused: true
-- pressKey: Remote Dpad Right
-- assertVisible:
-    text: ".*Shuffle.*"
-    focused: true
-- pressKey: Remote Dpad Right
-- assertVisible:
-    text: ".*A.Z.*"
-    focused: true
-- pressKey: Remote Dpad Right
+# Sort is focusable before the movie grid data is ready, so it is the toolbar's
+# focus target here; Center may only open Filters (docs/conventions/tv.md).
 - assertVisible:
     text: ".*Sort.*"
     focused: true

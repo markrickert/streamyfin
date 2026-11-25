@@ -176,10 +176,10 @@ describe("capture pass parents", () => {
     }
   });
 
-  // Hosted tvOS showed the Library tab retaining focus as the Movies page opened,
-  // so Rights on the tab bar instead of the toolbar missed Filters. The single
-  // guarded Down re-enters the toolbar; Center is only ever pressed on Filters.
-  it("tv-apple.yml enters the Movies toolbar with one guarded Down when the Library tab keeps focus", () => {
+  // A disabled Play all cannot hold tvOS focus while the movie grid loads, so
+  // the toolbar hands preferred focus to the always-enabled Sort: one Right
+  // then reaches Filters, and Center is only ever pressed on Filters.
+  it("tv-apple.yml enters the Movies toolbar from the focused Sort action", () => {
     const cmds = commandsOf("tv-apple.yml");
     const shot = cmds.findIndex(
       (cmd) => cmd.takeScreenshot === "06-library-movies",
@@ -189,30 +189,20 @@ describe("capture pass parents", () => {
       visible: "The Blacksmith.*",
       timeout: 60000,
     });
-    expect(cmds[shot + 1].runFlow).toEqual({
-      when: { visible: { text: "Library", focused: true } },
-      commands: [{ pressKey: "Remote Dpad Down" }],
-    });
-    expect(cmds[shot + 2].assertVisible).toEqual({
-      text: ".*Play all.*",
+    expect(cmds[shot + 1].assertVisible).toEqual({
+      text: ".*Sort.*",
       focused: true,
     });
-    for (const [offset, label] of [
-      [3, ".*Shuffle.*"],
-      [5, ".*A.Z.*"],
-      [7, ".*Sort.*"],
-      [9, ".*Filters.*"],
-    ] as const) {
-      expect(cmds[shot + offset].pressKey).toBe("Remote Dpad Right");
-      expect(cmds[shot + offset + 1].assertVisible).toEqual({
-        text: label,
-        focused: true,
-      });
-    }
+    expect(cmds[shot + 2]).toEqual({ pressKey: "Remote Dpad Right" });
+    expect(cmds[shot + 3].assertVisible).toEqual({
+      text: ".*Filters.*",
+      focused: true,
+    });
+    expect(cmds[shot + 4]).toEqual({ pressKey: "Remote Dpad Center" });
   });
 
-  // Returning to Library from Settings can leave native tab focus unsettled, so
-  // Movies opens from the first already-loaded visit (docs/conventions/tv.md).
+  // The loaded first Library visit supplies Movies; Settings is captured later,
+  // before its modal (docs/conventions/tv.md).
   it("tv-apple.yml opens Movies from the first Library visit", () => {
     const cmds = commandsOf("tv-apple.yml");
     const library = cmds.findIndex(
