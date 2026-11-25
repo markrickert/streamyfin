@@ -3,7 +3,10 @@
 # Never select a Home or movie card: that starts playback and mutates the fixture.
 appId: ${MAESTRO_APP_ID}
 ---
+# A relaunch can return to Expo's server picker on hosted tvOS. The existing
+# guarded helper reopens Metro's dev-client link before Home is asserted.
 - launchApp
+- runFlow: _dismiss-dev-overlays.yml
 - extendedWaitUntil:
     visible: ".*Recently added.*"
     timeout: 60000
@@ -69,6 +72,7 @@ appId: ${MAESTRO_APP_ID}
 - pressKey: Remote Menu
 
 - launchApp
+- runFlow: _dismiss-dev-overlays.yml
 - extendedWaitUntil:
     visible: ".*Recently added.*"
     timeout: 60000
@@ -94,6 +98,7 @@ appId: ${MAESTRO_APP_ID}
 - pressKey: Remote Menu
 
 - launchApp
+- runFlow: _dismiss-dev-overlays.yml
 - extendedWaitUntil:
     visible: ".*Recently added.*"
     timeout: 60000

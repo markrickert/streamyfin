@@ -176,6 +176,28 @@ describe("capture pass parents", () => {
     }
   });
 
+  // Hosted tvOS returned to Expo's server picker on a mid-flow relaunch; the
+  // guarded helper reopens the dev-client link before Home is asserted.
+  it.each(["tv-apple.yml", "seerr-apple.yml"])(
+    "%s reconnects dev client on every launch before waiting for Home",
+    (file) => {
+      const cmds = commandsOf(file);
+      const launches = cmds.flatMap((cmd, index) =>
+        String(cmd) === "launchApp" ? [index] : [],
+      );
+      expect(launches.length).toBeGreaterThan(0);
+      for (const launch of launches) {
+        expect(cmds[launch + 1]).toEqual({
+          runFlow: "_dismiss-dev-overlays.yml",
+        });
+        expect(cmds[launch + 2].extendedWaitUntil).toEqual({
+          visible: ".*Recently added.*",
+          timeout: 60000,
+        });
+      }
+    },
+  );
+
   // A disabled Play all cannot hold tvOS focus while the movie grid loads, so
   // the toolbar hands preferred focus to the always-enabled Sort: one Right
   // then reaches Filters, and Center is only ever pressed on Filters.
@@ -478,11 +500,13 @@ describe("bootstrap-login first-run overlays", () => {
       "waitForAnimationToEnd",
     ]);
     expect(cmds[1].runFlow.when.visible).toBe(
-      "Fetch development servers|Searching for development servers.*",
+      "Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually",
     );
     const picker = new RegExp(cmds[1].runFlow.when.visible);
     expect(picker.test("Fetch development servers")).toBe(true);
     expect(picker.test("Searching for development servers...")).toBe(true);
+    expect(picker.test("DEVELOPMENT SERVERS")).toBe(true);
+    expect(picker.test("Enter URL manually")).toBe(true);
     expect(picker.test("Home")).toBe(false);
     expect(cmds[1].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML

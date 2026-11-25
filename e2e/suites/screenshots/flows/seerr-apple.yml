@@ -4,6 +4,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - launchApp
+- runFlow: _dismiss-dev-overlays.yml
 - extendedWaitUntil:
     visible: ".*Recently added.*"
     timeout: 60000
