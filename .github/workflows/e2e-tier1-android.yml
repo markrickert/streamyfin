@@ -54,6 +54,8 @@ jobs:
               - 'app.config.ts'
               - 'plugins/withCast*.ts'
               - 'e2e/**'
+              # `shots.ts maestro-path` imports it.
+              - 'scripts/reassure-baseline.ts'
               - '.github/workflows/e2e-tier1-android.yml'
 
   maestro:
@@ -123,13 +125,11 @@ jobs:
           NODE_ENV: production
         run: bun run build:android:local
 
-      - name: 🧰 Install Maestro
-        env:
-          # The version proven on the bench; bump it on purpose, with a real run.
-          MAESTRO_VERSION: "2.8.0"
+      - name: 🧰 Install pinned Maestro
         run: |
-          curl -fsSL https://get.maestro.mobile.dev | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          maestro_bin="$(bun e2e/suites/screenshots/shots.ts maestro-path)"
+          [ -x "$maestro_bin" ] || { echo "::error::Missing pinned Maestro binary: $maestro_bin"; exit 1; }
+          echo "MAESTRO_BIN=$maestro_bin" >> "$GITHUB_ENV"
 
       - name: 🧰 Enable KVM for the emulator
         # Linux runners expose /dev/kvm to root only; without this the emulator runs unaccelerated and misses its boot timeout.
@@ -156,7 +156,7 @@ jobs:
           disable-animations: true
           script: |
             adb install -r android/app/build/outputs/apk/release/app-release.apk
-            python3 e2e/bench/maestro.py --flow e2e/suites/cast/flows/smoke-launch.yml --timeout 300
+            python3 e2e/bench/maestro.py --maestro "$MAESTRO_BIN" --flow e2e/suites/cast/flows/smoke-launch.yml --timeout 300
 
       - name: 🧹 Stop a leftover emulator
         # A first attempt cut by its timeout-minutes leaves the runner action no time to kill
@@ -178,7 +178,7 @@ jobs:
           disable-animations: true
           script: |
             adb install -r android/app/build/outputs/apk/release/app-release.apk
-            python3 e2e/bench/maestro.py --flow e2e/suites/cast/flows/smoke-launch.yml --timeout 300
+            python3 e2e/bench/maestro.py --maestro "$MAESTRO_BIN" --flow e2e/suites/cast/flows/smoke-launch.yml --timeout 300
 
       - name: 📤 Upload Maestro artifacts
         if: failure()
