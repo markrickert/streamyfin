@@ -642,7 +642,7 @@ describe("e2e-screenshots.yml", () => {
       );
       expect(clientUploads).toHaveLength(2);
       for (const upload of clientUploads) {
-        expect(upload.with?.["retention-days"]).toBe(30);
+        expect(upload.with?.["retention-days"]).toBe(90);
         expect(upload.if).toMatch(
           /^always\(\) && needs\.plan\.outputs\.trusted == 'true' && steps\.dev-clients\.outputs\.(before|after)_hash != ''$/,
         );
