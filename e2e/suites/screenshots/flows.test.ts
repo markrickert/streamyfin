@@ -493,6 +493,26 @@ describe("capture pass parents", () => {
     }
   });
 
+  it.each([
+    "ensure-seerr-mobile.yml",
+    "bootstrap-seerr-mobile.yml",
+    "seerr-mobile.yml",
+  ])(
+    "%s waits for rendered Home content after every launchApp instead of the racy Home label",
+    (file) => {
+      const cmds = commandsOf(file);
+      const launches = cmds.flatMap((cmd, index) =>
+        String(cmd) === "launchApp" ? [index] : [],
+      );
+      expect(launches.length).toBeGreaterThan(0);
+      for (const launch of launches) {
+        expect(cmds[launch + 1].extendedWaitUntil?.visible).toBe(
+          ".*Recently added.*",
+        );
+      }
+    },
+  );
+
   // Focus selects Search on tvOS NativeTabs; Android TV's JS TVNavBar also needs Center.
   it("bootstrap-seerr-tv focuses Search by D-pad and presses Center on Android TV", () => {
     const cmds = commandsOf("bootstrap-seerr-tv.yml");
