@@ -322,28 +322,29 @@ jobs:
 
       - name: 📤 Upload built dev client (before)
         # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it;
-        # the weekly native churn makes longer pointless. Leave default compression so
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so its expiry counts from the first
+        # build: keep the public-repo maximum of 90 days. Leave default compression so
         # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
         if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
           path: ${{ steps.dev-clients.outputs.before_path }}
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
           overwrite: true
 
       - name: 📤 Upload built dev client (after)
         # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it;
-        # the weekly native churn makes longer pointless.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so keep the public-repo maximum.
         if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
           path: ${{ steps.dev-clients.outputs.after_path }}
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
           overwrite: true
 
@@ -529,28 +530,29 @@ jobs:
 
       - name: 📤 Upload built dev client (before)
         # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it;
-        # the weekly native churn makes longer pointless. Leave default compression so
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so its expiry counts from the first
+        # build: keep the public-repo maximum of 90 days. Leave default compression so
         # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
         if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
           path: ${{ steps.dev-clients.outputs.before_path }}
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
           overwrite: true
 
       - name: 📤 Upload built dev client (after)
         # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it;
-        # the weekly native churn makes longer pointless.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so keep the public-repo maximum.
         if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
           path: ${{ steps.dev-clients.outputs.after_path }}
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
           overwrite: true
 
