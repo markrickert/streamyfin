@@ -26,6 +26,25 @@ class BuildCommandTests(unittest.TestCase):
             ["/opt/maestro", "--device", "emulator-5554", "test", "-e", "SERVER_URL=http://x", "-e", "FAKE_CAST=1", "flow.yml"],
         )
 
+    def test_build_command_with_out_keeps_screenshots_in_one_flat_folder(self):
+        command = build_command(
+            Path("flow.yml"), device=None, env={"SERVER_URL": "http://x"}, maestro=Path("/opt/maestro"), out=Path("shots/before")
+        )
+        self.assertEqual(
+            command,
+            ["/opt/maestro", "test", "--debug-output", "shots/before", "--flatten-debug-output", "-e", "SERVER_URL=http://x", "flow.yml"],
+        )
+        self.assertEqual(
+            build_command(Path("flow.yml"), device=None, env={}, maestro=Path("/opt/maestro")),
+            ["/opt/maestro", "test", "flow.yml"],
+        )
+
+    def test_build_command_with_platform_and_a_pinned_binary(self):
+        command = build_command(
+            Path("flow.yml"), device="UDID", env={}, maestro=Path("/tools/maestro-tvos"), platform="tvos"
+        )
+        self.assertEqual(command, ["/tools/maestro-tvos", "--device", "UDID", "--platform", "tvos", "test", "flow.yml"])
+
     def test_default_maestro_path_is_the_user_install(self):
         from unittest import mock
 
@@ -50,6 +69,43 @@ class RunTests(unittest.TestCase):
         import os
 
         self.assertEqual(run_flow(["true"], dict(os.environ), timeout=5), 0)
+
+    # With piped stdout (as the screenshot runner spawns maestro.py), an unflushed
+    # "$ ..." line stays buffered until exit and lands after Maestro's error output,
+    # pushing the actual failure out of the runner's stdout tail.
+    def test_main_flushes_echoed_command_before_maestro_output_when_piped(self):
+        import os
+        import subprocess
+        import sys
+        import tempfile
+
+        e2e_root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_maestro = Path(tmp) / "fake-maestro"
+            fake_maestro.write_text("#!/bin/sh\necho 'MAESTRO_ERROR_LINE'\nexit 1\n")
+            fake_maestro.chmod(0o755)
+            flow = Path(tmp) / "flow.yml"
+            flow.write_text("appId: x\n---\n[]\n")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(e2e_root / "bench" / "maestro.py"),
+                    "--flow",
+                    str(flow),
+                    "--device",
+                    "emulator-5554",
+                    "--maestro",
+                    str(fake_maestro),
+                ],
+                env={**os.environ, "PYTHONPATH": str(e2e_root)},
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 1)
+        lines = result.stdout.splitlines()
+        cmd_idx = next(i for i, line in enumerate(lines) if line.startswith("$ "))
+        err_idx = lines.index("MAESTRO_ERROR_LINE")
+        self.assertLess(cmd_idx, err_idx)
 
 
 class JavaHomeTests(unittest.TestCase):

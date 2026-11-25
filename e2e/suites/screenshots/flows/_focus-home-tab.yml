@@ -1,0 +1,36 @@
+# tvOS restores the last focus after launchApp, so reset to the Home tab
+# before counting Right presses. Focus alone selects the tab.
+# tvOS draws a native tab bar that matches by label; Android TV's JS TVNavBar focuses the
+# Pressable carrying the tv-nav-home testID, not the Text inside it.
+appId: ${MAESTRO_APP_ID}
+---
+- pressKey: Remote Dpad Up
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - repeat:
+          times: 5
+          while:
+            notVisible:
+              text: "Home"
+              focused: true
+          commands:
+            - pressKey: Remote Dpad Left
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - repeat:
+          times: 5
+          while:
+            notVisible:
+              id: tv-nav-home
+              focused: true
+          commands:
+            - pressKey: Remote Dpad Left
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Home"
+      TAB_ID: tv-nav-home

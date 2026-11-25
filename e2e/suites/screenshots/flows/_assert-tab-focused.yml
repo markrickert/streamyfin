@@ -1,0 +1,20 @@
+# Asserts the TV tab bar has TAB_LABEL focused. tvOS draws the native tab bar, which has
+# no testIDs, so it matches the label; Android TV's JS TVNavBar focuses the Pressable
+# that carries the tv-nav-* testID, not the Text inside it.
+# Env: TAB_LABEL (the tab's visible name), TAB_ID (its tv-nav-* testID).
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - assertVisible:
+          text: ${TAB_LABEL}
+          focused: true
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - assertVisible:
+          id: ${TAB_ID}
+          focused: true

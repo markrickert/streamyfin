@@ -10,8 +10,10 @@ server log, the session the server records, the receiver on the TV.
 | --- | --- |
 | `bench/` | Shared tooling: configuration, Jellyfin client, sessions observer, device inventory, Cast sender, Maestro runner, reports |
 | `fixtures/` | Shared test data: receiver protocol vectors (replayed by Jest and the Python sender, later by JUnit and XCTest), media cases for the playback matrix |
-| `suites/<name>/` | One folder per feature under test (`syncplay`, `cast`), each with its own README |
+| `suites/<name>/` | One folder per feature under test (`syncplay`, `cast`, `screenshots`), each with its own README |
 | `reports/` | Local run output, ignored by git |
+
+Device discovery and selection live in two places: `e2e/bench/devices.py` (Python inventory for bench runs) and `e2e/suites/screenshots/lib/device.ts` (TypeScript `selectDevice` for screenshot runs). They cannot share code across languages, so keep their simulator, emulator, and physical-device rules aligned.
 
 ## Tiers
 
@@ -29,10 +31,13 @@ server log, the session the server records, the receiver on the TV.
   `python3 e2e/bench/maestro.py --flow <flow> --device <id>`. Without `--device`, a flow runs on
   the one emulator or simulator running and never on a phone: the smoke flow clears the app's
   data. In CI on pull requests that touch cast code, the bench (`e2e/**`) or the screen the
-  smoke flow drives, and on demand (`.github/workflows/e2e-tier1-android.yml`). For local
-  browsing flows, seed the optional throwaway catalog with `bun run e2e:seed` after the
-  SyncPlay server setup (see `suites/syncplay/README.md`), pass `--syncplay` to the bench to hand
-  the flow its sign-in, and remove it with `bun run e2e:down`.
+  smoke flow drives, and on demand (`.github/workflows/e2e-tier1-android.yml`). The
+  screenshot comparison suite runs all four platforms (`ios`, `apple-tv`, `android`,
+  `android-tv`) on every push to `develop` and on demand in
+  `.github/workflows/e2e-screenshots.yml` (see `suites/screenshots/README.md`). For local browsing flows, seed the optional throwaway
+  catalog with `bun run e2e:seed` after the SyncPlay server setup (see
+  `suites/syncplay/README.md`), pass `--syncplay` to the bench to hand the flow its
+  sign-in, and remove it with `bun run e2e:down`.
 - **Tier 2, real devices.** Driven from a developer machine against the test server:
   Chromecast, Google TV, Apple TV, phones and tablets. The Python sender talks to the
   Jellyfin receiver directly, so the receiver and the server can be tested without the

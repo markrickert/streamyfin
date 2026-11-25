@@ -1,0 +1,100 @@
+# Seerr screens on TV (Apple TV and Android TV): one D-pad-driven flow runs on both
+# platforms. Focus selects tabs on tvOS while Android TV's JS TVNavBar switches tabs on
+# Center; Center selects the Discover pill or the verified 1931 detail card only.
+# Never press Request: it mutates the Seerr fixture.
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- runFlow: _dismiss-dev-overlays.yml
+- extendedWaitUntil:
+    visible: ".*Recently added.*"
+    timeout: 60000
+- runFlow: _focus-home-tab.yml
+- pressKey: Remote Dpad Right
+- runFlow:
+    file: _assert-tab-focused.yml
+    env:
+      TAB_LABEL: "Search"
+      TAB_ID: tv-nav-search
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "Discover"
+    timeout: 30000
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Down
+# Android TV's full-width TextInput can drop Down onto the left-aligned Library badge.
+- runFlow:
+    when:
+      visible:
+        text: "Library"
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Right
+- runFlow:
+    when:
+      visible:
+        id: tv-nav-libraries
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Right
+- assertVisible:
+    text: "Discover"
+    focused: true
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: ".*Trending.*|.*Popular.*"
+    timeout: 30000
+# Discover can show Trending before the seeded Recently added row loads.
+# Wait for its fixed title so the three passes capture the same content.
+- extendedWaitUntil:
+    visible: "Annie Oakley.*"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 10-seerr-discover
+
+# tvOS drops taps, so the D-pad reaches the field. Android TV taps the field by its
+# placeholder: Up from the Discover cards leaves focus on the tab bar there, where Center
+# would switch tabs, and `hideKeyboard` (Back) from the Search tab goes to Home.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Up
+      - pressKey: Remote Dpad Up
+      - inputText: "Iron Man"
+      - pressKey: Enter
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: '.*Search\.\.\..*'
+      - inputText: "Iron Man"
+      # The on-screen keyboard covers the results until dismissed.
+      - hideKeyboard
+# A query-field match is premature: 1931 appears only once result cards load.
+- extendedWaitUntil:
+    visible: "1931"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 11-seerr-search
+
+- runFlow: _focus-seerr-1931.yml
+- extendedWaitUntil:
+    visible: "Request"
+    timeout: 30000
+- assertVisible: "1931"
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 6000
+    optional: true
+- takeScreenshot: 12-seerr-detail

@@ -1,0 +1,106 @@
+# Signs the TV app (Android TV, and Apple TV through the tvOS Maestro fork) in to the demo Jellyfin server with the D-pad, leaving the session the
+# TV screenshot flows need. Clears the app's state first, so it works on a build that is already
+# signed in. The TV form is focus driven: Center opens a field for typing, Enter closes the
+# keyboard and leaves the focus on the field, Down moves to the next control.
+# Reads MAESTRO_JELLYFIN_URL, MAESTRO_JELLYFIN_USER and MAESTRO_JELLYFIN_PASS: see .env.example.
+# Run: e2e/suites/screenshots/run.sh bootstrap-login-tv <out dir> [device]
+appId: ${MAESTRO_APP_ID}
+---
+# Same notification-permission pre-grant as the mobile flow: the OS dialog would block
+# every TV selector below it.
+# The tvOS fork's permissions support is unverified, so Apple TV launches bare.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - launchApp:
+          stopApp: false
+          permissions:
+            notifications: allow
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - launchApp
+- runFlow: _dismiss-dev-overlays.yml
+# tvOS includes the icon glyph before "Add server" in the focused button's label.
+- extendedWaitUntil:
+    visible: ".*Add server"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 3000
+    optional: true
+- takeScreenshot: 00-login
+
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "Enter the URL to your Jellyfin server"
+    timeout: 15000
+- pressKey: Remote Dpad Center
+- inputText: ${MAESTRO_JELLYFIN_URL}
+- pressKey: Enter
+- pressKey: Remote Dpad Down
+- pressKey: Remote Dpad Center
+- extendedWaitUntil:
+    visible: "Username"
+    timeout: 30000
+
+# Android TV's Down/Center can reopen Username rather than focus Password after
+# Enter. Tap each field and prove focus before typing (docs/tv-focus-guide.md).
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Center
+      - inputText: ${MAESTRO_JELLYFIN_USER}
+      - pressKey: Enter
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Center
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Username"
+      - assertVisible:
+          text: "Username"
+          focused: true
+      - inputText: ${MAESTRO_JELLYFIN_USER}
+      - pressKey: Enter
+      - assertVisible: ${MAESTRO_JELLYFIN_USER}
+      - tapOn: "Password"
+      - assertVisible:
+          text: "Password"
+          focused: true
+- inputText: ${MAESTRO_JELLYFIN_PASS}
+# tvOS keeps the secure input staged until its on-screen Done button is selected.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Center
+      - assertNotVisible: "Keyboard"
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - pressKey: Enter
+# The username's preferred focus used to steal Down from the Save toggle on tvOS.
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS == '1'}
+    commands:
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Down
+      - pressKey: Remote Dpad Center
+- runFlow:
+    when:
+      true: ${MAESTRO_TVOS != '1'}
+    commands:
+      - tapOn: "Log in"
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 60000

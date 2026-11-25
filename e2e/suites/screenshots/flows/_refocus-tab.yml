@@ -1,0 +1,15 @@
+# Android TV only. Center on a tab can move focus into the page, and the next Right press
+# would then miss the next tab. Press Up until the tab bar item TAB_ID holds focus again.
+# A no-op when it already does. Run it after the screenshot, never before, so the capture
+# shows the page as the pass left it.
+# Env: TAB_ID (the tab's tv-nav-* testID).
+appId: ${MAESTRO_APP_ID}
+---
+- repeat:
+    times: 3
+    while:
+      notVisible:
+        id: ${TAB_ID}
+        focused: true
+    commands:
+      - pressKey: Remote Dpad Up
