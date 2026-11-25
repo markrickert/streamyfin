@@ -66,8 +66,8 @@ bun run e2e:setup
 bun run e2e:seed
 ```
 
-The seed adds 20 movies, four series with 12 episodes, and 15 tracks in five
-albums by five artists, plus a placeholder `Movie`, a `Show` with two episodes, and an
+The seed adds 20 movies, four series with 12 episodes, and 12 tracks in four
+albums by four artists, plus a placeholder `Movie`, a `Show` with two episodes, and an
 `Album` with two tracks that it always creates.
 Each new movie and episode is a generated 10-second black/silent video; each new track is
 10 seconds of silence. Titles, years, provider IDs, episode numbers and audio
@@ -162,8 +162,16 @@ This command requires internet access; `setup.py` and `e2e:seed` do not.
 `streamyfin-syncplay-e2e-seerr` on `127.0.0.1:15055` (config in `.state/seerr/`); the
 native backend runs the same release there. `setup.py` onboards it against this
 checkout's Jellyfin (`seerr.ensure_ready`) and enables
-the `SyncPlay Fixtures` library. The Seerr API key stays inside the fixture and is never
-logged.
+the `SyncPlay Fixtures` library. After `e2e:seed` and `e2e:enrich`, the screenshot
+runner calls `seerr.enable_catalog_libraries` to enable `Movies` and `Shows`
+(Seerr never syncs `Music`: its library sync excludes the music CollectionType), and
+`seerr.provision_client_access` to push `jellyseerrServerUrl`/`jellyseerrApiKey` into the
+Streamyfin plugin config so TV builds, which have no Seerr settings screen, sign in at
+Jellyfin login. The Seerr API key stays inside the fixture: it is readable by the
+fixture's own users, never logged.
+
+Enrichment is strict: `e2e:enrich` must exit 0 before screenshots run, and the runner
+treats a non-zero enrich as fatal.
 
 ## Controller against a live server
 

@@ -13,6 +13,10 @@ READY_ATTEMPTS = 90
 READY_DELAY_SECONDS = 2
 MEDIA_SERVER_TYPE_JELLYFIN = 2
 FIXTURE_LIBRARY = "SyncPlay Fixtures"
+# Seerr's mapLibraries excludes music, books, musicvideos, homevideos and boxsets
+# CollectionTypes, so the Music library can never sync: it is not a catalog member.
+CATALOG_LIBRARIES = ("Movies", "Shows")
+OWNER = "syncplay-host"
 
 
 def base_url(owned):
@@ -99,3 +103,45 @@ def ensure_ready(owned, username, password):
     request(opener, url, "/api/v1/settings/initialize", "POST")
     if not request(opener, url, "/api/v1/settings/public").get("initialized"):
         raise RuntimeError("Seerr initialization did not stick: /api/v1/settings/public still reports initialized=false")
+
+
+def enable_catalog_libraries(owned):
+    """Enable the seeded Movies and Shows libraries; the screenshot runner calls this
+    after e2e:seed so Seerr's Discover, search and detail screens have data."""
+    from suites.syncplay import setup
+
+    url = base_url(owned)
+    opener = new_session()
+    if not request(opener, url, "/api/v1/settings/public").get("initialized"):
+        raise RuntimeError("Seerr is not initialized; run setup.py first")
+    login(opener, url, OWNER, setup.PASSWORD)
+    enable_named(opener, url, CATALOG_LIBRARIES)
+
+
+def provision_client_access(owned):
+    """Push the Seerr URL and admin API key into the Streamyfin plugin's config.
+
+    TV builds have no Seerr settings screen, so the only way they learn about Seerr is
+    the plugin-provided seerrServerUrl/seerrApiKey, which makes JellyfinProvider sign in
+    at login without a password (the /user/jellyfin/{id} route, present in Seerr 3.5.0).
+    The plugin's POST /streamyfin/config/yaml takes {"value": <yaml>} and JSON is valid
+    YAML, so the mutated JSON config posts straight back. Requires e2e:enrich to have
+    installed the plugin. The key never leaves this host: it stays in plugin config on
+    the throwaway server.
+    """
+    from suites.syncplay import setup
+
+    credentials = json.loads((setup.STATE / "credentials.json").read_text())
+    token = credentials["host"]["token"]
+    seerr_settings = json.loads((setup.STATE / "seerr" / "settings.json").read_text())
+    api_key = seerr_settings["main"]["apiKey"]
+    if not api_key:
+        raise RuntimeError("Seerr's settings.json has no main.apiKey; is it onboarded?")
+
+    config = setup.api("/Streamyfin/config", token=token)
+    settings = config["settings"]
+    for key, value in (("jellyseerrServerUrl", base_url(owned)), ("jellyseerrApiKey", api_key)):
+        entry = settings.get(key) or {}
+        entry["value"] = value
+        settings[key] = entry
+    setup.api("/streamyfin/config/yaml", "POST", {"value": json.dumps(config)}, token=token)

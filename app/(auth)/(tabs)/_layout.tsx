@@ -213,7 +213,11 @@ export default function TabLayout() {
         </NativeTabs.Trigger>
         {/* Favorites, watchlists, downloads, custom links, sessions and
             settings: the phone bar keeps four tabs, the rest is in this menu. */}
-        <NativeTabs.Trigger name='(more)' hidden={Platform.isTV}>
+        <NativeTabs.Trigger
+          name='(more)'
+          hidden={Platform.isTV}
+          testID='more-tab'
+        >
           <NativeTabs.Trigger.Label>{t("tabs.more")}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             sf='ellipsis'
