@@ -28,6 +28,7 @@ import {
   prepareDevice,
   restoreDevice,
   selectDevice,
+  writeAndroidDiagnostics,
 } from "./device";
 import { ensureFixture, fixtureChecks, fixtureEnv } from "./fixture";
 import {
@@ -282,7 +283,15 @@ export async function runComparison(
           // because wiping state would also wipe the URL the link just set.
           resetTestAppState(d, cli.platform!, device, appId, artifact);
           launchDevClient(d, cli.platform!, device, appId, port);
-          runCapture(d, tooling, spec, device, outDir, env, maestro);
+          try {
+            runCapture(d, tooling, spec, device, outDir, env, maestro);
+          } catch (error) {
+            // A pass dying under a system ANR dialog leaves no trace of which
+            // process hung; dump the device state before the error aborts the run.
+            if (cli.platform === "android" || cli.platform === "android-tv")
+              writeAndroidDiagnostics(d, device, outDir);
+            throw error;
+          }
         }
       } finally {
         metro.kill();

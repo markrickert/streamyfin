@@ -352,6 +352,118 @@ describe("runComparison failure path", () => {
     expect(f.spawns.length).toBeGreaterThan(0);
     expect(f.spawns.every((s) => s.killed)).toBe(true);
   });
+
+  it("writes ANR and window dumps into the failed Android pass's report dir, then rethrows the flow error", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(
+      ["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
+      [
+        "dumpsys activity lastanr-traces",
+        { code: 0, stdout: "traces for nexuslauncher\n", stderr: "" },
+      ],
+      [
+        "dumpsys activity lastanr",
+        { code: 0, stdout: "anr record\n", stderr: "" },
+      ],
+      ["dumpsys window", { code: 0, stdout: "window state\n", stderr: "" }],
+    );
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("boom");
+    const report = f.files.get(`${outDir}/before/android-diagnostics.txt`);
+    expect(report).toContain("dumpsys activity lastanr");
+    expect(report).toContain("anr record");
+    expect(report).toContain("dumpsys activity lastanr-traces");
+    expect(report).toContain("traces for nexuslauncher");
+    expect(report).toContain("dumpsys window");
+    expect(report).toContain("window state");
+  });
+
+  it("still rethrows the flow error when the adb diagnostics themselves fail", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(
+      ["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
+      [
+        "dumpsys",
+        () => {
+          throw new Error("adb gone");
+        },
+      ],
+    );
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("boom");
+  });
+
+  it("runs no adb diagnostics when an iOS pass fails", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-ios`;
+    f.routes.push(
+      [
+        "list devices",
+        { code: 0, stdout: JSON.stringify(SIMCTL_JSON), stderr: "" },
+      ],
+      [
+        "pod install",
+        (fake) => {
+          fake.dirs.add(`${REPO}/ios`);
+          fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+          return ok;
+        },
+      ],
+      [
+        "xcodebuild",
+        (fake, argv) => {
+          const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+          fake.dirs.add(`${derived}/Build/Products/Debug-iphonesimulator`);
+          fake.dirs.add(
+            `${derived}/Build/Products/Debug-iphonesimulator/Streamyfin.app`,
+          );
+          return ok;
+        },
+      ],
+      [
+        "PlistBuddy",
+        { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+      ],
+      ["status_bar", ok],
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
+      ["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }],
+    );
+    const error = await runComparison(
+      f,
+      {
+        ...runCli,
+        platform: "ios",
+        device: "UDID-PHONE",
+        outDir,
+      },
+      REPO,
+    ).catch((e) => e);
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("boom");
+    expect(execs(f, "dumpsys")).toHaveLength(0);
+    expect(f.files.has(`${outDir}/before/android-diagnostics.txt`)).toBe(false);
+  });
 });
 
 describe("runComparison boundaries", () => {

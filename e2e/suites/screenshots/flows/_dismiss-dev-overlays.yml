@@ -11,7 +11,16 @@
 # MAESTRO_DEV_CLIENT_URL, and on iOS the "Open in" step below accepts that link too.
 appId: ${MAESTRO_APP_ID}
 ---
-# A slow CI emulator raises ANR dialogs for the launcher over the dev menu.
+# Waiting on a hung Pixel Launcher only defers its ANR dialog, which keeps
+# re-raising over the app. Close the launcher; Android restarts it on Home.
+- runFlow:
+    when:
+      visible: "Pixel Launcher isn't responding"
+    commands:
+      - tapOn: "Close app"
+      - waitForAnimationToEnd
+# Every other hung process — our own app above all — must never get "Close app",
+# because killing the app under test would end the run. It only gets "Wait".
 - runFlow:
     when:
       visible: ".*isn't responding.*"

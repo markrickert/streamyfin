@@ -604,56 +604,64 @@ describe("bootstrap-login first-run overlays", () => {
       readFileSync(join(__dirname, "flows", file), "utf8"),
     )[1] as Command[];
 
-  // The ANR step runs first so an Android system dialog never blocks the dev overlays,
-  // then the picker step opens the runner's link, and the open-in alert branches on
-  // tvOS (where PineBoard focuses Open and ignores tapOn).
-  it("dismisses Android ANRs, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
+  // The launcher step runs first because "Wait" only defers its ANR dialog; every
+  // other ANR still gets "Wait", then the picker step opens the runner's link and
+  // the open-in alert branches on tvOS (where PineBoard focuses Open and ignores
+  // tapOn).
+  it("closes a hung Pixel Launcher, waits out other ANRs, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
-    expect(cmds).toHaveLength(6);
-    expect(cmds[0].runFlow.when.visible).toBe(".*isn't responding.*");
+    expect(cmds).toHaveLength(7);
+    expect(cmds[0].runFlow.when.visible).toBe(
+      "Pixel Launcher isn't responding",
+    );
     expect(cmds[0].runFlow.commands).toEqual([
+      { tapOn: "Close app" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[1].runFlow.when.visible).toBe(".*isn't responding.*");
+    expect(cmds[1].runFlow.commands).toEqual([
       { tapOn: "Wait" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[1].runFlow.when.visible).toBe(
+    expect(cmds[2].runFlow.when.visible).toBe(
       "Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually",
     );
-    const picker = new RegExp(cmds[1].runFlow.when.visible);
+    const picker = new RegExp(cmds[2].runFlow.when.visible);
     expect(picker.test("Fetch development servers")).toBe(true);
     expect(picker.test("Searching for development servers...")).toBe(true);
     expect(picker.test("DEVELOPMENT SERVERS")).toBe(true);
     expect(picker.test("Enter URL manually")).toBe(true);
     expect(picker.test("Home")).toBe(false);
-    expect(cmds[1].runFlow.commands).toEqual([
+    expect(cmds[2].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
       { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
-      "waitForAnimationToEnd",
-    ]);
-    expect(cmds[2].runFlow.when).toEqual({
-      visible: "Open in .*",
-      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
-      true: "${MAESTRO_TVOS != '1'}",
-    });
-    expect(cmds[2].runFlow.commands).toEqual([
-      { tapOn: "Open" },
       "waitForAnimationToEnd",
     ]);
     expect(cmds[3].runFlow.when).toEqual({
       visible: "Open in .*",
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
-      true: "${MAESTRO_TVOS == '1'}",
+      true: "${MAESTRO_TVOS != '1'}",
     });
     expect(cmds[3].runFlow.commands).toEqual([
+      { tapOn: "Open" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[4].runFlow.when).toEqual({
+      visible: "Open in .*",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      true: "${MAESTRO_TVOS == '1'}",
+    });
+    expect(cmds[4].runFlow.commands).toEqual([
       { pressKey: "Remote Dpad Center" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[4].runFlow.when.visible).toBe("Continue");
-    expect(cmds[4].runFlow.commands).toEqual([
+    expect(cmds[5].runFlow.when.visible).toBe("Continue");
+    expect(cmds[5].runFlow.commands).toEqual([
       { tapOn: "Continue" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[5].runFlow.when.visible).toBe("Go home");
-    expect(cmds[5].runFlow.commands).toEqual([
+    expect(cmds[6].runFlow.when.visible).toBe("Go home");
+    expect(cmds[6].runFlow.commands).toEqual([
       { extendedWaitUntil: { visible: "Close", timeout: 10000 } },
       { tapOn: "Close" },
       "waitForAnimationToEnd",
