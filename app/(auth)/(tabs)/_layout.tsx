@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useTVBackHandler";
 import { useSettings } from "@/utils/atoms/settings";
 import { eventBus } from "@/utils/eventBus";
+import { writeToLog } from "@/utils/log";
 import {
   isTVTabGone,
   showsWatchlists,
@@ -126,9 +127,26 @@ export default function TabLayout() {
   const { settings } = useSettings();
   const watchlists = showsWatchlists(settings);
 
+  const traceTab = segments.find(isTabRoute) ?? "none";
+  const traceLeaf =
+    segments.at(-1) === "(tabs)"
+      ? "tabs"
+      : segments.at(-1) === "[libraryId]"
+        ? "library-detail"
+        : segments.at(-1) === traceTab
+          ? "root"
+          : "other";
+  const traceRoute = `${traceTab}|${traceLeaf}`;
+  useEffect(() => {
+    if (__DEV__ && Platform.isTV && Platform.OS === "ios")
+      writeToLog("DEBUG", `[DEBUG-TV-NAV] route=${traceRoute}`);
+  }, [traceRoute]);
+
   // "/" lands on this group's index route, and native tabs render only their
   // tabs: the app launched on a black screen. Send it to Home from here.
   if (segments.at(-1) === "(tabs)") {
+    if (__DEV__ && Platform.isTV && Platform.OS === "ios")
+      writeToLog("DEBUG", "[DEBUG-TV-NAV] redirect-tabs-root");
     return <Redirect href='/(auth)/(tabs)/(home)' />;
   }
 
@@ -147,7 +165,13 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger
           name='(home)'
-          listeners={{ tabPress: () => eventBus.emit("scrollToTop") }}
+          listeners={{
+            tabPress: () => {
+              if (__DEV__ && Platform.isTV && Platform.OS === "ios")
+                writeToLog("DEBUG", "[DEBUG-TV-NAV] home-tab-press");
+              eventBus.emit("scrollToTop");
+            },
+          }}
         >
           <NativeTabs.Trigger.Label>{t("tabs.home")}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
