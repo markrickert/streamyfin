@@ -344,6 +344,45 @@ export function restoreDevice(
   }
 }
 
+/**
+ * Dumps ANR and window state into a failed Android pass's report dir. A system
+ * process can bury the app under an "isn't responding" dialog that screenshots
+ * alone cannot explain, and adb keeps the last traces across it. Everything is
+ * best effort: a diagnostics failure must never mask the triggering error.
+ */
+export function writeAndroidDiagnostics(
+  d: Deps,
+  device: string,
+  outDir: string,
+): void {
+  const sections = [
+    "dumpsys activity lastanr",
+    "dumpsys activity lastanr-traces",
+    "dumpsys window",
+  ].map((command) => {
+    try {
+      const result = d.exec([
+        "adb",
+        "-s",
+        device,
+        "shell",
+        ...command.split(" "),
+      ]);
+      return `===== adb shell ${command} =====\nexit ${result.code}\n--- stdout ---\n${result.stdout}\n--- stderr ---\n${result.stderr}`;
+    } catch (error) {
+      return `===== adb shell ${command} =====\nexec failed: ${error}`;
+    }
+  });
+  try {
+    d.fs.write(
+      `${outDir}/android-diagnostics.txt`,
+      `${sections.join("\n\n")}\n`,
+    );
+  } catch (error) {
+    d.log(`could not write Android diagnostics for ${outDir}: ${error}`);
+  }
+}
+
 export function ensurePortFree(d: Deps, port: number): void {
   const result = d.exec(["lsof", "-nP", `-iTCP:${port}`, "-sTCP:LISTEN"]);
   if (result.stdout.trim())
