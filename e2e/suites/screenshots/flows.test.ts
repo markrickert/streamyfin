@@ -243,6 +243,44 @@ describe("capture pass parents", () => {
     expect(cmds[showRow + 11]).toEqual({ pressKey: "Remote Dpad Center" });
   });
 
+  // The focused Genres tile and Filters button still animate when the sheet
+  // first appears; settling first keeps the capture identical across passes.
+  it("tv-apple.yml settles the focused filter sheet before capture", () => {
+    const cmds = commandsOf("tv-apple.yml");
+    const shot = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "08-library-filters",
+    );
+    expect(shot).toBeGreaterThanOrEqual(0);
+    expect(cmds[shot - 2].extendedWaitUntil).toEqual({
+      visible: ".*Genres.*",
+      timeout: 10000,
+    });
+    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
+      visible: "__settle__",
+      timeout: 2000,
+      optional: true,
+    });
+  });
+
+  // The Discover Trending row can appear before the seeded Recently added
+  // row; all three passes must wait for the fixed title so noise matches.
+  it("seerr-apple.yml waits for seeded Discover content before capture", () => {
+    const cmds = commandsOf("seerr-apple.yml");
+    const shot = cmds.findIndex(
+      (cmd) => cmd.takeScreenshot === "10-seerr-discover",
+    );
+    expect(shot).toBeGreaterThanOrEqual(0);
+    expect(cmds[shot - 2].extendedWaitUntil).toEqual({
+      visible: "Annie Oakley.*",
+      timeout: 60000,
+    });
+    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
+      visible: "__settle__",
+      timeout: 6000,
+      optional: true,
+    });
+  });
+
   // The loaded first Library visit supplies Movies; Settings is captured later,
   // before its modal (docs/conventions/tv.md).
   it("tv-apple.yml opens Movies from the first Library visit", () => {

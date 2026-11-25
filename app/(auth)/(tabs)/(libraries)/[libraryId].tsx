@@ -175,12 +175,6 @@ const LibraryPage = () => {
   };
   const { libraryId, fromSeeAll } = searchParams;
 
-  useEffect(() => {
-    if (!__DEV__ || !Platform.isTV || Platform.OS !== "ios") return;
-    writeToLog("DEBUG", "[DEBUG-TV-NAV] detail-mounted");
-    return () => writeToLog("DEBUG", "[DEBUG-TV-NAV] detail-unmounted");
-  }, []);
-
   const typography = useScaledTVTypography();
   const posterSizes = useScaledTVPosterSizes();
   const [api] = useAtom(apiAtom);

@@ -14,14 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Animated,
-  Easing,
-  FlatList,
-  Platform,
-  Pressable,
-  View,
-} from "react-native";
+import { Animated, Easing, FlatList, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/components/common/ServerImage";
 import { Text } from "@/components/common/Text";
@@ -31,7 +24,7 @@ import useRouter from "@/hooks/useAppRouter";
 import { apiAtom, userAtom } from "@/providers/JellyfinProvider";
 import { useSettings } from "@/utils/atoms/settings";
 import { getBackdropUrl } from "@/utils/jellyfin/image/getBackdropUrl";
-import { logAndCaptureError, writeToLog } from "@/utils/log";
+import { logAndCaptureError } from "@/utils/log";
 import { scaleSize } from "@/utils/scaleSize";
 
 const HORIZONTAL_PADDING = scaleSize(80);
@@ -353,8 +346,6 @@ export const TVLibraries: React.FC = () => {
 
   const handleLibraryPress = useCallback(
     (library: BaseItemDto) => {
-      if (__DEV__ && Platform.isTV && Platform.OS === "ios")
-        writeToLog("DEBUG", "[DEBUG-TV-NAV] library-press");
       if (library.CollectionType === "livetv") {
         router.push("/(auth)/(tabs)/(libraries)/livetv/programs");
         return;

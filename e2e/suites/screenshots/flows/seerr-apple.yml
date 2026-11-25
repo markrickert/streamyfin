@@ -24,6 +24,11 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Trending.*|.*Popular.*"
     timeout: 30000
+# Discover can show Trending before the seeded Recently added row loads.
+# Wait for its fixed title so the three passes capture the same content.
+- extendedWaitUntil:
+    visible: "Annie Oakley.*"
+    timeout: 60000
 - extendedWaitUntil:
     visible: "__settle__"
     timeout: 6000

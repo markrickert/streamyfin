@@ -58,6 +58,12 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Genres.*"
     timeout: 10000
+# The Genres focus tile and Filters button animate after the sheet appears;
+# settle focus before capture (docs/tv-focus-guide.md).
+- extendedWaitUntil:
+    visible: "__settle__"
+    timeout: 2000
+    optional: true
 - takeScreenshot: 08-library-filters
 - pressKey: Remote Menu
 - pressKey: Remote Menu

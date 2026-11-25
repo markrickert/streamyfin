@@ -301,17 +301,6 @@ jobs:
             --device "$SIMULATOR_UDID" \
             --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
-      # Temporary tvOS route probe. Never upload raw MMKV: it holds app session data.
-      - name: 🔎 Collect tvOS navigation trace
-        if: failure() && matrix.platform == 'apple-tv'
-        run: |
-          container="$(xcrun simctl get_app_container "$SIMULATOR_UDID" com.fredrikburmester.streamyfin data || true)"
-          if [ -n "$container" ] && [ -f "$container/Library/Caches/mmkv/mmkv.default" ]; then
-            python3 e2e/suites/screenshots/ci/collect-tv-nav-trace.py \
-              "$container/Library/Caches/mmkv/mmkv.default" \
-              e2e/reports/shots/ci-apple-tv/report/tv-nav-trace.txt
-          fi
-
       - name: 📦 Prepare built dev clients for upload
         id: dev-clients
         # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
