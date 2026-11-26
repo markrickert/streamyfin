@@ -9,6 +9,8 @@ name: 📸 E2E Screenshots
 # Each `<x>-native` job builds both refs' clients once per platform; every `<x>`
 # capture job downloads that run-scoped cache and runs with SHOTS_NO_BUILD, so the
 # `repeat` dispatch input can fan captures out into attempts without rebuilding.
+# One `<x>-fixture` job per runner family also warms the weekly fixture, Maestro,
+# and Apple tvOS-driver caches before capture fan-out starts.
 
 on:
   push:
@@ -276,10 +278,180 @@ jobs:
           retention-days: 1
           if-no-files-found: ${{ steps.build.outcome == 'success' && 'error' || 'ignore' }}
 
+  apple-fixture:
+    name: 🔥 Warm Apple fixture caches
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.apple_native != '{"include":[]}'
+    permissions:
+      contents: read
+    runs-on: xcode-27
+    timeout-minutes: 45
+
+    steps:
+      - name: 🛠️ Select the newest Xcode
+        run: |
+          xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+          [ -n "$xcode" ] || { echo "::error::No Xcode on this image"; exit 1; }
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Seerr v3.5.0 sets engine-strict with node ^22.19.0.
+          node-version: "22"
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        # Maestro requires Java 17 on PATH.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 🎞️ Install ffmpeg
+        run: command -v ffmpeg >/dev/null || brew install ffmpeg
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache native fixture tools
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/suites/syncplay/.tools
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-tools-${{ hashFiles('e2e/suites/syncplay/native.py') }}
+
+      - name: 💾 Cache pinned Maestro
+        id: maestro-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/reports/shots/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
+
+      - name: 🔎 Identify tvOS driver toolchain
+        if: contains(needs.plan.outputs.apple_native, '"platform":"apple-tv"')
+        id: tvos-toolchain
+        run: echo "hash=$(xcodebuild -version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: 💾 Cache fixed Maestro tvOS driver
+        if: contains(needs.plan.outputs.apple_native, '"platform":"apple-tv"')
+        id: tvos-driver
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/reports/shots/tvos-driver
+          key: ${{ runner.os }}-${{ runner.arch }}-maestro-tvos-cli-2.8.0.6-7d5552724318d96857669e083e83d2ec29d91a43-min15-${{ steps.tvos-toolchain.outputs.hash }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The fixture cache can hit while a new tooling hash misses the Maestro cache.
+      # Populate it independently so capture fan-out never multiplies that download.
+      - name: 🥋 Ensure pinned Maestro
+        if: steps.maestro-cache.outputs.cache-hit != 'true'
+        run: bun e2e/suites/screenshots/shots.ts maestro-path
+
+      - name: 🗓️ Fixture cache week
+        id: fixture-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: 💾 Restore enriched fixture
+        id: fixture-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state/*
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
+      - name: 🔥 Warm enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        env:
+          SYNCPLAY_BACKEND: native
+        run: |
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform ios
+          # Stop the servers but keep .state, so SQLite is consistent when saved.
+          PYTHONPATH=e2e python3 -c "from suites.syncplay import setup; owned = setup.identity(); setup.backend(owned).down(owned)"
+
+      - name: 💾 Save enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state/*
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
+      - name: 🛠️ Build fixed Maestro tvOS driver
+        if: contains(needs.plan.outputs.apple_native, '"platform":"apple-tv"')
+        env:
+          SYNCPLAY_BACKEND: native
+        run: |
+          # The pinned CLI queries a nonexistent tvOS status bar on every hierarchy
+          # request, killing XCTest. The fork fixed this after its last release:
+          # https://github.com/plexinc/Maestro/commit/7d5552724318d96857669e083e83d2ec29d91a43
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform apple-tv
+          stage="e2e/reports/shots/tvos-driver/driver-appletvSimulator"
+          if [ "${{ steps.tvos-driver.outputs.cache-hit }}" != 'true' ]; then
+            source="$RUNNER_TEMP/maestro-tvos-source"
+            git clone --quiet --filter=blob:none --no-checkout https://github.com/plexinc/Maestro.git "$source"
+            git -C "$source" fetch --quiet --depth 1 origin 7d5552724318d96857669e083e83d2ec29d91a43
+            git -C "$source" checkout --quiet --detach 7d5552724318d96857669e083e83d2ec29d91a43
+
+            build="$RUNNER_TEMP/maestro-tvos-build"
+            xcodebuild build-for-testing \
+              -project "$source/maestro-ios-xctest-runner/maestro-driver-ios.xcodeproj" \
+              -scheme maestro-driver-tvos \
+              -destination 'generic/platform=tvOS Simulator' \
+              -derivedDataPath "$build" \
+              ARCHS=arm64 TVOS_DEPLOYMENT_TARGET=15.0 IPHONEOS_DEPLOYMENT_TARGET=15.0 CODE_SIGNING_ALLOWED=NO \
+              > "$RUNNER_TEMP/maestro-tvos-build.log" 2>&1 || {
+                tail -n 80 "$RUNNER_TEMP/maestro-tvos-build.log"
+                exit 1
+              }
+
+            products="$build/Build/Products"
+            mkdir -p "$stage/Debug-appletvsimulator"
+            xctestrun=("$products"/maestro-driver-tvos_*.xctestrun)
+            [ "${#xctestrun[@]}" -eq 1 ] || { echo "::error::Expected one tvOS xctestrun"; exit 1; }
+            cp "${xctestrun[0]}" "$stage/maestro-driver-tvos-config.xctestrun"
+            (
+              cd "$products/Debug-appletvsimulator"
+              zip -qr "$GITHUB_WORKSPACE/$stage/Debug-appletvsimulator/maestro-driver-tvosUITests-Runner.zip" maestro-driver-tvosUITests-Runner.app
+              zip -qr "$GITHUB_WORKSPACE/$stage/Debug-appletvsimulator/maestro-driver-tvos.zip" maestro-driver-tvos.app
+            )
+          fi
+          tag="$(bun -e 'import { MAESTRO_TAG } from "./e2e/suites/screenshots/lib/tooling.ts"; console.log(MAESTRO_TAG)')"
+          jar="e2e/reports/shots/tools/$tag/maestro/lib/maestro-ios-driver.jar"
+          jar uf "$jar" -C "e2e/reports/shots/tvos-driver" driver-appletvSimulator
+          echo "Maestro tvOS driver from 7d5552724318 (cache hit: ${{ steps.tvos-driver.outputs.cache-hit }})"
+
   apple:
     name: "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}"
-    needs: [plan, apple-native]
-    if: needs.plan.result == 'success' && needs.apple-native.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
+    needs: [plan, apple-native, apple-fixture]
+    if: needs.plan.result == 'success' && needs.apple-native.result == 'success' && needs.apple-fixture.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
     permissions:
       contents: read
     # The native fixture needs Apple silicon, and the tvOS 27.2 simulator needs Xcode 27.2.
@@ -749,10 +921,113 @@ jobs:
           retention-days: 1
           if-no-files-found: ${{ steps.build.outcome == 'success' && 'error' || 'ignore' }}
 
+  android-fixture:
+    name: 🔥 Warm Android fixture caches
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.android_native != '{"include":[]}'
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🗑️ Free Disk Space
+        uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
+        with:
+          tool-cache: false
+          mandb: true
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        # Maestro requires Java 17 on PATH.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache pinned Maestro
+        id: maestro-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: e2e/reports/shots/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-maestro-${{ hashFiles('e2e/suites/screenshots/lib/tooling.ts') }}
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The fixture cache can hit while a new tooling hash misses the Maestro cache.
+      # Populate it independently so capture fan-out never multiplies that download.
+      - name: 🥋 Ensure pinned Maestro
+        if: steps.maestro-cache.outputs.cache-hit != 'true'
+        run: bun e2e/suites/screenshots/shots.ts maestro-path
+
+      - name: 🗓️ Fixture cache week
+        id: fixture-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: 💾 Restore enriched fixture
+        id: fixture-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state/*
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
+      - name: 🔥 Warm enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        run: |
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform android
+          # Stop the servers but keep .state, so SQLite is consistent when saved.
+          PYTHONPATH=e2e python3 -c "from suites.syncplay import setup; owned = setup.identity(); setup.backend(owned).down(owned)"
+          # Docker wrote root-owned files; the cache save runs as the runner user.
+          sudo chown -R "$(id -u):$(id -g)" e2e/suites/syncplay/.state/config e2e/suites/syncplay/.state/cache
+
+      - name: 💾 Save enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state/*
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
   android:
     name: "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}"
-    needs: [plan, android-native]
-    if: needs.plan.result == 'success' && needs.android-native.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
+    needs: [plan, android-native, android-fixture]
+    if: needs.plan.result == 'success' && needs.android-native.result == 'success' && needs.android-fixture.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
     permissions:
       contents: read
     runs-on: ubuntu-26.04

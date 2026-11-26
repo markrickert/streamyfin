@@ -472,6 +472,7 @@ describe("e2e-screenshots.yml", () => {
     permissions?: Record<string, string>;
     strategy?: { "fail-fast"?: boolean; matrix?: string };
     steps?: Step[];
+    "timeout-minutes"?: number;
   };
   const rawWorkflow = readWorkflow("e2e-screenshots.yml");
   const workflow = loadYaml(rawWorkflow) as {
@@ -535,11 +536,19 @@ describe("e2e-screenshots.yml", () => {
       contents: "read",
       actions: "read",
     });
+    expect(workflow.jobs["apple-fixture"].permissions).toEqual({
+      contents: "read",
+    });
+    expect(workflow.jobs["android-fixture"].permissions).toEqual({
+      contents: "read",
+    });
     expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
     expect(workflow.jobs.apple["runs-on"]).toBe("xcode-27");
     expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
     expect(workflow.jobs["apple-native"]["runs-on"]).toBe("xcode-27");
     expect(workflow.jobs["android-native"]["runs-on"]).toBe("ubuntu-26.04");
+    expect(workflow.jobs["apple-fixture"]["runs-on"]).toBe("xcode-27");
+    expect(workflow.jobs["android-fixture"]["runs-on"]).toBe("ubuntu-26.04");
   });
 
   test("another label never cancels a running comparison", () => {
@@ -750,11 +759,16 @@ describe("e2e-screenshots.yml", () => {
   );
 
   test.each(["apple", "android"] as const)(
-    "%s capture jobs wait on the native job and never build",
+    "%s capture jobs wait on the native and fixture jobs and never build",
     (jobName) => {
       const job = workflow.jobs[jobName];
-      expect(job.needs).toEqual(["plan", `${jobName}-native`]);
+      expect(job.needs).toEqual([
+        "plan",
+        `${jobName}-native`,
+        `${jobName}-fixture`,
+      ]);
       expect(job.if).toContain(`needs.${jobName}-native.result == 'success'`);
+      expect(job.if).toContain(`needs.${jobName}-fixture.result == 'success'`);
       expect(job.name).toBe(
         // biome-ignore lint/suspicious/noTemplateCurlyInString: GitHub Actions expressions, not JS templates
         "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}",
@@ -815,6 +829,82 @@ describe("e2e-screenshots.yml", () => {
       );
     },
   );
+
+  const namedStep = (jobName: string, name: string) =>
+    workflow.jobs[jobName].steps?.find((step) => step.name === name);
+
+  const expectSameCache = (
+    fixtureJob: string,
+    captureJob: string,
+    stepName: string,
+  ) => {
+    const fixture = namedStep(fixtureJob, stepName);
+    const capture = namedStep(captureJob, stepName);
+    expect(fixture).toBeDefined();
+    expect(capture).toBeDefined();
+    expect(fixture?.with?.path).toBe(capture?.with?.path);
+    expect(fixture?.with?.key).toBe(capture?.with?.key);
+  };
+
+  test.each([
+    ["apple-fixture", "xcode-27", "apple_native", "ios"],
+    ["android-fixture", "ubuntu-26.04", "android_native", "android"],
+  ] as const)(
+    "%s serializes first-time fixture and Maestro downloads",
+    (jobName, runner, planOutput, platform) => {
+      const job = workflow.jobs[jobName];
+      expect(job).toBeDefined();
+      expect(job.needs).toBe("plan");
+      expect(job.if).toContain(
+        `needs.plan.outputs.${planOutput} != '{"include":[]}'`,
+      );
+      expect(job["runs-on"]).toBe(runner);
+      expect(job["timeout-minutes"]).toBe(45);
+      expect(job.strategy).toBeUndefined();
+
+      const steps = job.steps ?? [];
+      expect(steps.some((step) => step.run?.includes("resolve-refs.sh"))).toBe(
+        false,
+      );
+      const warm = namedStep(jobName, "🔥 Warm enriched fixture");
+      expect(warm?.run).toContain(
+        `shots.ts doctor --fix --platform ${platform}`,
+      );
+      expect(namedStep(jobName, "🥋 Ensure pinned Maestro")?.run).toContain(
+        "shots.ts maestro-path",
+      );
+      expect(namedStep(jobName, "💾 Save enriched fixture")).toBeDefined();
+
+      const captureJob = jobName.replace("-fixture", "");
+      expectSameCache(jobName, captureJob, "💾 Cache pinned Maestro");
+      expectSameCache(jobName, captureJob, "💾 Restore enriched fixture");
+      expectSameCache(jobName, captureJob, "💾 Save enriched fixture");
+    },
+  );
+
+  test("apple fixture job warms native tools and the fixed tvOS driver with capture-identical caches", () => {
+    expectSameCache("apple-fixture", "apple", "💾 Cache native fixture tools");
+    expectSameCache(
+      "apple-fixture",
+      "apple",
+      "💾 Cache fixed Maestro tvOS driver",
+    );
+    const job = workflow.jobs["apple-fixture"];
+    const identify = namedStep(
+      "apple-fixture",
+      "🔎 Identify tvOS driver toolchain",
+    );
+    const build = namedStep(
+      "apple-fixture",
+      "🛠️ Build fixed Maestro tvOS driver",
+    );
+    expect(identify?.if).toContain("needs.plan.outputs.apple_native");
+    expect(build?.if).toContain("needs.plan.outputs.apple_native");
+    expect(build?.run).toContain("xcodebuild build-for-testing");
+    expect(job.steps?.some((step) => step.name === "🎞️ Install ffmpeg")).toBe(
+      true,
+    );
+  });
 });
 
 /** The script of the step named `name`, as bash is given it. */
