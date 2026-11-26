@@ -225,6 +225,8 @@ jobs:
       # key rolls weekly and on fixture inputs, so the "latest stable" plugin and
       # TMDB data never freeze forever. Seerr is excluded: its uid-1000 ownership
       # cannot survive a cache round trip, and seerr.ensure_ready re-onboards it.
+      # The path lists .state/* rather than .state: actions/cache archives a listed
+      # directory whole, so the exclusions below only apply to its expanded entries.
       # Downloaded artwork lives in Actions cache and the gitignored .state/, never
       # in the repository (see e2e/suites/syncplay/README.md).
       - name: 💾 Restore enriched fixture
@@ -232,11 +234,11 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            e2e/suites/syncplay/.state
+            e2e/suites/syncplay/.state/*
             !e2e/suites/syncplay/.state/seerr
             !e2e/suites/syncplay/.state/logs
             !e2e/suites/syncplay/.state/*.pid
-          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
 
       - name: 🔥 Warm enriched fixture
         if: steps.fixture-cache.outputs.cache-hit != 'true'
@@ -252,11 +254,11 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            e2e/suites/syncplay/.state
+            e2e/suites/syncplay/.state/*
             !e2e/suites/syncplay/.state/seerr
             !e2e/suites/syncplay/.state/logs
             !e2e/suites/syncplay/.state/*.pid
-          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
 
       - name: 📱 Create and boot ${{ matrix.family }} simulator
         run: |
@@ -541,6 +543,8 @@ jobs:
       # key rolls weekly and on fixture inputs, so the "latest stable" plugin and
       # TMDB data never freeze forever. Seerr is excluded: its uid-1000 ownership
       # cannot survive a cache round trip, and seerr.ensure_ready re-onboards it.
+      # The path lists .state/* rather than .state: actions/cache archives a listed
+      # directory whole, so the exclusions below only apply to its expanded entries.
       # Downloaded artwork lives in Actions cache and the gitignored .state/, never
       # in the repository (see e2e/suites/syncplay/README.md).
       - name: 💾 Restore enriched fixture
@@ -548,11 +552,11 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            e2e/suites/syncplay/.state
+            e2e/suites/syncplay/.state/*
             !e2e/suites/syncplay/.state/seerr
             !e2e/suites/syncplay/.state/logs
             !e2e/suites/syncplay/.state/*.pid
-          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
 
       - name: 🔥 Warm enriched fixture
         if: steps.fixture-cache.outputs.cache-hit != 'true'
@@ -568,11 +572,11 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            e2e/suites/syncplay/.state
+            e2e/suites/syncplay/.state/*
             !e2e/suites/syncplay/.state/seerr
             !e2e/suites/syncplay/.state/logs
             !e2e/suites/syncplay/.state/*.pid
-          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v2-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
 
       - name: 🧰 Enable KVM for the emulator
         # Linux runners expose /dev/kvm to root only; without this the emulator runs unaccelerated and misses its boot timeout.
