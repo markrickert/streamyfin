@@ -547,12 +547,15 @@ describe("capture pass parents", () => {
   // The combined wait returns on rendered content or a known overlay, so the
   // overlay helper's absent-element guards no longer each cost the 7 s optional
   // lookup. Its picker labels are read from the helper so they cannot drift.
-  it("_relaunch-home-mobile.yml waits for content or a known overlay, dismisses it, then waits for content", () => {
+  it("_relaunch-home-mobile.yml retries a splash-stuck relaunch once, waiting for content or a known overlay, then dismissing it", () => {
     const cmds = commandsOf("_relaunch-home-mobile.yml");
-    expect(cmds).toHaveLength(4);
-    expect(cmds[0]).toBe("launchApp");
-    expect(cmds[2]).toEqual({ runFlow: "_dismiss-dev-overlays.yml" });
-    expect(cmds[3]).toEqual({
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0].retry.maxRetries).toBe(1);
+    const inner = cmds[0].retry.commands;
+    expect(inner).toHaveLength(4);
+    expect(inner[0]).toBe("launchApp");
+    expect(inner[2]).toEqual({ runFlow: "_dismiss-dev-overlays.yml" });
+    expect(inner[3]).toEqual({
       extendedWaitUntil: { visible: ".*Recently added.*", timeout: 60000 },
     });
     const picker = commandsOf("_dismiss-dev-overlays.yml").find(
@@ -561,7 +564,7 @@ describe("capture pass parents", () => {
         cmd.runFlow.when.visible.includes("DEVELOPMENT SERVERS"),
     )?.runFlow.when.visible;
     expect(typeof picker).toBe("string");
-    expect(cmds[1].extendedWaitUntil).toEqual({
+    expect(inner[1].extendedWaitUntil).toEqual({
       visible: [
         ".*Recently added.*",
         ...picker.split("|"),
