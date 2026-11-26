@@ -3,7 +3,7 @@ export const PLATFORMS = ["ios", "android", "android-tv", "apple-tv"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 export interface Cli {
-  command: "doctor" | "run";
+  command: "doctor" | "run" | "build";
   /** doctor only: bring up what the runner itself would, instead of only reporting. */
   fix?: boolean;
   platform?: Platform;
@@ -12,6 +12,8 @@ export interface Cli {
   device?: string;
   outDir?: string;
   port?: number;
+  /** build only: the Android ABI to build for — there is no device to ask. */
+  abi?: string;
 }
 
 export interface ExecResult {

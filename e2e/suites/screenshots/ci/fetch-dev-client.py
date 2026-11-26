@@ -2,6 +2,7 @@
 """Fetch a trusted debug dev-client artifact by native fingerprint."""
 
 import argparse
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -33,6 +34,34 @@ def is_trusted_artifact(artifact: dict, artifact_name: str, repo_id: int) -> boo
         run.get("head_repository_id") == repo_id
         and run.get("repository_id", repo_id) == repo_id
     )
+
+
+# A fetched client is never re-uploaded, so its expiry counts from the first build:
+# one dying inside the floor counts as missing, and the run rebuilds and uploads a
+# fresh artifact instead of inheriting days it cannot extend.
+EXPIRY_FLOOR = timedelta(days=14)
+
+
+def expires_soon(artifact: dict, now: datetime) -> bool:
+    raw = artifact.get("expires_at")
+    if not raw:
+        return False
+    try:
+        expiry = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return expiry - now < EXPIRY_FLOOR
+
+
+def current_time() -> datetime:
+    """Now in UTC; SHOTS_FETCH_NOW overrides it so the expiry floor is testable."""
+    raw = os.environ.get("SHOTS_FETCH_NOW", "").strip()
+    if not raw:
+        return datetime.now(timezone.utc)
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        fail("SHOTS_FETCH_NOW must be an ISO-8601 timestamp")
 
 
 def list_artifacts(repo: str, artifact_name: str) -> list[dict]:
@@ -108,8 +137,12 @@ def fetch_dev_client(platform: str, fp_hash: str, cache_dir: Path) -> None:
 
     artifact_name = f"{ARTIFACT_PREFIX}{platform}-{fp_hash}"
     artifacts = list_artifacts(repo, artifact_name)
+    now = current_time()
     trusted = [
-        a for a in artifacts if is_trusted_artifact(a, artifact_name, repo_id)
+        a
+        for a in artifacts
+        if is_trusted_artifact(a, artifact_name, repo_id)
+        and not expires_soon(a, now)
     ]
     if not trusted:
         fail(f"no trusted non-expired artifact named {artifact_name}")

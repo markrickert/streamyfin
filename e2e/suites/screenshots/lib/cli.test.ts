@@ -38,6 +38,47 @@ describe("parseArgs", () => {
       after: "b",
     });
   });
+  it("rejects a build without a platform", () => {
+    expect(() => parseArgs(["build", "--before", "a"])).toThrow(ShotError);
+  });
+  it("requires --abi for a build on android platforms only", () => {
+    for (const platform of ["android", "android-tv"] as const)
+      expect(() => parseArgs(["build", "--platform", platform])).toThrow(
+        /--abi/,
+      );
+    for (const platform of ["ios", "apple-tv"] as const)
+      expect(parseArgs(["build", "--platform", platform])).toMatchObject({
+        command: "build",
+        platform,
+      });
+  });
+  it("accepts the documented build shape with the run's ref defaults", () => {
+    const cli = parseArgs([
+      "build",
+      "--platform",
+      "android-tv",
+      "--before",
+      "a",
+      "--after",
+      "b",
+      "--abi",
+      "x86",
+      "--out",
+      "out-dir",
+    ]);
+    expect(cli).toMatchObject({
+      command: "build",
+      platform: "android-tv",
+      before: "a",
+      after: "b",
+      abi: "x86",
+      outDir: "out-dir",
+    });
+    expect(parseArgs(["build", "--platform", "ios"])).toMatchObject({
+      before: undefined,
+      after: "HEAD",
+    });
+  });
   it("accepts maestro-path without extra arguments", () => {
     expect(parseArgs(["maestro-path"])).toEqual({ command: "maestro-path" });
   });

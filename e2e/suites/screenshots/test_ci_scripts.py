@@ -648,6 +648,78 @@ class FetchDevClientTest(unittest.TestCase):
             self.assertFalse(cache_dir.exists())
             self.assertEqual(len(res.stderr.strip().splitlines()), 1)
 
+    def test_skips_artifacts_expiring_soon_and_downloads_a_longer_lived_one(self):
+        # A fetched client is never re-uploaded, so its expiry counts from the
+        # first build: one dying inside 14 days counts as missing. The boundary
+        # itself is usable — exactly 14 days out is not "less than".
+        name = "shots-dev-client-android-fpexp"
+        def artifact(run_id: int, created_at: str, expires_at: str) -> dict:
+            return {
+                "id": run_id,
+                "name": name,
+                "expired": False,
+                "created_at": created_at,
+                "expires_at": expires_at,
+                "workflow_run": {"id": run_id, "head_repository_id": 100},
+            }
+        payload = {
+            "total_count": 2,
+            "artifacts": [
+                # Newest by created_at, but 1 second inside the 14-day floor.
+                artifact(9001, "2026-11-24T04:00:00Z", "2026-12-10T09:59:59Z"),
+                artifact(9002, "2026-11-24T03:00:00Z", "2026-12-10T10:00:00Z"),
+            ],
+        }
+        tar_bytes = make_tar_bytes([("app-debug.apk", b"apk", 0o644, None)])
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bin_dir, calls_file = install_fake_gh(
+                tmp_path,
+                payload,
+                download_files={f"{name}.tar": tar_bytes},
+            )
+            cache_dir = tmp_path / "build-cache" / "android" / "fpexp"
+            res = self._run_fetch(
+                bin_dir,
+                "android",
+                "fpexp",
+                cache_dir,
+                extra_env={"SHOTS_FETCH_NOW": "2026-11-26T10:00:00Z"},
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            calls = json.loads(calls_file.read_text())
+            self.assertEqual(calls[1][2], "9002")
+
+    def test_fails_cleanly_when_every_artifact_expires_inside_the_floor(self):
+        name = "shots-dev-client-ios-fpold"
+        payload = {
+            "total_count": 1,
+            "artifacts": [
+                {
+                    "id": 1,
+                    "name": name,
+                    "expired": False,
+                    "created_at": "2026-11-24T02:00:00Z",
+                    "expires_at": "2026-11-27T00:00:00Z",
+                    "workflow_run": {"id": 9001, "head_repository_id": 100},
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bin_dir, _ = install_fake_gh(tmp_path, payload)
+            cache_dir = tmp_path / "build-cache" / "ios" / "fpold"
+            res = self._run_fetch(
+                bin_dir,
+                "ios",
+                "fpold",
+                cache_dir,
+                extra_env={"SHOTS_FETCH_NOW": "2026-11-26T10:00:00Z"},
+            )
+            self.assertNotEqual(res.returncode, 0)
+            self.assertFalse(cache_dir.exists())
+            self.assertEqual(len(res.stderr.strip().splitlines()), 1)
+
     def test_rejects_fork_and_expired_artifacts_with_one_line_error(self):
         name = "shots-dev-client-android-fp999"
         payload = {

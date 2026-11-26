@@ -1,6 +1,6 @@
 import { DEV_CLIENT_RECIPE } from "./build";
 import { type Cli, ShotError } from "./core";
-import { doctor, metroBundleUrl, runComparison } from "./run";
+import { buildNative, doctor, metroBundleUrl, runComparison } from "./run";
 import {
   execs,
   Fake,
@@ -1128,5 +1128,78 @@ describe("runComparison progress", () => {
         ),
       ),
     ).toBe(true);
+  });
+});
+
+describe("buildNative", () => {
+  const outDir = `${REPO}/e2e/reports/shots/test-build`;
+  const buildCli: Cli = {
+    command: "build",
+    platform: "android",
+    before: "main",
+    after: "feat/x",
+    abi: "x86",
+    outDir,
+  };
+
+  it("builds both refs, writes the manifest, and restores git without a device, fixture or Maestro", () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const report = buildNative(f, buildCli, REPO);
+
+    expect(report.sessionDir).toBe(outDir);
+    expect(execs(f, "git switch --detach sha-before")).toHaveLength(1);
+    expect(execs(f, "git switch --detach sha-after")).toHaveLength(1);
+    expect(execs(f, "git switch feat/dev")).toHaveLength(1);
+    expect(f.files.get(`${REPO}/android/user-file.txt`)).toBe("mine");
+    // Both refs share the seeded fingerprint, so the after ref hits the cache the
+    // before ref just wrote.
+    expect(execs(f, "assembleDebug")).toHaveLength(1);
+    expect(execs(f, "assembleDebug")[0]).toContain(
+      "-PreactNativeArchitectures=x86",
+    );
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    expect(manifest).toEqual([
+      {
+        ref: "before",
+        platform: "android",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        source: "built",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+      },
+      {
+        ref: "after",
+        platform: "android",
+        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        source: "local",
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+      },
+    ]);
+    // No device, no fixture, no Maestro, no Metro.
+    for (const needle of [
+      "adb",
+      "simctl",
+      "maestro",
+      "e2e:setup",
+      "e2e:seed",
+      "e2e:enrich",
+      "suites.syncplay",
+    ])
+      expect(execs(f, needle)).toHaveLength(0);
+    expect(f.spawns).toHaveLength(0);
+  });
+
+  it("restores git and the native dirs when a build fails mid-run", () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push([
+      "./gradlew assembleDebug",
+      { code: 1, stdout: "", stderr: "gradle boom" },
+    ]);
+    expect(() => buildNative(f, buildCli, REPO)).toThrow(ShotError);
+    expect(execs(f, "git switch feat/dev")).toHaveLength(1);
+    expect(f.files.get(`${REPO}/android/user-file.txt`)).toBe("mine");
   });
 });

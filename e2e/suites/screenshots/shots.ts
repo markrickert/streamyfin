@@ -4,6 +4,7 @@
  *
  *   bun e2e/suites/screenshots/shots.ts doctor [--fix] [--platform <ios|android|android-tv|apple-tv>]
  *   bun e2e/suites/screenshots/shots.ts run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
+ *   bun e2e/suites/screenshots/shots.ts build --platform <p> [--before <ref>] [--after <ref>] [--abi <abi>] [--out <dir>]
  *   bun e2e/suites/screenshots/shots.ts maestro-path
  *
  * --before defaults to the base the Reassure baseline uses: this branch's PR target, else
@@ -16,6 +17,7 @@ import { spawn, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import { resolveBaseRef } from "../../../scripts/reassure-baseline";
 import {
+  buildNative,
   type Deps,
   doctor,
   type ExecResult,
@@ -109,6 +111,16 @@ async function main() {
     return;
   }
   cli.before = resolveBaseRef(cli.before);
+  if (cli.command === "build") {
+    console.log(
+      `Building ${cli.platform} dev clients at ${cli.before} and ${cli.after}.`,
+    );
+    const report = buildNative(deps, cli, repo);
+    console.log(
+      `done: ${report.sessionDir}/build-cache.json (restored ${report.restored.ref})`,
+    );
+    return;
+  }
   console.log(`Comparing ${cli.after} against ${cli.before}.`);
   const report = await runComparison(deps, cli, repo);
   console.log(

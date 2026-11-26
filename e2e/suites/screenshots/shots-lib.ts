@@ -21,6 +21,7 @@ export {
   BUILD_CACHE_FETCH_TIMEOUT_MS,
   deviceAbi,
   ensureDebugBuild,
+  NO_BUILD_ENV,
   nativeFingerprint,
 } from "./lib/build";
 export {
@@ -60,8 +61,13 @@ export {
   gitStart,
   preflight,
 } from "./lib/git";
-export type { BuildCacheManifestEntry, RunReport } from "./lib/run";
+export type {
+  BuildCacheManifestEntry,
+  BuildReport,
+  RunReport,
+} from "./lib/run";
 export {
+  buildNative,
   doctor,
   interruptCleanup,
   runComparison,

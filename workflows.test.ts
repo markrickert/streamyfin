@@ -465,6 +465,7 @@ describe("e2e-screenshots.yml", () => {
   };
   type Job = {
     if?: string;
+    name?: string;
     needs?: string | string[];
     "runs-on"?: string;
     outputs?: Record<string, string>;
@@ -503,6 +504,7 @@ describe("e2e-screenshots.yml", () => {
         before?: { required?: boolean };
         after?: unknown;
         platforms?: { default?: string };
+        repeat?: { type?: string; default?: number };
       };
     };
     expect(dispatch.inputs?.before?.required).toBe(true);
@@ -513,23 +515,31 @@ describe("e2e-screenshots.yml", () => {
         .map((p) => p.trim())
         .sort(),
     ).toEqual([...PLATFORMS].sort());
+    expect(dispatch.inputs?.repeat?.type).toBe("number");
+    expect(dispatch.inputs?.repeat?.default).toBe(1);
   });
 
   test("uses minimal read permissions and the expected runner per job", () => {
     // The native Apple silicon fixture and tvOS 27.2 simulator require xcode-27;
     // Intel runners cannot run the arm64 fixture.
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(workflow.jobs.apple.permissions).toEqual({
+    // Capture jobs download only their own run's build cache; the native jobs
+    // list and download dev-client artifacts across runs, so they keep actions.
+    expect(workflow.jobs.apple.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs.android.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs["apple-native"].permissions).toEqual({
       contents: "read",
       actions: "read",
     });
-    expect(workflow.jobs.android.permissions).toEqual({
+    expect(workflow.jobs["android-native"].permissions).toEqual({
       contents: "read",
       actions: "read",
     });
     expect(workflow.jobs.plan["runs-on"]).toBe("ubuntu-26.04");
     expect(workflow.jobs.apple["runs-on"]).toBe("xcode-27");
     expect(workflow.jobs.android["runs-on"]).toBe("ubuntu-26.04");
+    expect(workflow.jobs["apple-native"]["runs-on"]).toBe("xcode-27");
+    expect(workflow.jobs["android-native"]["runs-on"]).toBe("ubuntu-26.04");
   });
 
   test("another label never cancels a running comparison", () => {
@@ -600,10 +610,91 @@ describe("e2e-screenshots.yml", () => {
     expect(emulatorStep?.uses).toBe(tier1Pin);
   });
 
-  test.each(["apple", "android"] as const)(
-    "%s shares dev clients via fingerprint artifacts instead of actions/cache",
-    (jobName) => {
-      const steps = workflow.jobs[jobName].steps ?? [];
+  /** Runs the plan job's inline Python as the workflow would. */
+  const runPlan = (env: Record<string, string>) => {
+    const dir = mkdtempSync(join(tmpdir(), "shots-plan-"));
+    try {
+      const outFile = join(dir, "github_output");
+      writeFileSync(outFile, "");
+      const res = spawnSync(
+        "bash",
+        ["-c", workflow.jobs.plan.steps?.[0]?.run ?? ""],
+        {
+          encoding: "utf8",
+          env: { ...process.env, GITHUB_OUTPUT: outFile, ...env },
+        },
+      );
+      const outputs: Record<string, string> = {};
+      for (const line of readFileSync(outFile, "utf8").split("\n")) {
+        const split = line.indexOf("=");
+        if (split > 0) outputs[line.slice(0, split)] = line.slice(split + 1);
+      }
+      return { code: res.status, stderr: res.stderr, outputs };
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  test("plan fans capture matrices out into platform × attempt with one native entry per platform", () => {
+    const { code, outputs } = runPlan({
+      INPUT_PLATFORMS: "ios,android-tv",
+      INPUT_REPEAT: "3",
+    });
+    expect(code).toBe(0);
+    const apple = JSON.parse(outputs.apple).include;
+    const appleNative = JSON.parse(outputs.apple_native).include;
+    expect(apple).toHaveLength(3);
+    expect(apple.map((entry: { attempt: number }) => entry.attempt)).toEqual([
+      1, 2, 3,
+    ]);
+    for (const entry of apple) expect(entry.platform).toBe("ios");
+    expect(appleNative).toEqual([{ platform: "ios", family: "iOS" }]);
+    const androidNative = JSON.parse(outputs.android_native).include;
+    expect(androidNative).toHaveLength(1);
+    expect(androidNative[0].attempt).toBeUndefined();
+  });
+
+  test("push and PR events get a single attempt", () => {
+    const { code, outputs } = runPlan({
+      INPUT_PLATFORMS: "ios,apple-tv,android,android-tv",
+    });
+    expect(code).toBe(0);
+    expect(JSON.parse(outputs.apple).include).toHaveLength(2);
+    expect(JSON.parse(outputs.android).include).toHaveLength(2);
+  });
+
+  test.each(["0", "21", "1.5", "lots"])(
+    "plan rejects a repeat of %s outside 1-20",
+    (repeat) => {
+      const { code, stderr } = runPlan({
+        INPUT_PLATFORMS: "ios",
+        INPUT_REPEAT: repeat,
+      });
+      expect(code).not.toBe(0);
+      expect(stderr).toContain("::error::");
+    },
+  );
+
+  test.each([
+    ["apple-native", "xcode-27"],
+    ["android-native", "ubuntu-26.04"],
+  ] as const)(
+    "%s builds both refs once per platform and publishes both caches",
+    (jobName, runner) => {
+      const job = workflow.jobs[jobName];
+      expect(job).toBeDefined();
+      expect(job["runs-on"]).toBe(runner);
+      const nativeOutput = jobName.replace("-", "_");
+      expect(job.needs).toBe("plan");
+      expect(job.if).toContain(
+        `needs.plan.outputs.${nativeOutput} != '{"include":[]}'`,
+      );
+      expect(job.strategy?.matrix).toContain(
+        `needs.plan.outputs.${nativeOutput}`,
+      );
+
+      const steps = job.steps ?? [];
+      // Dev clients are fingerprint artifacts, never actions/cache entries.
       expect(
         steps.some(
           (step) =>
@@ -613,21 +704,15 @@ describe("e2e-screenshots.yml", () => {
       ).toBe(false);
       expect(rawWorkflow).not.toContain("prune-build-cache");
 
-      const runStep = steps.find(
-        (step) =>
-          step.run?.includes("e2e:shots") ||
-          String(step.with?.script ?? "").includes("e2e:shots"),
-      );
-      expect(runStep?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
-      expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
+      const build = steps.find((step) => step.run?.includes("shots.ts build"));
+      expect(build).toBeDefined();
+      expect(build?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
+      expect(build?.env?.SHOTS_BUILD_CACHE_FETCH).toContain(
         "fetch-dev-client.py",
       );
-      expect(runStep?.env?.SHOTS_PASS_TIMEOUT_SECONDS).toBe("2700");
-
-      expect(workflow.jobs.plan.outputs?.trusted).toBe(
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: a GitHub Actions expression, not a JS template
-        "${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id) }}",
-      );
+      expect(build?.run).toContain("--before");
+      expect(build?.run).toContain("--after");
+      if (jobName === "android-native") expect(build?.run).toContain("--abi");
 
       const prepareStep = steps.find((step) => step.id === "dev-clients");
       expect(prepareStep).toBeDefined();
@@ -635,10 +720,11 @@ describe("e2e-screenshots.yml", () => {
         "always() && needs.plan.outputs.trusted == 'true'",
       );
 
-      const clientUploads = steps.filter(
-        (step) =>
-          step.uses?.startsWith("actions/upload-artifact@") &&
-          String(step.with?.name ?? "").startsWith("shots-dev-client-"),
+      const uploads = steps.filter((step) =>
+        step.uses?.startsWith("actions/upload-artifact@"),
+      );
+      const clientUploads = uploads.filter((step) =>
+        String(step.with?.name ?? "").startsWith("shots-dev-client-"),
       );
       expect(clientUploads).toHaveLength(2);
       for (const upload of clientUploads) {
@@ -647,6 +733,86 @@ describe("e2e-screenshots.yml", () => {
           /^always\(\) && needs\.plan\.outputs\.trusted == 'true' && steps\.dev-clients\.outputs\.(before|after)_hash != ''$/,
         );
       }
+      // The run-scoped cache feeds this run's capture jobs. It is never fetched
+      // across runs, so its content cannot leak a fork's binary into another run.
+      const runCache = uploads.find((step) =>
+        String(step.with?.name ?? "").startsWith("shots-native-run-"),
+      );
+      expect(runCache).toBeDefined();
+      expect(runCache?.with?.["retention-days"]).toBe(1);
+      expect(runCache?.if).toBe("always()");
+
+      expect(workflow.jobs.plan.outputs?.trusted).toBe(
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a GitHub Actions expression, not a JS template
+        "${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id) }}",
+      );
+    },
+  );
+
+  test.each(["apple", "android"] as const)(
+    "%s capture jobs wait on the native job and never build",
+    (jobName) => {
+      const job = workflow.jobs[jobName];
+      expect(job.needs).toEqual(["plan", `${jobName}-native`]);
+      expect(job.if).toContain(`needs.${jobName}-native.result == 'success'`);
+      expect(job.name).toBe(
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: GitHub Actions expressions, not JS templates
+        "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}",
+      );
+
+      const steps = job.steps ?? [];
+      const runStep = steps.find(
+        (step) =>
+          step.run?.includes("e2e:shots") ||
+          String(step.with?.script ?? "").includes("e2e:shots"),
+      );
+      expect(runStep?.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
+      expect(runStep?.env?.SHOTS_NO_BUILD).toBe("1");
+      expect(runStep?.env?.SHOTS_BUILD_CACHE_FETCH).toBeUndefined();
+      expect(runStep?.run ?? String(runStep?.with?.script ?? "")).not.toContain(
+        "fetch-dev-client.py",
+      );
+      expect(runStep?.env?.SHOTS_PASS_TIMEOUT_SECONDS).toBe("2700");
+
+      // The run-scoped build cache comes down as a tar and lands in the same
+      // build-cache directory the native job packed it from.
+      const download = steps.find((step) =>
+        step.uses?.startsWith("actions/download-artifact@"),
+      );
+      expect(download).toBeDefined();
+      expect(download?.with?.name).toBe(
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a GitHub Actions expression, not a JS template
+        "shots-native-run-${{ matrix.platform }}",
+      );
+      expect(
+        steps.some(
+          (step) =>
+            step.run?.includes("shots-native-run-") &&
+            step.run?.includes("tar -x") &&
+            // biome-ignore lint/suspicious/noTemplateCurlyInString: a GitHub Actions expression, not a JS template
+            step.run?.includes("build-cache/${{ matrix.platform }}"),
+        ),
+      ).toBe(true);
+
+      const uploadNames = steps
+        .filter((step) => step.uses?.startsWith("actions/upload-artifact@"))
+        .map((step) => String(step.with?.name ?? ""));
+      // Trusted dev-client uploads live in the native jobs only.
+      expect(
+        uploadNames.filter((name) => name.startsWith("shots-dev-client-")),
+      ).toEqual([]);
+      expect(
+        uploadNames.filter((name) => name.startsWith("shots-native-run-")),
+      ).toEqual([]);
+      // Repeated attempts must not clobber each other's artifacts.
+      expect(uploadNames).toEqual(
+        expect.arrayContaining([
+          // biome-ignore lint/suspicious/noTemplateCurlyInString: GitHub Actions expressions, not JS templates
+          "e2e-screenshots-${{ matrix.platform }}-report-${{ matrix.attempt }}",
+          // biome-ignore lint/suspicious/noTemplateCurlyInString: GitHub Actions expressions, not JS templates
+          "e2e-screenshots-${{ matrix.platform }}-fixture-logs-${{ matrix.attempt }}",
+        ]),
+      );
     },
   );
 });

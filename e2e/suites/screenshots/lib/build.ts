@@ -51,6 +51,9 @@ export function deviceAbi(d: Deps, device: string): string {
 /** Env var naming an optional executable that populates a missing local build-cache entry. */
 export const BUILD_CACHE_FETCH_ENV = "SHOTS_BUILD_CACHE_FETCH";
 
+/** Set to "1" in capture jobs that reuse the native job's build cache and must never compile. */
+export const NO_BUILD_ENV = "SHOTS_NO_BUILD";
+
 /** Bound on the remote cache fetch hook so a stalled download falls back to a local build. */
 export const BUILD_CACHE_FETCH_TIMEOUT_MS = 300_000;
 
@@ -139,6 +142,10 @@ export function ensureDebugBuild(
   const fetched = tryFetchCachedBuild(d, platform, hash, cacheDir);
   if (fetched)
     return { artifact: fetched, built: false, source: "fetched", hash };
+  if (d.env[NO_BUILD_ENV] === "1")
+    throw new ShotError(
+      `no cached ${platform} build for ${hash} and ${NO_BUILD_ENV}=1: the native job did not provide it`,
+    );
   onBeforeBuild?.();
   if (isAndroid) {
     // Gradle's codegen shells out to `node` inside module dirs; where node is an asdf

@@ -13,7 +13,7 @@ import {
   runCapture,
   startMetro,
 } from "./capture";
-import { platformSpec } from "./cli";
+import { type PlatformSpec, platformSpec } from "./cli";
 import {
   type Cli,
   type Deps,
@@ -68,6 +68,12 @@ export interface RunReport {
   restored: GitStart;
 }
 
+export interface BuildReport {
+  sessionDir: string;
+  builds: BuildCacheManifestEntry[];
+  restored: GitStart;
+}
+
 /** Set by runComparison while it holds live state; shots.ts calls it on SIGINT/SIGTERM. */
 export let interruptCleanup: (() => void) | undefined;
 
@@ -89,6 +95,143 @@ export function metroBundleUrl(
   port: number,
 ): string {
   return `http://127.0.0.1:${port}/index.ts.bundle?platform=${platform}&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`;
+}
+
+/** What a ref-switching command accumulates so its cleanup can undo the run. */
+interface RefSwitchState {
+  /** Native dirs moved into the session backup before the first prebuild. */
+  nativeMoved: string[];
+  /** The last switched ref's bun.lock + package.json, for the restore install. */
+  buildDeps: string;
+  /** Only restore git after a `git switch --detach` actually ran. */
+  switched: boolean;
+}
+
+/**
+ * `git switch --detach` plus `bun install` when the ref's build deps differ, then a
+ * re-read of them. The switched flag is set before the install so a refused install
+ * still unwinds the switch.
+ */
+function switchRef(
+  d: Deps,
+  repo: string,
+  state: RefSwitchState,
+  label: string,
+  sha: string,
+): void {
+  must(
+    d.exec(["git", "switch", "--detach", sha], { cwd: repo }),
+    `git switch ${label}`,
+  );
+  state.switched = true;
+  if (lockfileChanged(d, repo, state.buildDeps))
+    must(
+      d.exec(["bun", "install", "--frozen-lockfile"], { cwd: repo }),
+      "bun install --frozen-lockfile",
+    );
+  state.buildDeps = readBuildDeps(d, repo);
+}
+
+/**
+ * The per-ref native build shared by `run` and `build`: fingerprint, then the cached
+ * or freshly built debug client. A real build runs prebuild (and pod install on Apple)
+ * after the user's native dirs are moved into the session backup.
+ */
+function buildForRef(
+  d: Deps,
+  repo: string,
+  sessionDir: string,
+  spec: PlatformSpec,
+  platform: Platform,
+  state: RefSwitchState,
+  label: string,
+  abi: string | undefined,
+): { artifact: string; source: BuildSource; hash: string } {
+  const fingerprint = nativeFingerprint(d, repo, spec);
+  const shortHash = fingerprint.slice(0, 8);
+  const buildStarted = Date.now();
+  d.log(`building ${label} (${platform}, fingerprint ${shortHash})`);
+  const { artifact, source, hash } = ensureDebugBuild(
+    d,
+    repo,
+    platform,
+    spec,
+    fingerprint,
+    sessionDir,
+    () => {
+      if (!state.nativeMoved.length)
+        state.nativeMoved = backupNativeDirs(d, repo, sessionDir);
+      must(
+        d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
+          cwd: repo,
+        }),
+        "expo prebuild",
+      );
+      // `expo prebuild` writes the ios project but does not run pod install.
+      if (spec.fingerprintPlatform === "ios")
+        must(
+          // `react-native.config.js` drops iOS-only pods only under EXPO_TV=1;
+          // without it a tvOS app crashes at launch on their missing classes.
+          d.exec(["pod", "install"], {
+            cwd: `${repo}/ios`,
+            env: { EXPO_TV: spec.tv ? "1" : "0" },
+          }),
+          "pod install",
+        );
+    },
+    abi,
+  );
+  d.log(
+    `building ${label} (${platform}, fingerprint ${shortHash}): ${source} (${formatElapsed(Date.now() - buildStarted)})`,
+  );
+  return { artifact, source, hash };
+}
+
+function recordBuild(
+  d: Deps,
+  sessionDir: string,
+  manifest: BuildCacheManifestEntry[],
+  entry: BuildCacheManifestEntry,
+): void {
+  manifest.push(entry);
+  d.fs.write(
+    `${sessionDir}/build-cache.json`,
+    JSON.stringify(manifest, null, 2),
+  );
+}
+
+/**
+ * Ref and dependency restore shared by `run` and `build`. Nested: a refused git
+ * restore (new user edits mid-run) must not strand the native dirs in the backup.
+ */
+function restoreAfterSwitches(
+  d: Deps,
+  repo: string,
+  sessionDir: string,
+  start: GitStart,
+  state: RefSwitchState,
+): void {
+  try {
+    // A failure before the first `git switch --detach` leaves the tree on the
+    // starting ref already: switching back would be a switch the run never made.
+    if (state.switched) {
+      restoreGit(d, repo, start);
+      // node_modules still holds the last switched ref's lockfile. Logged, not
+      // thrown: a throw here would hide the error this cleanup runs after.
+      if (state.buildDeps && lockfileChanged(d, repo, state.buildDeps)) {
+        const install = d.exec(["bun", "install", "--frozen-lockfile"], {
+          cwd: repo,
+        });
+        if (install.code !== 0)
+          d.log(
+            `bun install failed while restoring ${start.ref}; run it by hand before anything else: ${install.stderr.trim().slice(0, 200)}`,
+          );
+      }
+    }
+  } finally {
+    if (state.nativeMoved.length)
+      restoreNativeDirs(d, repo, sessionDir, state.nativeMoved);
+  }
 }
 
 /**
@@ -136,37 +279,17 @@ export async function runComparison(
   };
 
   let metro: SpawnHandle | undefined;
-  let nativeMoved: string[] = [];
-  let buildDeps = "";
-  let switched = false;
+  const refState: RefSwitchState = {
+    nativeMoved: [],
+    buildDeps: "",
+    switched: false,
+  };
   const deviceState = newDeviceState();
-  // Nested: a refused git restore (new user edits mid-run) must not strand the
-  // native dirs in the backup.
   const cleanup = (): void => {
     metro?.kill();
     metro = undefined;
     restoreDevice(d, cli.platform!, device, deviceState);
-    try {
-      // A failure before the first `git switch --detach` leaves the tree on the
-      // starting ref already: switching back would be a switch the run never made.
-      if (switched) {
-        restoreGit(d, repo, start);
-        // node_modules still holds the last switched ref's lockfile. Logged, not
-        // thrown: a throw here would hide the error this cleanup runs after.
-        if (buildDeps && lockfileChanged(d, repo, buildDeps)) {
-          const install = d.exec(["bun", "install", "--frozen-lockfile"], {
-            cwd: repo,
-          });
-          if (install.code !== 0)
-            d.log(
-              `bun install failed while restoring ${start.ref}; run it by hand before anything else: ${install.stderr.trim().slice(0, 200)}`,
-            );
-        }
-      }
-    } finally {
-      if (nativeMoved.length)
-        restoreNativeDirs(d, repo, sessionDir, nativeMoved);
-    }
+    restoreAfterSwitches(d, repo, sessionDir, start, refState);
   };
   ensureOutIgnored(d, repo, sessionDir);
   setInterruptCleanup(cleanup);
@@ -196,67 +319,24 @@ export async function runComparison(
     // retry is already a later pass, so the flag flips before the call, not after it.
     let firstPass = true;
     for (const [refIndex, ref] of refs.entries()) {
-      must(
-        d.exec(["git", "switch", "--detach", ref.sha], { cwd: repo }),
-        `git switch ${ref.label}`,
-      );
-      switched = true;
-      if (lockfileChanged(d, repo, buildDeps))
-        must(
-          d.exec(["bun", "install", "--frozen-lockfile"], { cwd: repo }),
-          "bun install --frozen-lockfile",
-        );
-      buildDeps = readBuildDeps(d, repo);
-      const fingerprint = nativeFingerprint(d, repo, spec);
-      const shortHash = fingerprint.slice(0, 8);
-      const buildStarted = Date.now();
-      d.log(
-        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash})`,
-      );
-      const { artifact, source, hash } = ensureDebugBuild(
+      switchRef(d, repo, refState, ref.label, ref.sha);
+      const { artifact, source, hash } = buildForRef(
         d,
         repo,
-        cli.platform!,
-        spec,
-        fingerprint,
         sessionDir,
-        () => {
-          if (!nativeMoved.length)
-            nativeMoved = backupNativeDirs(d, repo, sessionDir);
-          must(
-            d.exec(["bun", "run", spec.tv ? "prebuild:tv" : "prebuild"], {
-              cwd: repo,
-            }),
-            "expo prebuild",
-          );
-          // `expo prebuild` writes the ios project but does not run pod install.
-          if (spec.fingerprintPlatform === "ios")
-            must(
-              // `react-native.config.js` drops iOS-only pods only under EXPO_TV=1;
-              // without it a tvOS app crashes at launch on their missing classes.
-              d.exec(["pod", "install"], {
-                cwd: `${repo}/ios`,
-                env: { EXPO_TV: spec.tv ? "1" : "0" },
-              }),
-              "pod install",
-            );
-        },
+        spec,
+        cli.platform!,
+        refState,
+        ref.label,
         abi,
       );
-      d.log(
-        `building ${ref.label} (${cli.platform!}, fingerprint ${shortHash}): ${source} (${formatElapsed(Date.now() - buildStarted)})`,
-      );
-      buildCacheManifest.push({
+      recordBuild(d, sessionDir, buildCacheManifest, {
         ref: ref.label,
         platform: cli.platform!,
         hash,
         source,
         path: artifact,
       });
-      d.fs.write(
-        `${sessionDir}/build-cache.json`,
-        JSON.stringify(buildCacheManifest, null, 2),
-      );
       d.log("installing");
       const appId = appIdOnDevice(d, cli.platform!, device, artifact);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator
@@ -428,6 +508,58 @@ export async function runComparison(
   } catch (error) {
     reportFailure(error);
     throw error;
+  } finally {
+    setInterruptCleanup(undefined);
+    cleanup();
+  }
+}
+
+/**
+ * `build`: produce both refs' debug clients without a device, fixture or Maestro —
+ * the native half of a comparison run. CI runs it once per platform so `repeat`
+ * capture jobs all reuse the same builds through the run-scoped cache artifact.
+ * Same ref-switching and restoration as runComparison.
+ */
+export function buildNative(d: Deps, cli: Cli, repo: string): BuildReport {
+  const spec = platformSpec(cli.platform!);
+  const { beforeSha, afterSha, start } = preflight(d, repo, cli);
+  const sessionDir = cli.outDir ?? `${repo}/${REPORTS_DIR}/${Date.now()}`;
+  const refState: RefSwitchState = {
+    nativeMoved: [],
+    buildDeps: "",
+    switched: false,
+  };
+  const cleanup = (): void =>
+    restoreAfterSwitches(d, repo, sessionDir, start, refState);
+  ensureOutIgnored(d, repo, sessionDir);
+  setInterruptCleanup(cleanup);
+  try {
+    d.fs.mkdir(sessionDir);
+    const buildCacheManifest: BuildCacheManifestEntry[] = [];
+    for (const ref of [
+      { label: "before", sha: beforeSha },
+      { label: "after", sha: afterSha },
+    ]) {
+      switchRef(d, repo, refState, ref.label, ref.sha);
+      const { artifact, source, hash } = buildForRef(
+        d,
+        repo,
+        sessionDir,
+        spec,
+        cli.platform!,
+        refState,
+        ref.label,
+        cli.abi,
+      );
+      recordBuild(d, sessionDir, buildCacheManifest, {
+        ref: ref.label,
+        platform: cli.platform!,
+        hash,
+        source,
+        path: artifact,
+      });
+    }
+    return { sessionDir, builds: buildCacheManifest, restored: start };
   } finally {
     setInterruptCleanup(undefined);
     cleanup();

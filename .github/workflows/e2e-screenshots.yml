@@ -4,6 +4,9 @@ name: 📸 E2E Screenshots
 # Android, and Android TV. Runs on every push to `develop` (the previous tip against
 # the pushed commit) and on demand (PR label or manual dispatch), because a full run
 # can compile two Debug clients and execute three Maestro passes per platform.
+# Each `<x>-native` job builds both refs' clients once per platform; every `<x>`
+# capture job downloads that run-scoped cache and runs with SHOTS_NO_BUILD, so the
+# `repeat` dispatch input can fan captures out into attempts without rebuilding.
 
 on:
   push:
@@ -29,6 +32,11 @@ on:
         required: false
         type: string
         default: "ios,apple-tv,android,android-tv"
+      repeat:
+        description: Capture attempts per platform (1-20)
+        required: false
+        type: number
+        default: 1
 
 permissions:
   contents: read
@@ -49,12 +57,15 @@ jobs:
     outputs:
       apple: ${{ steps.matrix.outputs.apple }}
       android: ${{ steps.matrix.outputs.android }}
+      apple_native: ${{ steps.matrix.outputs.apple_native }}
+      android_native: ${{ steps.matrix.outputs.android_native }}
       trusted: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == github.repository_id) }}
     steps:
       - name: 🧭 Resolve target platforms
         id: matrix
         env:
           INPUT_PLATFORMS: ${{ inputs.platforms }}
+          INPUT_REPEAT: ${{ inputs.repeat }}
         run: |
           python3 - <<'EOF'
           import json
@@ -81,6 +92,17 @@ jobs:
                   f"::error::Unknown platform(s): {', '.join(unknown)}. Valid platforms: {', '.join(KNOWN)}"
               )
 
+          # Push and PR events leave INPUT_REPEAT unset: one attempt per platform.
+          raw_repeat = os.environ.get("INPUT_REPEAT") or "1"
+          try:
+              repeat = int(raw_repeat)
+          except ValueError:
+              repeat = -1
+          if not 1 <= repeat <= 20:
+              raise SystemExit(
+                  f"::error::repeat must be an integer from 1 to 20, got '{raw_repeat}'"
+              )
+
           seen = set()
           apple = []
           android = []
@@ -93,23 +115,176 @@ jobs:
               else:
                   android.append(ANDROID[p])
 
+          # Capture jobs fan out into one job per platform per attempt; the native
+          # job stays one per platform and feeds all of them its build cache.
+          def attempts(entries):
+              return [
+                  {**entry, "attempt": n}
+                  for entry in entries
+                  for n in range(1, repeat + 1)
+              ]
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write(f"apple={json.dumps({'include': apple}, separators=(',', ':'))}\n")
-              out.write(f"android={json.dumps({'include': android}, separators=(',', ':'))}\n")
+              out.write(f"apple={json.dumps({'include': attempts(apple)}, separators=(',', ':'))}\n")
+              out.write(f"android={json.dumps({'include': attempts(android)}, separators=(',', ':'))}\n")
+              out.write(f"apple_native={json.dumps({'include': apple}, separators=(',', ':'))}\n")
+              out.write(f"android_native={json.dumps({'include': android}, separators=(',', ':'))}\n")
           EOF
 
-  apple:
-    name: 📸 Screenshot comparison (${{ matrix.platform }})
+  apple-native:
+    name: 🛠️ Build dev clients (${{ matrix.platform }})
     needs: plan
-    if: needs.plan.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
+    if: needs.plan.result == 'success' && needs.plan.outputs.apple_native != '{"include":[]}'
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
+    # The native build needs Apple silicon; `xcode-27` provides it and the newest Xcode.
+    runs-on: xcode-27
+    # A cold Debug build can pass 50 minutes on a standard runner, and a run may build twice.
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.apple_native) }}
+
+    steps:
+      - name: 🛠️ Select the newest Xcode
+        run: |
+          xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)"
+          [ -n "$xcode" ] || { echo "::error::No Xcode on this image"; exit 1; }
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🔎 Ensure comparison refs exist locally
+        # The runner switches the checkout between `before` and `after` with `git switch --detach`.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_AFTER: ${{ inputs.after }}
+          DISPATCH_SHA: ${{ github.sha }}
+        run: bash e2e/suites/screenshots/ci/resolve-refs.sh
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Seerr v3.5.0 sets engine-strict with node ^22.19.0.
+          node-version: "22"
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🛠️ Build dev clients
+        id: build
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+        run: |
+          # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
+          cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
+          bun e2e/suites/screenshots/shots.ts build \
+            --platform "${{ matrix.platform }}" \
+            --before "$BEFORE_REF" \
+            --after "$AFTER_REF" \
+            --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
+
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when the run is cancelled.
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: always() && needs.plan.outputs.trusted == 'true'
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so its expiry counts from the first
+        # build: keep the public-repo maximum of 90 days. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 90
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so keep the public-repo maximum.
+        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 90
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📦 Pack run-scoped build cache
+        if: always()
+        # One tar of the whole platform cache, COPYFILE_DISABLE=1 so macOS writes no
+        # AppleDouble files; the tar keeps .app symlinks and modes through upload's zip.
+        run: |
+          cache="e2e/reports/shots/build-cache/${{ matrix.platform }}"
+          if [ -d "$cache" ]; then
+            COPYFILE_DISABLE=1 tar -cf "$RUNNER_TEMP/shots-native-run-${{ matrix.platform }}.tar" -C "$cache" .
+          fi
+
+      - name: 📤 Upload run-scoped build cache
+        # Never fetched across runs — capture jobs download it from this run only, so
+        # a fork PR's cache cannot reach another run. That makes trusted gating unneeded.
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-native-run-${{ matrix.platform }}
+          path: ${{ runner.temp }}/shots-native-run-${{ matrix.platform }}.tar
+          retention-days: 1
+          if-no-files-found: ${{ steps.build.outcome == 'success' && 'error' || 'ignore' }}
+
+  apple:
+    name: "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}"
+    needs: [plan, apple-native]
+    if: needs.plan.result == 'success' && needs.apple-native.result == 'success' && needs.plan.outputs.apple != '{"include":[]}'
+    permissions:
+      contents: read
     # The native fixture needs Apple silicon, and the tvOS 27.2 simulator needs Xcode 27.2.
     # `xcode-27` is the runner label that provides both (github.com/actions/runner-images).
     runs-on: xcode-27
-    # A cold Debug build alone can pass 50 minutes on a standard runner, and a run may
-    # build twice plus native fixture setup and three Maestro passes.
+    # Native fixture setup plus three Maestro passes on a software-rendered
+    # simulator; the builds themselves happen in apple-native.
     timeout-minutes: 180
     strategy:
       fail-fast: false
@@ -332,6 +507,18 @@ jobs:
           jar uf "$jar" -C "e2e/reports/shots/tvos-driver" driver-appletvSimulator
           echo "Maestro tvOS driver from 7d5552724318 (cache hit: ${{ steps.tvos-driver.outputs.cache-hit }})"
 
+      - name: 📥 Download run-scoped build cache
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: shots-native-run-${{ matrix.platform }}
+          path: ${{ runner.temp }}/native-cache
+
+      - name: 📦 Unpack run-scoped build cache
+        run: |
+          mkdir -p "e2e/reports/shots/build-cache/${{ matrix.platform }}"
+          tar -xf "$RUNNER_TEMP/native-cache/shots-native-run-${{ matrix.platform }}.tar" \
+            -C "e2e/reports/shots/build-cache/${{ matrix.platform }}"
+
       - name: 📸 Run screenshot comparison
         # `shots.ts` exits 0 when screens change (changes are reported in summary.md) and
         # exits non-zero only on runner, build, capture, or blank-screenshot failures.
@@ -340,57 +527,17 @@ jobs:
           GIT_TERMINAL_PROMPT: "0"
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
-          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # The native job owns every build; a cache miss here fails rather than compiles.
+          SHOTS_NO_BUILD: "1"
           # Software-rendered CI devices run a pass several times slower.
           SHOTS_PASS_TIMEOUT_SECONDS: "2700"
         run: |
-          # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
-          cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
           bun run e2e:shots \
             --platform "${{ matrix.platform }}" \
             --before "$BEFORE_REF" \
             --after "$AFTER_REF" \
             --device "$SIMULATOR_UDID" \
             --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
-
-      - name: 📦 Prepare built dev clients for upload
-        id: dev-clients
-        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
-        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
-        # that another run will install.
-        if: always() && needs.plan.outputs.trusted == 'true'
-        run: |
-          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
-            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
-            >> "$GITHUB_OUTPUT"
-
-      - name: 📤 Upload built dev client (before)
-        # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it.
-        # A fetched client is never re-uploaded, so its expiry counts from the first
-        # build: keep the public-repo maximum of 90 days. Leave default compression so
-        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
-        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
-          path: ${{ steps.dev-clients.outputs.before_path }}
-          retention-days: 90
-          if-no-files-found: error
-          overwrite: true
-
-      - name: 📤 Upload built dev client (after)
-        # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it.
-        # A fetched client is never re-uploaded, so keep the public-repo maximum.
-        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
-          path: ${{ steps.dev-clients.outputs.after_path }}
-          retention-days: 90
-          if-no-files-found: error
-          overwrite: true
 
       - name: 📝 Job summary
         if: always()
@@ -403,7 +550,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-screenshots-${{ matrix.platform }}-report
+          name: e2e-screenshots-${{ matrix.platform }}-report-${{ matrix.attempt }}
           # Upload reports, changed-screen evidence, and raw pass captures while omitting DerivedData.
           path: |
             e2e/reports/shots/ci-${{ matrix.platform }}/report/
@@ -420,7 +567,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs
+          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs-${{ matrix.attempt }}
           path: e2e/suites/syncplay/.state/logs/
           if-no-files-found: ignore
           retention-days: 7
@@ -440,15 +587,173 @@ jobs:
           xcrun simctl shutdown "$SIMULATOR_UDID" || true
           xcrun simctl delete "$SIMULATOR_UDID" || true
 
-  android:
-    name: 📸 Screenshot comparison (${{ matrix.platform }})
+  android-native:
+    name: 🛠️ Build dev clients (${{ matrix.platform }})
     needs: plan
-    if: needs.plan.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
+    if: needs.plan.result == 'success' && needs.plan.outputs.android_native != '{"include":[]}'
     permissions:
       contents: read
       actions: read # list and download debug dev-client artifacts across runs
     runs-on: ubuntu-26.04
-    # Cold prebuild, up to two Gradle assembleDebug builds, Docker fixture setup, and three Maestro passes.
+    # Cold prebuild and up to two Gradle assembleDebug builds.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.android_native) }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🗑️ Free Disk Space
+        uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
+        with:
+          tool-cache: false
+          mandb: true
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
+
+      - name: 🔎 Ensure comparison refs exist locally
+        # The runner switches the checkout between `before` and `after` with `git switch --detach`.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_BEFORE: ${{ inputs.before }}
+          INPUT_AFTER: ${{ inputs.after }}
+          DISPATCH_SHA: ${{ github.sha }}
+        run: bash e2e/suites/screenshots/ci/resolve-refs.sh
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        # Gradle requires Java 17 on PATH.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache Gradle global
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ runner.arch }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-gradle-
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🛠️ Build dev clients
+        id: build
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+        run: |
+          # Copy outside the checkout because `shots.ts` switches to `before` before fetching.
+          cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH"
+          bun e2e/suites/screenshots/shots.ts build \
+            --platform "${{ matrix.platform }}" \
+            --before "$BEFORE_REF" \
+            --after "$AFTER_REF" \
+            --abi "${{ matrix.arch }}" \
+            --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
+
+      - name: 📦 Prepare built dev clients for upload
+        id: dev-clients
+        # Run even on failure or cancellation: a build stays valid when the run is cancelled.
+        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
+        # that another run will install.
+        if: always() && needs.plan.outputs.trusted == 'true'
+        run: |
+          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
+            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: 📤 Upload built dev client (before)
+        # Keep a valid build even when the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so its expiry counts from the first
+        # build: keep the public-repo maximum of 90 days. Leave default compression so
+        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
+        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
+          path: ${{ steps.dev-clients.outputs.before_path }}
+          retention-days: 90
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📤 Upload built dev client (after)
+        # Keep a valid build even when the run is cancelled.
+        # A later PR or develop run with the same native fingerprint reuses it.
+        # A fetched client is never re-uploaded, so keep the public-repo maximum.
+        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
+          path: ${{ steps.dev-clients.outputs.after_path }}
+          retention-days: 90
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 📦 Pack run-scoped build cache
+        if: always()
+        # One tar of the whole platform cache; the tar keeps file modes through
+        # upload-artifact's zip.
+        run: |
+          cache="e2e/reports/shots/build-cache/${{ matrix.platform }}"
+          if [ -d "$cache" ]; then
+            COPYFILE_DISABLE=1 tar -cf "$RUNNER_TEMP/shots-native-run-${{ matrix.platform }}.tar" -C "$cache" .
+          fi
+
+      - name: 📤 Upload run-scoped build cache
+        # Never fetched across runs — capture jobs download it from this run only, so
+        # a fork PR's cache cannot reach another run. That makes trusted gating unneeded.
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-native-run-${{ matrix.platform }}
+          path: ${{ runner.temp }}/shots-native-run-${{ matrix.platform }}.tar
+          retention-days: 1
+          if-no-files-found: ${{ steps.build.outcome == 'success' && 'error' || 'ignore' }}
+
+  android:
+    name: "📸 Screenshot comparison (${{ matrix.platform }}) #${{ matrix.attempt }}"
+    needs: [plan, android-native]
+    if: needs.plan.result == 'success' && needs.android-native.result == 'success' && needs.plan.outputs.android != '{"include":[]}'
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    # Docker fixture setup and three Maestro passes; the builds themselves happen in android-native.
     timeout-minutes: 150
     strategy:
       fail-fast: false
@@ -585,6 +890,18 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: 📥 Download run-scoped build cache
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: shots-native-run-${{ matrix.platform }}
+          path: ${{ runner.temp }}/native-cache
+
+      - name: 📦 Unpack run-scoped build cache
+        run: |
+          mkdir -p "e2e/reports/shots/build-cache/${{ matrix.platform }}"
+          tar -xf "$RUNNER_TEMP/native-cache/shots-native-run-${{ matrix.platform }}.tar" \
+            -C "e2e/reports/shots/build-cache/${{ matrix.platform }}"
+
       - name: 📸 Run screenshot comparison on emulator
         # `shots.ts` exits 0 when screens change (changes are reported in summary.md) and
         # exits non-zero only on runner, build, capture, or blank-screenshot failures.
@@ -595,7 +912,8 @@ jobs:
           GIT_TERMINAL_PROMPT: "0"
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
-          SHOTS_BUILD_CACHE_FETCH: ${{ runner.temp }}/fetch-dev-client.py
+          # The native job owns every build; a cache miss here fails rather than compiles.
+          SHOTS_NO_BUILD: "1"
           # Software-rendered CI devices run a pass several times slower.
           SHOTS_PASS_TIMEOUT_SECONDS: "2700"
         with:
@@ -605,46 +923,7 @@ jobs:
           profile: ${{ matrix.profile }}
           emulator-boot-timeout: 900
           disable-animations: true
-          script: cp e2e/suites/screenshots/ci/fetch-dev-client.py "$SHOTS_BUILD_CACHE_FETCH" && bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
-
-      - name: 📦 Prepare built dev clients for upload
-        id: dev-clients
-        # Run even on failure or cancellation: a build stays valid when capture fails or the run is cancelled.
-        # Only upload from trusted runs so a fork PR cannot plant a binary under a fingerprint
-        # that another run will install.
-        if: always() && needs.plan.outputs.trusted == 'true'
-        run: |
-          python3 e2e/suites/screenshots/ci/prepare-dev-client-uploads.py \
-            "e2e/reports/shots/ci-${{ matrix.platform }}/build-cache.json" \
-            >> "$GITHUB_OUTPUT"
-
-      - name: 📤 Upload built dev client (before)
-        # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it.
-        # A fetched client is never re-uploaded, so its expiry counts from the first
-        # build: keep the public-repo maximum of 90 days. Leave default compression so
-        # upload-artifact's zip shrinks the uncompressed .tar (especially .app bundles).
-        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.before_hash != ''
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.before_hash }}
-          path: ${{ steps.dev-clients.outputs.before_path }}
-          retention-days: 90
-          if-no-files-found: error
-          overwrite: true
-
-      - name: 📤 Upload built dev client (after)
-        # Keep a valid build even when capture fails or the run is cancelled.
-        # A later PR or develop run with the same native fingerprint reuses it.
-        # A fetched client is never re-uploaded, so keep the public-repo maximum.
-        if: always() && needs.plan.outputs.trusted == 'true' && steps.dev-clients.outputs.after_hash != ''
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: shots-dev-client-${{ matrix.platform }}-${{ steps.dev-clients.outputs.after_hash }}
-          path: ${{ steps.dev-clients.outputs.after_path }}
-          retention-days: 90
-          if-no-files-found: error
-          overwrite: true
+          script: bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
       - name: 📝 Job summary
         if: always()
@@ -657,7 +936,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-screenshots-${{ matrix.platform }}-report
+          name: e2e-screenshots-${{ matrix.platform }}-report-${{ matrix.attempt }}
           path: |
             e2e/reports/shots/ci-${{ matrix.platform }}/report/
             e2e/reports/shots/ci-${{ matrix.platform }}/evidence/
@@ -682,7 +961,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs
+          name: e2e-screenshots-${{ matrix.platform }}-fixture-logs-${{ matrix.attempt }}
           path: e2e/suites/syncplay/.state/logs/
           if-no-files-found: ignore
           retention-days: 7

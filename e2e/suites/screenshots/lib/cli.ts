@@ -8,9 +8,9 @@ export function parseArgs(argv: string[]): ParsedCli {
     if (rest.length > 0) throw new ShotError("usage: shots.ts maestro-path");
     return { command: "maestro-path" };
   }
-  if (command !== "doctor" && command !== "run")
+  if (command !== "doctor" && command !== "run" && command !== "build")
     throw new ShotError(
-      "usage: shots.ts doctor [--fix] [--platform <p>] | run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>] | maestro-path",
+      "usage: shots.ts doctor [--fix] [--platform <p>] | run --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>] | build --platform <p> [--before <ref>] [--after <ref>] [--abi <abi>] [--out <dir>] | maestro-path",
     );
   const flags: Record<string, string> = {};
   let fix = false;
@@ -32,6 +32,7 @@ export function parseArgs(argv: string[]): ParsedCli {
     device: flags.device,
     outDir: flags.out,
     port: flags.port ? Number(flags.port) : undefined,
+    abi: flags.abi,
   };
   if (
     cli.platform !== undefined &&
@@ -48,6 +49,18 @@ export function parseArgs(argv: string[]): ParsedCli {
       (!Number.isInteger(cli.port) || cli.port <= 0)
     )
       throw new ShotError("shots.ts run: --port must be a positive integer");
+  }
+  if (command === "build") {
+    if (!cli.platform)
+      throw new ShotError("shots.ts build: --platform is required");
+    // A device answers ro.product.cpu.abilist on `run`; `build` has none to ask.
+    if (
+      (cli.platform === "android" || cli.platform === "android-tv") &&
+      !cli.abi
+    )
+      throw new ShotError(
+        `shots.ts build: --abi is required for ${cli.platform}`,
+      );
   }
   return cli;
 }

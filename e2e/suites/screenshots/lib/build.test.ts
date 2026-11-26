@@ -4,6 +4,7 @@ import {
   DEV_CLIENT_RECIPE,
   deviceAbi,
   ensureDebugBuild,
+  NO_BUILD_ENV,
 } from "./build";
 import { platformSpec } from "./cli";
 import { type Cli, ShotError } from "./core";
@@ -293,6 +294,76 @@ describe("ensureDebugBuild cache", () => {
     expect(res.source).toBe("built");
     expect(f.logs).toHaveLength(1);
     expect(execs(f, "xcodebuild")).toHaveLength(1);
+  });
+
+  it("refuses a miss under SHOTS_NO_BUILD=1, naming platform and hash, without building", () => {
+    const f = new Fake();
+    f.env[NO_BUILD_ENV] = "1";
+    let beforeBuild = false;
+    expect(() =>
+      ensureDebugBuild(
+        f,
+        REPO,
+        "android",
+        spec,
+        "fp-none",
+        `${REPO}/session`,
+        () => {
+          beforeBuild = true;
+        },
+        "arm64-v8a",
+      ),
+    ).toThrow(
+      `no cached android build for fp-none-${DEV_CLIENT_RECIPE}-arm64-v8a and ${NO_BUILD_ENV}=1`,
+    );
+    expect(beforeBuild).toBe(false);
+    expect(execs(f, "assembleDebug")).toHaveLength(0);
+  });
+
+  it("still returns local and fetched hits under SHOTS_NO_BUILD=1", () => {
+    const f = new Fake();
+    f.env[NO_BUILD_ENV] = "1";
+    const cacheDir = `${REPO}/e2e/reports/shots/build-cache/android/fp-hit-${DEV_CLIENT_RECIPE}-arm64-v8a`;
+    f.dirs.add(cacheDir);
+    f.files.set(`${cacheDir}/app-debug.apk`, "apk");
+    expect(
+      ensureDebugBuild(
+        f,
+        REPO,
+        "android",
+        spec,
+        "fp-hit",
+        `${REPO}/session`,
+        undefined,
+        "arm64-v8a",
+      ).source,
+    ).toBe("local");
+
+    const g = new Fake();
+    g.env[NO_BUILD_ENV] = "1";
+    g.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    g.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        const dir = argv[3];
+        fake.dirs.add(dir);
+        fake.files.set(`${dir}/app-debug.apk`, "apk");
+        return ok;
+      },
+    ]);
+    expect(
+      ensureDebugBuild(
+        g,
+        REPO,
+        "android",
+        spec,
+        "fp-fetch",
+        `${REPO}/session`,
+        undefined,
+        "arm64-v8a",
+      ).source,
+    ).toBe("fetched");
+    expect(execs(g, "assembleDebug")).toHaveLength(0);
   });
 });
 

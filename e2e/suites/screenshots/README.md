@@ -20,10 +20,12 @@ on demand in `.github/workflows/e2e-screenshots.yml`.
   `tv-nav-*` IDs must exist on the previous tip; other screenshot IDs have fallbacks.
 - **A PR labeled `run-screenshots`** (target `develop` or `master`): `origin/<base_ref>`
   against the PR head. Remove and re-add the label to rerun.
-- **`workflow_dispatch`**: `before` (required), `after` (default: dispatched ref), and
-  `platforms` (subset of `ios,apple-tv,android,android-tv`, default all).
+- **`workflow_dispatch`**: `before` (required), `after` (default: dispatched ref),
+  `platforms` (subset of `ios,apple-tv,android,android-tv`, default all), and `repeat`
+  (1–20, default 1): capture attempts per platform, for repeated measurement.
 
-The `plan` job validates `platforms` and skips a job whose matrix is empty.
+The `plan` job validates `platforms` and `repeat`, and skips a job whose matrix is
+empty.
 
 - `ios`, `apple-tv` run on `xcode-27` with the native fixture. Apple silicon runners
   cannot run Docker or an Android emulator. Only `ios` runs `ios-disable-autofill.sh`.
@@ -38,21 +40,32 @@ The `plan` job validates `platforms` and skips a job whose matrix is empty.
   seed/enrich changes. On a miss `doctor --fix` warms the fixture, the servers come
   down for a consistent save, and the state uploads under the same key.
 
-Dev clients are shared as artifacts named `shots-dev-client-<platform>-<hash>` (a tar, to
-keep `.app` permissions and symlinks) and expire after 30 days. The fetch hook accepts only
-artifacts whose `workflow_run.head_repository_id` is this repository, and only trusted runs
-upload (pushes to `develop`, same-repository PRs, `workflow_dispatch`), so a fork PR cannot
-plant a binary under another run's fingerprint.
+Native builds happen once per platform in `<x>-native` jobs (`shots.ts build`); each
+`repeat` attempt is a separate capture job that never builds. The native job hands its
+build cache to this run's capture jobs as `shots-native-run-<platform>` (a tar of
+`e2e/reports/shots/build-cache/<platform>/`, retained 1 day, never fetched across runs),
+and capture jobs run with `SHOTS_NO_BUILD=1` so a missing entry fails instead of
+compiling.
+
+Dev clients are also shared across runs as `shots-dev-client-<platform>-<hash>` (a tar,
+to keep `.app` permissions and symlinks, retained 90 days). The fetch hook accepts only
+artifacts whose `workflow_run.head_repository_id` is this repository and whose expiry is
+at least 14 days out — a client about to die counts as missing, so the native job
+rebuilds and re-uploads it. Only trusted runs upload (pushes to `develop`,
+same-repository PRs, `workflow_dispatch`), so a fork PR cannot plant a binary under
+another run's fingerprint.
 
 Jobs fail only on runner, build or capture errors, blank screenshots included. Changed
-screens go to `$GITHUB_STEP_SUMMARY` and upload as `e2e-screenshots-<platform>-report`
-next to `e2e-screenshots-<platform>-fixture-logs`.
+screens go to `$GITHUB_STEP_SUMMARY` and upload as
+`e2e-screenshots-<platform>-report-<attempt>` next to
+`e2e-screenshots-<platform>-fixture-logs-<attempt>`.
 
 ## Commands
 
 ```sh
 bun run e2e:shots:doctor [--fix] [--platform ios|android|android-tv|apple-tv]
 bun run e2e:shots --platform <p> [--before <ref>] [--after <ref>] [--device <id>] [--out <dir>] [--port <port>]
+bun e2e/suites/screenshots/shots.ts build --platform <p> [--before <ref>] [--after <ref>] [--abi <abi>] [--out <dir>]
 ```
 
 `--before` defaults to the base the Reassure baseline measures against (`resolveBaseRef`
@@ -63,6 +76,12 @@ in `scripts/reassure-baseline.ts`): the PR target, else `develop`, on `upstream`
 installed. It is read-only unless you pass `--fix`, which brings up an unhealthy fixture
 the way `run` does (step 2) and installs the pinned Maestro. It never touches a dirty
 tree.
+
+`build` runs only step 3's native half for both refs — switch, install, fingerprint,
+debug client — with no device, fixture, Maestro or Metro, and writes the same
+`<out>/build-cache.json`. `--abi` is required for `android`/`android-tv` (there is no
+device to ask) and ignored for Apple platforms. CI's `<x>-native` jobs use it; locally it
+warms `e2e/reports/shots/build-cache` for a later `run`.
 
 `run` refuses a dirty tree, identical refs, a physical device or a busy port, then:
 
