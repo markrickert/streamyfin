@@ -216,6 +216,48 @@ jobs:
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: 🗓️ Fixture cache week
+        id: fixture-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # e2e:enrich fetches artwork and metadata online and has timed out under load;
+      # the cache holds Jellyfin state only, so a hit skips the fixture warm-up. The
+      # key rolls weekly and on fixture inputs, so the "latest stable" plugin and
+      # TMDB data never freeze forever. Seerr is excluded: its uid-1000 ownership
+      # cannot survive a cache round trip, and seerr.ensure_ready re-onboards it.
+      # Downloaded artwork lives in Actions cache and the gitignored .state/, never
+      # in the repository (see e2e/suites/syncplay/README.md).
+      - name: 💾 Restore enriched fixture
+        id: fixture-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
+      - name: 🔥 Warm enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        env:
+          SYNCPLAY_BACKEND: native
+        run: |
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform ${{ matrix.platform }}
+          # Stop the servers but keep .state, so SQLite is consistent when saved.
+          PYTHONPATH=e2e python3 -c "from suites.syncplay import setup; owned = setup.identity(); setup.backend(owned).down(owned)"
+
+      - name: 💾 Save enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
       - name: 📱 Create and boot ${{ matrix.family }} simulator
         run: |
           udid="$(python3 e2e/suites/screenshots/ci/create-simulator.py "${{ matrix.platform }}")"
@@ -488,6 +530,48 @@ jobs:
 
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: 🗓️ Fixture cache week
+        id: fixture-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # e2e:enrich fetches artwork and metadata online and has timed out under load;
+      # the cache holds Jellyfin state only, so a hit skips the fixture warm-up. The
+      # key rolls weekly and on fixture inputs, so the "latest stable" plugin and
+      # TMDB data never freeze forever. Seerr is excluded: its uid-1000 ownership
+      # cannot survive a cache round trip, and seerr.ensure_ready re-onboards it.
+      # Downloaded artwork lives in Actions cache and the gitignored .state/, never
+      # in the repository (see e2e/suites/syncplay/README.md).
+      - name: 💾 Restore enriched fixture
+        id: fixture-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
+
+      - name: 🔥 Warm enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        run: |
+          bun e2e/suites/screenshots/shots.ts doctor --fix --platform ${{ matrix.platform }}
+          # Stop the servers but keep .state, so SQLite is consistent when saved.
+          PYTHONPATH=e2e python3 -c "from suites.syncplay import setup; owned = setup.identity(); setup.backend(owned).down(owned)"
+          # Docker wrote root-owned files; the cache save runs as the runner user.
+          sudo chown -R "$(id -u):$(id -g)" e2e/suites/syncplay/.state/config e2e/suites/syncplay/.state/cache
+
+      - name: 💾 Save enriched fixture
+        if: steps.fixture-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            e2e/suites/syncplay/.state
+            !e2e/suites/syncplay/.state/seerr
+            !e2e/suites/syncplay/.state/logs
+            !e2e/suites/syncplay/.state/*.pid
+          key: ${{ runner.os }}-${{ runner.arch }}-syncplay-state-v1-${{ steps.fixture-week.outputs.week }}-${{ hashFiles('e2e/suites/syncplay/setup.py','e2e/suites/syncplay/seed.py','e2e/suites/syncplay/catalog_seed.py','e2e/suites/syncplay/enrich.py','e2e/suites/syncplay/plugin.py','e2e/suites/syncplay/native.py','e2e/suites/syncplay/backend.py','e2e/suites/syncplay/inventory.json','e2e/suites/syncplay/compose.yml') }}
 
       - name: 🧰 Enable KVM for the emulator
         # Linux runners expose /dev/kvm to root only; without this the emulator runs unaccelerated and misses its boot timeout.
