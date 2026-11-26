@@ -419,6 +419,26 @@ describe("capture pass parents", () => {
       expect(shots.filter((shot) => shot === name)).toHaveLength(1);
   });
 
+  // The intro helper dismisses the sheet on both platforms; its shot only fires
+  // where the caller sets INTRO_SHOT=1, and it must stay countable as 00-intro.
+  it("_dismiss-intro-mobile.yml gates the 00-intro shot on INTRO_SHOT in both platform branches", () => {
+    const cmds = commandsOf("_dismiss-intro-mobile.yml");
+    const gated = {
+      runFlow: {
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro resolves this flow variable
+        when: { true: "${INTRO_SHOT == '1'}" },
+        commands: [{ takeScreenshot: "00-intro" }],
+      },
+    };
+    const ios = cmds.find((cmd) => cmd.runFlow?.when?.platform === "iOS");
+    const android = cmds.find(
+      (cmd) => cmd.runFlow?.when?.platform === "Android",
+    );
+    expect(ios?.runFlow.commands).toContainEqual(gated);
+    expect(android?.runFlow.commands).toContainEqual(gated);
+    expect(screenshotNames(cmds)).toEqual(["00-intro", "00-intro"]);
+  });
+
   // The Seerr bootstrap runs only when Discover is missing, so a shot taken there is
   // absent from every pass where the plugin-pushed sign-in already connected.
   it("bootstrap-seerr-mobile.yml takes no screenshots: it only runs conditionally", () => {
@@ -727,7 +747,7 @@ describe("bootstrap-login first-run overlays", () => {
     ]);
   });
 
-  it("bootstrap-login-mobile grants notifications and keeps dismissing overlays until the login field is reachable", () => {
+  it("bootstrap-login-mobile grants notifications, dismisses overlays and an early intro sheet until the login field is reachable", () => {
     const cmds = commandsOf("bootstrap-login-mobile.yml");
     expect(cmds[0].launchApp).toEqual({
       stopApp: false,
@@ -739,7 +759,30 @@ describe("bootstrap-login first-run overlays", () => {
     expect(cmds[1].repeat.commands[0].runFlow).toBe(
       "_dismiss-dev-overlays.yml",
     );
-    expect(cmds[2].assertVisible).toEqual({ id: "login-server-url" });
+    expect(cmds[2].runFlow).toEqual({
+      when: { visible: "Welcome to Streamyfin|Bottom Sheet" },
+      file: "_dismiss-intro-mobile.yml",
+      env: { INTRO_SHOT: "0" },
+    });
+    expect(cmds[3].assertVisible).toEqual({ id: "login-server-url" });
+  });
+
+  it("bootstrap-login-mobile shoots the post-sign-in intro through the helper with INTRO_SHOT=1", () => {
+    const cmds = commandsOf("bootstrap-login-mobile.yml");
+    const wait = cmds.findIndex(
+      (cmd) =>
+        cmd.extendedWaitUntil?.visible === "Bottom Sheet|Welcome to Streamyfin",
+    );
+    expect(wait).toBeGreaterThanOrEqual(0);
+    expect(cmds[wait + 1]).toEqual({
+      runFlow: {
+        file: "_dismiss-intro-mobile.yml",
+        env: { INTRO_SHOT: "1" },
+      },
+    });
+    expect(
+      cmds.filter((cmd) => cmd.takeScreenshot === "00-intro"),
+    ).toHaveLength(0);
   });
 
   it("bootstrap-login-tv grants notifications except on tvOS, then dismisses overlays until the login screen is reachable", () => {

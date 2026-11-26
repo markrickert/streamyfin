@@ -29,6 +29,14 @@ appId: ${MAESTRO_APP_ID}
           visible: "__settle__"
           timeout: 1000
           optional: true
+# A slow cold start can mount Home long enough to open the intro sheet over the login
+# screen, where it swallows every tap.
+- runFlow:
+    when:
+      visible: "Welcome to Streamyfin|Bottom Sheet"
+    file: _dismiss-intro-mobile.yml
+    env:
+      INTRO_SHOT: "0"
 - assertVisible:
     id: "login-server-url"
 # The screen fades in: a shot taken during the fade is dimmed and differs on timing alone.
@@ -108,36 +116,15 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: "Not Now"
       - waitForAnimationToEnd
-# The first sign-in on a fresh install opens the intro sheet over Home. On iOS the sheet's
-# contents are not in the accessibility tree, only its "Bottom Sheet" container: Done is
-# tapped by its testID, and if that still does not match, a downward swipe dismisses the
-# sheet the same way a user would. Android exposes the text.
+# The first sign-in on a fresh install opens the intro sheet over Home.
 - extendedWaitUntil:
     visible: "Bottom Sheet|Welcome to Streamyfin"
     timeout: 20000
     optional: true
 - runFlow:
-    when:
-      platform: iOS
-      visible: "Bottom Sheet"
-    commands:
-      - takeScreenshot: 00-intro
-      - tapOn:
-          id: "intro-done"
-          optional: true
-      - runFlow:
-          when:
-            visible: "Bottom Sheet"
-          commands:
-            - swipe:
-                direction: DOWN
-- runFlow:
-    when:
-      platform: Android
-      visible: "Welcome to Streamyfin"
-    commands:
-      - takeScreenshot: 00-intro
-      - tapOn: "Done"
+    file: _dismiss-intro-mobile.yml
+    env:
+      INTRO_SHOT: "1"
 - extendedWaitUntil:
     visible: "Home"
     timeout: 60000
