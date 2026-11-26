@@ -71,7 +71,9 @@ tree.
    (`<exe> <platform> <hash> <cacheDir>`), else a local build. Each ref's
    `{ ref, platform, hash, source, path }` goes to `<session>/build-cache.json`. Then it
    installs the client, starts its own `expo start --dev-client --clear` on a free port,
-   and runs each pass as one parent Maestro invocation.
+   and runs each pass as one parent Maestro invocation. A pass whose Maestro driver
+   becomes unreachable (`DeviceUnreachableException` in `<pass>/maestro.log`) is
+   retried once, and the failed attempt is kept next to it as `<capture>-failed-1`.
 4. Runs `compare.ts --before … --noise … --after …` with the platform masks. The report
    and changed-screen evidence land in the session directory.
 

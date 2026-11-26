@@ -277,20 +277,38 @@ export async function runComparison(
         for (const capture of ref.captures) {
           d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
-          d.fs.mkdir(outDir);
-          // Every pass is a first run: fresh state, then the deep link that points the
-          // dev client at this ref's Metro — the flows themselves carry no clearState,
-          // because wiping state would also wipe the URL the link just set.
-          resetTestAppState(d, cli.platform!, device, appId, artifact);
-          launchDevClient(d, cli.platform!, device, appId, port);
-          try {
-            runCapture(d, tooling, spec, device, outDir, env, maestro);
-          } catch (error) {
-            // A pass dying under a system ANR dialog leaves no trace of which
-            // process hung; dump the device state before the error aborts the run.
-            if (cli.platform === "android" || cli.platform === "android-tv")
-              writeAndroidDiagnostics(d, device, outDir);
-            throw error;
+          for (let attempt = 0; attempt < 2; attempt++) {
+            d.fs.mkdir(outDir);
+            // Every pass is a first run: fresh state, then the deep link that points
+            // the dev client at this ref's Metro — the flows themselves carry no
+            // clearState, because wiping state would also wipe the URL the link just
+            // set.
+            resetTestAppState(d, cli.platform!, device, appId, artifact);
+            launchDevClient(d, cli.platform!, device, appId, port);
+            try {
+              runCapture(d, tooling, spec, device, outDir, env, maestro);
+              break;
+            } catch (error) {
+              // Maestro's iOS XCTest driver can die mid-pass while the app and the
+              // flow are still fine; the pass is stateless, so retry it once. The
+              // failed dir moves out as a sibling: compare.ts walks outDir
+              // recursively, so it must never nest inside it.
+              const log = `${outDir}/maestro.log`;
+              const driverLost =
+                d.fs.exists(log) &&
+                d.fs.read(log).includes("DeviceUnreachableException");
+              if (attempt > 0 || !driverLost) {
+                // A pass dying under a system ANR dialog leaves no trace of which
+                // process hung; dump the device state before the error aborts the run.
+                if (cli.platform === "android" || cli.platform === "android-tv")
+                  writeAndroidDiagnostics(d, device, outDir);
+                throw error;
+              }
+              d.log(
+                `maestro driver unreachable during ${capture}; the pass is retried once`,
+              );
+              d.fs.mv(outDir, `${sessionDir}/${capture}-failed-1`);
+            }
           }
         }
       } finally {

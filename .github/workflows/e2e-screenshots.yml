@@ -367,6 +367,7 @@ jobs:
             e2e/reports/shots/ci-${{ matrix.platform }}/before/
             e2e/reports/shots/ci-${{ matrix.platform }}/noise/
             e2e/reports/shots/ci-${{ matrix.platform }}/after/
+            e2e/reports/shots/ci-${{ matrix.platform }}/*-failed-*/
           if-no-files-found: ignore
           retention-days: 7
 
@@ -574,6 +575,7 @@ jobs:
             e2e/reports/shots/ci-${{ matrix.platform }}/before/
             e2e/reports/shots/ci-${{ matrix.platform }}/noise/
             e2e/reports/shots/ci-${{ matrix.platform }}/after/
+            e2e/reports/shots/ci-${{ matrix.platform }}/*-failed-*/
           if-no-files-found: ignore
           retention-days: 7
 

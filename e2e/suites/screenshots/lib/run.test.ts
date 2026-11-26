@@ -464,6 +464,134 @@ describe("runComparison failure path", () => {
     expect(execs(f, "dumpsys")).toHaveLength(0);
     expect(f.files.has(`${outDir}/before/android-diagnostics.txt`)).toBe(false);
   });
+
+  it("retries a pass once when maestro's driver becomes unreachable, keeping the failed attempt", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-ios`;
+    let captures = 0;
+    f.routes.push(
+      [
+        "list devices",
+        { code: 0, stdout: JSON.stringify(SIMCTL_JSON), stderr: "" },
+      ],
+      [
+        "pod install",
+        (fake) => {
+          fake.dirs.add(`${REPO}/ios`);
+          fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+          return ok;
+        },
+      ],
+      [
+        "xcodebuild",
+        (fake, argv) => {
+          const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+          fake.dirs.add(`${derived}/Build/Products/Debug-iphonesimulator`);
+          fake.dirs.add(
+            `${derived}/Build/Products/Debug-iphonesimulator/Streamyfin.app`,
+          );
+          return ok;
+        },
+      ],
+      [
+        "PlistBuddy",
+        { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+      ],
+      ["status_bar", ok],
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
+      [
+        "pass-mobile.yml",
+        (fake, argv) => {
+          captures += 1;
+          if (captures > 1) return ok;
+          const out = argv[argv.indexOf("--out") + 1];
+          fake.files.set(
+            `${out}/maestro.log`,
+            "maestro.DeviceUnreachableException: Device became unreachable during viewHierarchy",
+          );
+          return { code: 1, stdout: "", stderr: "driver lost" };
+        },
+      ],
+    );
+    await runComparison(
+      f,
+      { ...runCli, platform: "ios", device: "UDID-PHONE", outDir },
+      REPO,
+    );
+    // Four passes: the failed before plus its retry, then noise and after.
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(4);
+    expect(execs(f, "simctl uninstall")).toHaveLength(4);
+    expect(execs(f, "simctl openurl")).toHaveLength(4);
+    expect(f.logs.some((line) => line.includes("unreachable"))).toBe(true);
+    expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(true);
+    expect(f.files.get(`${outDir}/before-failed-1/maestro.log`)).toContain(
+      "DeviceUnreachableException",
+    );
+  });
+
+  it("does not retry a pass whose failure is not a lost driver", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(
+      [
+        "pass-mobile.yml",
+        (fake, argv) => {
+          const out = argv[argv.indexOf("--out") + 1];
+          fake.files.set(`${out}/maestro.log`, "flow failed: no such element");
+          return { code: 1, stdout: "", stderr: "boom" };
+        },
+      ],
+      ["dumpsys", { code: 0, stdout: "dump\n", stderr: "" }],
+    );
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("boom");
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(1);
+    expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(false);
+    expect(f.files.has(`${outDir}/before/android-diagnostics.txt`)).toBe(true);
+  });
+
+  it("rethrows after the retry when the driver is lost again", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(
+      [
+        "pass-mobile.yml",
+        (fake, argv) => {
+          const out = argv[argv.indexOf("--out") + 1];
+          fake.files.set(
+            `${out}/maestro.log`,
+            "maestro.DeviceUnreachableException: Device became unreachable during viewHierarchy",
+          );
+          return { code: 1, stdout: "", stderr: "driver lost" };
+        },
+      ],
+      ["dumpsys", { code: 0, stdout: "dump\n", stderr: "" }],
+    );
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("driver lost");
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(2);
+    expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(true);
+    expect(f.files.has(`${outDir}/before/android-diagnostics.txt`)).toBe(true);
+  });
 });
 
 describe("runComparison boundaries", () => {
