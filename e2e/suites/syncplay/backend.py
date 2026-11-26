@@ -82,6 +82,9 @@ class DockerBackend:
     def restart_jellyfin(self, owned):
         subprocess.run(["docker", "restart", docker_jellyfin_container()], check=True, stdout=subprocess.DEVNULL)
 
+    def restart_seerr(self, owned):
+        subprocess.run(["docker", "restart", owned["SYNCPLAY_SEERR_CONTAINER"]], check=True, stdout=subprocess.DEVNULL)
+
     def host_path(self, container_path):
         return container_path
 
@@ -113,6 +116,9 @@ class NativeBackend:
 
     def restart_jellyfin(self, owned):
         native.restart_jellyfin(owned)
+
+    def restart_seerr(self, owned):
+        native.restart_seerr(owned)
 
     def host_path(self, container_path):
         """The host path of the folder compose.yml mounts at container_path, read through the

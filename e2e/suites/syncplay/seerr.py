@@ -6,6 +6,7 @@ everything else rides the cookie the Jellyfin login sets, so one opener keeps th
 
 import http.cookiejar
 import json
+import sys
 import time
 import urllib.request
 
@@ -98,7 +99,14 @@ def ensure_ready(owned, username, password):
 
     url = base_url(owned)
     opener = new_session()
-    public = wait_for_public(opener, url)
+    try:
+        public = wait_for_public(opener, url)
+    except RuntimeError:
+        # A Seerr whose server never binds gets one container or process restart,
+        # and a second silence raises.
+        print(f"Seerr at {url} did not answer; restarting it once", file=sys.stderr)
+        setup.backend(owned).restart_seerr(owned)
+        public = wait_for_public(opener, url)
     if public.get("initialized"):
         login(opener, url, username, password)
         return

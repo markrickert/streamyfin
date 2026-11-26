@@ -10,7 +10,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from suites.syncplay import seerr, setup
+from suites.syncplay import backend, seerr, setup
 
 OWNED = {
     "SYNCPLAY_PROJECT": "streamyfin-syncplay-e2e",
@@ -132,10 +132,50 @@ class EnsureReadyTest(unittest.TestCase):
     def test_a_seerr_that_never_answers_is_refused_after_the_bound(self):
         opener = FakeOpener()
         opener.serve("GET", "/api/v1/settings/public", urllib.error.URLError("connection refused"))
-        with patched_opener(opener), mock.patch.object(seerr.time, "sleep"):
+        restarted = mock.Mock()
+        with patched_opener(opener), mock.patch.object(seerr.time, "sleep"), mock.patch.object(
+            setup, "backend", return_value=mock.Mock(restart_seerr=restarted)
+        ):
             with self.assertRaisesRegex(RuntimeError, "did not become ready"):
                 seerr.ensure_ready(OWNED, username="syncplay-host", password="pw")
-        self.assertEqual(len(opener.calls), seerr.READY_ATTEMPTS)
+        # Two full waits bound the run: the first failure restarts Seerr once, the second raises.
+        self.assertEqual(len(opener.calls), 2 * seerr.READY_ATTEMPTS)
+        restarted.assert_called_once_with(OWNED)
+
+    def test_a_seerr_silent_until_one_restart_answers_and_onboards(self):
+        opener = FakeOpener()
+        opener.serve(
+            "GET", "/api/v1/settings/public",
+            *([urllib.error.URLError("connection refused")] * seerr.READY_ATTEMPTS),
+            {"initialized": True},
+        )
+        opener.serve("POST", "/api/v1/auth/jellyfin", {"id": 1})
+        restarted = mock.Mock()
+        with patched_opener(opener), mock.patch.object(seerr.time, "sleep"), mock.patch.object(
+            setup, "backend", return_value=mock.Mock(restart_seerr=restarted)
+        ):
+            seerr.ensure_ready(OWNED, username="syncplay-host", password="pw")
+        restarted.assert_called_once_with(OWNED)
+        # Onboarding continued after the restart: the rerun login still carries no hostname.
+        self.assertEqual(opener.calls[-1], (
+            "POST", "/api/v1/auth/jellyfin", {"username": "syncplay-host", "password": "pw"},
+        ))
+
+
+class RestartSeerrTest(unittest.TestCase):
+    def test_docker_restarts_the_seerr_container(self):
+        with mock.patch.object(backend.subprocess, "run") as run:
+            backend.DockerBackend().restart_seerr(OWNED)
+        run.assert_called_once_with(
+            ["docker", "restart", "streamyfin-syncplay-e2e-seerr"],
+            check=True, stdout=backend.subprocess.DEVNULL,
+        )
+
+    def test_native_stops_and_starts_the_seerr_process(self):
+        with mock.patch.object(backend.native, "stop") as stop, mock.patch.object(backend.native, "start_seerr") as start:
+            backend.NativeBackend().restart_seerr(OWNED)
+        stop.assert_called_once_with("seerr")
+        start.assert_called_once_with(OWNED)
 
 
 class EnsureRadarrTest(unittest.TestCase):
