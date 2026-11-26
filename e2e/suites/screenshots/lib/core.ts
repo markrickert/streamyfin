@@ -85,7 +85,7 @@ export function mustSanitized(
         if (secret) out = out.split(secret).join("***");
       return out;
     };
-    const stderr = mask(result.stderr.trim()).slice(0, 500);
+    const stderr = mask(result.stderr.trim()).slice(-500);
     const stdout = mask(result.stdout.trim()).slice(-500);
     const detail = [stderr, stdout].filter(Boolean).join("\n");
     throw new ShotError(`${what} failed (${result.code}): ${detail}`);

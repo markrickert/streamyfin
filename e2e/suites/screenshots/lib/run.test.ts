@@ -671,12 +671,13 @@ describe("runComparison boundaries", () => {
       {
         code: 1,
         stdout: `${"line\n".repeat(150)}stdout tail ${PASSWORD}`,
-        stderr: `stderr head ${PASSWORD}`,
+        stderr: `stderr head ${PASSWORD}\n${"warning\n".repeat(120)}stderr tail ${PASSWORD}`,
       },
     ]);
     const error = await runComparison(f, runCli, REPO).catch((e) => e);
     expect(error).toBeInstanceOf(ShotError);
-    expect(error.message).toContain("stderr head ***");
+    expect(error.message).toContain("stderr tail ***");
+    expect(error.message).not.toContain("stderr head");
     expect(error.message).toContain("stdout tail ***");
     expect(error.message).not.toContain(PASSWORD);
   });
