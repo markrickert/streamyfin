@@ -33,7 +33,7 @@ The `plan` job validates `platforms` and skips a job whose matrix is empty.
 - Both comparison jobs restore the enriched fixture from Actions cache at
   `e2e/suites/syncplay/.state`, minus `seerr/` (its container uid cannot survive a
   round trip; `seerr.ensure_ready` re-onboards it), `logs/` and `*.pid`. The key is
-  `<os>-<arch>-syncplay-state-v1-<ISO week>-<hash of fixture inputs>`: the week rolls
+  `<os>-<arch>-syncplay-state-v2-<ISO week>-<hash of fixture inputs>`: the week rolls
   it weekly so plugin and TMDB data do not freeze, and the input hash rolls it on
   seed/enrich changes. On a miss `doctor --fix` warms the fixture, the servers come
   down for a consistent save, and the state uploads under the same key.
