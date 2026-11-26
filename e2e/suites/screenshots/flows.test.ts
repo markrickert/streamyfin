@@ -742,7 +742,7 @@ describe("bootstrap-login first-run overlays", () => {
     expect(cmds[2].assertVisible).toEqual({ id: "login-server-url" });
   });
 
-  it("bootstrap-login-tv grants notifications except on tvOS, then dismisses overlays", () => {
+  it("bootstrap-login-tv grants notifications except on tvOS, then dismisses overlays until the login screen is reachable", () => {
     const cmds = commandsOf("bootstrap-login-tv.yml");
     expect(cmds[0].runFlow.commands).toEqual([
       {
@@ -753,13 +753,37 @@ describe("bootstrap-login first-run overlays", () => {
       },
     ]);
     expect(cmds[1].runFlow.commands).toEqual(["launchApp"]);
-    expect(cmds[2].runFlow).toBe("_dismiss-dev-overlays.yml");
+    expect(cmds[2].repeat.while.notVisible).toBe(".*Add server");
+    expect(cmds[2].repeat.commands[0].runFlow).toBe(
+      "_dismiss-dev-overlays.yml",
+    );
+  });
+
+  it("bootstrap-login-tv repeats the overlay dismiss until Add server is reachable, then proves it before the shot", () => {
+    const cmds = commandsOf("bootstrap-login-tv.yml");
+    expect(
+      cmds.filter((cmd) => cmd.runFlow === "_dismiss-dev-overlays.yml"),
+    ).toHaveLength(0);
+    const repeat = cmds.find(
+      (cmd) => cmd.repeat?.while?.notVisible === ".*Add server",
+    );
+    expect(repeat?.repeat.commands).toContainEqual({
+      runFlow: "_dismiss-dev-overlays.yml",
+    });
+    const shot = cmds.findIndex((cmd) => cmd.takeScreenshot === "00-login");
+    expect(shot).toBeGreaterThanOrEqual(0);
+    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
+      visible: "__settle__",
+      timeout: 3000,
+      optional: true,
+    });
+    expect(cmds[shot - 2]).toEqual({ assertVisible: ".*Add server" });
   });
 
   it("bootstrap-login-tv finds the server button with or without its icon in the label", () => {
     // The tvOS hierarchy exposes the focused button as an icon glyph plus "Add server".
     const cmds = commandsOf("bootstrap-login-tv.yml");
-    const selector = cmds[3].extendedWaitUntil.visible;
+    const selector = cmds[3].assertVisible;
     expect(new RegExp(`^(?:${selector})$`).test("\uf103, Add server")).toBe(
       true,
     );
