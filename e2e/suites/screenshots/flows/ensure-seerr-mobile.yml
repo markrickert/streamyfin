@@ -4,11 +4,7 @@
 # Run: e2e/suites/screenshots/run.sh ensure-seerr-mobile <out dir> [device]
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-# "Home" can match the stopped instance's tab bar; wait for a row the new one renders.
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Search"
 - hideKeyboard:
     optional: true
@@ -26,11 +22,7 @@ appId: ${MAESTRO_APP_ID}
 # sign-in already exposed Discover. Read-only: Reset is waited on, never tapped, so
 # the connection is untouched. The wait names the full "Reset Seerr config" label:
 # a bare "Reset" could also match other settings rows.
-- launchApp
-# "Home" can match the stopped instance's tab bar; wait for a row the new one renders.
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - runFlow: _tap-more.yml
 - tapOn: ".*Settings.*"
 - scrollUntilVisible:
