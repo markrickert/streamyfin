@@ -2,8 +2,10 @@ import { resetTestAppState } from "./app-state";
 import {
   appIdOnDevice,
   type BuildSource,
+  capturesRelease,
   deviceAbi,
   ensureDebugBuild,
+  ensureReleaseBuild,
   nativeFingerprint,
 } from "./build";
 import {
@@ -43,6 +45,7 @@ import {
   restoreGit,
   restoreNativeDirs,
 } from "./git";
+import { ensureRepackApp, repackAppVersion, repackForRef } from "./repack";
 import {
   DEFAULT_PORT,
   ensureMaestro,
@@ -151,7 +154,12 @@ function buildForRef(
   const shortHash = fingerprint.slice(0, 8);
   const buildStarted = Date.now();
   d.log(`building ${label} (${platform}, fingerprint ${shortHash})`);
-  const { artifact, source, hash } = ensureDebugBuild(
+  // The release platform builds the repack's native base; everything else still
+  // builds the debug dev client Metro serves.
+  const ensure = capturesRelease(platform)
+    ? ensureReleaseBuild
+    : ensureDebugBuild;
+  const { artifact, source, hash } = ensure(
     d,
     repo,
     platform,
@@ -245,10 +253,12 @@ export async function runComparison(
   repo: string,
 ): Promise<RunReport> {
   const spec = platformSpec(cli.platform!);
+  const release = capturesRelease(cli.platform!);
   const { beforeSha, afterSha, start } = preflight(d, repo, cli);
   const device = selectDevice(d, cli.platform!, cli.device);
   const port = cli.port ?? DEFAULT_PORT;
-  ensurePortFree(d, port);
+  // A release run never binds a Metro port, so a busy one must not refuse it.
+  if (!release) ensurePortFree(d, port);
   passTimeoutSeconds(d);
   const sessionDir = cli.outDir ?? `${repo}/${REPORTS_DIR}/${Date.now()}`;
   let outReady = false;
@@ -296,7 +306,7 @@ export async function runComparison(
   try {
     d.fs.mkdir(sessionDir);
     outReady = true;
-    const tooling = snapshotTooling(d, repo, sessionDir);
+    const tooling = snapshotTooling(d, repo, sessionDir, release);
     const maestro = ensureMaestro(d, `${repo}/${REPORTS_DIR}/tools`);
     ensureFixture(d, repo);
     // Capture the fixture contract while the checkout that produced it is still on
@@ -304,6 +314,9 @@ export async function runComparison(
     // absent or changed file on the other ref must never be re-read mid-run.
     const baseEnv = fixtureEnv(d, repo, cli.platform!);
     secrets = [baseEnv.MAESTRO_JELLYFIN_PASS, baseEnv.MAESTRO_SEERR_PASS];
+    // The repack tooling reads the starting checkout's package.json, so it must be
+    // pinned before the first ref switch replaces node_modules.
+    if (release) ensureRepackApp(d, tooling, repackAppVersion(d, repo));
 
     prepareDevice(d, cli.platform!, device, deviceState);
     const abi =
@@ -335,10 +348,27 @@ export async function runComparison(
         platform: cli.platform!,
         hash,
         source,
+        // The manifest records the native base — it is what the run-scoped cache
+        // shares; the repacked APK below is session-local and never uploaded.
         path: artifact,
       });
+      // A release run installs the base with the ref's JS repacked in, never the
+      // base itself. The noise pass simply reuses before's repack: same ref.
+      let installed = artifact;
+      if (release) {
+        d.log(`repacking ${ref.label}`);
+        installed = repackForRef(
+          d,
+          repo,
+          spec,
+          artifact,
+          sessionDir,
+          tooling,
+          ref.label,
+        );
+      }
       d.log("installing");
-      const appId = appIdOnDevice(d, cli.platform!, device, artifact);
+      const appId = appIdOnDevice(d, cli.platform!, device, installed);
       // The plugin pushes Seerr as 127.0.0.1:<seerrPort>, which on ANY Android emulator
       // means the emulator's own loopback — both phone and TV need the reverse mapping
       // to reach the host fixture. Reuse an identical mapping, abort on a conflicting
@@ -375,67 +405,76 @@ export async function runComparison(
       const env = {
         ...baseEnv,
         MAESTRO_APP_ID: appId,
-        MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
+        // A release app has no dev client to point at Metro; the flows' dev-overlay
+        // branches are `when: visible` and simply never fire.
+        ...(release
+          ? {}
+          : { MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port) }),
       };
-      d.log("starting Metro");
-      // Metro's cache keys on file content and transformer config, but Expo needs
-      // --clear after a babel config change; later refs clear only when those inputs
-      // differ (diff exit 1), a nonzero exit for any other reason clears too.
-      let clear = true;
-      if (refIndex > 0)
-        clear =
-          d.exec(
-            [
-              "git",
-              "diff",
-              "--quiet",
-              refs[refIndex - 1].sha,
-              ref.sha,
-              "--",
-              "babel.config.js",
-              "metro.config.js",
-              "bun.lock",
-            ],
-            { cwd: repo },
-          ).code !== 0;
-      metro = await startMetro(
-        d,
-        repo,
-        spec,
-        port,
-        `${sessionDir}/metro-${ref.label}.log`,
-        clear,
-      );
+      if (!release) {
+        d.log("starting Metro");
+        // Metro's cache keys on file content and transformer config, but Expo needs
+        // --clear after a babel config change; later refs clear only when those inputs
+        // differ (diff exit 1), a nonzero exit for any other reason clears too.
+        let clear = true;
+        if (refIndex > 0)
+          clear =
+            d.exec(
+              [
+                "git",
+                "diff",
+                "--quiet",
+                refs[refIndex - 1].sha,
+                ref.sha,
+                "--",
+                "babel.config.js",
+                "metro.config.js",
+                "bun.lock",
+              ],
+              { cwd: repo },
+            ).code !== 0;
+        metro = await startMetro(
+          d,
+          repo,
+          spec,
+          port,
+          `${sessionDir}/metro-${ref.label}.log`,
+          clear,
+        );
+      }
       try {
-        // Prove this Metro serves the checked-out ref's JS — /status alone says only
-        // that a packager answers. A compile error in the switched ref fails here,
-        // before any screenshot is taken.
-        const bundleStart = Date.now();
-        const bundled = await d.waitFor(
-          metroBundleUrl(spec.fingerprintPlatform, port),
-          "__BUNDLE_START_TIME__",
-          METRO_BUNDLE_TIMEOUT_MS,
-        );
-        const bundleElapsed = Date.now() - bundleStart;
-        if (!bundled)
-          throw new ShotError(
-            `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref in ${formatElapsed(bundleElapsed)}`,
+        if (!release) {
+          // Prove this Metro serves the checked-out ref's JS — /status alone says only
+          // that a packager answers. A compile error in the switched ref fails here,
+          // before any screenshot is taken.
+          const bundleStart = Date.now();
+          const bundled = await d.waitFor(
+            metroBundleUrl(spec.fingerprintPlatform, port),
+            "__BUNDLE_START_TIME__",
+            METRO_BUNDLE_TIMEOUT_MS,
           );
-        d.log(
-          `Metro bundled ${spec.fingerprintPlatform} JS in ${formatElapsed(bundleElapsed)}`,
-        );
+          const bundleElapsed = Date.now() - bundleStart;
+          if (!bundled)
+            throw new ShotError(
+              `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref in ${formatElapsed(bundleElapsed)}`,
+            );
+          d.log(
+            `Metro bundled ${spec.fingerprintPlatform} JS in ${formatElapsed(bundleElapsed)}`,
+          );
+        }
         for (const capture of ref.captures) {
           passLabel = capture;
           d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
           for (let attempt = 0; attempt < 2; attempt++) {
             d.fs.mkdir(outDir);
-            // Every pass is a first run: fresh state, then the deep link that points
-            // the dev client at this ref's Metro — the flows themselves carry no
-            // clearState, because wiping state would also wipe the URL the link just
-            // set.
-            resetTestAppState(d, cli.platform!, device, appId, artifact);
-            launchDevClient(d, cli.platform!, device, appId, port);
+            // Every pass is a first run: fresh state, then on the debug path the deep
+            // link that points the dev client at this ref's Metro — the flows
+            // themselves carry no clearState, because wiping state would also wipe
+            // the URL the link just set.
+            resetTestAppState(d, cli.platform!, device, appId, installed);
+            if (!release)
+              launchDevClient(d, cli.platform!, device, appId, port);
             try {
               const reinstallDriver = firstPass;
               firstPass = false;
@@ -476,7 +515,7 @@ export async function runComparison(
         // A build or Metro failure between refs is not a pass failure.
         passLabel = undefined;
       } finally {
-        metro.kill();
+        metro?.kill();
         metro = undefined;
       }
     }

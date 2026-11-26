@@ -1,4 +1,4 @@
-import { DEV_CLIENT_RECIPE } from "./build";
+import { BUILD_RECIPE, DEV_CLIENT_RECIPE } from "./build";
 import { type Cli, ShotError } from "./core";
 import { buildNative, doctor, metroBundleUrl, runComparison } from "./run";
 import {
@@ -241,7 +241,7 @@ describe("runComparison restore", () => {
 });
 
 describe("runComparison ordering", () => {
-  it("captures before then noise on the before ref, then after on a second Metro", async () => {
+  it("captures before then noise on the before ref, then after on a second repack", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
@@ -265,20 +265,6 @@ describe("runComparison ordering", () => {
     expect(beforeOut).toBeLessThan(noiseOut);
     expect(noiseOut).toBeLessThan(switchAfter);
     expect(switchAfter).toBeLessThan(afterOut);
-
-    // One owned Metro per ref, both stopped, each logging into the session dir.
-    expect(f.spawns).toHaveLength(2);
-    expect(f.spawns.every((s) => s.killed)).toBe(true);
-    expect(f.spawnOpts.map((o) => o?.logFile?.split("/").pop())).toEqual([
-      "metro-before.log",
-      "metro-after.log",
-    ]);
-    // Each first bundle logs how long it took.
-    expect(
-      f.logs.filter((line) =>
-        /^Metro bundled android JS in (\d+s|\d+m\d+s)$/.test(line),
-      ),
-    ).toHaveLength(2);
 
     // compare runs from the snapshot, before/noise/after wired together.
     const compare = execs(f, "compare.ts")[0].join(" ");
@@ -362,12 +348,18 @@ describe("runComparison ordering", () => {
 });
 
 describe("runComparison failure path", () => {
+  // android-tv stays on the Debug + Metro path: it is the platform that still owns
+  // a Metro to kill when a flow throws.
   it("restores branch and native dirs and stops only its own Metro when a flow throws", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    f.routes.push(["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }]);
-    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
+    f.routes = f.routes.filter(([needle]) => needle !== "has-feature");
+    f.routes.push(["has-feature", { code: 0, stdout: "true\n", stderr: "" }]);
+    f.routes.push(["pass-tv.yml", { code: 1, stdout: "", stderr: "boom" }]);
+    await expect(
+      runComparison(f, { ...runCli, platform: "android-tv" }, REPO),
+    ).rejects.toThrow(ShotError);
 
     // Back on the starting branch, user's android/ dir restored with its file.
     expect(execs(f, "git switch feat/dev")).toHaveLength(1);
@@ -846,11 +838,15 @@ describe("runComparison boundaries", () => {
     expect(error.message).not.toContain(PASSWORD);
   });
 
-  it("launches Android through an explicit -p package and warms the exact dev-client JS bundle first", async () => {
+  // The phone captures on Release; android-tv keeps the dev-client deep link and
+  // the Metro bundle warm this test pins.
+  it("launches Android TV through an explicit -p package and warms the exact dev-client JS bundle first", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, runCli, REPO);
+    f.routes = f.routes.filter(([needle]) => needle !== "has-feature");
+    f.routes.push(["has-feature", { code: 0, stdout: "true\n", stderr: "" }]);
+    await runComparison(f, { ...runCli, platform: "android-tv" }, REPO);
 
     const amStarts = execs(f, "am start");
     // One deep link per capture pass (before, noise, after), each on fresh state.
@@ -1003,7 +999,7 @@ describe("runComparison build-cache manifest", () => {
     ]);
   });
 
-  it("skips prebuild and records fetched with <fingerprint>-<abi> when the fetch hook populates the cache", async () => {
+  it("skips prebuild and records fetched with <fingerprint>-r3-release-<abi> when the fetch hook populates the cache", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
@@ -1011,33 +1007,33 @@ describe("runComparison build-cache manifest", () => {
     f.routes.push([
       "/ci/fetch-dev-client.py",
       (fake, argv) => {
-        expect(argv[2]).toBe(`fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`);
+        expect(argv[2]).toBe(`fp-1-${BUILD_RECIPE}-arm64-v8a`);
         const cacheDir = argv[3];
         fake.dirs.add(cacheDir);
-        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        fake.files.set(`${cacheDir}/app-release.apk`, "apk");
         return ok;
       },
     ]);
 
     await runComparison(f, { ...runCli, outDir }, REPO);
     expect(execs(f, "bun run prebuild")).toHaveLength(0);
-    expect(execs(f, "assembleDebug")).toHaveLength(0);
+    expect(execs(f, "assembleRelease")).toHaveLength(0);
     expect(execs(f, "fetch-dev-client.py")).toHaveLength(1);
     const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
     expect(manifest).toEqual([
       {
         ref: "before",
         platform: "android",
-        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
+        hash: `fp-1-${BUILD_RECIPE}-arm64-v8a`,
         source: "fetched",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${BUILD_RECIPE}-arm64-v8a/app-release.apk`,
       },
       {
         ref: "after",
         platform: "android",
-        hash: `fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a`,
+        hash: `fp-1-${BUILD_RECIPE}-arm64-v8a`,
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-arm64-v8a/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${BUILD_RECIPE}-arm64-v8a/app-release.apk`,
       },
     ]);
   });
@@ -1054,7 +1050,7 @@ describe("runComparison build-cache manifest", () => {
 
     await runComparison(f, { ...runCli, outDir }, REPO);
     expect(execs(f, "bun run prebuild")).toHaveLength(1);
-    expect(execs(f, "assembleDebug")).toHaveLength(1);
+    expect(execs(f, "assembleRelease")).toHaveLength(1);
     const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
     expect(manifest[0].source).toBe("built");
     expect(manifest[1].source).toBe("local");
@@ -1085,20 +1081,16 @@ describe("runComparison progress", () => {
       expect.stringMatching(
         /^building before \(android, fingerprint abcdef01\): built \(\d+(?:m\d+)?s\)$/,
       ),
+      "repacking before",
       "installing",
-      "starting Metro",
-      expect.stringMatching(/^Metro up in \d+(?:m\d+)?s$/),
-      expect.stringMatching(/^Metro bundled android JS in \d+(?:m\d+)?s$/),
       "capturing before",
       "capturing noise",
       "building after (android, fingerprint abcdef01)",
       expect.stringMatching(
         /^building after \(android, fingerprint abcdef01\): local \(\d+(?:m\d+)?s\)$/,
       ),
+      "repacking after",
       "installing",
-      "starting Metro",
-      expect.stringMatching(/^Metro up in \d+(?:m\d+)?s$/),
-      expect.stringMatching(/^Metro bundled android JS in \d+(?:m\d+)?s$/),
       "capturing after",
       "comparing",
     ]);
@@ -1114,7 +1106,7 @@ describe("runComparison progress", () => {
       (fake, argv) => {
         const cacheDir = argv[3];
         fake.dirs.add(cacheDir);
-        fake.files.set(`${cacheDir}/app-debug.apk`, "apk");
+        fake.files.set(`${cacheDir}/app-release.apk`, "apk");
         return ok;
       },
     ]);
@@ -1128,6 +1120,140 @@ describe("runComparison progress", () => {
         ),
       ),
     ).toBe(true);
+  });
+});
+
+describe("runComparison release repack (android phone)", () => {
+  const outDir = `${REPO}/e2e/reports/shots/test-android`;
+
+  it("repacks the cached Release base per ref and installs the repacked APKs", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, { ...runCli, outDir }, REPO);
+
+    // One repack per ref: the noise pass reuses before's APK because repack only
+    // ever runs on a ref switch.
+    const repacks = execs(f, "repack-runner.ts");
+    expect(repacks).toHaveLength(2);
+    for (const argv of repacks) {
+      const flag = (name: string) => argv[argv.indexOf(name) + 1];
+      // The source is the cached native base from the run-scoped build cache…
+      expect(flag("--source")).toContain(
+        `build-cache/android/fp-1-${BUILD_RECIPE}-arm64-v8a/app-release.apk`,
+      );
+      // …run out of the tooling snapshot the ref switch cannot reach.
+      expect(argv[1]).toBe(
+        `${outDir}/tooling/repack/e2e/suites/screenshots/repack-runner.ts`,
+      );
+    }
+    expect(repacks[0].join(" ")).toContain(`--output ${outDir}/app-before.apk`);
+    expect(repacks[1].join(" ")).toContain(`--output ${outDir}/app-after.apk`);
+    // Each repack's log lands in the session for the report upload.
+    expect(f.files.has(`${outDir}/repack-before.log`)).toBe(true);
+    expect(f.files.has(`${outDir}/repack-after.log`)).toBe(true);
+
+    // adb installs the repacked APKs, never the base — while the manifest still
+    // records the base, which is what the cache shares.
+    const installs = execs(f, "install -r");
+    expect(installs).toHaveLength(2);
+    expect(installs[0].join(" ")).toContain(`${outDir}/app-before.apk`);
+    expect(installs[1].join(" ")).toContain(`${outDir}/app-after.apk`);
+    const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
+    for (const entry of manifest)
+      expect(entry.path).toContain("app-release.apk");
+  });
+
+  it("never spawns Metro, sends no deep link, and passes no dev-client URL to the flows", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, { ...runCli, outDir }, REPO);
+
+    expect(f.spawns).toHaveLength(0);
+    expect(f.waits).toHaveLength(0);
+    expect(execs(f, "am start")).toHaveLength(0);
+    expect(execs(f, "lsof")).toHaveLength(0);
+    const flows = execs(f, "maestro.py");
+    expect(flows).toHaveLength(3);
+    for (const argv of flows)
+      expect(argv.join(" ")).not.toContain("MAESTRO_DEV_CLIENT_URL");
+    // The repack driver and its pinned repack-app live in the session tooling:
+    // snapshotted there, then installed by its own package.json.
+    expect(
+      f.files.has(
+        `${outDir}/tooling/repack/e2e/suites/screenshots/repack-runner.ts`,
+      ),
+    ).toBe(true);
+    expect(
+      f.files.has(`${outDir}/tooling/repack/scripts/ci/repack-android.ts`),
+    ).toBe(true);
+    expect(
+      JSON.parse(f.files.get(`${outDir}/tooling/repack/package.json`)!),
+    ).toEqual({
+      private: true,
+      dependencies: { "@expo/repack-app": "0.10.4" },
+    });
+  });
+
+  it("keeps the Debug + Metro path on iOS: dev-client URL and bundle warm unchanged", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push(
+      [
+        "list devices",
+        { code: 0, stdout: JSON.stringify(SIMCTL_JSON), stderr: "" },
+      ],
+      [
+        "pod install",
+        (fake) => {
+          fake.dirs.add(`${REPO}/ios`);
+          fake.files.set(`${REPO}/ios/Streamyfin.xcworkspace`, "x");
+          return ok;
+        },
+      ],
+      [
+        "xcodebuild",
+        (fake, argv) => {
+          const derived = argv[argv.indexOf("-derivedDataPath") + 1];
+          fake.dirs.add(`${derived}/Build/Products/Debug-iphonesimulator`);
+          fake.files.set(
+            `${derived}/Build/Products/Debug-iphonesimulator/Streamyfin.app`,
+            "app",
+          );
+          return ok;
+        },
+      ],
+      [
+        "PlistBuddy",
+        { code: 0, stdout: "com.example.streamyfin\n", stderr: "" },
+      ],
+      ["status_bar", ok],
+      ["simctl uninstall", ok],
+      ["simctl install", ok],
+      [
+        "get_app_container",
+        { code: 0, stdout: "/sim/container\n", stderr: "" },
+      ],
+      ["plutil", ok],
+      ["simctl openurl", ok],
+    );
+    await runComparison(
+      f,
+      { ...runCli, platform: "ios", device: "UDID-PHONE", outDir },
+      REPO,
+    );
+
+    expect(f.spawns).toHaveLength(2);
+    expect(execs(f, "simctl openurl")).toHaveLength(3);
+    expect(execs(f, "repack-runner.ts")).toHaveLength(0);
+    const flows = execs(f, "maestro.py");
+    expect(flows).toHaveLength(3);
+    for (const argv of flows)
+      expect(argv.join(" ")).toContain("MAESTRO_DEV_CLIENT_URL=streamyfin://");
+    // No repack tooling is snapshotted on the debug path.
+    expect(f.files.has(`${outDir}/tooling/repack/package.json`)).toBe(false);
   });
 });
 
@@ -1154,9 +1280,9 @@ describe("buildNative", () => {
     expect(execs(f, "git switch feat/dev")).toHaveLength(1);
     expect(f.files.get(`${REPO}/android/user-file.txt`)).toBe("mine");
     // Both refs share the seeded fingerprint, so the after ref hits the cache the
-    // before ref just wrote.
-    expect(execs(f, "assembleDebug")).toHaveLength(1);
-    expect(execs(f, "assembleDebug")[0]).toContain(
+    // before ref just wrote. The phone's native job builds the Release repack base.
+    expect(execs(f, "assembleRelease")).toHaveLength(1);
+    expect(execs(f, "assembleRelease")[0]).toContain(
       "-PreactNativeArchitectures=x86",
     );
     const manifest = JSON.parse(f.files.get(`${outDir}/build-cache.json`)!);
@@ -1164,16 +1290,16 @@ describe("buildNative", () => {
       {
         ref: "before",
         platform: "android",
-        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        hash: `fp-1-${BUILD_RECIPE}-x86`,
         source: "built",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${BUILD_RECIPE}-x86/app-release.apk`,
       },
       {
         ref: "after",
         platform: "android",
-        hash: `fp-1-${DEV_CLIENT_RECIPE}-x86`,
+        hash: `fp-1-${BUILD_RECIPE}-x86`,
         source: "local",
-        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${DEV_CLIENT_RECIPE}-x86/app-debug.apk`,
+        path: `${REPO}/e2e/reports/shots/build-cache/android/fp-1-${BUILD_RECIPE}-x86/app-release.apk`,
       },
     ]);
     // No device, no fixture, no Maestro, no Metro.
@@ -1195,7 +1321,7 @@ describe("buildNative", () => {
     seed(f);
     happyRoutes(f);
     f.routes.push([
-      "./gradlew assembleDebug",
+      "./gradlew assembleRelease",
       { code: 1, stdout: "", stderr: "gradle boom" },
     ]);
     expect(() => buildNative(f, buildCli, REPO)).toThrow(ShotError);

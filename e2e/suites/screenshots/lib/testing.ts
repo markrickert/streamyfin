@@ -148,7 +148,13 @@ export function seed(f: Fake) {
   f.files.set(`${REPO}/e2e/bench/maestro.py`, "x");
   f.files.set(MAESTRO_BIN, "bin");
   f.files.set(`${REPO}/bun.lock`, "lock-v1");
-  f.files.set(`${REPO}/package.json`, "pkg-v1");
+  f.files.set(
+    `${REPO}/package.json`,
+    JSON.stringify({ devDependencies: { "@expo/repack-app": "0.10.4" } }),
+  );
+  // The repack driver snapshotTooling mirrors into the session tooling.
+  f.files.set(`${suite}/repack-runner.ts`, "x");
+  f.files.set(`${REPO}/scripts/ci/repack-android.ts`, "x");
   f.files.set(
     `${REPO}/e2e/suites/syncplay/.env`,
     "SYNCPLAY_PORT=18096\nSYNCPLAY_SEERR_PORT=15055\n",
@@ -221,6 +227,33 @@ export function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
         return ok;
       },
     ],
+    [
+      "assembleRelease",
+      (fake) => {
+        fake.files.set(
+          `${REPO}/android/app/build/outputs/apk/release/app-release.apk`,
+          "apk",
+        );
+        return ok;
+      },
+    ],
+    // The tooling repack driver writes the repacked APK and the embedded bundle the
+    // verification step extracts; unzip answers ok because the bundle is already
+    // where the driver put it.
+    [
+      "repack-runner.ts",
+      (fake, argv) => {
+        const flag = (name: string) => argv[argv.indexOf(name) + 1];
+        fake.files.set(flag("--output"), "repacked apk");
+        fake.files.set(
+          `${flag("--work")}/assets/index.android.bundle`,
+          `js __BUNDLE_START_TIME__ https://e2e@sentry.invalid/0`,
+        );
+        return ok;
+      },
+    ],
+    ["index.android.bundle", ok],
+    ["bun install", ok],
     // aapt answers the exact applicationId even when a production install shares the
     // "streamyfin" substring — pm list is deliberately not stubbed, so a regression to
     // substring matching fails as an unstubbed exec.
@@ -273,6 +306,18 @@ export const runCli: Cli = {
   after: "feat/x",
   device: "emulator-5554",
 };
+
+/** runCli on android-tv: the platform that still exercises the Debug + Metro path. */
+export const tvRunCli: Cli = { ...runCli, platform: "android-tv" };
+
+/**
+ * Answers leanback=true for pm has-feature, so selectDevice accepts the seeded
+ * emulator as an Android TV. happyRoutes seeds the phone's false answer.
+ */
+export function tvEmulator(f: Fake) {
+  f.routes = f.routes.filter(([needle]) => needle !== "has-feature");
+  f.routes.push(["has-feature", { code: 0, stdout: "true\n", stderr: "" }]);
+}
 
 export const execs = (f: Fake, needle: string) =>
   f.execLog.filter((argv) => argv.join(" ").includes(needle));

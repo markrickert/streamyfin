@@ -1,11 +1,13 @@
 # Screenshot comparison suite
 
-Compares two refs screen-for-screen on a development client. The runner switches this
-checkout between the refs, serves each with its own Metro, captures the same shots three
-times (before, a fresh "noise" pass on the before build, and after), and scores them with
-`compare.ts`. A change counts only when it beats the run's own noise floor.
+Compares two refs screen-for-screen. The runner switches this checkout between the refs,
+captures the same shots three times (before, a fresh "noise" pass on the before build,
+and after), and scores them with `compare.ts`. A change counts only when it beats the
+run's own noise floor.
 
-The runner uses local debug clients, never CI release artifacts. It needs a simulator or
+The runner builds its own clients, never CI release artifacts. `ios`, `apple-tv` and
+`android-tv` run a debug dev client against Metro; the Android phone repacks each ref's
+JS bundle into a cached Release APK and runs with no Metro. It needs a simulator or
 emulator, Java for Maestro, and the SyncPlay fixture on either backend, Docker or native
 (`SYNCPLAY_BACKEND=native`, see `e2e/suites/syncplay/README.md`). All four platforms
 (`ios`, `apple-tv`, `android`, `android-tv`) run locally, on every push to `develop`, and
@@ -40,8 +42,9 @@ empty.
   seed/enrich changes. On a miss `doctor --fix` warms the fixture, the servers come
   down for a consistent save, and the state uploads under the same key.
 
-Native builds happen once per platform in `<x>-native` jobs (`shots.ts build`); each
-`repeat` attempt is a separate capture job that never builds. The native job hands its
+Native builds happen once per platform in `<x>-native` jobs (`shots.ts build`): a
+Release repack base for `android`, a debug dev client for the rest. Each `repeat`
+attempt is a separate capture job that never builds. The native job hands its
 build cache to this run's capture jobs as `shots-native-run-<platform>` (a tar of
 `e2e/reports/shots/build-cache/<platform>/`, retained 1 day, never fetched across runs),
 and capture jobs run with `SHOTS_NO_BUILD=1` so a missing entry fails instead of
@@ -78,7 +81,7 @@ the way `run` does (step 2) and installs the pinned Maestro. It never touches a 
 tree.
 
 `build` runs only step 3's native half for both refs — switch, install, fingerprint,
-debug client — with no device, fixture, Maestro or Metro, and writes the same
+the cached client — with no device, fixture, Maestro or Metro, and writes the same
 `<out>/build-cache.json`. `--abi` is required for `android`/`android-tv` (there is no
 device to ask) and ignored for Apple platforms. CI's `<x>-native` jobs use it; locally it
 warms `e2e/reports/shots/build-cache` for a later `run`.
@@ -92,14 +95,32 @@ warms `e2e/reports/shots/build-cache` for a later `run`.
    `suites.syncplay.seerr`. It never runs `e2e:down`.
 3. For each ref: `git switch --detach` (never `--force`), `bun install --frozen-lockfile`
    if the lockfile changed, `@expo/fingerprint` with the platform's `EXPO_TV` (the recipe
-   of `.github/workflows/build-apps.yml`), then the debug client from the local cache
+   of `.github/workflows/build-apps.yml`), then the native client from the local cache
    `e2e/reports/shots/build-cache/<platform>/<hash>`, else `SHOTS_BUILD_CACHE_FETCH`
    (`<exe> <platform> <hash> <cacheDir>`), else a local build. Each ref's
-   `{ ref, platform, hash, source, path }` goes to `<session>/build-cache.json`. Then it
-   installs the client, starts its own `expo start --dev-client` on a free port —
-   `--clear` on the first Metro, and on a later ref only when `git diff --quiet` shows
-   `babel.config.js`, `metro.config.js` or `bun.lock` changed — and runs each pass as
-   one parent Maestro invocation. The session's first pass reinstalls Maestro's driver;
+   `{ ref, platform, hash, source, path }` goes to `<session>/build-cache.json`.
+   - `ios`, `apple-tv`, `android-tv`: installs the debug client, starts its own
+     `expo start --dev-client` on a free port — `--clear` on the first Metro, and on a
+     later ref only when `git diff --quiet` shows `babel.config.js`, `metro.config.js`
+     or `bun.lock` changed — and deep-links the client into it.
+   - `android`: the cached client is a Release APK (`assembleRelease` with minify and
+     resource shrinking off, signed with the debug keystore). Before the first switch
+     the runner stages `repack-runner.ts`, `scripts/ci/repack-android.ts` and a pinned
+     `@expo/repack-app` install under `<session>/tooling/repack/`, so a `before` ref
+     that lacks them cannot matter. Then `repackForRef` runs the driver once per ref —
+     `export:embed` inside the checked-out ref, `jsBundleOnly` repack of the cached
+     base into `<session>/app-<ref>.apk` — logs stdout and stderr to
+     `<session>/repack-<ref>.log`, and verifies the packed bundle before install. The
+     export runs with `EXPO_PUBLIC_SENTRY_DSN=https://e2e@sentry.invalid/0`: a release
+     build cannot tell it is on an emulator (`isDevice` is unknown on Android), so a
+     real DSN would report capture failures to production. The check is the sentinel's
+     presence in `assets/index.android.bundle`, because `PROJECT_SENTRY_DSN` in
+     `utils/sentry.ts` stays a literal in every bundle. The repacked APK is what gets
+     installed; the noise pass reuses the before one. There is no Metro, no bundle
+     warm and no dev-client deep link — `MAESTRO_DEV_CLIENT_URL` is unset and each
+     pass opens the app through the flow's own `launchApp`.
+   Then each pass runs as one parent Maestro invocation. The session's first pass
+   reinstalls Maestro's driver;
    every later pass, a retry included, runs with `--no-reinstall-driver`. A pass whose
    Maestro driver becomes unreachable (`DeviceUnreachableException` in
    `<pass>/maestro.log`) is retried once, and the failed attempt is kept next to it as
@@ -107,8 +128,10 @@ warms `e2e/reports/shots/build-cache` for a later `run`.
 4. Runs `compare.ts --before … --noise … --after …` with the platform masks. The report
    and changed-screen evidence land in the session directory.
 
-`<hash>` is `<fingerprint>-<recipe>`. Bump `DEV_CLIENT_RECIPE` in `lib/build.ts` when a
-runner change alters the native output, which the fingerprint cannot see. On Android the
+`<hash>` is `<fingerprint>-<recipe>`: `DEV_CLIENT_RECIPE` (`r2`) for the debug clients,
+`BUILD_RECIPE` (`r3-release`) for the phone's Release base. Bump the matching constant in
+`lib/build.ts` when a runner change alters the native output, which the fingerprint
+cannot see. On Android the
 hash also carries the emulator's first ABI (`ro.product.cpu.abilist`), which is passed to
 Gradle as `-PreactNativeArchitectures`.
 
@@ -148,7 +171,7 @@ The runner exports these per platform. `run.sh` forwards every `MAESTRO_*` as `-
 | Variable | ios / apple-tv | android / android-tv |
 | --- | --- | --- |
 | `MAESTRO_APP_ID` | the built app's bundle id | the built APK's applicationId (`.debug` on current refs, may be unsuffixed on older ones) |
-| `MAESTRO_DEV_CLIENT_URL` | the dev-client deep link to `http://127.0.0.1:<port>` | the dev-client deep link to `http://10.0.2.2:<port>` |
+| `MAESTRO_DEV_CLIENT_URL` | the dev-client deep link to `http://127.0.0.1:<port>` | `android-tv` only: the dev-client deep link to `http://10.0.2.2:<port>`; unset on `android`, whose Release app has no dev client |
 | `MAESTRO_JELLYFIN_URL` | `http://127.0.0.1:<SYNCPLAY_PORT>` | `http://10.0.2.2:<SYNCPLAY_PORT>` |
 | `MAESTRO_JELLYFIN_USER` | `syncplay-host` | same |
 | `MAESTRO_JELLYFIN_PASS` | the fixture password | same |

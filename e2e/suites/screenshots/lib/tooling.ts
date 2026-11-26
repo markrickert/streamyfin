@@ -51,6 +51,7 @@ export function snapshotTooling(
   d: Deps,
   repo: string,
   sessionDir: string,
+  repack = false,
 ): string {
   const tooling = `${sessionDir}/tooling`;
   const suite = `${repo}/e2e/suites/screenshots`;
@@ -64,6 +65,22 @@ export function snapshotTooling(
   for (const flow of d.fs.list(`${suite}/flows`))
     d.fs.cp(`${suite}/flows/${flow}`, `${tooling}/flows/${flow}`);
   d.fs.cp(`${repo}/e2e/bench/maestro.py`, `${tooling}/maestro.py`);
+  if (repack) {
+    // The repack driver keeps the repo's relative layout under repack/ so its
+    // ../../../scripts/ci/repack-android import resolves to this copy, in the
+    // gitignored session dir that the ref switch and its node_modules swap never
+    // touch.
+    d.fs.mkdir(`${tooling}/repack/e2e/suites/screenshots`);
+    d.fs.mkdir(`${tooling}/repack/scripts/ci`);
+    d.fs.cp(
+      `${suite}/repack-runner.ts`,
+      `${tooling}/repack/e2e/suites/screenshots/repack-runner.ts`,
+    );
+    d.fs.cp(
+      `${repo}/scripts/ci/repack-android.ts`,
+      `${tooling}/repack/scripts/ci/repack-android.ts`,
+    );
+  }
   return tooling;
 }
 

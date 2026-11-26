@@ -1,9 +1,11 @@
 name: 📸 E2E Screenshots
 
-# Compares two refs screen-for-screen on debug dev clients across iOS, Apple TV,
-# Android, and Android TV. Runs on every push to `develop` (the previous tip against
+# Compares two refs screen-for-screen across iOS, Apple TV, Android, and Android TV.
+# ios, apple-tv and android-tv run debug dev clients against Metro; the Android phone
+# repacks each ref's JS bundle into a cached Release APK and runs without Metro. Runs
+# on every push to `develop` (the previous tip against
 # the pushed commit) and on demand (PR label or manual dispatch), because a full run
-# can compile two Debug clients and execute three Maestro passes per platform.
+# can compile two native clients and execute three Maestro passes per platform.
 # Each `<x>-native` job builds both refs' clients once per platform; every `<x>`
 # capture job downloads that run-scoped cache and runs with SHOTS_NO_BUILD, so the
 # `repeat` dispatch input can fan captures out into attempts without rebuilding.
@@ -593,9 +595,10 @@ jobs:
     if: needs.plan.result == 'success' && needs.plan.outputs.android_native != '{"include":[]}'
     permissions:
       contents: read
-      actions: read # list and download debug dev-client artifacts across runs
+      actions: read # list and download dev-client artifacts across runs
     runs-on: ubuntu-26.04
-    # Cold prebuild and up to two Gradle assembleDebug builds.
+    # Cold prebuild and up to two Gradle builds: assembleRelease for the phone,
+    # assembleDebug for the TV.
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -945,6 +948,8 @@ jobs:
             e2e/reports/shots/ci-${{ matrix.platform }}/after/
             e2e/reports/shots/ci-${{ matrix.platform }}/*-failed-*/
             e2e/reports/shots/ci-${{ matrix.platform }}/metro-*.log
+            # The phone repacks each ref's JS into its Release APK; its log lives here.
+            e2e/reports/shots/ci-${{ matrix.platform }}/repack-*.log
           if-no-files-found: ignore
           retention-days: 7
 

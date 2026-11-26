@@ -1,7 +1,9 @@
 /**
- * Dev-mode screenshot comparison: switch this checkout between two refs, run the same
- * Metro-backed capture on each plus a fresh "noise" pass on the before ref, and compare
- * with compare.ts. Everything that runs a subprocess or touches the filesystem goes
+ * Dev-mode screenshot comparison: switch this checkout between two refs, capture the
+ * same Maestro flows on each plus a fresh "noise" pass on the before ref, and compare
+ * with compare.ts. ios, apple-tv and android-tv run the app Debug against Metro; the
+ * Android phone repacks each ref's JS bundle into a cached Release APK instead.
+ * Everything that runs a subprocess or touches the filesystem goes
  * through Deps, so the orchestration is testable without a device, git, or Metro.
  * The code lives in lib/, one module per concern; this file re-exports its public API.
  *
@@ -17,10 +19,14 @@
 
 export type { BuildResult, BuildSource } from "./lib/build";
 export {
+  androidBuildToolsDir,
   BUILD_CACHE_FETCH_ENV,
   BUILD_CACHE_FETCH_TIMEOUT_MS,
+  BUILD_RECIPE,
+  capturesRelease,
   deviceAbi,
   ensureDebugBuild,
+  ensureReleaseBuild,
   NO_BUILD_ENV,
   nativeFingerprint,
 } from "./lib/build";
@@ -61,6 +67,11 @@ export {
   gitStart,
   preflight,
 } from "./lib/git";
+export {
+  ensureRepackApp,
+  REPACK_SENTINEL_DSN,
+  repackForRef,
+} from "./lib/repack";
 export type {
   BuildCacheManifestEntry,
   BuildReport,

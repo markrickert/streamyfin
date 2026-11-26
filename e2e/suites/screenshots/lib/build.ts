@@ -117,6 +117,56 @@ function tryFetchCachedBuild(
 export const DEV_CLIENT_RECIPE = "r2";
 
 /**
+ * Version of the release native base the Android phone captures on. Kept apart from
+ * DEV_CLIENT_RECIPE so a debug client is never served as a release base.
+ */
+export const BUILD_RECIPE = "r3-release";
+
+/**
+ * Only the Android phone captures on a repacked Release base today: the other
+ * platforms stay on the Debug dev client + Metro until Phase B. One predicate so the
+ * debug and release paths stay easy to tell apart.
+ */
+export const capturesRelease = (platform: Platform) => platform === "android";
+
+// Gradle's codegen shells out to `node` inside module dirs; where node is an asdf
+// shim and a module ships a .tool-versions without nodejs, the shim aborts. The
+// env override pins the runner's node for every nested invocation — inert when
+// node is not shimmed.
+function asdfNodeEnv(d: Deps): Record<string, string> {
+  const nodeVersion = d
+    .exec(["node", "--version"])
+    .stdout.trim()
+    .replace(/^v/, "");
+  return nodeVersion ? { ASDF_NODEJS_VERSION: nodeVersion } : {};
+}
+
+/**
+ * The cache lookup every recipe shares: the local artifact, then the fetch hook,
+ * then the SHOTS_NO_BUILD refusal, then a build through `build`.
+ */
+function ensureCachedBuild(
+  d: Deps,
+  platform: Platform,
+  hash: string,
+  cacheDir: string,
+  onBeforeBuild: (() => void) | undefined,
+  build: () => BuildResult,
+): BuildResult {
+  const cached = findCachedArtifact(d, platform, cacheDir);
+  if (cached) return { artifact: cached, built: false, source: "local", hash };
+  const fetched = tryFetchCachedBuild(d, platform, hash, cacheDir);
+  if (fetched)
+    return { artifact: fetched, built: false, source: "fetched", hash };
+  if (d.env[NO_BUILD_ENV] === "1")
+    throw new ShotError(
+      `no cached ${platform} build for ${hash} and ${NO_BUILD_ENV}=1: the native job did not provide it`,
+    );
+  onBeforeBuild?.();
+  return build();
+}
+
+/**
  * A debug client is native code: reuse the cached artifact for the same native
  * fingerprint and recipe (locally, else via the fetch hook), rebuild otherwise. Never a
  * CI release artifact.
@@ -137,112 +187,163 @@ export function ensureDebugBuild(
   const keyed = `${fingerprint}-${DEV_CLIENT_RECIPE}`;
   const hash = isAndroid ? `${keyed}-${abi}` : keyed;
   const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${platform}/${hash}`;
-  const cached = findCachedArtifact(d, platform, cacheDir);
-  if (cached) return { artifact: cached, built: false, source: "local", hash };
-  const fetched = tryFetchCachedBuild(d, platform, hash, cacheDir);
-  if (fetched)
-    return { artifact: fetched, built: false, source: "fetched", hash };
-  if (d.env[NO_BUILD_ENV] === "1")
-    throw new ShotError(
-      `no cached ${platform} build for ${hash} and ${NO_BUILD_ENV}=1: the native job did not provide it`,
-    );
-  onBeforeBuild?.();
-  if (isAndroid) {
-    // Gradle's codegen shells out to `node` inside module dirs; where node is an asdf
-    // shim and a module ships a .tool-versions without nodejs, the shim aborts. The
-    // env override pins the runner's node for every nested invocation — inert when
-    // node is not shimmed.
-    const nodeVersion = d
-      .exec(["node", "--version"])
-      .stdout.trim()
-      .replace(/^v/, "");
+  return ensureCachedBuild(d, platform, hash, cacheDir, onBeforeBuild, () => {
+    if (isAndroid) {
+      must(
+        d.exec(
+          ["./gradlew", "assembleDebug", `-PreactNativeArchitectures=${abi}`],
+          {
+            cwd: `${repo}/android`,
+            env: { EXPO_TV: spec.tv ? "1" : "0", ...asdfNodeEnv(d) },
+          },
+        ),
+        "gradle assembleDebug",
+      );
+      const apk = `${repo}/android/app/build/outputs/apk/debug/app-debug.apk`;
+      if (!d.fs.exists(apk))
+        throw new ShotError(`gradle built but ${apk} is missing`);
+      d.fs.mkdir(cacheDir);
+      d.fs.cp(apk, `${cacheDir}/app-debug.apk`);
+      return {
+        artifact: `${cacheDir}/app-debug.apk`,
+        built: true,
+        source: "built",
+        hash,
+      };
+    }
+    const sdk =
+      platform === "apple-tv" ? "appletvsimulator" : "iphonesimulator";
+    const derived = `${sessionDir}/DerivedData`;
+    // The prebuild names the project after the ref's app name, so read it back.
+    const workspace = d.fs
+      .list(`${repo}/ios`)
+      .find((name) => name.endsWith(".xcworkspace"));
+    if (!workspace)
+      throw new ShotError(
+        `prebuild produced no .xcworkspace under ${repo}/ios`,
+      );
     must(
       d.exec(
-        ["./gradlew", "assembleDebug", `-PreactNativeArchitectures=${abi}`],
-        {
-          cwd: `${repo}/android`,
-          env: {
-            EXPO_TV: spec.tv ? "1" : "0",
-            ...(nodeVersion ? { ASDF_NODEJS_VERSION: nodeVersion } : {}),
-          },
-        },
+        [
+          "xcodebuild",
+          "-workspace",
+          `${repo}/ios/${workspace}`,
+          "-scheme",
+          workspace.replace(/\.xcworkspace$/, ""),
+          "-configuration",
+          "Debug",
+          "-sdk",
+          sdk,
+          "-derivedDataPath",
+          derived,
+          "build",
+        ],
+        { cwd: repo, env: { EXPO_TV: spec.tv ? "1" : "0" } },
       ),
-      "gradle assembleDebug",
+      "xcodebuild debug",
     );
-    const apk = `${repo}/android/app/build/outputs/apk/debug/app-debug.apk`;
-    if (!d.fs.exists(apk))
-      throw new ShotError(`gradle built but ${apk} is missing`);
+    const apps = d.fs.exists(`${derived}/Build/Products/Debug-${sdk}`)
+      ? d.fs
+          .list(`${derived}/Build/Products/Debug-${sdk}`)
+          .filter((name) => name.endsWith(".app"))
+      : [];
+    if (!apps.length)
+      throw new ShotError(`xcodebuild produced no .app under Debug-${sdk}`);
     d.fs.mkdir(cacheDir);
-    d.fs.cp(apk, `${cacheDir}/app-debug.apk`);
+    d.fs.cp(
+      `${derived}/Build/Products/Debug-${sdk}/${apps[0]}`,
+      `${cacheDir}/${apps[0]}`,
+    );
     return {
-      artifact: `${cacheDir}/app-debug.apk`,
+      artifact: `${cacheDir}/${apps[0]}`,
       built: true,
       source: "built",
       hash,
     };
-  }
-  const sdk = platform === "apple-tv" ? "appletvsimulator" : "iphonesimulator";
-  const derived = `${sessionDir}/DerivedData`;
-  // The prebuild names the project after the ref's app name, so read it back.
-  const workspace = d.fs
-    .list(`${repo}/ios`)
-    .find((name) => name.endsWith(".xcworkspace"));
-  if (!workspace)
-    throw new ShotError(`prebuild produced no .xcworkspace under ${repo}/ios`);
-  must(
-    d.exec(
-      [
-        "xcodebuild",
-        "-workspace",
-        `${repo}/ios/${workspace}`,
-        "-scheme",
-        workspace.replace(/\.xcworkspace$/, ""),
-        "-configuration",
-        "Debug",
-        "-sdk",
-        sdk,
-        "-derivedDataPath",
-        derived,
-        "build",
-      ],
-      { cwd: repo, env: { EXPO_TV: spec.tv ? "1" : "0" } },
-    ),
-    "xcodebuild debug",
-  );
-  const apps = d.fs.exists(`${derived}/Build/Products/Debug-${sdk}`)
-    ? d.fs
-        .list(`${derived}/Build/Products/Debug-${sdk}`)
-        .filter((name) => name.endsWith(".app"))
-    : [];
-  if (!apps.length)
-    throw new ShotError(`xcodebuild produced no .app under Debug-${sdk}`);
-  d.fs.mkdir(cacheDir);
-  d.fs.cp(
-    `${derived}/Build/Products/Debug-${sdk}/${apps[0]}`,
-    `${cacheDir}/${apps[0]}`,
-  );
-  return {
-    artifact: `${cacheDir}/${apps[0]}`,
-    built: true,
-    source: "built",
-    hash,
-  };
+  });
 }
 
-/** Latest aapt in the Android SDK build-tools — reads the APK's real applicationId. */
-function aaptPath(d: Deps): string {
+/**
+ * The Android phone's release native base: same fingerprint cache as the debug
+ * client, built with R8 shrinking off — the repack rebuilds the APK with apktool,
+ * which cannot relink resources a shrink pass stripped. The base is never installed
+ * as is; each ref's JS is repacked into it first.
+ */
+export function ensureReleaseBuild(
+  d: Deps,
+  repo: string,
+  platform: Platform,
+  spec: PlatformSpec,
+  fingerprint: string,
+  // Kept for signature parity with ensureDebugBuild, which needs it for DerivedData.
+  _sessionDir: string,
+  onBeforeBuild?: () => void,
+  abi?: string,
+): BuildResult {
+  if (platform !== "android")
+    throw new ShotError(
+      `release repack builds are only implemented for android, not ${platform}`,
+    );
+  if (!abi)
+    throw new ShotError(`ABI is required to build or cache ${platform}`);
+  const hash = `${fingerprint}-${BUILD_RECIPE}-${abi}`;
+  const cacheDir = `${repo}/${REPORTS_DIR}/build-cache/${platform}/${hash}`;
+  return ensureCachedBuild(d, platform, hash, cacheDir, onBeforeBuild, () => {
+    must(
+      d.exec(
+        [
+          "./gradlew",
+          "assembleRelease",
+          `-PreactNativeArchitectures=${abi}`,
+          "-Pandroid.enableMinifyInReleaseBuilds=false",
+          "-Pandroid.enableShrinkResourcesInReleaseBuilds=false",
+        ],
+        {
+          cwd: `${repo}/android`,
+          env: {
+            EXPO_TV: spec.tv ? "1" : "0",
+            NODE_ENV: "production",
+            ...asdfNodeEnv(d),
+          },
+        },
+      ),
+      "gradle assembleRelease",
+    );
+    const apk = `${repo}/android/app/build/outputs/apk/release/app-release.apk`;
+    if (!d.fs.exists(apk))
+      throw new ShotError(`gradle built but ${apk} is missing`);
+    d.fs.mkdir(cacheDir);
+    d.fs.cp(apk, `${cacheDir}/app-release.apk`);
+    return {
+      artifact: `${cacheDir}/app-release.apk`,
+      built: true,
+      source: "built",
+      hash,
+    };
+  });
+}
+
+/**
+ * Latest Android SDK build-tools dir — aapt reads the APK's applicationId, and the
+ * repack passes the dir to apktool and apksigner.
+ */
+export function androidBuildToolsDir(d: Deps): string {
   const sdk = d.env.ANDROID_HOME ?? `${d.env.HOME ?? ""}/Library/Android/sdk`;
   const tools = d.fs.exists(`${sdk}/build-tools`)
     ? d.fs.list(`${sdk}/build-tools`).sort()
     : [];
-  const aapt = tools.length
-    ? `${sdk}/build-tools/${tools[tools.length - 1]}/aapt`
+  const dir = tools.length
+    ? `${sdk}/build-tools/${tools[tools.length - 1]}`
     : "";
-  if (!aapt || !d.fs.exists(aapt))
+  if (!dir || !d.fs.exists(`${dir}/aapt`))
     throw new ShotError(
-      `Android build-tools aapt not found under ${sdk} — it is needed to read the built APK's applicationId`,
+      `Android build-tools not found under ${sdk} — aapt reads the built APK's applicationId and the repack signs with them`,
     );
-  return aapt;
+  return dir;
+}
+
+function aaptPath(d: Deps): string {
+  return `${androidBuildToolsDir(d)}/aapt`;
 }
 
 /**

@@ -12,6 +12,8 @@ import {
   REPO,
   runCli,
   seed,
+  tvEmulator,
+  tvRunCli,
 } from "./testing";
 
 describe("adb reverse for the plugin-pushed Seerr URL", () => {
@@ -64,6 +66,7 @@ describe("Metro port TOCTOU and liveness", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
+    tvEmulator(f);
     let lsofCalls = 0;
     f.routes = f.routes.filter(([m]) => m !== "lsof");
     f.routes.push([
@@ -77,7 +80,7 @@ describe("Metro port TOCTOU and liveness", () => {
               stderr: "",
             },
     ]);
-    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
+    await expect(runComparison(f, tvRunCli, REPO)).rejects.toThrow(
       /already listening/,
     );
     // No Metro was spawned, so nothing the runner owns was killed either.
@@ -88,7 +91,8 @@ describe("Metro port TOCTOU and liveness", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, runCli, REPO);
+    tvEmulator(f);
+    await runComparison(f, tvRunCli, REPO);
     for (const opts of f.spawnOpts) {
       expect(opts?.env).toMatchObject({
         EXPO_NO_INTERACTIVE: "1",
@@ -104,7 +108,8 @@ describe("Metro port TOCTOU and liveness", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, runCli, REPO);
+    tvEmulator(f);
+    await runComparison(f, tvRunCli, REPO);
     expect(f.spawns).toHaveLength(2);
     for (const spawn of f.spawns) expect(spawn.argv).toContain("--clear");
     const diffs = execs(f, "git diff --quiet");
@@ -118,8 +123,9 @@ describe("Metro port TOCTOU and liveness", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
+    tvEmulator(f);
     f.routes.push(["git diff --quiet sha-before sha-after", ok]);
-    await runComparison(f, runCli, REPO);
+    await runComparison(f, tvRunCli, REPO);
     expect(f.spawns).toHaveLength(2);
     expect(f.spawns[0].argv).toContain("--clear");
     expect(f.spawns[1].argv).not.toContain("--clear");
@@ -129,12 +135,13 @@ describe("Metro port TOCTOU and liveness", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
+    tvEmulator(f);
     f.spawn = (argv: string[]) => {
       const handle = new FakeSpawn(argv);
       handle.alive = false; // died immediately; /status is a foreign Metro's
       return handle;
     };
-    await expect(runComparison(f, runCli, REPO)).rejects.toThrow(
+    await expect(runComparison(f, tvRunCli, REPO)).rejects.toThrow(
       /did not report packager-status:running/,
     );
     expect(execs(f, "maestro.py")).toHaveLength(0);
@@ -149,7 +156,8 @@ describe("dev-client deep link in the flow env", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, runCli, REPO);
+    tvEmulator(f);
+    await runComparison(f, tvRunCli, REPO);
     const sent = execs(f, "am start").map((argv) =>
       argv[argv.indexOf("-d") + 1].slice(1, -1),
     );
@@ -264,7 +272,8 @@ describe("dev-client deep link quoting", () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
-    await runComparison(f, runCli, REPO);
+    tvEmulator(f);
+    await runComparison(f, tvRunCli, REPO);
     for (const argv of execs(f, "am start")) {
       const dIdx = argv.indexOf("-d");
       const url = argv[dIdx + 1];

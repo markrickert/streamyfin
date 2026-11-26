@@ -1,3 +1,4 @@
+import { capturesRelease } from "./build";
 import { type Deps, must, type Platform } from "./core";
 import { simctlInstall } from "./device";
 
@@ -20,8 +21,11 @@ export function resetTestAppState(
       d.exec(["adb", "-s", device, "shell", "pm", "clear", appId]),
       "pm clear test app",
     );
-    disableAndroidFastRefresh(d, device, appId);
-    hideAndroidDevMenuFab(d, device, appId);
+    // The run-as writes only work on a debuggable build; a release app refuses them.
+    if (!capturesRelease(platform)) {
+      disableAndroidFastRefresh(d, device, appId);
+      hideAndroidDevMenuFab(d, device, appId);
+    }
     return;
   }
   must(

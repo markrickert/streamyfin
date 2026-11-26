@@ -1,9 +1,11 @@
 import {
   BUILD_CACHE_FETCH_ENV,
   BUILD_CACHE_FETCH_TIMEOUT_MS,
+  BUILD_RECIPE,
   DEV_CLIENT_RECIPE,
   deviceAbi,
   ensureDebugBuild,
+  ensureReleaseBuild,
   NO_BUILD_ENV,
 } from "./build";
 import { platformSpec } from "./cli";
@@ -364,6 +366,143 @@ describe("ensureDebugBuild cache", () => {
       ).source,
     ).toBe("fetched");
     expect(execs(g, "assembleDebug")).toHaveLength(0);
+  });
+});
+
+describe("ensureReleaseBuild", () => {
+  const spec = platformSpec("android");
+
+  it("assembles a Release APK with shrinking off and caches it under <fingerprint>-r3-release-<abi>", () => {
+    const f = new Fake();
+    f.routes.push(
+      ["node --version", { code: 0, stdout: "v22.14.0\n", stderr: "" }],
+      [
+        "assembleRelease",
+        (fake) => {
+          fake.files.set(
+            `${REPO}/android/app/build/outputs/apk/release/app-release.apk`,
+            "apk",
+          );
+          return ok;
+        },
+      ],
+    );
+
+    const res = ensureReleaseBuild(
+      f,
+      REPO,
+      "android",
+      spec,
+      "fp-a",
+      `${REPO}/session`,
+      undefined,
+      "arm64-v8a",
+    );
+    expect(res).toEqual({
+      artifact: `${REPO}/e2e/reports/shots/build-cache/android/fp-a-${BUILD_RECIPE}-arm64-v8a/app-release.apk`,
+      built: true,
+      source: "built",
+      hash: `fp-a-${BUILD_RECIPE}-arm64-v8a`,
+    });
+    const gradle = execs(f, "assembleRelease");
+    expect(gradle).toHaveLength(1);
+    const argv = gradle[0].join(" ");
+    // Minify and resource shrinking stay off: R8's shrinked output no longer
+    // links under the repack's apktool rebuild.
+    expect(argv).toContain("-PreactNativeArchitectures=arm64-v8a");
+    expect(argv).toContain("-Pandroid.enableMinifyInReleaseBuilds=false");
+    expect(argv).toContain(
+      "-Pandroid.enableShrinkResourcesInReleaseBuilds=false",
+    );
+    const opts = f.execOpts[f.execLog.indexOf(gradle[0])];
+    expect(opts?.env?.NODE_ENV).toBe("production");
+    expect(opts?.env?.EXPO_TV).toBe("0");
+    expect(opts?.env?.ASDF_NODEJS_VERSION).toBe("22.14.0");
+
+    // The same fingerprint + ABI hits the local cache, like the debug recipe.
+    expect(
+      ensureReleaseBuild(
+        f,
+        REPO,
+        "android",
+        spec,
+        "fp-a",
+        `${REPO}/session`,
+        undefined,
+        "arm64-v8a",
+      ).source,
+    ).toBe("local");
+    expect(execs(f, "assembleRelease")).toHaveLength(1);
+  });
+
+  it("uses the fetch hook on a local miss and refuses a miss under SHOTS_NO_BUILD=1", () => {
+    const f = new Fake();
+    f.env[BUILD_CACHE_FETCH_ENV] = "/ci/fetch-dev-client.py";
+    f.routes.push([
+      "/ci/fetch-dev-client.py",
+      (fake, argv) => {
+        expect(argv[2]).toBe(`fp-rel-${BUILD_RECIPE}-arm64-v8a`);
+        fake.dirs.add(argv[3]);
+        fake.files.set(`${argv[3]}/app-release.apk`, "apk");
+        return ok;
+      },
+    ]);
+    expect(
+      ensureReleaseBuild(
+        f,
+        REPO,
+        "android",
+        spec,
+        "fp-rel",
+        `${REPO}/session`,
+        undefined,
+        "arm64-v8a",
+      ).source,
+    ).toBe("fetched");
+    expect(execs(f, "assembleRelease")).toHaveLength(0);
+
+    const g = new Fake();
+    g.env[NO_BUILD_ENV] = "1";
+    expect(() =>
+      ensureReleaseBuild(
+        g,
+        REPO,
+        "android",
+        spec,
+        "fp-none",
+        `${REPO}/session`,
+        undefined,
+        "arm64-v8a",
+      ),
+    ).toThrow(
+      `no cached android build for fp-none-${BUILD_RECIPE}-arm64-v8a and ${NO_BUILD_ENV}=1`,
+    );
+    expect(execs(g, "assembleRelease")).toHaveLength(0);
+  });
+
+  it("is Android-only for now: Apple platforms refuse before any cache lookup", () => {
+    const f = new Fake();
+    expect(() =>
+      ensureReleaseBuild(
+        f,
+        REPO,
+        "ios",
+        platformSpec("ios"),
+        "fp",
+        `${REPO}/s`,
+      ),
+    ).toThrow(ShotError);
+    expect(() =>
+      ensureReleaseBuild(
+        f,
+        REPO,
+        "apple-tv",
+        platformSpec("apple-tv"),
+        "fp",
+        `${REPO}/s`,
+      ),
+    ).toThrow(ShotError);
+    expect(execs(f, "xcodebuild")).toHaveLength(0);
   });
 });
 

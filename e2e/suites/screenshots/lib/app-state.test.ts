@@ -2,66 +2,48 @@ import { runComparison } from "./run";
 import { execs, Fake, happyRoutes, REPO, runCli, seed } from "./testing";
 
 describe("fresh-state capture sequence", () => {
-  it("resets the test app and deep-links per capture pass on Android", async () => {
+  // The Android phone captures on the Release repack: pm clear per pass is the
+  // whole reset — the dev-client preference writes only work through run-as on a
+  // debuggable build, and a Release app refuses them.
+  it("resets the release app per capture pass on Android, with no run-as writes and no deep link", async () => {
     const f = new Fake();
     seed(f);
     happyRoutes(f);
     await runComparison(f, runCli, REPO);
 
-    // before + noise + after → three pm clears of the DEBUG package only, each
-    // followed by its own deep-link launch before the flows run.
     const clears = execs(f, "pm clear");
     expect(clears).toHaveLength(3);
     for (const argv of clears)
       expect(argv).toContain("com.example.streamyfin.debug");
-    const starts = execs(f, "am start");
-    expect(starts).toHaveLength(3);
-    for (const argv of starts) {
-      const joined = argv.join(" ");
-      expect(joined).toContain("streamyfin://?__expo_url=");
-      expect(joined).toContain("__expo_disable_onboarding=1");
-      expect(joined).toContain("__expo_disable_fab=1");
-      expect(joined).toContain("-p com.example.streamyfin.debug");
-    }
-    // Fast Refresh is switched off after each clear, before that pass's launch.
-    const prefs = execs(f, "_preferences.xml");
-    expect(prefs).toHaveLength(3);
-    for (const argv of prefs)
-      expect(argv.join(" ")).toContain(
-        "run-as com.example.streamyfin.debug cp /data/local/tmp/streamyfin-shots-fast-refresh-off.xml shared_prefs/com.example.streamyfin.debug_preferences.xml",
-      );
-    expect(f.files.get("/tmp/streamyfin-shots-fast-refresh-off.xml")).toContain(
-      'name="hot_module_replacement" value="false"',
-    );
-    // The dev menu's floating button is off after each clear, before that pass's launch.
-    // The deep link's __expo_disable_fab lasts one process; a flow's launchApp restarts
-    // the app and brings the button back, its "Tools" label in the first 10 s of a shot.
-    const fab = execs(f, "expo.modules.devmenu.sharedpreferences.xml");
-    expect(fab).toHaveLength(3);
-    for (const argv of fab)
-      expect(argv.join(" ")).toContain(
-        "run-as com.example.streamyfin.debug cp /data/local/tmp/streamyfin-shots-dev-menu-fab-off.xml shared_prefs/expo.modules.devmenu.sharedpreferences.xml",
-      );
-    expect(f.files.get("/tmp/streamyfin-shots-dev-menu-fab-off.xml")).toContain(
-      'name="showFab" value="false"',
-    );
-    const steps = f.execLog.map((argv) => argv.join(" "));
-    expect(
-      steps.findIndex((a) => a.includes("devmenu.sharedpreferences.xml")),
-    ).toBeLessThan(steps.findIndex((a) => a.includes("am start")));
-    const order = f.execLog.map((argv) => argv.join(" "));
-    expect(order.findIndex((a) => a.includes("pm clear"))).toBeLessThan(
-      order.findIndex((a) => a.includes("_preferences.xml")),
-    );
-    expect(order.findIndex((a) => a.includes("_preferences.xml"))).toBeLessThan(
-      order.findIndex((a) => a.includes("am start")),
-    );
-    // Every clear precedes its own launch, which precedes that pass's flows.
+    expect(execs(f, "run-as")).toHaveLength(0);
+    expect(execs(f, "am start")).toHaveLength(0);
+    // Every clear precedes that pass's flow; the flow's own launchApp opens the app.
     const trace = f.execLog.map((argv) => argv.join(" "));
     const firstClear = trace.findIndex((a) => a.includes("pm clear"));
-    const firstStart = trace.findIndex((a) => a.includes("am start"));
     const firstFlow = trace.findIndex((a) => a.includes("maestro.py"));
-    expect(firstClear).toBeLessThan(firstStart);
-    expect(firstStart).toBeLessThan(firstFlow);
+    expect(firstClear).toBeGreaterThanOrEqual(0);
+    expect(firstClear).toBeLessThan(firstFlow);
+  });
+
+  // android-tv stays on the Debug dev client: the run-as preference writes and the
+  // deep-link launch still run per pass there.
+  it("keeps the debug-client reset on android-tv: run-as preference writes and the deep link stay", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes = f.routes.filter(([needle]) => needle !== "has-feature");
+    f.routes.push(["has-feature", { code: 0, stdout: "true\n", stderr: "" }]);
+    await runComparison(f, { ...runCli, platform: "android-tv" }, REPO);
+
+    expect(execs(f, "pm clear")).toHaveLength(3);
+    // Fast Refresh off + dev-menu FAB off, pushed and copied once per pass.
+    expect(
+      execs(f, "shared_prefs/com.example.streamyfin.debug_preferences.xml"),
+    ).toHaveLength(3);
+    expect(
+      execs(f, "shared_prefs/expo.modules.devmenu.sharedpreferences.xml"),
+    ).toHaveLength(3);
+    expect(execs(f, "run-as")).toHaveLength(12);
+    expect(execs(f, "am start")).toHaveLength(3);
   });
 });

@@ -93,7 +93,7 @@ export const withDeclaredAttributes =
   };
 
 /** What repack-app spawns with by default: output captured, then resolved. */
-const spawnProcess: SpawnAsync = (command, args, options) => {
+export const spawnProcess: SpawnAsync = (command, args, options) => {
   const child = spawn(command, args, { stdio: "pipe", ...options });
   const done = new Promise<Awaited<ReturnType<SpawnAsync>>>(
     (resolve, reject) => {
