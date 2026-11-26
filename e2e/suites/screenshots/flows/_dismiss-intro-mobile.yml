@@ -1,0 +1,36 @@
+# Dismisses the first-run intro sheet. On iOS only its "Bottom Sheet" container is in
+# the accessibility tree: Done is tapped by its testID, and a downward swipe is the
+# fallback. Android exposes the text and taps Done. Callers set INTRO_SHOT=1 where the
+# sheet is the screen to capture; every other call just dismisses it.
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow:
+    when:
+      platform: iOS
+      visible: "Bottom Sheet"
+    commands:
+      - runFlow:
+          when:
+            true: ${INTRO_SHOT == '1'}
+          commands:
+            - takeScreenshot: 00-intro
+      - tapOn:
+          id: "intro-done"
+          optional: true
+      - runFlow:
+          when:
+            visible: "Bottom Sheet"
+          commands:
+            - swipe:
+                direction: DOWN
+- runFlow:
+    when:
+      platform: Android
+      visible: "Welcome to Streamyfin"
+    commands:
+      - runFlow:
+          when:
+            true: ${INTRO_SHOT == '1'}
+          commands:
+            - takeScreenshot: 00-intro
+      - tapOn: "Done"
