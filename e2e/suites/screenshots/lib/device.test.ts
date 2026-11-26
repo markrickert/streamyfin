@@ -1,5 +1,10 @@
 import { ShotError } from "./core";
-import { ensurePortFree, prepareDevice, selectDevice } from "./device";
+import {
+  ensurePortFree,
+  prepareDevice,
+  selectDevice,
+  simctlInstall,
+} from "./device";
 import { runComparison } from "./run";
 import {
   execs,
@@ -340,6 +345,75 @@ describe("selectDevice", () => {
       },
     ]);
     expect(() => selectDevice(f, "android", undefined)).toThrow(/--device/);
+  });
+});
+
+describe("simctlInstall", () => {
+  // SimError 405 is the CoreSimulator service dying mid-install; it restarts
+  // itself, so bootstatus -b waits for the device and the install retries once.
+  it("waits for boot and retries the install once when CoreSimulator dies", () => {
+    const f = new Fake();
+    let installs = 0;
+    f.routes.push(
+      [
+        "simctl install",
+        () => {
+          installs += 1;
+          return installs === 1
+            ? {
+                code: 1,
+                stdout: "",
+                stderr:
+                  "(domain=com.apple.CoreSimulator.SimError, code=405): Invalid device state … (Mach error -308 - (ipc/mig) server died)",
+              }
+            : ok;
+        },
+      ],
+      ["simctl bootstatus", ok],
+    );
+    expect(() =>
+      simctlInstall(
+        f,
+        "UDID-PHONE",
+        "/sim/Streamyfin.app",
+        "simctl install test app",
+      ),
+    ).not.toThrow();
+    expect(f.execLog.map((argv) => argv.join(" "))).toEqual([
+      "xcrun simctl install UDID-PHONE /sim/Streamyfin.app",
+      "xcrun simctl bootstatus UDID-PHONE -b",
+      "xcrun simctl install UDID-PHONE /sim/Streamyfin.app",
+    ]);
+    expect(f.logs.some((line) => line.includes("CoreSimulator"))).toBe(true);
+  });
+
+  it("does not retry an install failure that is not a dead CoreSimulator", () => {
+    const f = new Fake();
+    f.routes.push([
+      "simctl install",
+      { code: 1, stdout: "", stderr: "An application was not specified" },
+    ]);
+    expect(() =>
+      simctlInstall(f, "UDID-PHONE", "/sim/a.app", "simctl install test app"),
+    ).toThrow("simctl install test app failed (1)");
+    expect(execs(f, "simctl install")).toHaveLength(1);
+    expect(execs(f, "bootstatus")).toHaveLength(0);
+  });
+
+  it("throws after the retry when CoreSimulator dies again", () => {
+    const f = new Fake();
+    f.routes.push(
+      [
+        "simctl install",
+        { code: 1, stdout: "", stderr: "(ipc/mig) server died" },
+      ],
+      ["simctl bootstatus", ok],
+    );
+    expect(() =>
+      simctlInstall(f, "UDID-PHONE", "/sim/a.app", "simctl install"),
+    ).toThrow("simctl install failed (1)");
+    expect(execs(f, "simctl install")).toHaveLength(2);
+    expect(execs(f, "bootstatus")).toHaveLength(1);
   });
 });
 

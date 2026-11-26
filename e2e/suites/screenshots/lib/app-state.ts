@@ -1,4 +1,5 @@
 import { type Deps, must, type Platform } from "./core";
+import { simctlInstall } from "./device";
 
 /**
  * Fresh app state per capture pass, scoped to the TEST app only: Android `pm clear`
@@ -27,10 +28,7 @@ export function resetTestAppState(
     d.exec(["xcrun", "simctl", "uninstall", device, appId]),
     "simctl uninstall test app",
   );
-  must(
-    d.exec(["xcrun", "simctl", "install", device, artifact]),
-    "simctl install test app",
-  );
+  simctlInstall(d, device, artifact, "simctl install test app");
   const plist = disableFastRefresh(d, device, appId);
   hideDevMenuFab(d, plist);
 }
