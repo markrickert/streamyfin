@@ -1,5 +1,6 @@
 import { type PlatformSpec } from "./cli";
 import { type Deps, must, type Platform, ShotError } from "./core";
+import { simctlInstall } from "./device";
 import { REPORTS_DIR } from "./tooling";
 
 export function nativeFingerprint(
@@ -285,9 +286,6 @@ export function appIdOnDevice(
   if (plistResult.code !== 0)
     throw new ShotError(`cannot read the built app's bundle id from ${plist}`);
   const id = plistResult.stdout.trim();
-  must(
-    d.exec(["xcrun", "simctl", "install", device, artifact]),
-    "simctl install",
-  );
+  simctlInstall(d, device, artifact, "simctl install");
   return id;
 }

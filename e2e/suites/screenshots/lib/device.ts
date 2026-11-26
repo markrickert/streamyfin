@@ -383,6 +383,32 @@ export function writeAndroidDiagnostics(
   }
 }
 
+/**
+ * `xcrun simctl install`, retrying once through `bootstatus -b` when the failure is
+ * the CoreSimulator service dying mid-install (SimError 405's `Invalid device state`
+ * / `server died`): the service restarts itself, so waiting for the device to boot
+ * again lands a working daemon. Any other failure throws through `must`.
+ */
+export function simctlInstall(
+  d: Deps,
+  device: string,
+  artifact: string,
+  what: string,
+): void {
+  let result = d.exec(["xcrun", "simctl", "install", device, artifact]);
+  if (
+    result.code !== 0 &&
+    /server died|Invalid device state/.test(`${result.stdout}${result.stderr}`)
+  ) {
+    d.log(
+      `${what} failed on a dead CoreSimulator; waiting for boot and retrying once`,
+    );
+    d.exec(["xcrun", "simctl", "bootstatus", device, "-b"]);
+    result = d.exec(["xcrun", "simctl", "install", device, artifact]);
+  }
+  must(result, what);
+}
+
 export function ensurePortFree(d: Deps, port: number): void {
   const result = d.exec(["lsof", "-nP", `-iTCP:${port}`, "-sTCP:LISTEN"]);
   if (result.stdout.trim())
