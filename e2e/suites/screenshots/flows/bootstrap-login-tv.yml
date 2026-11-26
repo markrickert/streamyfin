@@ -22,11 +22,20 @@ appId: ${MAESTRO_APP_ID}
       true: ${MAESTRO_TVOS == '1'}
     commands:
       - launchApp
-- runFlow: _dismiss-dev-overlays.yml
+# The dev menu can open after the bundle finishes loading, over a login screen that is
+# already there, so dismiss again until Add server is reachable instead of once up front.
 # tvOS includes the icon glyph before "Add server" in the focused button's label.
-- extendedWaitUntil:
-    visible: ".*Add server"
-    timeout: 60000
+- repeat:
+    while:
+      notVisible: ".*Add server"
+    times: 20
+    commands:
+      - runFlow: _dismiss-dev-overlays.yml
+      - extendedWaitUntil:
+          visible: ".*Add server"
+          timeout: 3000
+          optional: true
+- assertVisible: ".*Add server"
 - extendedWaitUntil:
     visible: "__settle__"
     timeout: 3000
