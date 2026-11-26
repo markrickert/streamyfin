@@ -337,6 +337,43 @@ describe("capture pass parents", () => {
     });
   });
 
+  // The Discover pill can ignore a Center press that lands while the page is still
+  // mounting; the repeat presses it again, as seerr-mobile.yml does with taps.
+  it("seerr-tv.yml re-presses a focused Discover pill until its rows are there", () => {
+    const cmds = commandsOf("seerr-tv.yml");
+    const rows = ".*Trending.*|.*Popular.*";
+    const press = cmds.findIndex(
+      (cmd) => cmd.pressKey === "Remote Dpad Center",
+    );
+    const retry = cmds[press + 1];
+    expect(retry.repeat).toEqual({
+      while: { notVisible: rows },
+      times: 4,
+      commands: [
+        {
+          extendedWaitUntil: {
+            visible: rows,
+            timeout: 8000,
+            optional: true,
+          },
+        },
+        {
+          runFlow: {
+            when: {
+              notVisible: rows,
+              visible: { text: "Discover", focused: true },
+            },
+            commands: [{ pressKey: "Remote Dpad Center" }],
+          },
+        },
+      ],
+    });
+    expect(cmds[press + 2].extendedWaitUntil).toEqual({
+      visible: rows,
+      timeout: 30000,
+    });
+  });
+
   // The Discover Trending row can appear before the seeded Recently added
   // row; all three passes must wait for the fixed title so noise matches.
   it("seerr-tv.yml waits for seeded Discover content before capture", () => {

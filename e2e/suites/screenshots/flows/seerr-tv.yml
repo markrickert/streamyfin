@@ -45,6 +45,25 @@ appId: ${MAESTRO_APP_ID}
     text: "Discover"
     focused: true
 - pressKey: Remote Dpad Center
+# The pill can ignore a press that lands while the page is still mounting, so press it
+# again until the Discover rows are there, as seerr-mobile.yml does with taps.
+- repeat:
+    while:
+      notVisible: ".*Trending.*|.*Popular.*"
+    times: 4
+    commands:
+      - extendedWaitUntil:
+          visible: ".*Trending.*|.*Popular.*"
+          timeout: 8000
+          optional: true
+      - runFlow:
+          when:
+            notVisible: ".*Trending.*|.*Popular.*"
+            visible:
+              text: "Discover"
+              focused: true
+          commands:
+            - pressKey: Remote Dpad Center
 - extendedWaitUntil:
     visible: ".*Trending.*|.*Popular.*"
     timeout: 30000
