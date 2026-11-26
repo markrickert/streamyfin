@@ -56,7 +56,15 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
       (cmd) => cmd.takeScreenshot === "11-seerr-search",
     );
     expect(shot).toBeGreaterThanOrEqual(0);
-    expect(cmds[shot + 1]).toEqual({ runFlow: "_focus-seerr-1931.yml" });
+    expect(cmds[shot + 1]).toEqual({
+      retry: {
+        maxRetries: 2,
+        commands: [
+          { runFlow: "_focus-seerr-1931.yml" },
+          { extendedWaitUntil: { visible: "Request", timeout: 20000 } },
+        ],
+      },
+    });
     const picks = commandsOf("_focus-seerr-1931.yml");
     expect(
       picks.find((c) => c.repeat?.while?.visible)?.repeat.while.visible,
@@ -91,7 +99,15 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
       (cmd) => cmd.takeScreenshot === "11-seerr-search",
     );
     expect(shot).toBeGreaterThanOrEqual(0);
-    expect(tv[shot + 1]).toEqual({ runFlow: "_focus-seerr-1931.yml" });
+    expect(tv[shot + 1]).toEqual({
+      retry: {
+        maxRetries: 2,
+        commands: [
+          { runFlow: "_focus-seerr-1931.yml" },
+          { extendedWaitUntil: { visible: "Request", timeout: 20000 } },
+        ],
+      },
+    });
     const pick = commandsOf("_focus-seerr-1931.yml");
     const firstCard = {
       focused: true,
@@ -118,7 +134,15 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
     const shot = cmds.findIndex((c) => c.takeScreenshot === "12-seerr-detail");
     expect(shot).toBeGreaterThanOrEqual(0);
     expect(cmds.slice(shot - 3, shot)).toEqual([
-      { extendedWaitUntil: { visible: "Request", timeout: 30000 } },
+      {
+        retry: {
+          maxRetries: 2,
+          commands: [
+            { runFlow: "_focus-seerr-1931.yml" },
+            { extendedWaitUntil: { visible: "Request", timeout: 20000 } },
+          ],
+        },
+      },
       { assertVisible: "1931" },
       {
         extendedWaitUntil: {

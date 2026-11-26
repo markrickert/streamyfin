@@ -88,10 +88,14 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 11-seerr-search
 
-- runFlow: _focus-seerr-1931.yml
-- extendedWaitUntil:
-    visible: "Request"
-    timeout: 30000
+# A relayout can pull focus to the tab bar before Center lands; retry the pick.
+- retry:
+    maxRetries: 2
+    commands:
+      - runFlow: _focus-seerr-1931.yml
+      - extendedWaitUntil:
+          visible: "Request"
+          timeout: 20000
 - assertVisible: "1931"
 - extendedWaitUntil:
     visible: "__settle__"
