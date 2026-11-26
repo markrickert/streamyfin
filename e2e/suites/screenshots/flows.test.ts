@@ -222,16 +222,18 @@ describe("capture pass parents", () => {
     "%s reconnects dev client on every launch before waiting for Home",
     (file) => {
       const cmds = commandsOf(file);
-      const launches = cmds.flatMap((cmd, index) =>
+      // seerr-tv.yml wraps its launch in a retry for the empty-Discover flake.
+      const top = cmds[0].retry?.commands ?? cmds;
+      const launches = top.flatMap((cmd, index) =>
         String(cmd) === "launchApp" ? [index] : [],
       );
       expect(launches.length).toBeGreaterThan(0);
       for (const launch of launches) {
-        expect(cmds[launch + 1]).toEqual({
+        expect(top[launch + 1]).toEqual({
           runFlow: "_dismiss-dev-overlays.yml",
         });
-        expect(cmds[launch + 2].extendedWaitUntil.timeout).toBe(60000);
-        expect(cmds[launch + 2].extendedWaitUntil.visible).toContain(
+        expect(top[launch + 2].extendedWaitUntil.timeout).toBe(60000);
+        expect(top[launch + 2].extendedWaitUntil.visible).toContain(
           ".*Recently added.*",
         );
       }
@@ -337,10 +339,30 @@ describe("capture pass parents", () => {
     });
   });
 
+  // The guarded re-presses cannot recover a Discover that stays empty on tvOS; a
+  // fresh launch refetches it, so the whole visit retries once.
+  it("seerr-tv.yml retries the whole Discover visit once, from launch to the rows wait", () => {
+    const cmds = commandsOf("seerr-tv.yml");
+    expect(cmds[0].retry.maxRetries).toBe(1);
+    const inner = cmds[0].retry.commands;
+    expect(inner[0]).toBe("launchApp");
+    expect(inner[inner.length - 1].extendedWaitUntil).toEqual({
+      visible: ".*Trending.*|.*Popular.*",
+      timeout: 30000,
+    });
+    // Nothing past the rows wait moves into the retry, and no shot does either.
+    expect(inner.filter((cmd) => cmd.takeScreenshot)).toHaveLength(0);
+    expect(screenshotNames(cmds)).toEqual([
+      "10-seerr-discover",
+      "11-seerr-search",
+      "12-seerr-detail",
+    ]);
+  });
+
   // The Discover pill can ignore a Center press that lands while the page is still
   // mounting; the repeat presses it again, as seerr-mobile.yml does with taps.
   it("seerr-tv.yml re-presses a focused Discover pill until its rows are there", () => {
-    const cmds = commandsOf("seerr-tv.yml");
+    const cmds = commandsOf("seerr-tv.yml")[0].retry.commands;
     const rows = ".*Trending.*|.*Popular.*";
     const press = cmds.findIndex(
       (cmd) => cmd.pressKey === "Remote Dpad Center",
