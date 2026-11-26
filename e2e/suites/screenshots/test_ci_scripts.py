@@ -104,6 +104,10 @@ class CreateSimulatorTest(unittest.TestCase):
             res = run_create_simulator(bin_dir, "ios")
             self.assertEqual(res.returncode, 0, res.stderr)
             self.assertEqual(res.stdout.strip(), "UDID-IOS")
+            # The chosen model, its identifier and the runtime are logged for the job.
+            self.assertIn("iPhone 16", res.stderr)
+            self.assertIn("type.iphone16", res.stderr)
+            self.assertIn("com.apple.CoreSimulator.SimRuntime.iOS-18-4", res.stderr)
             calls = json.loads(calls_file.read_text())
             self.assertEqual(
                 calls[1],
@@ -116,7 +120,32 @@ class CreateSimulatorTest(unittest.TestCase):
                 ],
             )
 
-    def test_ios_falls_back_to_any_iphone_and_top_level_devicetypes(self):
+    def test_ios_falls_back_to_the_newest_base_iphone(self):
+        payload = {
+            "runtimes": [
+                {
+                    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-2",
+                    "version": "18.2",
+                    "isAvailable": True,
+                }
+            ],
+            "devicetypes": [
+                {"name": "iPhone 18", "identifier": "type.iphone18"},
+                {"name": "iPhone 18 Pro Max", "identifier": "type.iphone18promax"},
+                {"name": "iPhone Fold", "identifier": "type.iphonefold"},
+                {"name": "iPhone 19", "identifier": "type.iphone19"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, calls_file = install_fake_xcrun(Path(tmp), payload, "UDID-19")
+            res = run_create_simulator(bin_dir, "ios")
+            self.assertEqual(res.returncode, 0, res.stderr)
+            self.assertEqual(res.stdout.strip(), "UDID-19")
+            self.assertIn("iPhone 19", res.stderr)
+            calls = json.loads(calls_file.read_text())
+            self.assertEqual(calls[1][3], "type.iphone19")
+
+    def test_ios_fails_when_only_non_base_iphones_are_available(self):
         payload = {
             "runtimes": [
                 {
@@ -128,15 +157,16 @@ class CreateSimulatorTest(unittest.TestCase):
             "devicetypes": [
                 {"name": "iPad Pro", "identifier": "type.ipad"},
                 {"name": "iPhone SE (3rd generation)", "identifier": "type.iphonese"},
+                {"name": "iPhone 18 Pro Max", "identifier": "type.iphone18promax"},
             ],
         }
         with tempfile.TemporaryDirectory() as tmp:
-            bin_dir, calls_file = install_fake_xcrun(Path(tmp), payload, "UDID-SE")
+            bin_dir, _ = install_fake_xcrun(Path(tmp), payload)
             res = run_create_simulator(bin_dir, "ios")
-            self.assertEqual(res.returncode, 0, res.stderr)
-            self.assertEqual(res.stdout.strip(), "UDID-SE")
-            calls = json.loads(calls_file.read_text())
-            self.assertEqual(calls[1][3], "type.iphonese")
+            self.assertNotEqual(res.returncode, 0)
+            self.assertEqual(res.stdout, "")
+            self.assertIn("iPhone SE (3rd generation)", res.stderr)
+            self.assertIn("iPhone 18 Pro Max", res.stderr)
 
     def test_apple_tv_prefers_4k_3rd_gen_on_newest_tvos_runtime(self):
         payload = {
