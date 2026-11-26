@@ -41,12 +41,24 @@ export function fixtureEnv(
   };
 }
 
+/** stderr's tail, where a traceback puts its exception; the … marks the cut. */
+const stderrTail = (stderr: string): string => {
+  const trimmed = stderr.trim();
+  return trimmed.length > 1500 ? `…${trimmed.slice(-1500)}` : trimmed;
+};
+
 export function ensureFixture(d: Deps, repo: string): void {
   for (const step of ["e2e:setup", "e2e:seed", "e2e:enrich"]) {
-    const result = d.exec(["bun", "run", step], { cwd: repo });
+    let result = d.exec(["bun", "run", step], { cwd: repo });
+    if (result.code !== 0 && step === "e2e:enrich") {
+      // e2e:enrich only queues refreshes for what is still missing, so a failed run is
+      // safe to retry once: Jellyfin may just be busy ingesting catalog people.
+      d.log(`${step} failed; retrying once (${stderrTail(result.stderr)})`);
+      result = d.exec(["bun", "run", step], { cwd: repo });
+    }
     if (result.code !== 0)
       throw new ShotError(
-        `${step} failed; the local fixture is not ready (${result.stderr.trim().slice(0, 200)})`,
+        `${step} failed; the local fixture is not ready (${stderrTail(result.stderr)})`,
       );
   }
   must(
