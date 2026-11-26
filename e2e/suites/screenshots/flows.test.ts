@@ -133,7 +133,7 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
     const cmds = commandsOf("seerr-tv.yml");
     const shot = cmds.findIndex((c) => c.takeScreenshot === "12-seerr-detail");
     expect(shot).toBeGreaterThanOrEqual(0);
-    expect(cmds.slice(shot - 3, shot)).toEqual([
+    expect(cmds.slice(shot - 4, shot)).toEqual([
       {
         retry: {
           maxRetries: 2,
@@ -144,6 +144,14 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
         },
       },
       { assertVisible: "1931" },
+      // Optional: refs from before the marker existed must still finish.
+      {
+        extendedWaitUntil: {
+          visible: { id: "seerr-backdrop-ready" },
+          timeout: 20000,
+          optional: true,
+        },
+      },
       {
         waitForAnimationToEnd: { timeout: 6000 },
       },
@@ -219,7 +227,7 @@ describe("capture pass parents", () => {
     (file) => {
       const cmds = commandsOf(file);
       // seerr-tv.yml wraps its launch in a retry for the empty-Discover flake.
-      const top = cmds[0].retry?.commands ?? cmds;
+      const top: Command[] = cmds[0].retry?.commands ?? cmds;
       expect(
         top.filter(
           (cmd) => String(cmd) === "launchApp" || cmd.launchApp !== undefined,
@@ -333,7 +341,7 @@ describe("capture pass parents", () => {
   it("seerr-tv.yml retries the whole Discover visit once, from launch to the rows wait", () => {
     const cmds = commandsOf("seerr-tv.yml");
     expect(cmds[0].retry.maxRetries).toBe(1);
-    const inner = cmds[0].retry.commands;
+    const inner: Command[] = cmds[0].retry.commands;
     expect(inner[0]).toEqual({ runFlow: "_relaunch-home-tv.yml" });
     expect(inner[inner.length - 1].extendedWaitUntil).toEqual({
       visible: ".*Trending.*|.*Popular.*",
@@ -351,7 +359,7 @@ describe("capture pass parents", () => {
   // The Discover pill can ignore a Center press that lands while the page is still
   // mounting; the repeat presses it again, as seerr-mobile.yml does with taps.
   it("seerr-tv.yml re-presses a focused Discover pill until its rows are there", () => {
-    const cmds = commandsOf("seerr-tv.yml")[0].retry.commands;
+    const cmds: Command[] = commandsOf("seerr-tv.yml")[0].retry.commands;
     const rows = ".*Trending.*|.*Popular.*";
     const press = cmds.findIndex(
       (cmd) => cmd.pressKey === "Remote Dpad Center",

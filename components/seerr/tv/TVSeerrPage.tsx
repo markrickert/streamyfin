@@ -268,6 +268,11 @@ export const TVSeerrPage: React.FC = () => {
     return path ? seerrApi?.imageProxy(path, SEERR_BACKDROP_SIZE) : null;
   }, [details, result.backdropPath, seerrApi]);
 
+  // The screenshot flows wait for `seerr-backdrop-ready` before capturing: the
+  // backdrop comes from TMDB through Seerr and can land after the page settles.
+  const [settledBackdropUrl, setSettledBackdropUrl] = useState<string>();
+  const backdropReady = !backdropUrl || settledBackdropUrl === backdropUrl;
+
   // Poster URL
   const posterUrl = useMemo(() => {
     if (posterSrc) return posterSrc;
@@ -440,6 +445,7 @@ export const TVSeerrPage: React.FC = () => {
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {/* Full-screen backdrop */}
       <View
+        testID={backdropReady ? "seerr-backdrop-ready" : undefined}
         style={{
           position: "absolute",
           top: 0,
@@ -455,6 +461,8 @@ export const TVSeerrPage: React.FC = () => {
             contentFit='cover'
             cachePolicy='memory-disk'
             transition={BACKGROUND_IMAGE_TRANSITION}
+            onLoad={() => setSettledBackdropUrl(backdropUrl)}
+            onError={() => setSettledBackdropUrl(backdropUrl)}
           />
         ) : (
           <View style={{ flex: 1, backgroundColor: "#1a1a1a" }} />

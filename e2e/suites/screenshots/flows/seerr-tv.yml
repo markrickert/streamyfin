@@ -113,6 +113,13 @@ appId: ${MAESTRO_APP_ID}
           visible: "Request"
           timeout: 20000
 - assertVisible: "1931"
+# The TMDB backdrop can land after the page stops moving. Refs from before
+# `seerr-backdrop-ready` existed fall through after the timeout.
+- extendedWaitUntil:
+    visible:
+      id: seerr-backdrop-ready
+    timeout: 20000
+    optional: true
 - waitForAnimationToEnd:
     timeout: 6000
 - takeScreenshot: 12-seerr-detail
