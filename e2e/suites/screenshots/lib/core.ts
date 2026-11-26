@@ -48,7 +48,11 @@ export interface Deps {
   ): ExecResult;
   spawn(
     argv: string[],
-    opts?: { cwd?: string; env?: Record<string, string | undefined> },
+    opts?: {
+      cwd?: string;
+      env?: Record<string, string | undefined>;
+      logFile?: string;
+    },
   ): SpawnHandle;
   waitFor(url: string, needle: string, timeoutMs: number): Promise<boolean>;
   fs: FsOps;

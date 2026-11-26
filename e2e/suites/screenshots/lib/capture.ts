@@ -74,6 +74,7 @@ export async function startMetro(
   repo: string,
   spec: PlatformSpec,
   port: number,
+  logFile: string,
 ): Promise<SpawnHandle> {
   // TOCTOU: the preflight check ran minutes ago; re-verify immediately before bind so
   // a foreign Metro that grabbed the port meanwhile aborts the run instead of being
@@ -92,6 +93,7 @@ export async function startMetro(
     {
       cwd: repo,
       env: { EXPO_TV: spec.tv ? "1" : "0", EXPO_NO_INTERACTIVE: "1" },
+      logFile,
     },
   );
   const up = await d.waitFor(

@@ -45,12 +45,14 @@ const deps: Deps = {
     };
   },
   spawn(argv, opts) {
+    const logFd = opts?.logFile ? fs.openSync(opts.logFile, "a") : undefined;
     const child = spawn(argv[0], argv.slice(1), {
       cwd: opts?.cwd ?? repo,
       env: { ...process.env, ...opts?.env },
-      stdio: "ignore",
+      stdio: logFd === undefined ? "ignore" : ["ignore", logFd, logFd],
       detached: false,
     });
+    if (logFd !== undefined) fs.closeSync(logFd);
     return {
       kill: () => child.kill("SIGTERM"),
       isAlive: () => child.exitCode === null && child.signalCode === null,

@@ -260,7 +260,13 @@ export async function runComparison(
         MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
       };
       d.log("starting Metro");
-      metro = await startMetro(d, repo, spec, port);
+      metro = await startMetro(
+        d,
+        repo,
+        spec,
+        port,
+        `${sessionDir}/metro-${ref.label}.log`,
+      );
       try {
         // Prove this Metro serves the checked-out ref's JS — /status alone says only
         // that a packager answers. A compile error in the switched ref fails here,
