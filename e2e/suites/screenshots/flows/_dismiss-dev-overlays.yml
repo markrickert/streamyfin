@@ -27,6 +27,15 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: "Wait"
       - waitForAnimationToEnd
+# Google TV can raise its first-run Shop dialog over any launch, taking the app out of
+# the foreground: dismiss it and start the app again.
+- runFlow:
+    when:
+      platform: Android
+      visible: "Buy and rent movies on your TV"
+    commands:
+      - tapOn: "Dismiss"
+      - launchApp
 - runFlow:
     # Phone clients show "Fetch development servers"; tvOS shows "Searching for development servers...".
     # A finished search leaves its "DEVELOPMENT SERVERS" list up instead: same picker.

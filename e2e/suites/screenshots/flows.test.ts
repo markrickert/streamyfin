@@ -727,9 +727,9 @@ describe("bootstrap-login first-run overlays", () => {
   // other ANR still gets "Wait", then the picker step opens the runner's link and
   // the open-in alert branches on tvOS (where PineBoard focuses Open and ignores
   // tapOn).
-  it("closes a hung Pixel Launcher, waits out other ANRs, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
+  it("closes a hung Pixel Launcher, waits out other ANRs, dismisses the Google TV Shop dialog, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
-    expect(cmds).toHaveLength(8);
+    expect(cmds).toHaveLength(9);
     expect(cmds[0].runFlow.when.visible).toBe(
       "Pixel Launcher isn't responding",
     );
@@ -742,58 +742,68 @@ describe("bootstrap-login first-run overlays", () => {
       { tapOn: "Wait" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[2].runFlow.when.visible).toBe(
+    // The Shop dialog only lives on Android launchers; dismissing it relaunches so the
+    // steps below run against the app in front again.
+    expect(cmds[2].runFlow.when).toEqual({
+      platform: "Android",
+      visible: "Buy and rent movies on your TV",
+    });
+    expect(cmds[2].runFlow.commands).toEqual([
+      { tapOn: "Dismiss" },
+      "launchApp",
+    ]);
+    expect(cmds[3].runFlow.when.visible).toBe(
       "Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually",
     );
-    const picker = new RegExp(cmds[2].runFlow.when.visible);
+    const picker = new RegExp(cmds[3].runFlow.when.visible);
     expect(picker.test("Fetch development servers")).toBe(true);
     expect(picker.test("Searching for development servers...")).toBe(true);
     expect(picker.test("DEVELOPMENT SERVERS")).toBe(true);
     expect(picker.test("Enter URL manually")).toBe(true);
     expect(picker.test("Home")).toBe(false);
-    expect(cmds[2].runFlow.commands).toEqual([
+    expect(cmds[3].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
       { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
-      "waitForAnimationToEnd",
-    ]);
-    expect(cmds[3].runFlow.when).toEqual({
-      visible: "Open in .*",
-      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
-      true: "${MAESTRO_TVOS != '1'}",
-    });
-    expect(cmds[3].runFlow.commands).toEqual([
-      { tapOn: "Open" },
       "waitForAnimationToEnd",
     ]);
     expect(cmds[4].runFlow.when).toEqual({
       visible: "Open in .*",
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
-      true: "${MAESTRO_TVOS == '1'}",
+      true: "${MAESTRO_TVOS != '1'}",
     });
     expect(cmds[4].runFlow.commands).toEqual([
+      { tapOn: "Open" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[5].runFlow.when).toEqual({
+      visible: "Open in .*",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      true: "${MAESTRO_TVOS == '1'}",
+    });
+    expect(cmds[5].runFlow.commands).toEqual([
       { pressKey: "Remote Dpad Center" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[5].runFlow.when.visible).toBe("Continue");
-    expect(cmds[5].runFlow.commands).toEqual([
+    expect(cmds[6].runFlow.when.visible).toBe("Continue");
+    expect(cmds[6].runFlow.commands).toEqual([
       { tapOn: "Continue" },
       "waitForAnimationToEnd",
     ]);
     // The load-error screen's "Go home" must never reach the dev-menu step below,
     // which waits on a "Close" that screen does not have.
-    expect(cmds[6].runFlow.when.visible).toBe(
+    expect(cmds[7].runFlow.when.visible).toBe(
       "There was a problem loading the project.*",
     );
-    expect(cmds[6].runFlow.commands).toEqual([
+    expect(cmds[7].runFlow.commands).toEqual([
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
       { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[7].runFlow.when).toEqual({
+    expect(cmds[8].runFlow.when).toEqual({
       visible: "Go home",
       notVisible: "There was a problem loading the project.*",
     });
-    expect(cmds[7].runFlow.commands).toEqual([
+    expect(cmds[8].runFlow.commands).toEqual([
       { extendedWaitUntil: { visible: "Close", timeout: 10000 } },
       { tapOn: "Close" },
       "waitForAnimationToEnd",
