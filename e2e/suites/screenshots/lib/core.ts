@@ -76,24 +76,31 @@ export function must(result: ExecResult, what: string): string {
   return result.stdout.trim();
 }
 
+/** Replaces every occurrence of each non-empty secret with `***`. */
+export function mask(text: string, secrets: string[]): string {
+  let out = text;
+  for (const secret of new Set(secrets))
+    if (secret) out = out.split(secret).join("***");
+  return out;
+}
+
+/** The masked stderr and stdout tails a flow failure reports: Maestro may echo -e values. */
+export function sanitizedDetail(result: ExecResult, secrets: string[]): string {
+  const stderr = mask(result.stderr.trim(), secrets).slice(-500);
+  const stdout = mask(result.stdout.trim(), secrets).slice(-500);
+  return [stderr, stdout].filter(Boolean).join("\n");
+}
+
 /** must() for flows: Maestro prints errors to stdout and may echo -e values, so secrets are masked first. */
 export function mustSanitized(
   result: ExecResult,
   what: string,
   secrets: string[],
 ): string {
-  if (result.code !== 0) {
-    const mask = (text: string) => {
-      let out = text;
-      for (const secret of new Set(secrets))
-        if (secret) out = out.split(secret).join("***");
-      return out;
-    };
-    const stderr = mask(result.stderr.trim()).slice(-500);
-    const stdout = mask(result.stdout.trim()).slice(-500);
-    const detail = [stderr, stdout].filter(Boolean).join("\n");
-    throw new ShotError(`${what} failed (${result.code}): ${detail}`);
-  }
+  if (result.code !== 0)
+    throw new ShotError(
+      `${what} failed (${result.code}): ${sanitizedDetail(result, secrets)}`,
+    );
   return result.stdout.trim();
 }
 

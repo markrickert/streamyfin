@@ -1,15 +1,19 @@
+import { dirname } from "node:path";
 import { type PlatformSpec } from "./cli";
 import {
   type Deps,
   formatElapsed,
   hostFor,
+  mask,
   must,
   mustSanitized,
   type Platform,
   ShotError,
   type SpawnHandle,
+  sanitizedDetail,
 } from "./core";
 import { ensurePortFree } from "./device";
+import { describeFailedStep, failedStep } from "./failure";
 
 // SDK 58 dev-client deep link: __expo_url pins Metro, the disable flags skip the
 // one-time onboarding sheet and hide the dev client's floating menu button
@@ -167,11 +171,22 @@ export function runCapture(
     argv.push("--env", `${key}=${value}`);
   // The env map reaches maestro.py through argv; it is never printed by this runner,
   // and a failing flow's stderr is stripped of credentials before it is thrown.
-  mustSanitized(
-    d.exec(argv, {
-      env: { MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS: OPTIONAL_LOOKUP_TIMEOUT_MS },
-    }),
-    `flow ${flow}`,
-    [env.MAESTRO_JELLYFIN_PASS, env.MAESTRO_SEERR_PASS],
+  const secrets = [env.MAESTRO_JELLYFIN_PASS, env.MAESTRO_SEERR_PASS];
+  const result = d.exec(argv, {
+    env: { MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS: OPTIONAL_LOOKUP_TIMEOUT_MS },
+  });
+  if (result.code === 0) return;
+  // The raw tail is often an unrelated warning; the debug output's commands.json
+  // names the failing command and the flow chain around it, so lead with that.
+  const step = failedStep(d, outDir);
+  if (!step) {
+    mustSanitized(result, `flow ${flow}`, secrets);
+    return;
+  }
+  throw new ShotError(
+    `flow ${flow} failed at ${describeFailedStep(
+      { ...step, message: mask(step.message, secrets) },
+      dirname(outDir),
+    )}\nflow ${flow} failed (${result.code}): ${sanitizedDetail(result, secrets)}`,
   );
 }

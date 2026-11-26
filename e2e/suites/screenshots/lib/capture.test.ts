@@ -1,3 +1,6 @@
+import { runCapture } from "./capture";
+import { platformSpec } from "./cli";
+import { ShotError } from "./core";
 import { runComparison } from "./run";
 import {
   execs,
@@ -5,6 +8,7 @@ import {
   FakeSpawn,
   happyRoutes,
   ok,
+  PASSWORD,
   REPO,
   runCli,
   seed,
@@ -158,6 +162,100 @@ describe("dev-client deep link in the flow env", () => {
       );
       expect(sent).toContain(entry?.slice("MAESTRO_DEV_CLIENT_URL=".length));
     }
+  });
+});
+
+describe("runCapture failure detail", () => {
+  // A failing pass throws with the raw stderr/stdout tail, which on CI is often an
+  // unrelated warning. The debug output's commands.json names the failing command and
+  // the flow chain around it; the thrown error must lead with that.
+  const sessionDir = `${REPO}/e2e/reports/shots/session`;
+  const outDir = `${sessionDir}/before`;
+
+  function commandsJson(f: Fake, message: string) {
+    f.dirs.add(outDir);
+    f.dirs.add(`${outDir}/pass-mobile`);
+    f.files.set(
+      `${outDir}/pass-mobile/commands.json`,
+      JSON.stringify([
+        {
+          command: {
+            runFlowCommand: { sourceDescription: "mobile.yml", commands: [] },
+          },
+          metadata: { status: "FAILED", sequenceNumber: 57, depth: 0 },
+        },
+        {
+          command: {
+            runFlowCommand: {
+              sourceDescription: "_tap-more.yml",
+              commands: [],
+            },
+          },
+          metadata: { status: "FAILED", sequenceNumber: 90, depth: 1 },
+        },
+        {
+          command: {
+            tapOnElement: { selector: { textRegex: ".*Settings.*" } },
+          },
+          metadata: {
+            status: "FAILED",
+            sequenceNumber: 97,
+            depth: 2,
+            error: { message },
+          },
+          artifacts: [
+            {
+              type: "SCREEN_HIERARCHY",
+              path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
+            },
+            {
+              type: "SCREENSHOT",
+              path: "screenshots/step-098-tapOnElement-Settings.png",
+            },
+          ],
+        },
+      ]),
+    );
+  }
+
+  function capture(f: Fake) {
+    return () =>
+      runCapture(
+        f,
+        "tools",
+        platformSpec("android"),
+        "emulator-5554",
+        outDir,
+        { MAESTRO_JELLYFIN_PASS: PASSWORD },
+        "maestro",
+        false,
+      );
+  }
+
+  it("names the failed step's chain, command, message and session-relative artifacts", () => {
+    const f = new Fake();
+    f.routes.push(["maestro.py", { code: 1, stdout: "", stderr: "boom" }]);
+    commandsJson(f, "Element not found: Text matching regex: .*Settings.*");
+    expect(capture(f)).toThrow(ShotError);
+    expect(capture(f)).toThrow(
+      "flow pass-mobile failed at mobile.yml > _tap-more.yml: tapOnElement: Element not found: Text matching regex: .*Settings.* " +
+        "(screenshot before/pass-mobile/screenshots/step-098-tapOnElement-Settings.png, " +
+        "hierarchy before/pass-mobile/screen-hierarchy/step-098-tapOnElement-Settings.json)",
+    );
+  });
+
+  it("masks the fixture password in the failed step's message", () => {
+    const f = new Fake();
+    f.routes.push(["maestro.py", { code: 1, stdout: "", stderr: "boom" }]);
+    commandsJson(f, `login rejected for ${PASSWORD}`);
+    expect(capture(f)).toThrow("login rejected for ***");
+    expect(capture(f)).not.toThrow(PASSWORD);
+  });
+
+  it("keeps the bare tail when the pass wrote no commands.json", () => {
+    const f = new Fake();
+    f.routes.push(["maestro.py", { code: 1, stdout: "", stderr: "boom" }]);
+    expect(capture(f)).toThrow("flow pass-mobile failed (1): boom");
   });
 });
 

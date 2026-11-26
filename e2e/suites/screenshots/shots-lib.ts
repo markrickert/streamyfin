@@ -45,6 +45,11 @@ export {
   prepareDevice,
   selectDevice,
 } from "./lib/device";
+export type { FailedStep } from "./lib/failure";
+export {
+  describeFailedStep,
+  failedStep,
+} from "./lib/failure";
 export {
   ensureFixture,
   fixtureDotenv,

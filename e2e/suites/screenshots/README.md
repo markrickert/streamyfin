@@ -97,6 +97,14 @@ On success, failure or Ctrl-C the runner stops only its own Metro, returns to th
 branch or SHA, reinstalls dependencies if the lockfile differs, and restores `ios/` and
 `android/` from the session backup. Your native dirs are moved aside, never deleted.
 
+On a failure the runner writes `<session>/report/summary.md` before cleaning up — on
+success `compare.ts` owns that file. It carries the thrown error and, when a Maestro
+pass failed, the pass label and the failing step recovered from the pass's
+`commands.json`: the flow chain, the command, its message, and the screenshot and
+screen hierarchy Maestro captured, copied into `report/failure/`. The thrown error
+leads with the same step (`flow pass-mobile failed at mobile.yml > …: tapOnElement: …`),
+so a CI log names the failing command rather than whatever warning ended the output.
+
 ### Device use
 
 Use an emulator or simulator kept for screenshots. Each run installs over any app with the

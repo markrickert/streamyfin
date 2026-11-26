@@ -567,6 +567,132 @@ describe("runComparison failure path", () => {
     );
   });
 
+  it("writes report/summary.md naming the pass and the failed step, with its artifacts copied into report/failure", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(
+      [
+        "pass-mobile.yml",
+        (fake, argv) => {
+          const out = argv[argv.indexOf("--out") + 1];
+          const dir = `${out}/pass-mobile`;
+          fake.dirs.add(dir);
+          fake.dirs.add(`${dir}/screenshots`);
+          fake.dirs.add(`${dir}/screen-hierarchy`);
+          fake.files.set(
+            `${dir}/commands.json`,
+            JSON.stringify([
+              {
+                command: {
+                  runFlowCommand: {
+                    sourceDescription: "mobile.yml",
+                    commands: [],
+                  },
+                },
+                metadata: { status: "FAILED", sequenceNumber: 57, depth: 0 },
+              },
+              {
+                command: {
+                  runFlowCommand: {
+                    sourceDescription: "_tap-more.yml",
+                    commands: [],
+                  },
+                },
+                metadata: { status: "FAILED", sequenceNumber: 90, depth: 1 },
+              },
+              {
+                command: {
+                  tapOnElement: { selector: { textRegex: ".*Settings.*" } },
+                },
+                metadata: {
+                  status: "FAILED",
+                  sequenceNumber: 97,
+                  depth: 2,
+                  error: {
+                    message:
+                      "Element not found: Text matching regex: .*Settings.*",
+                  },
+                },
+                artifacts: [
+                  {
+                    type: "SCREENSHOT",
+                    path: "screenshots/step-098-tapOnElement-Settings.png",
+                  },
+                  {
+                    type: "SCREEN_HIERARCHY",
+                    path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
+                  },
+                ],
+              },
+            ]),
+          );
+          fake.files.set(
+            `${dir}/screenshots/step-098-tapOnElement-Settings.png`,
+            "png-bytes",
+          );
+          fake.files.set(
+            `${dir}/screen-hierarchy/step-098-tapOnElement-Settings.json`,
+            "{}",
+          );
+          return { code: 1, stdout: "", stderr: "boom" };
+        },
+      ],
+      ["dumpsys", { code: 0, stdout: "dump\n", stderr: "" }],
+    );
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain(
+      "flow pass-mobile failed at mobile.yml > _tap-more.yml: tapOnElement",
+    );
+    const summary = f.files.get(`${outDir}/report/summary.md`);
+    expect(summary).toContain("## Screenshot run failed (android)");
+    expect(summary).toContain("**Pass:** before");
+    expect(summary).toContain("mobile.yml > _tap-more.yml");
+    expect(summary).toContain("tapOnElement");
+    expect(summary).toContain(
+      "Element not found: Text matching regex: .*Settings.*",
+    );
+    expect(summary).toContain(
+      "report/failure/step-098-tapOnElement-Settings.png",
+    );
+    expect(summary).toContain(
+      "report/failure/step-098-tapOnElement-Settings.json",
+    );
+    expect(
+      f.files.get(
+        `${outDir}/report/failure/step-098-tapOnElement-Settings.png`,
+      ),
+    ).toBe("png-bytes");
+    expect(
+      f.files.get(
+        `${outDir}/report/failure/step-098-tapOnElement-Settings.json`,
+      ),
+    ).toBe("{}");
+  });
+
+  it("writes report/summary.md without a pass label or step when the run dies outside a pass", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push([
+      "git switch --detach sha-before",
+      { code: 1, stdout: "", stderr: "refused" },
+    ]);
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    const summary = f.files.get(`${outDir}/report/summary.md`)!;
+    expect(summary).toContain("## Screenshot run failed (android)");
+    expect(summary).not.toContain("**Pass:**");
+    expect(summary).not.toContain("**Failed step:**");
+  });
+
   it("does not retry a pass whose failure is not a lost driver", async () => {
     const f = new Fake();
     seed(f);
@@ -591,6 +717,15 @@ describe("runComparison failure path", () => {
     expect(execs(f, "pass-mobile.yml")).toHaveLength(1);
     expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(false);
     expect(f.files.has(`${outDir}/before/android-diagnostics.txt`)).toBe(true);
+  });
+
+  it("writes no report/summary.md on success — compare.ts owns it", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    expect(f.files.has(`${outDir}/report/summary.md`)).toBe(false);
   });
 
   it("rethrows after the retry when the driver is lost again", async () => {

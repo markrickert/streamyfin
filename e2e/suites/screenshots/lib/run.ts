@@ -18,6 +18,7 @@ import {
   type Cli,
   type Deps,
   formatElapsed,
+  mask,
   must,
   type Platform,
   ShotError,
@@ -31,6 +32,7 @@ import {
   selectDevice,
   writeAndroidDiagnostics,
 } from "./device";
+import { describeFailedStep, failedStep } from "./failure";
 import { ensureFixture, fixtureChecks, fixtureEnv } from "./fixture";
 import {
   backupNativeDirs,
@@ -106,19 +108,37 @@ export async function runComparison(
   ensurePortFree(d, port);
   passTimeoutSeconds(d);
   const sessionDir = cli.outDir ?? `${repo}/${REPORTS_DIR}/${Date.now()}`;
-  ensureOutIgnored(d, repo, sessionDir);
-  d.fs.mkdir(sessionDir);
-  const tooling = snapshotTooling(d, repo, sessionDir);
-  const maestro = ensureMaestro(d, `${repo}/${REPORTS_DIR}/tools`);
-  ensureFixture(d, repo);
-  // Capture the fixture contract while the checkout that produced it is still on disk:
-  // .state/ and .env are gitignored, so they survive the switch — but an absent or
-  // changed file on the other ref must never be re-read mid-run.
-  const baseEnv = fixtureEnv(d, repo, cli.platform!);
+  let outReady = false;
+  let passLabel: string | undefined;
+  let secrets: string[] = [];
+  // A failure is reported in <session>/report/summary.md even when compare.ts never
+  // runs (CI cats it into the job summary). The report itself is best-effort: it must
+  // never mask the error it describes, and it stays unwritten until sessionDir is
+  // proven gitignored — an --out outside it must not gain files either.
+  const reportFailure = (error: unknown): void => {
+    if (!outReady) return;
+    try {
+      writeFailureSummary(
+        d,
+        sessionDir,
+        cli.platform!,
+        passLabel,
+        error,
+        secrets,
+      );
+    } catch (summaryError) {
+      d.log(
+        `could not write ${sessionDir}/report/summary.md: ${
+          summaryError instanceof Error ? summaryError.message : summaryError
+        }`,
+      );
+    }
+  };
 
   let metro: SpawnHandle | undefined;
   let nativeMoved: string[] = [];
   let buildDeps = "";
+  let switched = false;
   const deviceState = newDeviceState();
   // Nested: a refused git restore (new user edits mid-run) must not strand the
   // native dirs in the backup.
@@ -127,25 +147,41 @@ export async function runComparison(
     metro = undefined;
     restoreDevice(d, cli.platform!, device, deviceState);
     try {
-      restoreGit(d, repo, start);
-      // node_modules still holds the last switched ref's lockfile. Logged, not thrown:
-      // a throw here would hide the error this cleanup runs after.
-      if (buildDeps && lockfileChanged(d, repo, buildDeps)) {
-        const install = d.exec(["bun", "install", "--frozen-lockfile"], {
-          cwd: repo,
-        });
-        if (install.code !== 0)
-          d.log(
-            `bun install failed while restoring ${start.ref}; run it by hand before anything else: ${install.stderr.trim().slice(0, 200)}`,
-          );
+      // A failure before the first `git switch --detach` leaves the tree on the
+      // starting ref already: switching back would be a switch the run never made.
+      if (switched) {
+        restoreGit(d, repo, start);
+        // node_modules still holds the last switched ref's lockfile. Logged, not
+        // thrown: a throw here would hide the error this cleanup runs after.
+        if (buildDeps && lockfileChanged(d, repo, buildDeps)) {
+          const install = d.exec(["bun", "install", "--frozen-lockfile"], {
+            cwd: repo,
+          });
+          if (install.code !== 0)
+            d.log(
+              `bun install failed while restoring ${start.ref}; run it by hand before anything else: ${install.stderr.trim().slice(0, 200)}`,
+            );
+        }
       }
     } finally {
       if (nativeMoved.length)
         restoreNativeDirs(d, repo, sessionDir, nativeMoved);
     }
   };
+  ensureOutIgnored(d, repo, sessionDir);
   setInterruptCleanup(cleanup);
   try {
+    d.fs.mkdir(sessionDir);
+    outReady = true;
+    const tooling = snapshotTooling(d, repo, sessionDir);
+    const maestro = ensureMaestro(d, `${repo}/${REPORTS_DIR}/tools`);
+    ensureFixture(d, repo);
+    // Capture the fixture contract while the checkout that produced it is still on
+    // disk: .state/ and .env are gitignored, so they survive the switch — but an
+    // absent or changed file on the other ref must never be re-read mid-run.
+    const baseEnv = fixtureEnv(d, repo, cli.platform!);
+    secrets = [baseEnv.MAESTRO_JELLYFIN_PASS, baseEnv.MAESTRO_SEERR_PASS];
+
     prepareDevice(d, cli.platform!, device, deviceState);
     const abi =
       cli.platform === "android" || cli.platform === "android-tv"
@@ -164,6 +200,7 @@ export async function runComparison(
         d.exec(["git", "switch", "--detach", ref.sha], { cwd: repo }),
         `git switch ${ref.label}`,
       );
+      switched = true;
       if (lockfileChanged(d, repo, buildDeps))
         must(
           d.exec(["bun", "install", "--frozen-lockfile"], { cwd: repo }),
@@ -308,6 +345,7 @@ export async function runComparison(
           `Metro bundled ${spec.fingerprintPlatform} JS in ${formatElapsed(bundleElapsed)}`,
         );
         for (const capture of ref.captures) {
+          passLabel = capture;
           d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
           for (let attempt = 0; attempt < 2; attempt++) {
@@ -355,6 +393,8 @@ export async function runComparison(
             }
           }
         }
+        // A build or Metro failure between refs is not a pass failure.
+        passLabel = undefined;
       } finally {
         metro.kill();
         metro = undefined;
@@ -385,10 +425,57 @@ export async function runComparison(
       "compare",
     );
     return { sessionDir, beforeSha, afterSha, restored: start };
+  } catch (error) {
+    reportFailure(error);
+    throw error;
   } finally {
     setInterruptCleanup(undefined);
     cleanup();
   }
+}
+
+/**
+ * A failed run's report: the thrown error, the pass it died in when one was running,
+ * and the failing Maestro step from that pass's debug output — its screenshot and
+ * screen hierarchy copied into report/failure and referenced from there. On success
+ * nothing is written: compare.ts owns report/summary.md.
+ */
+function writeFailureSummary(
+  d: Deps,
+  sessionDir: string,
+  platform: Platform,
+  pass: string | undefined,
+  error: unknown,
+  secrets: string[],
+): void {
+  const message = mask(
+    error instanceof Error ? error.message : String(error),
+    secrets,
+  );
+  const lines = [
+    `## Screenshot run failed (${platform})`,
+    "",
+    ...(pass ? [`**Pass:** ${pass}`, ""] : []),
+    "```",
+    message,
+    "```",
+  ];
+  const step = pass ? failedStep(d, `${sessionDir}/${pass}`) : undefined;
+  if (step) {
+    const failureDir = `${sessionDir}/report/failure`;
+    d.fs.mkdir(failureDir);
+    const shown = { ...step, message: mask(step.message, secrets) };
+    for (const key of ["screenshot", "hierarchy"] as const) {
+      const src = step[key];
+      if (!src || !d.fs.exists(src)) continue;
+      const dest = `${failureDir}/${src.split("/").pop()}`;
+      d.fs.cp(src, dest);
+      shown[key] = dest;
+    }
+    lines.push("", `**Failed step:** ${describeFailedStep(shown, sessionDir)}`);
+  }
+  d.fs.mkdir(`${sessionDir}/report`);
+  d.fs.write(`${sessionDir}/report/summary.md`, `${lines.join("\n")}\n`);
 }
 
 export function doctor(
