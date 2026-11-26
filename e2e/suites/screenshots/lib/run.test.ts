@@ -266,9 +266,13 @@ describe("runComparison ordering", () => {
     expect(noiseOut).toBeLessThan(switchAfter);
     expect(switchAfter).toBeLessThan(afterOut);
 
-    // One owned Metro per ref, both stopped.
+    // One owned Metro per ref, both stopped, each logging into the session dir.
     expect(f.spawns).toHaveLength(2);
     expect(f.spawns.every((s) => s.killed)).toBe(true);
+    expect(f.spawnOpts.map((o) => o?.logFile?.split("/").pop())).toEqual([
+      "metro-before.log",
+      "metro-after.log",
+    ]);
 
     // compare runs from the snapshot, before/noise/after wired together.
     const compare = execs(f, "compare.ts")[0].join(" ");

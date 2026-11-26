@@ -55,9 +55,12 @@ export class Fake implements Deps {
     return this.result(argv);
   }
 
-  spawn(argv: string[]): SpawnHandle {
+  spawnOpts: (Parameters<Deps["spawn"]>[1] | undefined)[] = [];
+
+  spawn(argv: string[], opts?: Parameters<Deps["spawn"]>[1]): SpawnHandle {
     const handle = new FakeSpawn(argv);
     this.spawns.push(handle);
+    this.spawnOpts.push(opts);
     return handle;
   }
 

@@ -410,6 +410,7 @@ jobs:
             e2e/reports/shots/ci-${{ matrix.platform }}/noise/
             e2e/reports/shots/ci-${{ matrix.platform }}/after/
             e2e/reports/shots/ci-${{ matrix.platform }}/*-failed-*/
+            e2e/reports/shots/ci-${{ matrix.platform }}/metro-*.log
           if-no-files-found: ignore
           retention-days: 7
 
@@ -660,6 +661,7 @@ jobs:
             e2e/reports/shots/ci-${{ matrix.platform }}/noise/
             e2e/reports/shots/ci-${{ matrix.platform }}/after/
             e2e/reports/shots/ci-${{ matrix.platform }}/*-failed-*/
+            e2e/reports/shots/ci-${{ matrix.platform }}/metro-*.log
           if-no-files-found: ignore
           retention-days: 7
 
