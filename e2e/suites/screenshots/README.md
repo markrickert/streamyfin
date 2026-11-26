@@ -30,6 +30,13 @@ The `plan` job validates `platforms` and skips a job whose matrix is empty.
 - `android`, `android-tv` run on `ubuntu-26.04` with KVM, the Docker fixture and
   `reactivecircus/android-emulator-runner` (API 34 `x86_64`; `tv_1080p` for TV). Teardown
   falls back to `sudo rm -rf` on `e2e/suites/syncplay/.state` for root-owned Docker files.
+- Both comparison jobs restore the enriched fixture from Actions cache at
+  `e2e/suites/syncplay/.state`, minus `seerr/` (its container uid cannot survive a
+  round trip; `seerr.ensure_ready` re-onboards it), `logs/` and `*.pid`. The key is
+  `<os>-<arch>-syncplay-state-v1-<ISO week>-<hash of fixture inputs>`: the week rolls
+  it weekly so plugin and TMDB data do not freeze, and the input hash rolls it on
+  seed/enrich changes. On a miss `doctor --fix` warms the fixture, the servers come
+  down for a consistent save, and the state uploads under the same key.
 
 Dev clients are shared as artifacts named `shots-dev-client-<platform>-<hash>` (a tar, to
 keep `.app` permissions and symlinks) and expire after 30 days. The fetch hook accepts only
