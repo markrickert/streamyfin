@@ -3,9 +3,8 @@
 # en-US). Needs the session that bootstrap-login-mobile.yml leaves behind, so no
 # clearState here. Never play an item: the fixture account's history must stay frozen.
 # Screenshot names are the pairing key for compare.ts, so keep them stable.
-# waitForAnimationToEnd returns at once when nothing animates, so it cannot wait for
-# content: wait on visible text, or settle for a fixed time where a screen has none (an
-# optional wait for a string that is never shown is a sleep).
+# Flows wait on visible content first, then waitForAnimationToEnd with a bounded
+# timeout so images, fades and keyboards can settle before the shot.
 # iOS labels a row with its icon glyphs around the text ("<glyph>, Settings, <glyph>"),
 # and the selector matches the whole label, so rows are matched with .*text.*.
 # Each section starts with a relaunch instead of a back press: `back` is Android only, and
@@ -56,37 +55,29 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Playback & controls.*"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 1500
-    optional: true
 - takeScreenshot: 05-settings
 
 - runFlow: _relaunch-home-mobile.yml
 - runFlow: _tap-more.yml
 - tapOn: ".*Sessions.*"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 06-sessions
 
 - runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 8000
-    optional: true
 - takeScreenshot: 07-library-movies
 
 - runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Music.*"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 8000
-    optional: true
 - takeScreenshot: 08-library-music
 
 # Item details: The Blacksmith in the Movies library. The seed drops a fixed file named
@@ -107,10 +98,8 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Blacksmith.*"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 5000
-    optional: true
 - takeScreenshot: 09-item-details
 
 # The library filter sheet: the Movies library's Genres chip opens a bottom sheet over
@@ -170,10 +159,8 @@ appId: ${MAESTRO_APP_ID}
       - extendedWaitUntil:
           visible: ".* items"
           timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 5000
-    optional: true
 - takeScreenshot: 14-library-filter-sheet
 - swipe:
     direction: DOWN
@@ -195,8 +182,6 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Season.*|.*Pilot.*"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 5000
-    optional: true
 - takeScreenshot: 15-series-details

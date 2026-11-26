@@ -9,11 +9,7 @@ appId: ${MAESTRO_APP_ID}
 - retry:
     maxRetries: 1
     commands:
-      - launchApp
-      - runFlow: _dismiss-dev-overlays.yml
-      - extendedWaitUntil:
-          visible: ".*Recently added.*"
-          timeout: 60000
+      - runFlow: _relaunch-home-tv.yml
       - runFlow: _focus-home-tab.yml
       - pressKey: Remote Dpad Right
       - runFlow:
@@ -77,10 +73,8 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: "Annie Oakley.*"
     timeout: 60000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 10-seerr-discover
 
 # tvOS drops taps, so the D-pad reaches the field. Android TV taps the field by its
@@ -106,10 +100,8 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: "1931"
     timeout: 60000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 11-seerr-search
 
 # A relayout can pull focus to the tab bar before Center lands; retry the pick.
@@ -121,8 +113,6 @@ appId: ${MAESTRO_APP_ID}
           visible: "Request"
           timeout: 20000
 - assertVisible: "1931"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 12-seerr-detail

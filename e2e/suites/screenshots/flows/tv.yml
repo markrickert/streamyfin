@@ -6,29 +6,9 @@
 # Screenshot names are the pairing key for compare.ts, so keep them stable.
 appId: ${MAESTRO_APP_ID}
 ---
-# A relaunch can return to Expo's server picker on hosted tvOS. The guarded helper
-# reopens Metro's dev-client link before Home is asserted.
-- launchApp
-- runFlow: _dismiss-dev-overlays.yml
-# Google TV can put its first-run Shop dialog over any relaunch.
-- extendedWaitUntil:
-    visible: ".*Recently added.*|Buy and rent movies on your TV"
-    timeout: 60000
-- runFlow:
-    when:
-      visible: "Buy and rent movies on your TV"
-      true: ${MAESTRO_TVOS != '1'}
-    commands:
-      - tapOn: "Dismiss"
-      - launchApp
-      - runFlow: _dismiss-dev-overlays.yml
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
-- extendedWaitUntil:
-    visible: "__settle__"
+- runFlow: _relaunch-home-tv.yml
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - runFlow: _focus-home-tab.yml
 - takeScreenshot: 01-home
 
@@ -43,10 +23,8 @@ appId: ${MAESTRO_APP_ID}
       true: ${MAESTRO_TVOS != '1'}
     commands:
       - pressKey: Remote Dpad Center
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 4000
-          optional: true
 - takeScreenshot: 02-search
 - runFlow:
     when:
@@ -68,10 +46,8 @@ appId: ${MAESTRO_APP_ID}
       true: ${MAESTRO_TVOS != '1'}
     commands:
       - pressKey: Remote Dpad Center
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 4000
-          optional: true
 - takeScreenshot: 03-favorites
 - runFlow:
     when:
@@ -100,10 +76,8 @@ appId: ${MAESTRO_APP_ID}
     when:
       true: ${MAESTRO_TVOS != '1'}
     commands:
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 5000
-          optional: true
 - takeScreenshot: 04-library
 # Use this loaded Library tab directly. Returning from Settings can leave native
 # tab focus unsettled before Movies is selected (docs/conventions/tv.md).
@@ -133,10 +107,8 @@ appId: ${MAESTRO_APP_ID}
         focused: true
     commands:
       - pressKey: Remote Dpad Down
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 1000
-          optional: true
 - repeat:
     times: 6
     while:
@@ -145,10 +117,8 @@ appId: ${MAESTRO_APP_ID}
         focused: true
     commands:
       - pressKey: Remote Dpad Right
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 1000
-          optional: true
 - assertVisible:
     text: ".*Filters.*"
     focused: true
@@ -158,10 +128,8 @@ appId: ${MAESTRO_APP_ID}
     timeout: 10000
 # The Genres focus tile and Filters button animate after the sheet appears;
 # settle focus before capture (docs/tv-focus-guide.md).
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 2000
-    optional: true
 - takeScreenshot: 08-library-filters
 - runFlow:
     when:
@@ -176,23 +144,7 @@ appId: ${MAESTRO_APP_ID}
       - pressKey: Back
       - pressKey: Back
 
-- launchApp
-- runFlow: _dismiss-dev-overlays.yml
-# Google TV can put its first-run Shop dialog over any relaunch.
-- extendedWaitUntil:
-    visible: ".*Recently added.*|Buy and rent movies on your TV"
-    timeout: 60000
-- runFlow:
-    when:
-      visible: "Buy and rent movies on your TV"
-      true: ${MAESTRO_TVOS != '1'}
-    commands:
-      - tapOn: "Dismiss"
-      - launchApp
-      - runFlow: _dismiss-dev-overlays.yml
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-tv.yml
 - runFlow: _focus-home-tab.yml
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
@@ -208,21 +160,15 @@ appId: ${MAESTRO_APP_ID}
       true: ${MAESTRO_TVOS != '1'}
     commands:
       - pressKey: Remote Dpad Center
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 4000
-          optional: true
 - takeScreenshot: 05-settings
 - pressKey: Remote Dpad Down
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 1500
-    optional: true
 - pressKey: Remote Dpad Down
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 1500
-    optional: true
 - assertVisible:
     text: ".*Inactivity timeout.*"
     focused: true
@@ -230,10 +176,8 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: "24 hours"
     timeout: 10000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 2000
-    optional: true
 - takeScreenshot: 07-settings-modal
 - runFlow:
     when:
@@ -246,24 +190,7 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - pressKey: Back
 
-- launchApp
-- runFlow: _dismiss-dev-overlays.yml
-# Google TV can put its first-run Shop dialog over a relaunch after Settings.
-# Dismiss only that OS dialog, then start the app again before the Shows capture.
-- extendedWaitUntil:
-    visible: ".*Recently added.*|Buy and rent movies on your TV"
-    timeout: 60000
-- runFlow:
-    when:
-      visible: "Buy and rent movies on your TV"
-      true: ${MAESTRO_TVOS != '1'}
-    commands:
-      - tapOn: "Dismiss"
-      - launchApp
-      - runFlow: _dismiss-dev-overlays.yml
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-tv.yml
 - runFlow: _focus-home-tab.yml
 - pressKey: Remote Dpad Right
 - pressKey: Remote Dpad Right
@@ -282,10 +209,8 @@ appId: ${MAESTRO_APP_ID}
     visible: ".*Shows.*"
     timeout: 15000
 - pressKey: Remote Dpad Down
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 1000
-    optional: true
 - pressKey: Remote Dpad Down
 - assertVisible:
     text: ".*Shows.*"
@@ -309,10 +234,8 @@ appId: ${MAESTRO_APP_ID}
         below: ".*Filters.*"
     commands:
       - pressKey: Remote Dpad Right
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 1000
-          optional: true
 # On hosted tvOS the last Right may still be on Filters. Only then enter the
 # grid with Down; the card must be below Filters (docs/tv-focus-guide.md).
 - runFlow:
@@ -331,8 +254,6 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Season.*|.*Pilot.*"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 4000
-    optional: true
 - takeScreenshot: 09-series-details

@@ -79,6 +79,7 @@ export async function startMetro(
   spec: PlatformSpec,
   port: number,
   logFile: string,
+  clear: boolean,
 ): Promise<SpawnHandle> {
   // TOCTOU: the preflight check ran minutes ago; re-verify immediately before bind so
   // a foreign Metro that grabbed the port meanwhile aborts the run instead of being
@@ -93,7 +94,7 @@ export async function startMetro(
       "--dev-client",
       "--port",
       String(port),
-      "--clear",
+      ...(clear ? ["--clear"] : []),
     ],
     {
       cwd: repo,
@@ -125,6 +126,10 @@ export async function startMetro(
   return metro;
 }
 
+// The pinned plexinc/Maestro fork reads MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS in
+// Orchestra.kt: the ceiling for each absent `when: visible` or `optional` lookup.
+const OPTIONAL_LOOKUP_TIMEOUT_MS = "3000";
+
 export function runCapture(
   d: Deps,
   tooling: string,
@@ -133,6 +138,7 @@ export function runCapture(
   outDir: string,
   env: Record<string, string>,
   maestro: string,
+  reinstallDriver: boolean,
 ): void {
   // One parent flow per pass: a failing nested flow then aborts the whole pass, and the
   // capture order lives in the YAML next to the flows it sequences, not in two places.
@@ -151,6 +157,7 @@ export function runCapture(
     "--maestro",
     maestro,
   ];
+  if (!reinstallDriver) argv.push("--no-reinstall-driver");
   if (spec.maestroPlatform) argv.push("--platform", spec.maestroPlatform);
   argv.push(
     "--env",
@@ -160,8 +167,11 @@ export function runCapture(
     argv.push("--env", `${key}=${value}`);
   // The env map reaches maestro.py through argv; it is never printed by this runner,
   // and a failing flow's stderr is stripped of credentials before it is thrown.
-  mustSanitized(d.exec(argv), `flow ${flow}`, [
-    env.MAESTRO_JELLYFIN_PASS,
-    env.MAESTRO_SEERR_PASS,
-  ]);
+  mustSanitized(
+    d.exec(argv, {
+      env: { MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS: OPTIONAL_LOOKUP_TIMEOUT_MS },
+    }),
+    `flow ${flow}`,
+    [env.MAESTRO_JELLYFIN_PASS, env.MAESTRO_SEERR_PASS],
+  );
 }

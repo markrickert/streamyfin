@@ -39,6 +39,16 @@ class BuildCommandTests(unittest.TestCase):
             ["/opt/maestro", "test", "flow.yml"],
         )
 
+    def test_build_command_with_no_reinstall_driver(self):
+        command = build_command(
+            Path("flow.yml"), device=None, env={}, maestro=Path("/opt/maestro"), no_reinstall_driver=True
+        )
+        self.assertEqual(command, ["/opt/maestro", "test", "--no-reinstall-driver", "flow.yml"])
+        self.assertEqual(
+            build_command(Path("flow.yml"), device=None, env={}, maestro=Path("/opt/maestro")),
+            ["/opt/maestro", "test", "flow.yml"],
+        )
+
     def test_build_command_with_platform_and_a_pinned_binary(self):
         command = build_command(
             Path("flow.yml"), device="UDID", env={}, maestro=Path("/tools/maestro-tvos"), platform="tvos"
@@ -173,6 +183,12 @@ class DeviceChoiceTests(unittest.TestCase):
         run.assert_not_called()
         self.assertIn("R58M12ABCDE", errors.getvalue())
         self.assertIn("xcrun simctl", errors.getvalue())
+
+    def test_main_forwards_no_reinstall_driver_after_test(self):
+        with mock.patch("bench.maestro.run_flow", return_value=0) as run, redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["--flow", "f.yml", "--device", "emulator-5554", "--no-reinstall-driver"]), 0)
+        command = run.call_args[0][0]
+        self.assertEqual(command[command.index("test") + 1], "--no-reinstall-driver")
 
     def test_a_named_device_is_used_without_looking(self):
         with mock.patch("bench.maestro.discover") as discover, mock.patch("bench.maestro.run_flow", return_value=0) as run, redirect_stdout(io.StringIO()):

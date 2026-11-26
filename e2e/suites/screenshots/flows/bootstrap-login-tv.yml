@@ -36,10 +36,8 @@ appId: ${MAESTRO_APP_ID}
           timeout: 3000
           optional: true
 - assertVisible: ".*Add server"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 3000
-    optional: true
 - takeScreenshot: 00-login
 
 - pressKey: Remote Dpad Center

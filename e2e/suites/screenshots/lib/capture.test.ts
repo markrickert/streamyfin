@@ -4,6 +4,7 @@ import {
   Fake,
   FakeSpawn,
   happyRoutes,
+  ok,
   REPO,
   runCli,
   seed,
@@ -93,6 +94,33 @@ describe("Metro port TOCTOU and liveness", () => {
     }
   });
 
+  // Metro's cache keys on file content and transformer config; only a babel config,
+  // metro config or lockfile change between refs needs Expo's --clear.
+  it("clears Metro's cache on the first ref and on a later ref whose transform inputs differ", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    expect(f.spawns).toHaveLength(2);
+    for (const spawn of f.spawns) expect(spawn.argv).toContain("--clear");
+    const diffs = execs(f, "git diff --quiet");
+    expect(diffs).toHaveLength(1);
+    expect(diffs[0].join(" ")).toContain(
+      "git diff --quiet sha-before sha-after -- babel.config.js metro.config.js bun.lock",
+    );
+  });
+
+  it("skips --clear on a later ref whose transform inputs are unchanged", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes.push(["git diff --quiet sha-before sha-after", ok]);
+    await runComparison(f, runCli, REPO);
+    expect(f.spawns).toHaveLength(2);
+    expect(f.spawns[0].argv).toContain("--clear");
+    expect(f.spawns[1].argv).not.toContain("--clear");
+  });
+
   it("fails before captures when its Metro dies but a foreign packager satisfies /status", async () => {
     const f = new Fake();
     seed(f);
@@ -179,6 +207,23 @@ describe("pass timeout configuration", () => {
       expect(idx).toBeGreaterThan(-1);
       expect(argv[idx + 1]).toBe("2700");
     }
+  });
+
+  // The fork's Orchestra.kt reads MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS; absent-element
+  // `when: visible` and `optional` guards each wait at most this long.
+  it("caps Maestro's absent-element lookup through the fork's env override on every pass", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const passIndices = f.execLog.flatMap((argv, index) =>
+      argv.join(" ").includes("maestro.py") ? [index] : [],
+    );
+    expect(passIndices.length).toBeGreaterThan(0);
+    for (const index of passIndices)
+      expect(f.execOpts[index]?.env?.MAESTRO_OPTIONAL_LOOKUP_TIMEOUT_MS).toBe(
+        "3000",
+      );
   });
 
   it.each(["0", "-5", "abc", "Infinity"])(

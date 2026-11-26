@@ -8,11 +8,7 @@
 # Run: e2e/suites/screenshots/run.sh bootstrap-seerr-tv <out dir> [device]
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-- runFlow: _dismiss-dev-overlays.yml
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-tv.yml
 - runFlow: _focus-home-tab.yml
 - pressKey: Remote Dpad Right
 - runFlow:
