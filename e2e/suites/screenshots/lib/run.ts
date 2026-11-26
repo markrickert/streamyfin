@@ -72,6 +72,9 @@ export function setInterruptCleanup(fn: (() => void) | undefined): void {
   interruptCleanup = fn;
 }
 
+// A cold Metro cache on the 3-core macOS runner has taken over 300 s for the first iOS bundle.
+const METRO_BUNDLE_TIMEOUT_MS = 600_000;
+
 /**
  * Exact bundle URL that expo-dev-launcher requests from Metro's manifest
  * (`ManifestMiddleware._getBundleUrl` / `createBundleUrlPath` in `@expo/cli`). Warming
@@ -271,15 +274,20 @@ export async function runComparison(
         // Prove this Metro serves the checked-out ref's JS — /status alone says only
         // that a packager answers. A compile error in the switched ref fails here,
         // before any screenshot is taken.
+        const bundleStart = Date.now();
         const bundled = await d.waitFor(
           metroBundleUrl(spec.fingerprintPlatform, port),
           "__BUNDLE_START_TIME__",
-          300_000,
+          METRO_BUNDLE_TIMEOUT_MS,
         );
+        const bundleElapsed = Date.now() - bundleStart;
         if (!bundled)
           throw new ShotError(
-            `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref`,
+            `Metro on ${port} is up but did not bundle ${spec.fingerprintPlatform} JS for the switched ref in ${formatElapsed(bundleElapsed)}`,
           );
+        d.log(
+          `Metro bundled ${spec.fingerprintPlatform} JS in ${formatElapsed(bundleElapsed)}`,
+        );
         for (const capture of ref.captures) {
           d.log(`capturing ${capture}`);
           const outDir = `${sessionDir}/${capture}`;
