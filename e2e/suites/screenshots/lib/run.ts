@@ -17,6 +17,7 @@ import { platformSpec } from "./cli";
 import {
   type Cli,
   type Deps,
+  formatElapsed,
   must,
   type Platform,
   ShotError,
@@ -86,12 +87,6 @@ export function metroBundleUrl(
   port: number,
 ): string {
   return `http://127.0.0.1:${port}/index.ts.bundle?platform=${platform}&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable`;
-}
-
-function formatElapsed(ms: number): string {
-  const totalSec = Math.max(0, Math.round(ms / 1000));
-  if (totalSec < 60) return `${totalSec}s`;
-  return `${Math.floor(totalSec / 60)}m${totalSec % 60}s`;
 }
 
 /**

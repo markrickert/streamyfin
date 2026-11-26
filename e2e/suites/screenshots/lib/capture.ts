@@ -1,6 +1,7 @@
 import { type PlatformSpec } from "./cli";
 import {
   type Deps,
+  formatElapsed,
   hostFor,
   must,
   mustSanitized,
@@ -69,6 +70,9 @@ export function launchDevClient(
     );
 }
 
+/** Expo CLI's startup network calls have stalled past 120 s on the macOS CI runner. */
+const METRO_STATUS_TIMEOUT_MS = 300_000;
+
 export async function startMetro(
   d: Deps,
   repo: string,
@@ -79,6 +83,7 @@ export async function startMetro(
   // TOCTOU: the preflight check ran minutes ago; re-verify immediately before bind so
   // a foreign Metro that grabbed the port meanwhile aborts the run instead of being
   // adopted as ours. EXPO_NO_INTERACTIVE keeps Expo from auto-hopping to a free port.
+  // The runner needs no Expo network calls, and they have stalled Metro's start on CI.
   ensurePortFree(d, port);
   const metro = d.spawn(
     [
@@ -92,23 +97,31 @@ export async function startMetro(
     ],
     {
       cwd: repo,
-      env: { EXPO_TV: spec.tv ? "1" : "0", EXPO_NO_INTERACTIVE: "1" },
+      env: {
+        EXPO_TV: spec.tv ? "1" : "0",
+        EXPO_NO_INTERACTIVE: "1",
+        EXPO_OFFLINE: "1",
+        EXPO_NO_TELEMETRY: "1",
+      },
       logFile,
     },
   );
+  const statusStart = Date.now();
   const up = await d.waitFor(
     `http://127.0.0.1:${port}/status`,
     "packager-status:running",
-    120_000,
+    METRO_STATUS_TIMEOUT_MS,
   );
+  const statusElapsed = Date.now() - statusStart;
   // /status answering while OUR child is dead means a foreign packager satisfied the
   // probe — never treat it as ours.
   if (!up || !metro.isAlive()) {
     metro.kill();
     throw new ShotError(
-      `Metro did not report packager-status:running on port ${port}`,
+      `Metro did not report packager-status:running on port ${port} in ${formatElapsed(statusElapsed)}`,
     );
   }
+  d.log(`Metro up in ${formatElapsed(statusElapsed)}`);
   return metro;
 }
 
