@@ -273,6 +273,12 @@ describe("runComparison ordering", () => {
       "metro-before.log",
       "metro-after.log",
     ]);
+    // Each first bundle logs how long it took.
+    expect(
+      f.logs.filter((line) =>
+        /^Metro bundled android JS in (\d+s|\d+m\d+s)$/.test(line),
+      ),
+    ).toHaveLength(2);
 
     // compare runs from the snapshot, before/noise/after wired together.
     const compare = execs(f, "compare.ts")[0].join(" ");
@@ -927,6 +933,7 @@ describe("runComparison progress", () => {
       ),
       "installing",
       "starting Metro",
+      expect.stringMatching(/^Metro bundled android JS in \d+(?:m\d+)?s$/),
       "capturing before",
       "capturing noise",
       "building after (android, fingerprint abcdef01)",
@@ -935,6 +942,7 @@ describe("runComparison progress", () => {
       ),
       "installing",
       "starting Metro",
+      expect.stringMatching(/^Metro bundled android JS in \d+(?:m\d+)?s$/),
       "capturing after",
       "comparing",
     ]);
