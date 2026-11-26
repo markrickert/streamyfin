@@ -145,14 +145,63 @@ class CreateSimulatorTest(unittest.TestCase):
             calls = json.loads(calls_file.read_text())
             self.assertEqual(calls[1][3], "type.iphone19")
 
+    def test_ios_skips_a_device_specific_runtime_without_a_base_iphone(self):
+        # Runners can carry a device-specific runtime (iOS-27-2-iPhone19-4) that sorts
+        # newest but only offers "iPhone Duo"; the regular runtime must be tried next.
+        payload = {
+            "runtimes": [
+                {
+                    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2-iPhone19-4",
+                    "version": "27.2",
+                    "isAvailable": True,
+                    "supportedDeviceTypes": [
+                        {"name": "iPhone Duo", "identifier": "type.iphoneduo"},
+                    ],
+                },
+                {
+                    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+                    "platform": "iOS",
+                    "version": "27.2",
+                    "isAvailable": True,
+                    "supportedDeviceTypes": [
+                        {"name": "iPhone 16", "identifier": "type.iphone16"},
+                    ],
+                },
+            ]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, calls_file = install_fake_xcrun(Path(tmp), payload, "UDID-16")
+            res = run_create_simulator(bin_dir, "ios")
+            self.assertEqual(res.returncode, 0, res.stderr)
+            self.assertEqual(res.stdout.strip(), "UDID-16")
+            calls = json.loads(calls_file.read_text())
+            self.assertEqual(
+                calls[1],
+                [
+                    "simctl",
+                    "create",
+                    "e2e-screenshots-ios",
+                    "type.iphone16",
+                    "com.apple.CoreSimulator.SimRuntime.iOS-27-2",
+                ],
+            )
+
     def test_ios_fails_when_only_non_base_iphones_are_available(self):
         payload = {
             "runtimes": [
                 {
+                    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2-iPhone19-4",
+                    "version": "27.2",
+                    "isAvailable": True,
+                    "supportedDeviceTypes": [
+                        {"name": "iPhone Duo", "identifier": "type.iphoneduo"},
+                    ],
+                },
+                {
                     "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-2",
                     "version": "18.2",
                     "isAvailable": True,
-                }
+                },
             ],
             "devicetypes": [
                 {"name": "iPad Pro", "identifier": "type.ipad"},
@@ -165,8 +214,11 @@ class CreateSimulatorTest(unittest.TestCase):
             res = run_create_simulator(bin_dir, "ios")
             self.assertNotEqual(res.returncode, 0)
             self.assertEqual(res.stdout, "")
+            self.assertIn("iPhone Duo", res.stderr)
             self.assertIn("iPhone SE (3rd generation)", res.stderr)
             self.assertIn("iPhone 18 Pro Max", res.stderr)
+            self.assertIn("iOS-27-2-iPhone19-4", res.stderr)
+            self.assertIn("iOS-18-2", res.stderr)
 
     def test_apple_tv_prefers_4k_3rd_gen_on_newest_tvos_runtime(self):
         payload = {

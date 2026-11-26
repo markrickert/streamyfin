@@ -69,27 +69,35 @@ def select_runtime_and_device_type(data: dict, platform: str) -> tuple[str, dict
             f"No available {spec['runtime_platform']} simulator runtime found"
         )
     runtimes.sort(key=lambda r: version_key(r["version"]), reverse=True)
-    runtime = runtimes[0]
 
-    supported = runtime.get("supportedDeviceTypes") or data.get("devicetypes", [])
-    by_name = {d["name"]: d for d in supported}
-    device_type = next(
-        (by_name[name] for name in spec["preferred_models"] if name in by_name),
-        None,
-    )
-    if device_type is None:
-        device_type = spec["fallback"](supported, spec["name_needle"])
-    if device_type is None:
-        names = ", ".join(
+    # A device-specific runtime (iOS-27-2-iPhone19-4) can sort newest while only
+    # offering e.g. "iPhone Duo"; walk down until a runtime has an acceptable type.
+    tried = []
+    for runtime in runtimes:
+        supported = runtime.get("supportedDeviceTypes") or data.get(
+            "devicetypes", []
+        )
+        by_name = {d["name"]: d for d in supported}
+        device_type = next(
+            (
+                by_name[name]
+                for name in spec["preferred_models"]
+                if name in by_name
+            ),
+            None,
+        ) or spec["fallback"](supported, spec["name_needle"])
+        if device_type is not None:
+            return runtime["identifier"], device_type
+        names = [
             d["name"]
             for d in supported
             if spec["name_needle"] in d.get("name", "")
-        )
-        raise SystemExit(
-            f"No {spec['name_needle']} device type available for {runtime['identifier']} ({names or 'none'})"
-        )
+        ]
+        tried.append(f"{runtime['identifier']} ({', '.join(names) or 'none'})")
 
-    return runtime["identifier"], device_type
+    raise SystemExit(
+        f"No {spec['name_needle']} device type available on any runtime: {'; '.join(tried)}"
+    )
 
 
 def create_simulator(platform: str) -> str:
