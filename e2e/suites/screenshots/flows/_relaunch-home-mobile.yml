@@ -2,15 +2,20 @@
 # that comes back with no Metro URL lands on its server picker instead, so the first
 # wait accepts rendered content or a known overlay; either way, the 7 s window that
 # _dismiss-dev-overlays.yml's absent-element guards would each burn is mostly gone
-# by the time they run. The seeded catalog has no Continue Watching, so the wait is
-# on the "Recently added in Movies" row e2e:seed creates.
+# by the time they run. A launch that stays on the splash screen through the wait is
+# retried once: retry re-runs launchApp, which stops and starts the app again. The
+# seeded catalog has no Continue Watching, so the wait is on the "Recently added in
+# Movies" row e2e:seed creates.
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*|Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually|.*isn't responding.*|Open in .*"
-    timeout: 60000
-- runFlow: _dismiss-dev-overlays.yml
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- retry:
+    maxRetries: 1
+    commands:
+      - launchApp
+      - extendedWaitUntil:
+          visible: ".*Recently added.*|Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually|.*isn't responding.*|Open in .*"
+          timeout: 60000
+      - runFlow: _dismiss-dev-overlays.yml
+      - extendedWaitUntil:
+          visible: ".*Recently added.*"
+          timeout: 60000
