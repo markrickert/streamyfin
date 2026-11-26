@@ -113,7 +113,7 @@ async function main() {
   cli.before = resolveBaseRef(cli.before);
   if (cli.command === "build") {
     console.log(
-      `Building ${cli.platform} dev clients at ${cli.before} and ${cli.after}.`,
+      `Building native builds for ${cli.platform} at ${cli.before} and ${cli.after}.`,
     );
     const report = buildNative(deps, cli, repo);
     console.log(

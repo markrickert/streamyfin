@@ -156,6 +156,25 @@ describe("runComparison preflight", () => {
     await expect(runComparison(f, runCli, REPO)).rejects.toThrow(ShotError);
     expect(execs(f, "git switch")).toHaveLength(0);
   });
+
+  it("compares before and after when both refs resolve to the same commit", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    f.routes = f.routes.filter(
+      ([needle]) => needle !== "rev-parse --verify feat/x^{commit}",
+    );
+    f.routes.push([
+      "rev-parse --verify feat/x^{commit}",
+      { code: 0, stdout: "sha-before\n", stderr: "" },
+    ]);
+
+    await expect(runComparison(f, runCli, REPO)).resolves.toMatchObject({
+      beforeSha: "sha-before",
+      afterSha: "sha-before",
+    });
+    expect(execs(f, "compare.ts")).toHaveLength(1);
+  });
 });
 
 describe("runComparison restore", () => {

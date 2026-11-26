@@ -50,8 +50,8 @@ function stepFrom(
   let step: FailedStep | undefined;
   for (const entry of entries) {
     const depth = entry.metadata?.depth ?? 0;
-    for (const d of [...flowAtDepth.keys()])
-      if (d > depth) flowAtDepth.delete(d);
+    for (const level of [...flowAtDepth.keys()])
+      if (level > depth) flowAtDepth.delete(level);
     const command = entry.command ?? {};
     const name = Object.keys(command)[0] ?? "";
     if (name === "runFlowCommand") {
@@ -75,9 +75,9 @@ function stepFrom(
     };
     const message = entry.metadata.error?.message;
     step = {
-      flows: Array.from({ length: depth }, (_, d) => flowAtDepth.get(d)).filter(
-        (flow): flow is string => flow !== undefined,
-      ),
+      flows: Array.from({ length: depth }, (_, level) =>
+        flowAtDepth.get(level),
+      ).filter((flow): flow is string => flow !== undefined),
       command: name,
       message: typeof message === "string" ? message : "",
       screenshot: artifact("SCREENSHOT"),

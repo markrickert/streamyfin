@@ -45,8 +45,6 @@ export function preflight(
     }),
     `git rev-parse ${cli.after}`,
   );
-  if (beforeSha === afterSha)
-    throw new ShotError("--before and --after resolve to the same commit");
   return { beforeSha, afterSha, start: gitStart(d, repo) };
 }
 

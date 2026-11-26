@@ -86,7 +86,7 @@ the cached client — with no device, fixture, Maestro or Metro, and writes the 
 device to ask) and ignored for Apple platforms. CI's `<x>-native` jobs use it; locally it
 warms `e2e/reports/shots/build-cache` for a later `run`.
 
-`run` refuses a dirty tree, identical refs, a physical device or a busy port, then:
+`run` refuses a dirty tree, a physical device or a busy port, then:
 
 1. Snapshots the tooling (flows, `run.sh`, `compare.ts`, masks, `e2e/bench/maestro.py`)
    into the gitignored `e2e/reports/shots/<session>/tooling`, so the checked-out ref cannot
