@@ -57,9 +57,18 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: "Continue"
       - waitForAnimationToEnd
+# The dev client's load-error screen is a timed-out bundle request; reopening the
+# runner's link retries it, and the callers' loops wait for the result.
+- runFlow:
+    when:
+      visible: "There was a problem loading the project.*"
+    commands:
+      - openLink: ${MAESTRO_DEV_CLIENT_URL}
+      - waitForAnimationToEnd
 - runFlow:
     when:
       visible: "Go home"
+      notVisible: "There was a problem loading the project.*"
     commands:
       # "Go home" shows while the sheet still slides up; its ✕ (accessibility label
       # "Close") is not hittable until the sheet settles.
