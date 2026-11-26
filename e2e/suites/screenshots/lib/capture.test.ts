@@ -79,6 +79,20 @@ describe("Metro port TOCTOU and liveness", () => {
     expect(f.spawns).toHaveLength(0);
   });
 
+  it("starts Metro offline, without telemetry or interactive port-hopping", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    for (const opts of f.spawnOpts) {
+      expect(opts?.env).toMatchObject({
+        EXPO_NO_INTERACTIVE: "1",
+        EXPO_OFFLINE: "1",
+        EXPO_NO_TELEMETRY: "1",
+      });
+    }
+  });
+
   it("fails before captures when its Metro dies but a foreign packager satisfies /status", async () => {
     const f = new Fake();
     seed(f);
