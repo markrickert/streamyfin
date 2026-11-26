@@ -689,7 +689,7 @@ describe("bootstrap-login first-run overlays", () => {
   // tapOn).
   it("closes a hung Pixel Launcher, waits out other ANRs, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
-    expect(cmds).toHaveLength(7);
+    expect(cmds).toHaveLength(8);
     expect(cmds[0].runFlow.when.visible).toBe(
       "Pixel Launcher isn't responding",
     );
@@ -739,8 +739,21 @@ describe("bootstrap-login first-run overlays", () => {
       { tapOn: "Continue" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[6].runFlow.when.visible).toBe("Go home");
+    // The load-error screen's "Go home" must never reach the dev-menu step below,
+    // which waits on a "Close" that screen does not have.
+    expect(cmds[6].runFlow.when.visible).toBe(
+      "There was a problem loading the project.*",
+    );
     expect(cmds[6].runFlow.commands).toEqual([
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro's own placeholder, read verbatim from the YAML
+      { openLink: "${MAESTRO_DEV_CLIENT_URL}" },
+      "waitForAnimationToEnd",
+    ]);
+    expect(cmds[7].runFlow.when).toEqual({
+      visible: "Go home",
+      notVisible: "There was a problem loading the project.*",
+    });
+    expect(cmds[7].runFlow.commands).toEqual([
       { extendedWaitUntil: { visible: "Close", timeout: 10000 } },
       { tapOn: "Close" },
       "waitForAnimationToEnd",
