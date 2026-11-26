@@ -16,6 +16,7 @@ Maestro flows under `e2e/suites/*/flows/` select UI elements by `id:`. Each `id:
 | `login-connect` | `components/login/Login.tsx` | `cast` (`smoke-launch.yml`), `screenshots` (`bootstrap-login-mobile.yml`) |
 | `login-server-url` | `components/login/Login.tsx` | `cast` (`smoke-launch.yml`), `screenshots` (`bootstrap-login-mobile.yml`) |
 | `more-tab` | `app/(auth)/(tabs)/_layout.tsx` | `screenshots` (`_tap-more.yml`) |
+| `seerr-backdrop-ready` | `components/seerr/tv/TVSeerrPage.tsx` | `screenshots` (`seerr-tv.yml`) |
 | `seerr-poster-<id>` | `components/posters/SeerrPoster.tsx` | `screenshots` (`seerr-mobile.yml`) |
 | `seerr-server-url` | `components/settings/Seerr.tsx` | `screenshots` (`bootstrap-seerr-mobile.yml`) |
 | `tv-nav-home` | `components/tv/TVNavBar.tsx` | `screenshots` (`_focus-home-tab.yml`, `_assert-tab-focused.yml`) |
