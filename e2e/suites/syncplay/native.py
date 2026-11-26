@@ -357,3 +357,8 @@ def down(owned):
 def restart_jellyfin(owned):
     stop("jellyfin")
     start_jellyfin(owned)
+
+
+def restart_seerr(owned):
+    stop("seerr")
+    start_seerr(owned)

@@ -162,7 +162,8 @@ This command requires internet access; `setup.py` and `e2e:seed` do not.
 `streamyfin-syncplay-e2e-seerr` on `127.0.0.1:15055` (config in `.state/seerr/`); the
 native backend runs the same release there. `setup.py` onboards it against this
 checkout's Jellyfin (`seerr.ensure_ready`) and enables
-the `SyncPlay Fixtures` library. After `e2e:seed` and `e2e:enrich`, the screenshot
+the `SyncPlay Fixtures` library; a Seerr that never binds within 180 s is restarted
+once before `ensure_ready` fails. After `e2e:seed` and `e2e:enrich`, the screenshot
 runner calls `seerr.enable_catalog_libraries` to enable `Movies` and `Shows`
 (Seerr never syncs `Music`: its library sync excludes the music CollectionType), and
 `seerr.provision_client_access` to push `jellyseerrServerUrl`/`jellyseerrApiKey` into the

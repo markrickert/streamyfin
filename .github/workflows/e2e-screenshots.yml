@@ -665,6 +665,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: 📋 Dump fixture container logs
+        if: always()
+        run: |
+          # The Docker backend keeps server logs inside the containers, not in .state/logs.
+          mkdir -p e2e/suites/syncplay/.state/logs || true
+          for name in $(docker ps -a --filter "name=streamyfin-syncplay-e2e" --format '{{.Names}}'); do
+            docker logs "$name" > "e2e/suites/syncplay/.state/logs/$name.log" 2>&1 || true
+          done
+
       - name: 📤 Upload fixture logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
