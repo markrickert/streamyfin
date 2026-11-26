@@ -3,13 +3,9 @@
 # so the noise floor decides whether they count; "Iron Man" is a fixed title for the pages
 # below.
 # Read-only: nothing here may create a request, which would change the Seerr server.
-# The seeded catalog has no Continue Watching, so the wait is on the Recently added row.
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Search"
 - hideKeyboard:
     optional: true

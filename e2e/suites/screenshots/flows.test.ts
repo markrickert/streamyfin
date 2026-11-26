@@ -504,38 +504,53 @@ describe("capture pass parents", () => {
     expect(JSON.stringify(nonShopCmds)).not.toContain("tapOn");
   });
 
-  it("waits for rendered Home content after every relaunch in mobile.yml instead of the racy Home label", () => {
-    const cmds = commandsOf("mobile.yml");
-    const relaunches = cmds
-      .map((cmd, index) => ({ cmd, index }))
-      .filter(({ cmd }) => String(cmd) === "launchApp");
-    expect(relaunches.length).toBeGreaterThan(1);
-    for (const { index } of relaunches.slice(1)) {
-      expect(cmds[index + 1].extendedWaitUntil?.visible).toBe(
-        ".*Recently added.*",
-      );
-    }
-  });
-
+  // A dev client can come back from launchApp with no Metro URL and sit on its
+  // server picker; the helper re-opens the runner's link through
+  // _dismiss-dev-overlays.yml, so no phone flow may launch bare.
   it.each([
+    "mobile.yml",
+    "seerr-mobile.yml",
     "ensure-seerr-mobile.yml",
     "bootstrap-seerr-mobile.yml",
-    "seerr-mobile.yml",
-  ])(
-    "%s waits for rendered Home content after every launchApp instead of the racy Home label",
-    (file) => {
-      const cmds = commandsOf(file);
-      const launches = cmds.flatMap((cmd, index) =>
-        String(cmd) === "launchApp" ? [index] : [],
-      );
-      expect(launches.length).toBeGreaterThan(0);
-      for (const launch of launches) {
-        expect(cmds[launch + 1].extendedWaitUntil?.visible).toBe(
-          ".*Recently added.*",
-        );
-      }
-    },
-  );
+  ])("%s relaunches only through _relaunch-home-mobile.yml", (file) => {
+    const cmds = commandsOf(file);
+    expect(
+      cmds.filter(
+        (cmd) => String(cmd) === "launchApp" || cmd.launchApp !== undefined,
+      ),
+    ).toHaveLength(0);
+    expect(
+      cmds.filter((cmd) => cmd.runFlow === "_relaunch-home-mobile.yml").length,
+    ).toBeGreaterThan(0);
+  });
+
+  // The combined wait returns on rendered content or a known overlay, so the
+  // overlay helper's absent-element guards no longer each cost the 7 s optional
+  // lookup. Its picker labels are read from the helper so they cannot drift.
+  it("_relaunch-home-mobile.yml waits for content or a known overlay, dismisses it, then waits for content", () => {
+    const cmds = commandsOf("_relaunch-home-mobile.yml");
+    expect(cmds).toHaveLength(4);
+    expect(cmds[0]).toBe("launchApp");
+    expect(cmds[2]).toEqual({ runFlow: "_dismiss-dev-overlays.yml" });
+    expect(cmds[3]).toEqual({
+      extendedWaitUntil: { visible: ".*Recently added.*", timeout: 60000 },
+    });
+    const picker = commandsOf("_dismiss-dev-overlays.yml").find(
+      (cmd) =>
+        typeof cmd.runFlow?.when?.visible === "string" &&
+        cmd.runFlow.when.visible.includes("DEVELOPMENT SERVERS"),
+    )?.runFlow.when.visible;
+    expect(typeof picker).toBe("string");
+    expect(cmds[1].extendedWaitUntil).toEqual({
+      visible: [
+        ".*Recently added.*",
+        ...picker.split("|"),
+        ".*isn't responding.*",
+        "Open in .*",
+      ].join("|"),
+      timeout: 60000,
+    });
+  });
 
   // Focus selects Search on tvOS NativeTabs; Android TV's JS TVNavBar also needs Center.
   it("bootstrap-seerr-tv focuses Search by D-pad and presses Center on Android TV", () => {

@@ -10,19 +10,9 @@
 # and the selector matches the whole label, so rows are matched with .*text.*.
 # Each section starts with a relaunch instead of a back press: `back` is Android only, and
 # a fresh Home gives every section the same starting point.
-# The seeded catalog has no Continue Watching (the fixture account never plays), so the
-# wait is on the "Recently added in Movies" row e2e:seed creates instead.
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-- extendedWaitUntil:
-    visible: "Home"
-    timeout: 60000
-# "Home" is in the tab bar from the first frame, so wait for a row to prove the content
-# loaded: a shot taken earlier can be a blank frame.
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 # Let posters and the hero decode before the first frame.
 - waitForAnimationToEnd:
     timeout: 8000
@@ -72,12 +62,7 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 05-settings
 
-# "Home" can pass on a stale frame during relaunch; wait for a Home row so the tab bar
-# is live before tapping More or Library.
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - runFlow: _tap-more.yml
 - tapOn: ".*Sessions.*"
 - extendedWaitUntil:
@@ -86,10 +71,7 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 06-sessions
 
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
 - extendedWaitUntil:
@@ -98,10 +80,7 @@ appId: ${MAESTRO_APP_ID}
     optional: true
 - takeScreenshot: 07-library-movies
 
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Music.*"
 - extendedWaitUntil:
@@ -113,10 +92,7 @@ appId: ${MAESTRO_APP_ID}
 # Item details: The Blacksmith in the Movies library. The seed drops a fixed file named
 # for it, so the same title opens on every run — deterministic, unlike a card position
 # in a row that is empty on the fixture account.
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
 # The title sorts into the first rows. scrollUntilVisible swipes down as soon as its
@@ -144,10 +120,7 @@ appId: ${MAESTRO_APP_ID}
 # the count. The Blacksmith wait proves the page loaded; scrolling would hide the chip.
 # Nothing is selected, and the swipe dismisses the sheet before the next section.
 # Maestro's full text match needs a wildcard for the chip's merged iOS icon label.
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Movies.*"
 - extendedWaitUntil:
@@ -208,10 +181,7 @@ appId: ${MAESTRO_APP_ID}
 # Series details: the seeded "Show" series in the Shows library. iOS merges the
 # unplayed count before the title ("2, Show") and may append a year. The anchor
 # still rejects "Shows" (the library header). A series page plays nothing.
-- launchApp
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - tapOn: "Library"
 - tapOn: ".*Shows.*"
 - extendedWaitUntil:

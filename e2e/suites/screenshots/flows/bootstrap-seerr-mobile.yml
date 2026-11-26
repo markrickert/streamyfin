@@ -7,11 +7,7 @@
 # Run: e2e/suites/screenshots/run.sh bootstrap-seerr-mobile <out dir> [device]
 appId: ${MAESTRO_APP_ID}
 ---
-- launchApp
-# "Home" can match the stopped instance's tab bar; wait for a row the new one renders.
-- extendedWaitUntil:
-    visible: ".*Recently added.*"
-    timeout: 60000
+- runFlow: _relaunch-home-mobile.yml
 - runFlow: _tap-more.yml
 - tapOn: ".*Settings.*"
 - scrollUntilVisible:
