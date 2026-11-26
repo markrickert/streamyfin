@@ -42,10 +42,24 @@ export function fixtureEnv(
 }
 
 /** stderr's tail, where a traceback puts its exception; the … marks the cut. */
-const stderrTail = (stderr: string): string => {
+export const stderrTail = (stderr: string): string => {
   const trimmed = stderr.trim();
   return trimmed.length > 1500 ? `…${trimmed.slice(-1500)}` : trimmed;
 };
+
+/** Whether the Jellyfin fixture answers 200 on /health, probed from the host. */
+export function jellyfinHealthy(d: Deps, port: string): boolean {
+  const result = d.exec([
+    "curl",
+    "-fsS",
+    "-o",
+    "/dev/null",
+    "-w",
+    "%{http_code}",
+    `http://127.0.0.1:${port}/health`,
+  ]);
+  return result.stdout.trim() === "200";
+}
 
 export function ensureFixture(d: Deps, repo: string): void {
   for (const step of ["e2e:setup", "e2e:seed", "e2e:enrich"]) {
@@ -81,22 +95,13 @@ export function fixtureChecks(d: Deps, repo: string): string[] {
   const dotenv = fixtureDotenv(d, repo);
   const jellyfinPort = dotenv.SYNCPLAY_PORT ?? "18096";
   const seerrPort = dotenv.SYNCPLAY_SEERR_PORT ?? "15055";
-  const jellyfin = d.exec([
-    "curl",
-    "-fsS",
-    "-o",
-    "/dev/null",
-    "-w",
-    "%{http_code}",
-    `http://127.0.0.1:${jellyfinPort}/health`,
-  ]);
   const seerr = d.exec([
     "curl",
     "-fsS",
     `http://127.0.0.1:${seerrPort}/api/v1/settings/public`,
   ]);
   return [
-    jellyfin.stdout.trim() === "200"
+    jellyfinHealthy(d, jellyfinPort)
       ? "jellyfin fixture healthy"
       : `jellyfin fixture NOT reachable at :${jellyfinPort}`,
     seerr.code === 0 && seerr.stdout.includes('"initialized":true')

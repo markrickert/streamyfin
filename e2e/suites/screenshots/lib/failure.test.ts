@@ -4,22 +4,29 @@ import { Fake, REPO } from "./testing";
 const OUT = `${REPO}/e2e/reports/shots/session/before`;
 const FLOW_DIR = `${OUT}/pass-mobile`;
 
-/** A runFlowCommand entry; `sourceDescription` is absent on an inline `runFlow: {when: ...}`. */
-const runFlow = (
+/** A container command: runFlow or retry; `sourceDescription` is absent on an inline `runFlow: {when: ...}` and always on `retry`. */
+const container = (
+  name: string,
   seq: number,
   depth: number,
   sourceDescription?: string,
   status = "FAILED",
 ) => ({
   command: {
-    runFlowCommand: {
+    [name]: {
       ...(sourceDescription === undefined ? {} : { sourceDescription }),
-      commands: [],
-      config: {},
     },
   },
   metadata: { status, sequenceNumber: seq, depth },
 });
+
+/** A runFlowCommand entry; `sourceDescription` is absent on an inline `runFlow: {when: ...}`. */
+const runFlow = (
+  seq: number,
+  depth: number,
+  sourceDescription?: string,
+  status = "FAILED",
+) => container("runFlowCommand", seq, depth, sourceDescription, status);
 
 const leaf = (
   name: string,
@@ -41,8 +48,8 @@ const leaf = (
     sequenceNumber: seq,
     depth,
     ...(message === undefined ? {} : { error: { message } }),
+    ...(artifacts === undefined ? {} : { artifacts }),
   },
-  ...(artifacts === undefined ? {} : { artifacts }),
 });
 
 function commands(f: Fake, entries: unknown[], dir = FLOW_DIR) {
@@ -96,6 +103,31 @@ describe("failedStep", () => {
       flows: ["mobile.yml"],
       command: "assertVisible",
       message: "inside the inline runFlow",
+    });
+  });
+
+  it("treats retryCommand as a container: never the leaf, no chain entry", () => {
+    const f = new Fake();
+    commands(f, [
+      runFlow(10, 0, "mobile.yml"),
+      runFlow(20, 1, "_relaunch-home.yml"),
+      // The retry wraps the commands that failed; it fails too but holds no name
+      // and must not shadow the deeper leaf that came after it.
+      container("retryCommand", 30, 2),
+      leaf("assertConditionCommand", 40, 3, {
+        message: "Assertion is false",
+        artifacts: [
+          {
+            type: "SCREENSHOT",
+            path: "screenshots/step-041-assert.png",
+          },
+        ],
+      }),
+    ]);
+    expect(failedStep(f, OUT)).toMatchObject({
+      flows: ["mobile.yml", "_relaunch-home.yml"],
+      command: "assertConditionCommand",
+      screenshot: `${FLOW_DIR}/screenshots/step-041-assert.png`,
     });
   });
 

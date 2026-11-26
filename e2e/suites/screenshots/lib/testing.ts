@@ -198,6 +198,9 @@ export function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     ],
     ["lsof", { code: 1, stdout: "", stderr: "" }],
     ["git check-ignore", { code: 0, stdout: "", stderr: "" }],
+    // The pass-failure Jellyfin probe: healthy by default, so a plain pass failure
+    // throws without a fixture restart. Longer needles (e.g. ":18096/health") win.
+    ["/health", { code: 0, stdout: "200\n", stderr: "" }],
     ["bun run e2e:setup", ok],
     ["bun run e2e:seed", ok],
     ["bun run e2e:enrich", ok],

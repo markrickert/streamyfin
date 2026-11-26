@@ -578,6 +578,115 @@ describe("runComparison failure path", () => {
     );
   });
 
+  // Jellyfin can die mid-pass on a client's WebSocket close (upstream
+  // jellyfin/jellyfin#18053): the app then fails on "Server unreachable". The
+  // runner probes /health after a failed pass, restarts the fixture and retries
+  // once — the same per-pass budget the driver retry uses.
+  const probeAnswers = (f: Fake, answers: string[]) =>
+    f.routes.push([
+      ":18096/health",
+      () => ({ code: 0, stdout: answers.shift() ?? "200\n", stderr: "" }),
+    ]);
+
+  it("restarts a dead Jellyfin fixture and retries the failed pass once", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    let captures = 0;
+    f.routes.push([
+      "pass-mobile.yml",
+      () =>
+        ++captures === 1
+          ? { code: 1, stdout: "", stderr: "server unreachable" }
+          : ok,
+    ]);
+    probeAnswers(f, ["000\n", "200\n"]);
+    await runComparison(f, { ...runCli, outDir }, REPO);
+    // Two e2e:setup execs: ensureFixture's up-front one, then the restart.
+    expect(execs(f, "e2e:setup")).toHaveLength(2);
+    expect(
+      f.logs.some((line) =>
+        line.includes("Jellyfin fixture died during before"),
+      ),
+    ).toBe(true);
+    expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(true);
+    // The failed before plus its retry, then noise and after.
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(4);
+  });
+
+  it("retries only once and annotates the final error when Jellyfin is down again", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push([
+      "pass-mobile.yml",
+      { code: 1, stdout: "", stderr: "server unreachable" },
+    ]);
+    // First failure: down. After e2e:setup: healthy enough to retry. Retry's
+    // failure: down again.
+    probeAnswers(f, ["000\n", "200\n", "000\n"]);
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain(
+      "(Jellyfin fixture unreachable after the pass)",
+    );
+    expect(execs(f, "e2e:setup")).toHaveLength(2);
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(2);
+    expect(f.dirs.has(`${outDir}/before-failed-1`)).toBe(true);
+  });
+
+  it("does not retry or restart when a failed pass leaves Jellyfin healthy", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    f.routes.push(["pass-mobile.yml", { code: 1, stdout: "", stderr: "boom" }]);
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("boom");
+    expect(error.message).not.toContain("unreachable");
+    // e2e:setup ran once, for ensureFixture — never as a restart.
+    expect(execs(f, "e2e:setup")).toHaveLength(1);
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(1);
+  });
+
+  it("throws when the Jellyfin fixture restart itself fails", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    const outDir = `${REPO}/e2e/reports/shots/test-android`;
+    let setups = 0;
+    f.routes = f.routes.map(([needle, route]) =>
+      needle === "bun run e2e:setup"
+        ? ([
+            needle,
+            () =>
+              ++setups === 1
+                ? ok
+                : { code: 1, stdout: "", stderr: "setup boom" },
+          ] as const)
+        : ([needle, route] as const),
+    );
+    f.routes.push([
+      "pass-mobile.yml",
+      { code: 1, stdout: "", stderr: "server unreachable" },
+    ]);
+    probeAnswers(f, ["000\n"]);
+    const error = await runComparison(f, { ...runCli, outDir }, REPO).catch(
+      (e) => e,
+    );
+    expect(error).toBeInstanceOf(ShotError);
+    expect(error.message).toContain("fixture restart failed");
+    expect(error.message).toContain("setup boom");
+    expect(execs(f, "pass-mobile.yml")).toHaveLength(1);
+  });
+
   it("writes report/summary.md naming the pass and the failed step, with its artifacts copied into report/failure", async () => {
     const f = new Fake();
     seed(f);
@@ -625,17 +734,17 @@ describe("runComparison failure path", () => {
                     message:
                       "Element not found: Text matching regex: .*Settings.*",
                   },
+                  artifacts: [
+                    {
+                      type: "SCREENSHOT",
+                      path: "screenshots/step-098-tapOnElement-Settings.png",
+                    },
+                    {
+                      type: "SCREEN_HIERARCHY",
+                      path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
+                    },
+                  ],
                 },
-                artifacts: [
-                  {
-                    type: "SCREENSHOT",
-                    path: "screenshots/step-098-tapOnElement-Settings.png",
-                  },
-                  {
-                    type: "SCREEN_HIERARCHY",
-                    path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
-                  },
-                ],
               },
             ]),
           );

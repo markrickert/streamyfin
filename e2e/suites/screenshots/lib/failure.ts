@@ -6,7 +6,8 @@ import type { Deps } from "./core";
  * output. `maestro --debug-output <outDir> --flatten-debug-output` writes
  * `<outDir>/<flow>/commands.json`: a flat array of every command in start order, each
  * with `metadata.status`/`sequenceNumber`/`depth`, `metadata.error` on failures, and
- * `artifacts` (screenshot, screen hierarchy) relative to the commands.json folder.
+ * `metadata.artifacts` (screenshot, screen hierarchy) relative to the commands.json
+ * folder.
  */
 export interface FailedStep {
   /**
@@ -31,8 +32,8 @@ interface CommandEntry {
     sequenceNumber?: number;
     depth?: number;
     error?: { message?: unknown };
+    artifacts?: { type?: unknown; path?: unknown }[];
   };
-  artifacts?: { type?: unknown; path?: unknown }[];
 }
 
 /**
@@ -54,21 +55,23 @@ function stepFrom(
       if (level > depth) flowAtDepth.delete(level);
     const command = entry.command ?? {};
     const name = Object.keys(command)[0] ?? "";
-    if (name === "runFlowCommand") {
-      const runFlow = command.runFlowCommand as
+    // runFlow and retry are containers: they fail when a child fails, so they are
+    // never the leaf, and only a file-runFlow adds a name to the chain.
+    if (name === "runFlowCommand" || name === "retryCommand") {
+      const container = command[name] as
         | { sourceDescription?: unknown }
         | undefined;
       flowAtDepth.set(
         depth,
-        typeof runFlow?.sourceDescription === "string"
-          ? runFlow.sourceDescription
+        typeof container?.sourceDescription === "string"
+          ? container.sourceDescription
           : undefined,
       );
       continue;
     }
     if (entry.metadata?.status !== "FAILED") continue;
     const artifact = (type: string) => {
-      const found = entry.artifacts?.find((a) => a.type === type);
+      const found = entry.metadata?.artifacts?.find((a) => a.type === type);
       return typeof found?.path === "string"
         ? path.join(dir, found.path)
         : undefined;

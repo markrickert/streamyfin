@@ -123,6 +123,7 @@ Build and tooling:
 - `repack-shrunk-resources-missing-attrs` | AGP 9's R8 resource shrinking leaves XML naming attributes it removed; apktool cannot relink them, so the Android repack declares them and builds again
 - `expo-prebuilt-modules-need-matching-rn` | the prebuilt ExpoModulesCore uses React core classes of the RN patch the SDK targets; expo-modules-core 58.0.30 on react-native-tvos 0.88.0-0 dies in dyld at every iOS launch while the build stays green
 - `new-swift-file-needs-pod-install` | a Swift file added to a local module joins its Pods target only after `pod install`; until then xcodebuild fails on the types it declares
+- `jellyfin-websocket-close-crashes-server` | Jellyfin 10.11.x/12.0 dies on a client WebSocket close (upstream #18053, PR #18028 unmerged); screenshot runs see "Server unreachable" on relaunch, and the runner restarts the fixture via e2e:setup and retries the pass once
 
 ## Project overview
 

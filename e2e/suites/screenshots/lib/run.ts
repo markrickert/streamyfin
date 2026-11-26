@@ -35,7 +35,14 @@ import {
   writeAndroidDiagnostics,
 } from "./device";
 import { describeFailedStep, failedStep } from "./failure";
-import { ensureFixture, fixtureChecks, fixtureEnv } from "./fixture";
+import {
+  ensureFixture,
+  fixtureChecks,
+  fixtureDotenv,
+  fixtureEnv,
+  jellyfinHealthy,
+  stderrTail,
+} from "./fixture";
 import {
   backupNativeDirs,
   type GitStart,
@@ -314,6 +321,9 @@ export async function runComparison(
     // absent or changed file on the other ref must never be re-read mid-run.
     const baseEnv = fixtureEnv(d, repo, cli.platform!);
     secrets = [baseEnv.MAESTRO_JELLYFIN_PASS, baseEnv.MAESTRO_SEERR_PASS];
+    // The pass-retry probe reads the Jellyfin port from the same pre-switch .env;
+    // the host always reaches the fixture over loopback.
+    const { SYNCPLAY_PORT: jellyfinPort } = fixtureDotenv(d, repo);
     // The repack tooling reads the starting checkout's package.json, so it must be
     // pinned before the first ref switch replaces node_modules.
     if (release) ensureRepackApp(d, tooling, repackAppVersion(d, repo));
@@ -498,16 +508,43 @@ export async function runComparison(
               const driverLost =
                 d.fs.exists(log) &&
                 d.fs.read(log).includes("DeviceUnreachableException");
-              if (attempt > 0 || !driverLost) {
+              if (attempt === 0 && driverLost) {
+                d.log(
+                  `maestro driver unreachable during ${capture}; the pass is retried once`,
+                );
+                d.fs.mv(outDir, `${sessionDir}/${capture}-failed-1`);
+                continue;
+              }
+              // Jellyfin 10.11.x and 12.0 can terminate on a client's WebSocket
+              // close (jellyfin/jellyfin#18053): the app then dies on "Server
+              // unreachable" — fixture state, not app state — so a restart earns
+              // one retry, inside the same per-pass budget as the driver retry.
+              const fixtureDown = !jellyfinHealthy(d, jellyfinPort);
+              if (attempt > 0 || !fixtureDown) {
                 // A pass dying under a system ANR dialog leaves no trace of which
                 // process hung; dump the device state before the error aborts the run.
                 if (cli.platform === "android" || cli.platform === "android-tv")
                   writeAndroidDiagnostics(d, device, outDir);
+                if (fixtureDown)
+                  throw new ShotError(
+                    `${error instanceof Error ? error.message : String(error)} (Jellyfin fixture unreachable after the pass)`,
+                  );
                 throw error;
               }
               d.log(
-                `maestro driver unreachable during ${capture}; the pass is retried once`,
+                `Jellyfin fixture died during ${capture}; restarting it and retrying the pass once`,
               );
+              const setup = d.exec(["bun", "run", "e2e:setup"], { cwd: repo });
+              const passError =
+                error instanceof Error ? error.message : String(error);
+              if (setup.code !== 0)
+                throw new ShotError(
+                  `pass ${capture} failed (${passError}) and the Jellyfin fixture restart failed too (${stderrTail(setup.stderr)})`,
+                );
+              if (!jellyfinHealthy(d, jellyfinPort))
+                throw new ShotError(
+                  `pass ${capture} failed (${passError}) and the Jellyfin fixture is still unreachable after e2e:setup`,
+                );
               d.fs.mv(outDir, `${sessionDir}/${capture}-failed-1`);
             }
           }

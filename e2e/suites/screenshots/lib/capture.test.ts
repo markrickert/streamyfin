@@ -210,17 +210,17 @@ describe("runCapture failure detail", () => {
             sequenceNumber: 97,
             depth: 2,
             error: { message },
+            artifacts: [
+              {
+                type: "SCREEN_HIERARCHY",
+                path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
+              },
+              {
+                type: "SCREENSHOT",
+                path: "screenshots/step-098-tapOnElement-Settings.png",
+              },
+            ],
           },
-          artifacts: [
-            {
-              type: "SCREEN_HIERARCHY",
-              path: "screen-hierarchy/step-098-tapOnElement-Settings.json",
-            },
-            {
-              type: "SCREENSHOT",
-              path: "screenshots/step-098-tapOnElement-Settings.png",
-            },
-          ],
         },
       ]),
     );

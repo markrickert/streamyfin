@@ -128,7 +128,11 @@ warms `e2e/reports/shots/build-cache` for a later `run`.
    every later pass, a retry included, runs with `--no-reinstall-driver`. A pass whose
    Maestro driver becomes unreachable (`DeviceUnreachableException` in
    `<pass>/maestro.log`) is retried once, and the failed attempt is kept next to it as
-   `<capture>-failed-1`.
+   `<capture>-failed-1`. A failed pass that leaves Jellyfin's `/health` unanswered —
+   the server can die on a client's WebSocket close (upstream issue #18053, still
+   unfixed) — restarts the fixture with `e2e:setup` and is retried once inside the
+   same per-pass budget; a final failure while the server stays down gets
+   ` (Jellyfin fixture unreachable after the pass)` appended to the thrown error.
 4. Runs `compare.ts --before … --noise … --after …` with the platform masks. The report
    and changed-screen evidence land in the session directory.
 
