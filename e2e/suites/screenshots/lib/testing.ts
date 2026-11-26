@@ -197,6 +197,9 @@ export function happyRoutes(f: Fake, { dirty = "" }: { dirty?: string } = {}) {
     ["bun run e2e:enrich", ok],
     ["suites.syncplay import seerr", ok],
     ["git switch", ok],
+    // The refs being compared differ in Metro's transform inputs, so the second ref's
+    // Metro clears its cache; a same-inputs run pushes a longer needle answering 0.
+    ["git diff --quiet", { code: 1, stdout: "", stderr: "" }],
     [
       "fingerprint:generate",
       {

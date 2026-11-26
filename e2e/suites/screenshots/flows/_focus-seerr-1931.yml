@@ -25,10 +25,8 @@ appId: ${MAESTRO_APP_ID}
         leftOf: "1931"
     commands:
       - pressKey: Remote Dpad Right
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 1500
-          optional: true
 - assertVisible:
     focused: true
     below: "Request movies"

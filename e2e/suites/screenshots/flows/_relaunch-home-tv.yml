@@ -1,0 +1,21 @@
+# Relaunches the TV app and proves Home rendered before returning. A dev client that
+# comes back with no Metro URL lands on its server picker instead, Google TV can raise
+# its first-run Shop dialog over the launch, and a timed-out bundle request shows the
+# load-error screen, so the first wait accepts rendered content or a known overlay;
+# either way, the 7 s window that _dismiss-dev-overlays.yml's absent-element guards
+# would each burn is mostly gone by the time they run. A launch that stays on the
+# splash screen is retried once. The seeded catalog has no Continue Watching, so the
+# wait is on the "Recently added in Movies" row e2e:seed creates.
+appId: ${MAESTRO_APP_ID}
+---
+- retry:
+    maxRetries: 1
+    commands:
+      - launchApp
+      - extendedWaitUntil:
+          visible: ".*Recently added.*|Buy and rent movies on your TV|Fetch development servers|Searching for development servers.*|DEVELOPMENT SERVERS|Enter URL manually|.*isn't responding.*|Open in .*|There was a problem loading the project.*"
+          timeout: 60000
+      - runFlow: _dismiss-dev-overlays.yml
+      - extendedWaitUntil:
+          visible: ".*Recently added.*"
+          timeout: 60000

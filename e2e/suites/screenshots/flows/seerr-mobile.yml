@@ -29,20 +29,16 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: "Trending"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 10-seerr-discover
 
 # Typing before the keyboard is up drops the text and leaves the Discover page, whose own
 # Iron Man card would satisfy the wait below. The typed query reads back as exactly
 # "Iron Man", which no card label does (they carry the year), so retype until it is there.
 - tapOn: '.*Search\.\.\..*'
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 1500
-    optional: true
 - inputText: "Iron Man"
 - repeat:
     while:
@@ -50,10 +46,8 @@ appId: ${MAESTRO_APP_ID}
     times: 3
     commands:
       - tapOn: '.*Search\.\.\..*'
-      - extendedWaitUntil:
-          visible: "__settle__"
+      - waitForAnimationToEnd:
           timeout: 1500
-          optional: true
       - inputText: "Iron Man"
 - hideKeyboard:
     optional: true
@@ -65,10 +59,8 @@ appId: ${MAESTRO_APP_ID}
       platform: Android
     commands:
       - assertVisible: "More"
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 11-seerr-search
 
 # Iron Man (1931), TMDB id 194310, a public-domain film with a stable id across runs.
@@ -103,8 +95,6 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible: ".*Iron Man.*"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "__settle__"
+- waitForAnimationToEnd:
     timeout: 6000
-    optional: true
 - takeScreenshot: 12-seerr-detail

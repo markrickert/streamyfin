@@ -77,10 +77,14 @@ tree.
    `e2e/reports/shots/build-cache/<platform>/<hash>`, else `SHOTS_BUILD_CACHE_FETCH`
    (`<exe> <platform> <hash> <cacheDir>`), else a local build. Each ref's
    `{ ref, platform, hash, source, path }` goes to `<session>/build-cache.json`. Then it
-   installs the client, starts its own `expo start --dev-client --clear` on a free port,
-   and runs each pass as one parent Maestro invocation. A pass whose Maestro driver
-   becomes unreachable (`DeviceUnreachableException` in `<pass>/maestro.log`) is
-   retried once, and the failed attempt is kept next to it as `<capture>-failed-1`.
+   installs the client, starts its own `expo start --dev-client` on a free port —
+   `--clear` on the first Metro, and on a later ref only when `git diff --quiet` shows
+   `babel.config.js`, `metro.config.js` or `bun.lock` changed — and runs each pass as
+   one parent Maestro invocation. The session's first pass reinstalls Maestro's driver;
+   every later pass, a retry included, runs with `--no-reinstall-driver`. A pass whose
+   Maestro driver becomes unreachable (`DeviceUnreachableException` in
+   `<pass>/maestro.log`) is retried once, and the failed attempt is kept next to it as
+   `<capture>-failed-1`.
 4. Runs `compare.ts --before … --noise … --after …` with the platform masks. The report
    and changed-screen evidence land in the session directory.
 

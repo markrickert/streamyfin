@@ -15,6 +15,7 @@ appId: ${MAESTRO_APP_ID}
 # re-raising over the app. Close the launcher; Android restarts it on Home.
 - runFlow:
     when:
+      platform: Android
       visible: "Pixel Launcher isn't responding"
     commands:
       - tapOn: "Close app"
@@ -23,6 +24,7 @@ appId: ${MAESTRO_APP_ID}
 # because killing the app under test would end the run. It only gets "Wait".
 - runFlow:
     when:
+      platform: Android
       visible: ".*isn't responding.*"
     commands:
       - tapOn: "Wait"

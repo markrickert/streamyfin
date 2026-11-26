@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // Compare masks must cover the device chrome and volatile text without hiding the
@@ -145,11 +145,7 @@ describe("Seerr detail tap on refs with and without the poster testID", () => {
       },
       { assertVisible: "1931" },
       {
-        extendedWaitUntil: {
-          visible: "__settle__",
-          timeout: 6000,
-          optional: true,
-        },
+        waitForAnimationToEnd: { timeout: 6000 },
       },
     ]);
   });
@@ -194,10 +190,10 @@ describe("capture pass parents", () => {
 
   // Relaunching on tvOS can resume a stale tab focus, so each tv.yml section
   // resets to the Home tab before its counted Right presses.
-  it("tv.yml normalizes to the Home tab after every launchApp", () => {
+  it("tv.yml normalizes to the Home tab after every relaunch", () => {
     const cmds = commandsOf("tv.yml");
     const launches = cmds.flatMap((cmd, index) =>
-      String(cmd) === "launchApp" ? [index] : [],
+      cmd.runFlow === "_relaunch-home-tv.yml" ? [index] : [],
     );
     const normalizations = cmds.flatMap((cmd, index) =>
       cmd.runFlow === "_focus-home-tab.yml" ? [index] : [],
@@ -216,27 +212,22 @@ describe("capture pass parents", () => {
     }
   });
 
-  // Hosted tvOS returned to Expo's server picker on a mid-flow relaunch; the
-  // guarded helper reopens the dev-client link before Home is asserted.
+  // TV relaunches go through the same shaped helper as the phone: content-or-overlay
+  // wait first, then the overlay helper, so no TV flow may launch bare.
   it.each(["tv.yml", "seerr-tv.yml", "bootstrap-seerr-tv.yml"])(
-    "%s reconnects dev client on every launch before waiting for Home",
+    "%s relaunches only through _relaunch-home-tv.yml",
     (file) => {
       const cmds = commandsOf(file);
       // seerr-tv.yml wraps its launch in a retry for the empty-Discover flake.
       const top = cmds[0].retry?.commands ?? cmds;
-      const launches = top.flatMap((cmd, index) =>
-        String(cmd) === "launchApp" ? [index] : [],
-      );
-      expect(launches.length).toBeGreaterThan(0);
-      for (const launch of launches) {
-        expect(top[launch + 1]).toEqual({
-          runFlow: "_dismiss-dev-overlays.yml",
-        });
-        expect(top[launch + 2].extendedWaitUntil.timeout).toBe(60000);
-        expect(top[launch + 2].extendedWaitUntil.visible).toContain(
-          ".*Recently added.*",
-        );
-      }
+      expect(
+        top.filter(
+          (cmd) => String(cmd) === "launchApp" || cmd.launchApp !== undefined,
+        ),
+      ).toHaveLength(0);
+      expect(
+        top.filter((cmd) => cmd.runFlow === "_relaunch-home-tv.yml").length,
+      ).toBeGreaterThan(0);
     },
   );
 
@@ -332,10 +323,8 @@ describe("capture pass parents", () => {
       visible: ".*Genres.*",
       timeout: 10000,
     });
-    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
-      visible: "__settle__",
-      timeout: 2000,
-      optional: true,
+    expect(cmds[shot - 1]).toEqual({
+      waitForAnimationToEnd: { timeout: 2000 },
     });
   });
 
@@ -345,7 +334,7 @@ describe("capture pass parents", () => {
     const cmds = commandsOf("seerr-tv.yml");
     expect(cmds[0].retry.maxRetries).toBe(1);
     const inner = cmds[0].retry.commands;
-    expect(inner[0]).toBe("launchApp");
+    expect(inner[0]).toEqual({ runFlow: "_relaunch-home-tv.yml" });
     expect(inner[inner.length - 1].extendedWaitUntil).toEqual({
       visible: ".*Trending.*|.*Popular.*",
       timeout: 30000,
@@ -408,10 +397,8 @@ describe("capture pass parents", () => {
       visible: "Annie Oakley.*",
       timeout: 60000,
     });
-    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
-      visible: "__settle__",
-      timeout: 6000,
-      optional: true,
+    expect(cmds[shot - 1]).toEqual({
+      waitForAnimationToEnd: { timeout: 6000 },
     });
   });
 
@@ -634,6 +621,46 @@ describe("capture pass parents", () => {
     });
   });
 
+  // Same shape as the phone helper, plus the overlays only a TV launch can show: the
+  // Google TV Shop dialog and the dev client's load-error screen. Picker labels are
+  // read from the overlay helper so they cannot drift.
+  it("_relaunch-home-tv.yml retries a splash-stuck relaunch once, waiting for content or a known overlay, then dismissing it", () => {
+    const cmds = commandsOf("_relaunch-home-tv.yml");
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0].retry.maxRetries).toBe(1);
+    const inner = cmds[0].retry.commands;
+    expect(inner).toHaveLength(4);
+    expect(inner[0]).toBe("launchApp");
+    expect(inner[2]).toEqual({ runFlow: "_dismiss-dev-overlays.yml" });
+    expect(inner[3]).toEqual({
+      extendedWaitUntil: { visible: ".*Recently added.*", timeout: 60000 },
+    });
+    const picker = commandsOf("_dismiss-dev-overlays.yml").find(
+      (cmd) =>
+        typeof cmd.runFlow?.when?.visible === "string" &&
+        cmd.runFlow.when.visible.includes("DEVELOPMENT SERVERS"),
+    )?.runFlow.when.visible;
+    expect(typeof picker).toBe("string");
+    expect(inner[1].extendedWaitUntil).toEqual({
+      visible: [
+        ".*Recently added.*",
+        "Buy and rent movies on your TV",
+        ...picker.split("|"),
+        ".*isn't responding.*",
+        "Open in .*",
+        "There was a problem loading the project.*",
+      ].join("|"),
+      timeout: 60000,
+    });
+  });
+
+  it("no flow sleeps on a label that never exists", () => {
+    for (const file of readdirSync(`${__dirname}/flows`))
+      expect(readFileSync(`${__dirname}/flows/${file}`, "utf8")).not.toContain(
+        "__settle__",
+      );
+  });
+
   // Focus selects Search on tvOS NativeTabs; Android TV's JS TVNavBar also needs Center.
   it("bootstrap-seerr-tv focuses Search by D-pad and presses Center on Android TV", () => {
     const cmds = commandsOf("bootstrap-seerr-tv.yml");
@@ -663,45 +690,25 @@ describe("capture pass parents", () => {
       expect(screenshotNames(commandsOf(file))).toHaveLength(0);
   });
 
-  it("tv.yml recovers from Google's Shop prompt at every relaunch", () => {
+  // The Shop dialog only lives on Android launchers; the overlay helper dismisses it
+  // and relaunches, so the TV relaunch helper waits on it as one of its overlays.
+  it("tv.yml relaunches three times through _relaunch-home-tv.yml, whose first wait covers the Shop dialog", () => {
     const cmds = commandsOf("tv.yml");
-    const launches = cmds.flatMap((cmd, index) =>
-      String(cmd) === "launchApp" ? [index] : [],
-    );
-    expect(launches).toHaveLength(3);
-    for (const relaunch of launches) expectShopGuard(cmds, relaunch);
-  });
-
-  function expectShopGuard(cmds: Record<string, any>[], relaunch: number) {
-    expect(cmds[relaunch + 1]).toEqual({
-      runFlow: "_dismiss-dev-overlays.yml",
-    });
-    expect(cmds[relaunch + 2].extendedWaitUntil).toEqual({
-      visible: ".*Recently added.*|Buy and rent movies on your TV",
-      timeout: 60000,
-    });
-    expect(cmds[relaunch + 3].runFlow).toEqual({
-      when: {
-        visible: "Buy and rent movies on your TV",
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: Maestro resolves this flow variable
-        true: "${MAESTRO_TVOS != '1'}",
-      },
-      commands: [
-        { tapOn: "Dismiss" },
-        "launchApp",
-        { runFlow: "_dismiss-dev-overlays.yml" },
-      ],
-    });
-    expect(cmds[relaunch + 4].extendedWaitUntil).toEqual({
-      visible: ".*Recently added.*",
-      timeout: 60000,
-    });
     expect(
-      cmds
-        .slice(relaunch + 5, relaunch + 7)
-        .some((cmd) => cmd.runFlow === "_focus-home-tab.yml"),
-    ).toBe(true);
-  }
+      cmds.filter((cmd) => cmd.runFlow === "_relaunch-home-tv.yml"),
+    ).toHaveLength(3);
+    const shop = commandsOf("_dismiss-dev-overlays.yml").find(
+      (cmd) => cmd.runFlow?.when?.visible === "Buy and rent movies on your TV",
+    )?.runFlow;
+    expect(shop?.when.platform).toBe("Android");
+    expect(shop?.commands).toEqual([{ tapOn: "Dismiss" }, "launchApp"]);
+    const firstWait = commandsOf("_relaunch-home-tv.yml")[0].retry.commands[1]
+      .extendedWaitUntil.visible as string;
+    expect(firstWait).toContain("Buy and rent movies on your TV");
+    expect(cmds.some((cmd) => cmd.runFlow === "_focus-home-tab.yml")).toBe(
+      true,
+    );
+  });
 
   it("tv.yml hands focus back to the tab bar after Center on Android TV, after the screenshot", () => {
     const cmds = commandsOf("tv.yml");
@@ -752,14 +759,19 @@ describe("bootstrap-login first-run overlays", () => {
   it("closes a hung Pixel Launcher, waits out other ANRs, dismisses the Google TV Shop dialog, reconnects from the server picker, accepts open-in per platform, then dismisses onboarding and dev menu", () => {
     const cmds = commandsOf("_dismiss-dev-overlays.yml");
     expect(cmds).toHaveLength(9);
-    expect(cmds[0].runFlow.when.visible).toBe(
-      "Pixel Launcher isn't responding",
-    );
+    // ANR dialogs cannot appear on iOS or tvOS, so both guards cost no lookup there.
+    expect(cmds[0].runFlow.when).toEqual({
+      platform: "Android",
+      visible: "Pixel Launcher isn't responding",
+    });
     expect(cmds[0].runFlow.commands).toEqual([
       { tapOn: "Close app" },
       "waitForAnimationToEnd",
     ]);
-    expect(cmds[1].runFlow.when.visible).toBe(".*isn't responding.*");
+    expect(cmds[1].runFlow.when).toEqual({
+      platform: "Android",
+      visible: ".*isn't responding.*",
+    });
     expect(cmds[1].runFlow.commands).toEqual([
       { tapOn: "Wait" },
       "waitForAnimationToEnd",
@@ -900,10 +912,8 @@ describe("bootstrap-login first-run overlays", () => {
     });
     const shot = cmds.findIndex((cmd) => cmd.takeScreenshot === "00-login");
     expect(shot).toBeGreaterThanOrEqual(0);
-    expect(cmds[shot - 1].extendedWaitUntil).toEqual({
-      visible: "__settle__",
-      timeout: 3000,
-      optional: true,
+    expect(cmds[shot - 1]).toEqual({
+      waitForAnimationToEnd: { timeout: 3000 },
     });
     expect(cmds[shot - 2]).toEqual({ assertVisible: ".*Add server" });
   });

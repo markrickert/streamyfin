@@ -320,6 +320,20 @@ describe("runComparison ordering", () => {
     });
   });
 
+  // The driver survives a pass on the same device, so only the session's first pass
+  // pays for the install the pinned CLI defaults to.
+  it("reinstalls maestro's driver on the first pass only", async () => {
+    const f = new Fake();
+    seed(f);
+    happyRoutes(f);
+    await runComparison(f, runCli, REPO);
+    const flows = execs(f, "maestro.py");
+    expect(flows).toHaveLength(3);
+    expect(flows[0]).not.toContain("--no-reinstall-driver");
+    for (const argv of flows.slice(1))
+      expect(argv).toContain("--no-reinstall-driver");
+  });
+
   it("runs the TV pass as the tv parent flow on android-tv", async () => {
     const f = new Fake();
     seed(f);
@@ -537,8 +551,13 @@ describe("runComparison failure path", () => {
       { ...runCli, platform: "ios", device: "UDID-PHONE", outDir },
       REPO,
     );
-    // Four passes: the failed before plus its retry, then noise and after.
-    expect(execs(f, "pass-mobile.yml")).toHaveLength(4);
+    // Four passes: the failed before plus its retry, then noise and after. The retry
+    // is already a later pass, so it skips the driver reinstall like the rest.
+    const flows = execs(f, "pass-mobile.yml");
+    expect(flows).toHaveLength(4);
+    expect(flows[0]).not.toContain("--no-reinstall-driver");
+    for (const argv of flows.slice(1))
+      expect(argv).toContain("--no-reinstall-driver");
     expect(execs(f, "simctl uninstall")).toHaveLength(4);
     expect(execs(f, "simctl openurl")).toHaveLength(4);
     expect(f.logs.some((line) => line.includes("unreachable"))).toBe(true);

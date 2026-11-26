@@ -156,7 +156,10 @@ export async function runComparison(
       { label: "after", sha: afterSha, captures: ["after"] },
     ];
     const buildCacheManifest: BuildCacheManifestEntry[] = [];
-    for (const ref of refs) {
+    // Only the session's first pass reinstalls Maestro's driver; a failed first pass's
+    // retry is already a later pass, so the flag flips before the call, not after it.
+    let firstPass = true;
+    for (const [refIndex, ref] of refs.entries()) {
       must(
         d.exec(["git", "switch", "--detach", ref.sha], { cwd: repo }),
         `git switch ${ref.label}`,
@@ -258,12 +261,33 @@ export async function runComparison(
         MAESTRO_DEV_CLIENT_URL: devClientUrl(cli.platform!, port),
       };
       d.log("starting Metro");
+      // Metro's cache keys on file content and transformer config, but Expo needs
+      // --clear after a babel config change; later refs clear only when those inputs
+      // differ (diff exit 1), a nonzero exit for any other reason clears too.
+      let clear = true;
+      if (refIndex > 0)
+        clear =
+          d.exec(
+            [
+              "git",
+              "diff",
+              "--quiet",
+              refs[refIndex - 1].sha,
+              ref.sha,
+              "--",
+              "babel.config.js",
+              "metro.config.js",
+              "bun.lock",
+            ],
+            { cwd: repo },
+          ).code !== 0;
       metro = await startMetro(
         d,
         repo,
         spec,
         port,
         `${sessionDir}/metro-${ref.label}.log`,
+        clear,
       );
       try {
         // Prove this Metro serves the checked-out ref's JS — /status alone says only
@@ -295,7 +319,18 @@ export async function runComparison(
             resetTestAppState(d, cli.platform!, device, appId, artifact);
             launchDevClient(d, cli.platform!, device, appId, port);
             try {
-              runCapture(d, tooling, spec, device, outDir, env, maestro);
+              const reinstallDriver = firstPass;
+              firstPass = false;
+              runCapture(
+                d,
+                tooling,
+                spec,
+                device,
+                outDir,
+                env,
+                maestro,
+                reinstallDriver,
+              );
               break;
             } catch (error) {
               // Maestro's iOS XCTest driver can die mid-pass while the app and the
