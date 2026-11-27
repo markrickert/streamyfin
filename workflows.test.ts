@@ -666,6 +666,63 @@ describe("build-apps.yml", () => {
     );
   });
 
+  test("checks signing credentials before fingerprint work and skips only on known absence", () => {
+    const fingerprint = jobs.get("fingerprint")!;
+    const [{ body: signed }] = callerByVariant.get(
+      "ios-phone-release-device-signed",
+    )!;
+    const gate = jobs.get("gate-ios-phone")!;
+    const preflight = fingerprint.indexOf(
+      "- name: Check signed iOS credentials",
+    );
+    expect(preflight).toBeGreaterThan(0);
+    expect(preflight).toBeLessThan(
+      fingerprint.indexOf("- name: 📥 Checkout code"),
+    );
+    expect(fingerprint).toContain(
+      "can_sign: ${{ steps.signing.outputs.can_sign }}",
+    );
+    expect(fingerprint).toContain("CAN_SIGN: ${{ secrets.EXPO_TOKEN != '' }}");
+    expect(ifOf(signed)).toContain(
+      "needs.fingerprint.outputs.can_sign != 'false'",
+    );
+    expect(gate).toContain(
+      "needs: [fingerprint, ios-phone-release-device-signed]",
+    );
+    expect(gate).toContain(
+      "CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}",
+    );
+    expect(gate).toContain("IS_FORK_REPO: ${{ github.event.repository.fork }}");
+  });
+
+  test.each([
+    ["false", "true", 0, "Skipping signed iOS build"],
+    ["false", "false", 1, "EXPO_TOKEN is not configured"],
+    ["", "true", 1, "Build did not succeed"],
+  ])(
+    "checks a skipped signed build (can sign: %s; fork: %s)",
+    (canSign, isFork, status, message) => {
+      const script = runOf(
+        jobs.get("gate-ios-phone")!,
+        "✅ Verify build result",
+      );
+      const result = spawnSync("bash", ["-eo", "pipefail", "-c", script], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          RESULT: "skipped",
+          BUILD_RESULT: "",
+          SKIP_CI: "false",
+          IS_FORK_PR: "false",
+          CAN_SIGN: canSign,
+          IS_FORK_REPO: isFork,
+        },
+      });
+      expect(result.status).toBe(status);
+      expect(result.stdout).toContain(message);
+    },
+  );
+
   test("ensure callers need a successful fingerprint job", () => {
     for (const variant of VARIANTS.filter((v) => v.mode === "ensure")) {
       const [{ body }] = callerByVariant.get(variant.id)!;

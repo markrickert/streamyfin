@@ -49,6 +49,7 @@ jobs:
       contents: read
       actions: read # list and download earlier runs' artifacts
     outputs:
+      can_sign: ${{ steps.signing.outputs.can_sign }}
       ios_hash: ${{ steps.hash.outputs.ios }}
       tv_hash: ${{ steps.hash.outputs.tv }}
       android_hash: ${{ steps.hash.outputs.android }}
@@ -81,6 +82,13 @@ jobs:
       android_tv_release_device_debugkey_universal_build: ${{ steps.ensure.outputs.android-tv-release-device-debugkey-universal }}
 
     steps:
+      # Job conditions cannot read secrets directly. Expose only token presence.
+      - name: Check signed iOS credentials
+        id: signing
+        env:
+          CAN_SIGN: ${{ secrets.EXPO_TOKEN != '' }}
+        run: echo "can_sign=$CAN_SIGN" >> "$GITHUB_OUTPUT"
+
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -141,9 +149,7 @@ jobs:
           TV: ${{ steps.hash.outputs.tv }}
           ANDROID: ${{ steps.hash.outputs.android }}
           ANDROID_TV: ${{ steps.hash.outputs.android_tv }}
-          # A signed IPA is re-signed with files fetched from EAS, so a run
-          # without the EAS token (a fork PR) must build it on macOS.
-          CAN_SIGN: ${{ secrets.EXPO_TOKEN != '' }}
+          CAN_SIGN: ${{ steps.signing.outputs.can_sign }}
         run: |
           names=(
             "ios_phone_unsigned=$(bun scripts/build-cache/cli.ts name ios-phone-release-device-unsigned "$IOS")"
@@ -202,8 +208,8 @@ jobs:
   # job's outputs are never passed on, so these callers never repack.
   ios-phone-release-device-signed:
     needs: fingerprint
-    # Signed iOS needs EAS secrets, which fork PRs do not receive.
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    # An unknown result must not suppress fallback if fingerprint setup failed.
+    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && needs.fingerprint.outputs.can_sign != 'false' && !contains(github.event.head_commit.message, '[skip ci]') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -424,7 +430,7 @@ jobs:
   # when its caller succeeded (or recovered via the fallback build), or was
   # intentionally skipped.
   gate-ios-phone:
-    needs: ios-phone-release-device-signed
+    needs: [fingerprint, ios-phone-release-device-signed]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build iOS IPA (Phone)
@@ -435,11 +441,11 @@ jobs:
       BUILD_RESULT: ${{ needs.ios-phone-release-device-signed.outputs.build-result }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
       IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}
+      IS_FORK_REPO: ${{ github.event.repository.fork }}
     steps:
-      # Mirror the pre-reusable-workflow rule for fork PRs: the signed iOS job
-      # was skipped there because forks lack EAS secrets, and GitHub treats a
-      # skipped required check as passing. Allow skipped only for fork PRs or
-      # [skip ci], and fail when skipped for any other reason.
+      # A fork without credentials cannot sign. Missing credentials on the
+      # canonical repository must still fail the required check.
       - name: ✅ Verify build result
         run: |
           if [ "$RESULT" = "success" ]; then
@@ -451,6 +457,14 @@ jobs:
           fi
           if [ "$RESULT" = "skipped" ] && { [ "$IS_FORK_PR" = "true" ] || [ "$SKIP_CI" = "true" ]; }; then
             exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && [ "$CAN_SIGN" = "false" ]; then
+            if [ "$IS_FORK_REPO" = "true" ]; then
+              echo "Skipping signed iOS build: EXPO_TOKEN is not configured on this fork."
+              exit 0
+            fi
+            echo "::error::EXPO_TOKEN is not configured for the required signed iOS build."
+            exit 1
           fi
           echo "::error::Build did not succeed (caller=$RESULT, build=$BUILD_RESULT)"
           exit 1
