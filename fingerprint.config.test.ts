@@ -30,8 +30,15 @@ describe("fingerprint.config.js", () => {
 
   it("hashes the build workflows, which set native build options", () => {
     // The ABIs and the Xcode version live there, out of the project's sight.
-    expect(hashed.has(".github/workflows/build-apps.yml")).toBe(true);
-    expect(hashed.has(".github/workflows/_native-variant.yml")).toBe(true);
+    for (const file of [
+      ".github/workflows/build-apps.yml",
+      ".github/workflows/_native-variant.yml",
+      ".github/workflows/_native-build-group.yml",
+      ".github/actions/build-native-variant/action.yml",
+      "scripts/build-cache/build-native-variant.sh",
+    ]) {
+      expect(hashed.has(file)).toBe(true);
+    }
   });
 
   it.each([

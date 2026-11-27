@@ -208,6 +208,16 @@ jobs:
             // with two jobs prefers the live one, then the successful one, so
             // a skipped job never stands in for the repack that ran.
             const findJobForTarget = (jobs, jobNames) => {
+              // A grouped runner reports each artifact as a step, not a job.
+              // Keep repack jobs and older standalone build jobs usable too.
+              jobs = jobs.flatMap(job => {
+                if (!['Build Apple variants', 'Build Android variants'].includes(stripCallerPrefix(job.name))) return [job];
+                return (job.steps || []).filter(step => jobNames.includes(step.name)).map(step => ({
+                  ...job,
+                  ...step,
+                  conclusion: step.conclusion,
+                }));
+              });
               const exact = jobs.filter(j => jobNames.includes(stripCallerPrefix(j.name)));
               const pool = exact.length
                 ? exact
@@ -462,7 +472,7 @@ jobs:
               let downloadLink = '*Waiting for build...*';
 
               if (matchingStatus) {
-                if (matchingStatus.conclusion === 'success' && matchingArtifact) {
+                if (matchingArtifact) {
                   status = '✅ Complete';
                   const directLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${matchingArtifact.workflow_run.id}/artifacts/${matchingArtifact.id}`;
                   const fileType = target.name.includes('Android') ? 'APK' : 'IPA';

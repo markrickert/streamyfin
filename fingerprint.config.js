@@ -71,6 +71,21 @@ module.exports = {
       reasons: ["Native build options set by the CI workflow"],
     },
     {
+      type: "file",
+      filePath: ".github/workflows/_native-build-group.yml",
+      reasons: ["Native build options set by the CI workflow"],
+    },
+    {
+      type: "file",
+      filePath: ".github/actions/build-native-variant/action.yml",
+      reasons: ["Native build options set by the CI workflow"],
+    },
+    {
+      type: "file",
+      filePath: "scripts/build-cache/build-native-variant.sh",
+      reasons: ["Native build options set by the CI workflow"],
+    },
+    {
       type: "dir",
       filePath: "plugins",
       reasons: ["Files config plugins copy in at prebuild"],

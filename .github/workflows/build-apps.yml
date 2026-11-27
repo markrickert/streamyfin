@@ -202,14 +202,10 @@ jobs:
             fi
           done
 
-  # ── Repack variants (1 to 5) ────────────────────────────────────────────────
-  # A flaky fingerprint must never block a merge: the required variants build
-  # in full and upload under a name no lookup will reuse. A failed fingerprint
-  # job's outputs are never passed on, so these callers never repack.
+  # Repack only when the fingerprint job found a trusted source.
   ios-phone-release-device-signed:
     needs: fingerprint
-    # An unknown result must not suppress fallback if fingerprint setup failed.
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && needs.fingerprint.outputs.can_sign != 'false' && !contains(github.event.head_commit.message, '[skip ci]') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_source != '' && needs.fingerprint.outputs.can_sign != 'false' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -217,16 +213,14 @@ jobs:
     secrets: inherit
     with:
       variant: ios-phone-release-device-signed
-      artifact-name: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_release_device_signed_name || '' }}
-      source-run-id: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_source || '' }}
-      mode: repack
+      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_signed_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_phone_source }}
       retention-days: 7
       repack-name: 🍎 Repack iOS IPA (Phone)
-      build-name: 🍎 Build iOS IPA (Phone) · build
 
   ios-phone-release-device-unsigned:
     needs: fingerprint
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_unsigned_source != '' }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -234,18 +228,16 @@ jobs:
     secrets: inherit
     with:
       variant: ios-phone-release-device-unsigned
-      artifact-name: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_release_device_unsigned_name || '' }}
-      source-run-id: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_unsigned_source || '' }}
-      mode: repack
+      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_phone_unsigned_source }}
       retention-days: 7
       repack-name: 🍎 Repack iOS IPA (Phone - Unsigned)
-      build-name: 🍎 Build iOS IPA (Phone - Unsigned)
 
   ios-tv-release-device-unsigned:
     # The only tvOS device build in CI: it needs no Apple credentials. Signed
     # tvOS builds come from release.yml, which holds the tvOS signing files.
     needs: fingerprint
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_unsigned_source != '' }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -253,16 +245,14 @@ jobs:
     secrets: inherit
     with:
       variant: ios-tv-release-device-unsigned
-      artifact-name: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_release_device_unsigned_name || '' }}
-      source-run-id: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_unsigned_source || '' }}
-      mode: repack
+      artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_device_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_tv_unsigned_source }}
       retention-days: 7
       repack-name: 🍎 Repack tvOS IPA (Unsigned)
-      build-name: 🍎 Build tvOS IPA (Unsigned) · build
 
   android-phone-release-device-debugkey:
     needs: fingerprint
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_phone_source != '' }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -270,16 +260,14 @@ jobs:
     secrets: inherit
     with:
       variant: android-phone-release-device-debugkey
-      artifact-name: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_phone_release_device_debugkey_name || '' }}
-      source-run-id: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_phone_source || '' }}
-      mode: repack
+      artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_phone_source }}
       retention-days: 7
       repack-name: 🤖 Repack Android APK (Phone)
-      build-name: 🤖 Build Android APK (Phone) · build
 
   android-tv-release-device-debugkey:
     needs: fingerprint
-    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_tv_source != '' }}
     permissions:
       contents: read
       actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
@@ -287,150 +275,75 @@ jobs:
     secrets: inherit
     with:
       variant: android-tv-release-device-debugkey
-      artifact-name: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_tv_release_device_debugkey_name || '' }}
-      source-run-id: ${{ needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_tv_source || '' }}
-      mode: repack
+      artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_tv_source }}
       retention-days: 7
       repack-name: 🤖 Repack Android APK (TV)
-      build-name: 🤖 Build Android APK (TV) · build
 
-  # ── Ensure variants (6 to 13) ───────────────────────────────────────────────
-  # Ensure variants are not required checks. Skip them when the fingerprint
-  # job fails, so a flaky hash never spends the scarce macOS runners.
-  ios-phone-debug-simulator-unsigned:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+  plan-native-builds:
+    needs: [fingerprint, ios-phone-release-device-signed, ios-phone-release-device-unsigned, ios-tv-release-device-unsigned, android-phone-release-device-debugkey, android-tv-release-device-debugkey]
+    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-26.04
+    name: Plan full native builds
     permissions:
       contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: ios-phone-debug-simulator-unsigned
-      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_debug_simulator_unsigned_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.ios_phone_debug_simulator_unsigned_build }}
-      retention-days: 90
-      build-name: 🛠️ Build dev client (iOS simulator)
+    outputs:
+      android: ${{ steps.plan.outputs.android }}
+      ios: ${{ steps.plan.outputs.ios }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          show-progress: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.4"
+      - name: Select missing or failed variants
+        id: plan
+        env:
+          FINGERPRINT_RESULT: ${{ needs.fingerprint.result }}
+          FINGERPRINT_OUTPUTS: ${{ toJSON(needs.fingerprint.outputs) }}
+          CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign != 'false' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+          REPACK_IOS_PHONE_RELEASE_DEVICE_SIGNED: ${{ needs.ios-phone-release-device-signed.result }}
+          REPACK_IOS_PHONE_RELEASE_DEVICE_UNSIGNED: ${{ needs.ios-phone-release-device-unsigned.result }}
+          REPACK_IOS_TV_RELEASE_DEVICE_UNSIGNED: ${{ needs.ios-tv-release-device-unsigned.result }}
+          REPACK_ANDROID_PHONE_RELEASE_DEVICE_DEBUGKEY: ${{ needs.android-phone-release-device-debugkey.result }}
+          REPACK_ANDROID_TV_RELEASE_DEVICE_DEBUGKEY: ${{ needs.android-tv-release-device-debugkey.result }}
+        run: bun scripts/build-cache/plan-ci.ts >> "$GITHUB_OUTPUT"
 
-  ios-tv-debug-simulator-unsigned:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+  build-android:
+    needs: plan-native-builds
+    if: ${{ needs.plan-native-builds.outputs.android != '{}' }}
     permissions:
       contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
     secrets: inherit
     with:
-      variant: ios-tv-debug-simulator-unsigned
-      artifact-name: ${{ needs.fingerprint.outputs.ios_tv_debug_simulator_unsigned_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.ios_tv_debug_simulator_unsigned_build }}
-      retention-days: 90
-      build-name: 🛠️ Build dev client (tvOS simulator)
+      platform: android
+      plan: ${{ needs.plan-native-builds.outputs.android }}
 
-  android-phone-debug-device-debugkey:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+  build-ios:
+    needs: plan-native-builds
+    if: ${{ needs.plan-native-builds.outputs.ios != '{}' }}
     permissions:
       contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
     secrets: inherit
     with:
-      variant: android-phone-debug-device-debugkey
-      artifact-name: ${{ needs.fingerprint.outputs.android_phone_debug_device_debugkey_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.android_phone_debug_device_debugkey_build }}
-      retention-days: 90
-      build-name: 🛠️ Build dev client (Android phone)
-
-  android-tv-debug-device-debugkey:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    permissions:
-      contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: android-tv-debug-device-debugkey
-      artifact-name: ${{ needs.fingerprint.outputs.android_tv_debug_device_debugkey_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.android_tv_debug_device_debugkey_build }}
-      retention-days: 90
-      build-name: 🛠️ Build dev client (Android TV)
-
-  ios-phone-release-simulator-unsigned:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    permissions:
-      contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: ios-phone-release-simulator-unsigned
-      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_simulator_unsigned_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.ios_phone_release_simulator_unsigned_build }}
-      retention-days: 90
-      build-name: 🛠️ Build release simulator (iOS)
-
-  ios-tv-release-simulator-unsigned:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    permissions:
-      contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: ios-tv-release-simulator-unsigned
-      artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_simulator_unsigned_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.ios_tv_release_simulator_unsigned_build }}
-      retention-days: 90
-      build-name: 🛠️ Build release simulator (tvOS)
-
-  android-phone-release-device-debugkey-universal:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    permissions:
-      contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: android-phone-release-device-debugkey-universal
-      artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_universal_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_universal_build }}
-      retention-days: 90
-      build-name: 🛠️ Build universal release APK (Android phone)
-
-  android-tv-release-device-debugkey-universal:
-    needs: fingerprint
-    if: ${{ needs.fingerprint.result == 'success' && !contains(github.event.head_commit.message, '[skip ci]') && github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    permissions:
-      contents: read
-      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
-    uses: ./.github/workflows/_native-variant.yml
-    secrets: inherit
-    with:
-      variant: android-tv-release-device-debugkey-universal
-      artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_universal_name }}
-      mode: ensure
-      build: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_universal_build }}
-      retention-days: 90
-      build-name: 🛠️ Build universal release APK (Android TV)
+      platform: ios
+      plan: ${{ needs.plan-native-builds.outputs.ios }}
 
   # ── Required status-check gates ─────────────────────────────────────────────
   # Repository rulesets require these exact check names. Each gate passes only
   # when its caller succeeded (or recovered via the fallback build), or was
   # intentionally skipped.
   gate-ios-phone:
-    needs: [fingerprint, ios-phone-release-device-signed]
+    needs: [fingerprint, ios-phone-release-device-signed, build-ios]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build iOS IPA (Phone)
@@ -438,7 +351,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-phone-release-device-signed.result }}
-      BUILD_RESULT: ${{ needs.ios-phone-release-device-signed.outputs.build-result }}
+      BUILD_RESULT: ${{ needs.build-ios.outputs.ios-phone-release-device-signed }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
       IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}
@@ -448,11 +361,7 @@ jobs:
       # canonical repository must still fail the required check.
       - name: ✅ Verify build result
         run: |
-          if [ "$RESULT" = "success" ]; then
-            exit 0
-          fi
-          # A failed repack falls back to the full build; pass when that build succeeded.
-          if [ "$RESULT" = "failure" ] && [ "$BUILD_RESULT" = "success" ]; then
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
             exit 0
           fi
           if [ "$RESULT" = "skipped" ] && { [ "$IS_FORK_PR" = "true" ] || [ "$SKIP_CI" = "true" ]; }; then
@@ -470,7 +379,7 @@ jobs:
           exit 1
 
   gate-android-phone:
-    needs: android-phone-release-device-debugkey
+    needs: [android-phone-release-device-debugkey, build-android]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (Phone)
@@ -478,16 +387,12 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.android-phone-release-device-debugkey.result }}
-      BUILD_RESULT: ${{ needs.android-phone-release-device-debugkey.outputs.build-result }}
+      BUILD_RESULT: ${{ needs.build-android.outputs.android-phone-release-device-debugkey }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
         run: |
-          if [ "$RESULT" = "success" ]; then
-            exit 0
-          fi
-          # A failed repack falls back to the full build; pass when that build succeeded.
-          if [ "$RESULT" = "failure" ] && [ "$BUILD_RESULT" = "success" ]; then
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
             exit 0
           fi
           if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then
@@ -497,7 +402,7 @@ jobs:
           exit 1
 
   gate-android-tv:
-    needs: android-tv-release-device-debugkey
+    needs: [android-tv-release-device-debugkey, build-android]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (TV)
@@ -505,16 +410,12 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.android-tv-release-device-debugkey.result }}
-      BUILD_RESULT: ${{ needs.android-tv-release-device-debugkey.outputs.build-result }}
+      BUILD_RESULT: ${{ needs.build-android.outputs.android-tv-release-device-debugkey }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
         run: |
-          if [ "$RESULT" = "success" ]; then
-            exit 0
-          fi
-          # A failed repack falls back to the full build; pass when that build succeeded.
-          if [ "$RESULT" = "failure" ] && [ "$BUILD_RESULT" = "success" ]; then
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
             exit 0
           fi
           if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then
@@ -524,7 +425,7 @@ jobs:
           exit 1
 
   gate-ios-tv-unsigned:
-    needs: ios-tv-release-device-unsigned
+    needs: [ios-tv-release-device-unsigned, build-ios]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build tvOS IPA (Unsigned)
@@ -532,16 +433,12 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-tv-release-device-unsigned.result }}
-      BUILD_RESULT: ${{ needs.ios-tv-release-device-unsigned.outputs.build-result }}
+      BUILD_RESULT: ${{ needs.build-ios.outputs.ios-tv-release-device-unsigned }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
         run: |
-          if [ "$RESULT" = "success" ]; then
-            exit 0
-          fi
-          # A failed repack falls back to the full build; pass when that build succeeded.
-          if [ "$RESULT" = "failure" ] && [ "$BUILD_RESULT" = "success" ]; then
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
             exit 0
           fi
           if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then

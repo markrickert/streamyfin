@@ -1,0 +1,342 @@
+name: Native Build Group
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: Expo platform for this runner (android or ios)
+        required: true
+        type: string
+      plan:
+        description: Planned variant names and whether each form needs a prebuild
+        required: true
+        type: string
+    outputs:
+      ios-phone-release-device-signed:
+        description: Outcome of building and uploading ios-phone-release-device-signed
+        value: ${{ jobs.build.outputs.ios-phone-release-device-signed }}
+      android-phone-release-device-debugkey:
+        description: Outcome of building and uploading android-phone-release-device-debugkey
+        value: ${{ jobs.build.outputs.android-phone-release-device-debugkey }}
+      android-tv-release-device-debugkey:
+        description: Outcome of building and uploading android-tv-release-device-debugkey
+        value: ${{ jobs.build.outputs.android-tv-release-device-debugkey }}
+      ios-tv-release-device-unsigned:
+        description: Outcome of building and uploading ios-tv-release-device-unsigned
+        value: ${{ jobs.build.outputs.ios-tv-release-device-unsigned }}
+
+# Exposed to `expo prebuild` (app.config.ts → extra.build) so Settings can show the
+# branch + commit + Actions run a CI build was made from. EAS cloud builds use
+# EAS_BUILD_* instead. The run number maps a sideloaded build back to its Actions
+# run (artifacts + logs) without needing Expo access.
+env:
+  EXPO_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+  EXPO_PUBLIC_GIT_COMMIT: ${{ github.sha }}
+  EXPO_PUBLIC_GIT_RUN_NUMBER: ${{ github.run_number }}
+
+jobs:
+  build:
+    name: ${{ inputs.platform == 'ios' && 'Build Apple variants' || 'Build Android variants' }}
+    runs-on: ${{ inputs.platform == 'ios' && 'xcode-27' || 'ubuntu-26.04' }}
+    permissions:
+      contents: read
+      actions: write # refresh the PR comment after each variant's upload
+    outputs:
+      ios-phone-release-device-signed: ${{ steps.ios-phone-release-device-signed.outcome }}
+      android-phone-release-device-debugkey: ${{ steps.android-phone-release-device-debugkey.outcome }}
+      android-tv-release-device-debugkey: ${{ steps.android-tv-release-device-debugkey.outcome }}
+      ios-tv-release-device-unsigned: ${{ steps.ios-tv-release-device-unsigned.outcome }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🗑️ Free Disk Space
+        if: inputs.platform == 'android'
+        uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
+        with:
+          tool-cache: false
+          mandb: true
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        if: inputs.platform == 'android'
+        # ubuntu-26.04 defaults to JDK 25, which breaks the RN/AGP native build
+        # (Kotlin falls back to JVM_23, the foojay toolchain + CMake configure
+        # fail). Pin Temurin 17 for a deterministic Android build.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 🏗️ Setup EAS
+        id: eas
+        if: ${{ fromJSON(inputs.plan).variants['ios-phone-release-device-signed'] != null }}
+        continue-on-error: true
+        uses: expo/expo-github-action@5273c2136bd09c2a341fe3340d3e767ce5a13015 # main
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          eas-cache: true
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 💾 Cache Gradle global
+        if: inputs.platform == 'android'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ runner.arch }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-gradle-
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Hash before any prebuild generates native sources. A name from the
+      # fingerprint job needs no retry.
+      - name: Resolve artifact names
+        id: artifacts
+        env:
+          PLAN: ${{ inputs.plan }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          resolved="$PLAN"
+          variants=$(jq -r '.variants | keys[]' <<< "$PLAN")
+          while IFS= read -r variant; do
+            name=$(jq -r --arg variant "$variant" '.variants[$variant].name' <<< "$PLAN")
+            if [ -n "$name" ]; then
+              continue
+            fi
+            if name=$(bun scripts/build-cache/cli.ts name "$variant"); then
+              echo "::warning::The fingerprint job failed; $variant was hashed in its build job instead."
+            else
+              name=$(bun scripts/build-cache/cli.ts fallback-name "$variant" "$RUN_ID" "$RUN_ATTEMPT")
+              echo "::warning::$variant was built without a fingerprint and will not be reused."
+            fi
+            resolved=$(jq -c --arg variant "$variant" --arg name "$name" '.variants[$variant].name = $name' <<< "$resolved")
+          done <<< "$variants"
+          echo "plan=$(jq -c . <<< "$resolved")" >> "$GITHUB_OUTPUT"
+
+      - name: Prebuild phone
+        id: prebuild-phone
+        if: ${{ fromJSON(inputs.plan).phone }}
+        continue-on-error: true
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          EXPO_TV: "0"
+        run: bunx expo prebuild --clean --platform "$PLATFORM"
+
+      - name: Cache Android phone Gradle project
+        id: gradle-phone
+        if: ${{ inputs.platform == 'android' && steps.prebuild-phone.outcome == 'success' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: android/.gradle
+          key: ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-
+
+      - name: 🍎 Build iOS IPA (Phone) · build
+        id: ios-phone-release-device-signed
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-signed'] != null && steps.eas.outcome == 'success' }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-phone-release-device-signed
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-release-device-signed'].name }}
+          retention-days: 7
+
+      - name: 🍎 Build iOS IPA (Phone - Unsigned)
+        id: ios-phone-release-device-unsigned
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-phone-release-device-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-release-device-unsigned'].name }}
+          retention-days: 7
+
+      - name: 🤖 Build Android APK (Phone) · build
+        id: android-phone-release-device-debugkey
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-phone-release-device-debugkey
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-release-device-debugkey'].name }}
+          retention-days: 7
+
+      - name: 🛠️ Build dev client (iOS simulator)
+        id: ios-phone-debug-simulator-unsigned
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-debug-simulator-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-phone-debug-simulator-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-debug-simulator-unsigned'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build dev client (Android phone)
+        id: android-phone-debug-device-debugkey
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-debug-device-debugkey'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-phone-debug-device-debugkey
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-debug-device-debugkey'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build release simulator (iOS)
+        id: ios-phone-release-simulator-unsigned
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-simulator-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-phone-release-simulator-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-release-simulator-unsigned'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build universal release APK (Android phone)
+        id: android-phone-release-device-debugkey-universal
+        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey-universal'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-phone-release-device-debugkey-universal
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-release-device-debugkey-universal'].name }}
+          retention-days: 90
+
+      - name: Save Android phone Gradle project
+        if: ${{ inputs.platform == 'android' && steps.prebuild-phone.outcome == 'success' && steps.gradle-phone.outputs.cache-hit != 'true' && !cancelled() }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: android/.gradle
+          key: ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+
+      # The phone artifacts have already uploaded. Reclaim only this job's
+      # generated build output; keep shared download/tool caches on the runner.
+      - name: Reclaim phone build space
+        if: ${{ fromJSON(inputs.plan).tv }}
+        run: |
+          for path in "$RUNNER_TEMP/native-phone" "$GITHUB_WORKSPACE/build/native-phone"; do
+            if [ -d "$path" ]; then find "$path" -depth -delete; fi
+          done
+
+      - name: Prebuild tv
+        id: prebuild-tv
+        if: ${{ fromJSON(inputs.plan).tv }}
+        continue-on-error: true
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          EXPO_TV: "1"
+        run: bunx expo prebuild --clean --platform "$PLATFORM"
+
+      - name: Cache Android tv Gradle project
+        id: gradle-tv
+        if: ${{ inputs.platform == 'android' && steps.prebuild-tv.outcome == 'success' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: android/.gradle
+          key: ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-
+
+      - name: 🍎 Build tvOS IPA (Unsigned) · build
+        id: ios-tv-release-device-unsigned
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-device-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-tv-release-device-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-tv-release-device-unsigned'].name }}
+          retention-days: 7
+
+      - name: 🤖 Build Android APK (TV) · build
+        id: android-tv-release-device-debugkey
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-tv-release-device-debugkey
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-release-device-debugkey'].name }}
+          retention-days: 7
+
+      - name: 🛠️ Build dev client (tvOS simulator)
+        id: ios-tv-debug-simulator-unsigned
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-debug-simulator-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-tv-debug-simulator-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-tv-debug-simulator-unsigned'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build dev client (Android TV)
+        id: android-tv-debug-device-debugkey
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-debug-device-debugkey'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-tv-debug-device-debugkey
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-debug-device-debugkey'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build release simulator (tvOS)
+        id: ios-tv-release-simulator-unsigned
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-simulator-unsigned'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: ios-tv-release-simulator-unsigned
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-tv-release-simulator-unsigned'].name }}
+          retention-days: 90
+
+      - name: 🛠️ Build universal release APK (Android TV)
+        id: android-tv-release-device-debugkey-universal
+        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey-universal'] != null }}
+        continue-on-error: true
+        uses: ./.github/actions/build-native-variant
+        with:
+          variant: android-tv-release-device-debugkey-universal
+          artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-release-device-debugkey-universal'].name }}
+          retention-days: 90
+
+      - name: Save Android tv Gradle project
+        if: ${{ inputs.platform == 'android' && steps.prebuild-tv.outcome == 'success' && steps.gradle-tv.outputs.cache-hit != 'true' && !cancelled() }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: android/.gradle
+          key: ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+
+      # Every selected variant gets a chance, but a failed upload/build or
+      # failed form setup must still fail the group.
+      - name: Check grouped build results
+        if: ${{ !cancelled() && contains(steps.*.outcome, 'failure') }}
+        run: exit 1

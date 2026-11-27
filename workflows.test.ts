@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, posix } from "node:path";
+import { join, posix, resolve } from "node:path";
 import ignore from "ignore";
 
 import {
@@ -532,9 +532,19 @@ describe("linting.yml", () => {
 
 describe("build-apps.yml", () => {
   const buildAppsRaw = readWorkflow("build-apps.yml");
-  const nativeVariantRaw = readWorkflow("_native-variant.yml");
+  const nativeVariant = withoutComments(readWorkflow("_native-variant.yml"));
+  const groupRaw = readWorkflow("_native-build-group.yml");
+  const group = withoutComments(groupRaw);
+  const buildActionRaw = readFileSync(
+    resolve(__dirname, ".github/actions/build-native-variant/action.yml"),
+    "utf8",
+  );
+  const buildAction = withoutComments(buildActionRaw);
+  const buildScript = readFileSync(
+    resolve(__dirname, "scripts/build-cache/build-native-variant.sh"),
+    "utf8",
+  );
   const buildApps = withoutComments(buildAppsRaw);
-  const nativeVariant = withoutComments(nativeVariantRaw);
 
   /** Splits `jobs:` in a workflow into a map of job id -> raw job block. */
   const jobsOf = (text: string): Map<string, string> => {
@@ -575,10 +585,19 @@ describe("build-apps.yml", () => {
     callerByVariant.set(variantId, list);
   }
 
-  test("every variant id in VARIANTS has exactly one caller job", () => {
-    expect(callers).toHaveLength(VARIANTS.length);
+  test("groups full builds by OS and gives every variant a single build step", () => {
+    expect(jobsOf(group).size).toBe(1);
+    expect([...jobs.keys()].filter((id) => id.startsWith("build-"))).toEqual([
+      "build-android",
+      "build-ios",
+    ]);
     for (const variant of VARIANTS) {
-      expect(callerByVariant.get(variant.id)).toHaveLength(1);
+      expect(callerByVariant.get(variant.id)?.length ?? 0).toBe(
+        variant.mode === "repack" ? 1 : 0,
+      );
+      expect(
+        group.match(new RegExp(`^\\s*variant: ${variant.id}$`, "gm")),
+      ).toHaveLength(1);
     }
   });
 
@@ -612,50 +631,42 @@ describe("build-apps.yml", () => {
       const callerId = callerByVariant.get(expectedCallerVariant)![0].id;
       const needsLine = gateBody.match(/^\s*needs:\s*(.+)$/m)?.[1] ?? "";
       expect(needsLine).toContain(callerId);
+      const buildOs = expectedCallerVariant.startsWith("ios-")
+        ? "ios"
+        : "android";
+      expect(needsLine).toContain(`build-${buildOs}`);
+      expect(gateBody).toContain(
+        `needs.build-${buildOs}.outputs.${expectedCallerVariant}`,
+      );
+      expect(group).toContain(
+        `${expectedCallerVariant}: \${{ steps.${expectedCallerVariant}.outcome }}`,
+      );
     }
   });
 
-  test("ensure callers carry the merge_group and fork skip condition", () => {
+  test("the ensure step carries the merge_group and fork skip condition", () => {
     const ensureVariants = VARIANTS.filter((v) => v.mode === "ensure");
     expect(ensureVariants.length).toBe(8);
 
-    for (const variant of ensureVariants) {
-      const [{ body }] = callerByVariant.get(variant.id)!;
-      const ifLine = body.match(/^\s*if:\s*(.+)$/m)?.[1] ?? "";
-      expect(ifLine).toContain("github.event_name != 'merge_group'");
-      expect(ifLine).toContain(
-        "github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository",
-      );
-    }
+    const fingerprint = jobs.get("fingerprint")!;
+    const ensureStep = fingerprint.slice(fingerprint.indexOf("id: ensure"));
+    const ifLine = ensureStep.match(/^\s*if: (.+)$/m)?.[1] ?? "";
+    expect(ifLine).toContain("github.event_name != 'merge_group'");
+    expect(ifLine).toContain(
+      "github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository",
+    );
   });
 
   // A flaky fingerprint must never block a merge: the required variants build
   // in full and upload under a name no lookup will reuse.
   const ifOf = (body: string) => body.match(/^\s*if:\s*(.+)$/m)?.[1] ?? "";
 
-  test("repack callers still run after a failed fingerprint job, and never repack", () => {
-    const repackVariants = VARIANTS.filter((v) => v.mode === "repack");
-    expect(repackVariants.length).toBe(5);
-
-    for (const variant of repackVariants) {
-      const [{ body }] = callerByVariant.get(variant.id)!;
-      const ifLine = ifOf(body);
-      expect(ifLine).toContain("always()");
-      expect(ifLine).toContain("!cancelled()");
-      expect(ifLine).toContain("needs.fingerprint.result != 'skipped'");
-      expect(ifLine).toContain(
-        "!contains(github.event.head_commit.message, '[skip ci]')",
+  test("never repacks without a successful fingerprint and a trusted source", () => {
+    for (const [, caller] of callers) {
+      expect(ifOf(caller)).toContain("needs.fingerprint.result == 'success'");
+      expect(ifOf(caller)).toMatch(
+        /needs\.fingerprint\.outputs\.\w+_source != ''/,
       );
-      // A failed fingerprint job's outputs reach no callee: an empty source
-      // builds in full, and an empty name is resolved in the build job.
-      for (const input of ["artifact-name", "source-run-id"]) {
-        expect(body).toMatch(
-          new RegExp(
-            `^\\s*${input}: \\$\\{\\{ needs\\.fingerprint\\.result == 'success' && needs\\.fingerprint\\.outputs\\.\\w+ \\|\\| '' \\}\\}$`,
-            "m",
-          ),
-        );
-      }
     }
 
     const [{ body: signed }] = callerByVariant.get(
@@ -687,7 +698,7 @@ describe("build-apps.yml", () => {
       "needs.fingerprint.outputs.can_sign != 'false'",
     );
     expect(gate).toContain(
-      "needs: [fingerprint, ios-phone-release-device-signed]",
+      "needs: [fingerprint, ios-phone-release-device-signed, build-ios]",
     );
     expect(gate).toContain(
       "CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}",
@@ -723,40 +734,53 @@ describe("build-apps.yml", () => {
     },
   );
 
-  test("ensure callers need a successful fingerprint job", () => {
-    for (const variant of VARIANTS.filter((v) => v.mode === "ensure")) {
-      const [{ body }] = callerByVariant.get(variant.id)!;
-      const ifLine = ifOf(body);
-      expect(ifLine).toContain("needs.fingerprint.result == 'success'");
-      expect(ifLine).not.toContain("always()");
-    }
+  test("a successful fallback upload passes its gate after a repack failure", () => {
+    const result = spawnSync(
+      "bash",
+      [
+        "-eo",
+        "pipefail",
+        "-c",
+        runOf(jobs.get("gate-android-phone")!, "✅ Verify build result"),
+      ],
+      {
+        env: {
+          ...process.env,
+          RESULT: "failure",
+          BUILD_RESULT: "success",
+          SKIP_CI: "false",
+        },
+      },
+    );
+    expect(result.status).toBe(0);
   });
 
   describe("the build job's artifact name", () => {
-    const step = "🏷️ Resolve artifact name";
-    const script = runOf(nativeVariantRaw, step);
-    const buildJob = jobsOf(nativeVariant).get("build") ?? "";
+    const step = "Resolve artifact names";
+    const script = runOf(groupRaw, step);
 
     test("is resolved before prebuild and used for the binary and its upload", () => {
-      const resolveAt = buildJob.indexOf(`- name: ${step}`);
+      const resolveAt = group.indexOf(`- name: ${step}`);
       expect(resolveAt).toBeGreaterThan(0);
-      expect(resolveAt).toBeLessThan(
-        buildJob.indexOf("- name: 🛠️ Generate project files"),
-      );
-      expect(buildJob).toMatch(
-        /^\s*ARTIFACT_NAME: \$\{\{ inputs\.artifact-name \}\}$/m,
-      );
-      expect(buildJob).toMatch(/^\s*RUN_ID: \$\{\{ github\.run_id \}\}$/m);
-      expect(buildJob).toMatch(
+      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild phone"));
+      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild tv"));
+      expect(group).toMatch(/^\s*PLAN: \$\{\{ inputs\.plan \}\}$/m);
+      expect(group).toMatch(/^\s*RUN_ID: \$\{\{ github\.run_id \}\}$/m);
+      expect(group).toMatch(
         /^\s*RUN_ATTEMPT: \$\{\{ github\.run_attempt \}\}$/m,
       );
-      // The resolve step reads the input; everything after it reads the result.
-      expect(buildJob.match(/inputs\.artifact-name/g)).toHaveLength(1);
-      expect(buildJob).toMatch(
-        /^\s*ARTIFACT_NAME: \$\{\{ steps\.artifact\.outputs\.name \}\}$/m,
+      for (const variant of VARIANTS) {
+        expect(group).toContain(
+          `artifact-name: \${{ fromJSON(steps.artifacts.outputs.plan).variants['${variant.id}'].name }}`,
+        );
+      }
+      // The group resolves every name once; the action consumes it verbatim.
+      expect(buildAction.match(/inputs\.artifact-name/g)).toHaveLength(2);
+      expect(buildAction).toMatch(
+        /^\s*ARTIFACT_NAME: \$\{\{ inputs\.artifact-name \}\}$/m,
       );
-      expect(buildJob).toMatch(
-        /^\s*name: \$\{\{ steps\.artifact\.outputs\.name \}\}$/m,
+      expect(buildAction).toMatch(
+        /^\s*name: \$\{\{ inputs\.artifact-name \}\}$/m,
       );
     });
 
@@ -791,8 +815,12 @@ describe("build-apps.yml", () => {
             LOG: log,
             HASH_EXIT: String(hashExit),
             GITHUB_OUTPUT: output,
-            VARIANT: "android-phone-release-device-debugkey",
-            ARTIFACT_NAME: given,
+            PLAN: JSON.stringify({
+              phone: true,
+              variants: {
+                "android-phone-release-device-debugkey": { name: given },
+              },
+            }),
             RUN_ID: "123",
             RUN_ATTEMPT: "2",
           },
@@ -802,7 +830,9 @@ describe("build-apps.yml", () => {
         return {
           code: result.status,
           stdout: result.stdout,
-          output: read(output),
+          output: JSON.parse(read(output).slice("plan=".length)).variants[
+            "android-phone-release-device-debugkey"
+          ].name,
           calls: read(log).split("\n").filter(Boolean),
         };
       } finally {
@@ -813,7 +843,7 @@ describe("build-apps.yml", () => {
     test("keeps the name the fingerprint job gave", () => {
       const result = resolve("given-name", 0);
       expect(result.code).toBe(0);
-      expect(result.output).toBe("name=given-name");
+      expect(result.output).toBe("given-name");
       expect(result.calls).toEqual([]);
       expect(result.stdout).not.toContain("::warning::");
     });
@@ -822,7 +852,7 @@ describe("build-apps.yml", () => {
       const result = resolve("", 0);
       expect(result.code).toBe(0);
       expect(result.output).toBe(
-        "name=hashed-android-phone-release-device-debugkey",
+        "hashed-android-phone-release-device-debugkey",
       );
       expect(result.calls).toEqual([
         "scripts/build-cache/cli.ts name android-phone-release-device-debugkey",
@@ -834,7 +864,7 @@ describe("build-apps.yml", () => {
       const result = resolve("", 2);
       expect(result.code).toBe(0);
       expect(result.output).toBe(
-        "name=fallback-android-phone-release-device-debugkey-123-2",
+        "fallback-android-phone-release-device-debugkey-123-2",
       );
       expect(result.calls).toEqual([
         "scripts/build-cache/cli.ts name android-phone-release-device-debugkey",
@@ -849,20 +879,33 @@ describe("build-apps.yml", () => {
   test("no artifact name is hand-written in either workflow outside comments", () => {
     expect(buildApps).not.toContain("streamyfin-");
     expect(nativeVariant).not.toContain("streamyfin-");
+    expect(group).not.toContain("streamyfin-");
+    expect(buildAction).not.toContain("streamyfin-");
   });
 
-  test("_native-variant.yml uploads with retention-days from an input and callers pass each variant retentionDays", () => {
+  test("uploads carry each variant's retention days", () => {
     const uploadSteps = nativeVariant
       .split(/\n(?=[ \t]*- name: )/)
       .filter((step) => step.includes("actions/upload-artifact@"));
-    expect(uploadSteps).toHaveLength(2);
+    expect(uploadSteps).toHaveLength(1);
     for (const step of uploadSteps) {
       expect(step).toMatch(
         /^\s*retention-days:\s*\$\{\{\s*inputs\.retention-days\s*\}\}\s*$/m,
       );
     }
+    expect(buildAction).toContain(
+      "retention-days: ${{ inputs.retention-days }}",
+    );
 
     for (const variant of VARIANTS) {
+      const stepStart = group.indexOf(`variant: ${variant.id}`);
+      const stepEnd = group.indexOf("- name: ", stepStart);
+      expect(
+        group.slice(stepStart, stepEnd < 0 ? undefined : stepEnd),
+      ).toContain(`retention-days: ${variant.retentionDays}`);
+    }
+
+    for (const variant of VARIANTS.filter((v) => v.mode === "repack")) {
       const [{ body }] = callerByVariant.get(variant.id)!;
       const retention = body.match(/^\s*retention-days:\s*(\d+)\s*$/m)?.[1];
       expect(Number(retention)).toBe(variant.retentionDays);
@@ -877,11 +920,11 @@ describe("build-apps.yml", () => {
       expect(variantById(variant.id)?.kind).toBe("app");
     }
 
-    expect(nativeVariant).toMatch(
+    expect(buildScript).toMatch(
       /COPYFILE_DISABLE=1 tar -cf "\$tar_path" -C "\$products" "\$app_name"/,
     );
-    expect(nativeVariant).toMatch(/tar_path=.*\.tar/);
-    expect(nativeVariant).toContain(
+    expect(buildScript).toMatch(/tar_path="\$artifact_dir\/.*\.tar"/);
+    expect(buildScript).toContain(
       'echo "artifact_path=$tar_path" >> "$GITHUB_OUTPUT"',
     );
   });
@@ -982,7 +1025,7 @@ describe("build-apps.yml", () => {
   });
 
   test("the variant lookup step guards the command substitution", () => {
-    const script = withoutComments(runOf(nativeVariantRaw, "🚀 Build app"));
+    const script = withoutComments(buildScript);
     expect(script).not.toMatch(/\beval\s+"\$\(bun\b/);
     expect(script).toMatch(
       /vars=\$\(bun -e '[\s\S]*?' "\$VARIANT"\)\s*\|\|\s*\{\s*echo "::error::[^"]+";\s*exit 1;\s*\}/,
@@ -994,7 +1037,7 @@ describe("build-apps.yml", () => {
   });
 
   test("the build recipe chain covers every os/config/target and ends in an erroring else", () => {
-    const script = withoutComments(runOf(nativeVariantRaw, "🚀 Build app"));
+    const script = withoutComments(buildScript);
     const combinations = new Set(
       VARIANTS.map((v) => `${v.os}:${v.config}:${v.target}`),
     );
@@ -1013,7 +1056,7 @@ describe("build-apps.yml", () => {
   });
 
   test("no run block interpolates inputs directly", () => {
-    for (const workflow of [nativeVariant, buildApps]) {
+    for (const workflow of [nativeVariant, buildApps, group, buildAction]) {
       const blocks = runBlocksOf(workflow);
       expect(blocks.length).toBeGreaterThan(0);
       for (const block of blocks) {
