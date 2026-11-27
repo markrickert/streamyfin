@@ -976,6 +976,12 @@ describe("build-apps.yml", () => {
     }
   });
 
+  test("stops the Gradle daemon when an Android variant exits", () => {
+    expect(buildScript).toMatch(
+      /if \[ "\$v_os" = "android" \]; then\n(?:.*\n)*?\s*trap '[^']*\.\/gradlew --stop[^']*' EXIT/,
+    );
+  });
+
   test("simulator builds compile only the arm64 slice", () => {
     const start = buildScript.indexOf("build_ios_simulator()");
     const fn = buildScript.slice(start, buildScript.indexOf("\n}\n", start));

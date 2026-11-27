@@ -88,6 +88,12 @@ build_ios_simulator() {
 artifact_dir="$GITHUB_WORKSPACE/build/native-$v_form/$VARIANT"
 mkdir -p "$artifact_dir"
 
+if [ "$v_os" = "android" ]; then
+  # Stop the Gradle daemon when each variant exits so the next variant on the
+  # same runner starts with a clean heap while keeping on-disk build outputs.
+  trap '[ -x android/gradlew ] && (cd android && ./gradlew --stop) || true' EXIT
+fi
+
 if [ "$v_os" = "android" ] && [ "$v_config" = "debug" ] && [ "$v_target" = "device" ]; then
   export ORG_GRADLE_PROJECT_reactNativeArchitectures="$v_abis"
   (cd android && ./gradlew assembleDebug)
