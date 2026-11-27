@@ -601,6 +601,18 @@ describe("build-apps.yml", () => {
     }
   });
 
+  test.each(["android", "ios"])(
+    "runs the %s group after skipped repack ancestors",
+    (os) => {
+      const condition = ifOf(jobs.get(`build-${os}`)!);
+      const output = `needs.plan-native-builds.outputs.${os}`;
+      expect(condition).toContain(
+        "always() && !cancelled() && needs.plan-native-builds.result == 'success'",
+      );
+      expect(condition).toContain(`${output} != '' && ${output} != '{}'`);
+    },
+  );
+
   test("the four gate names exist exactly once and nothing else uses those names", () => {
     const expectedGates: Record<string, string> = {
       "🍎 Build iOS IPA (Phone)": "ios-phone-release-device-signed",

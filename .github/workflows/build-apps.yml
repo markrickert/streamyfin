@@ -316,7 +316,7 @@ jobs:
 
   build-android:
     needs: plan-native-builds
-    if: ${{ needs.plan-native-builds.outputs.android != '{}' }}
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android != '' && needs.plan-native-builds.outputs.android != '{}' }}
     permissions:
       contents: read
       actions: write
@@ -328,7 +328,7 @@ jobs:
 
   build-ios:
     needs: plan-native-builds
-    if: ${{ needs.plan-native-builds.outputs.ios != '{}' }}
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios != '' && needs.plan-native-builds.outputs.ios != '{}' }}
     permissions:
       contents: read
       actions: write
