@@ -4,9 +4,11 @@
  * Subcommands:
  *   bun scripts/build-cache/cli.ts hash <os> <form>
  *   bun scripts/build-cache/cli.ts name <variantId> [hash]
+ *   bun scripts/build-cache/cli.ts fallback-name <variantId> <runId> <attempt>
+ *   bun scripts/build-cache/cli.ts outputs ios=<hash> tv=<hash> android=<hash> android_tv=<hash>
  *   bun scripts/build-cache/cli.ts fetch <variantId>
  *   bun scripts/build-cache/cli.ts repack <variantId> <source> <output> [--sentry]
- *   bun scripts/build-cache/cli.ts needs-build <variantId>
+ *   bun scripts/build-cache/cli.ts needs-build <variantId> [hash]
  *   bun scripts/build-cache/cli.ts prune
  *
  * Exit codes:
@@ -80,6 +82,24 @@ const requireVariant = (id: string | undefined): Variant => {
   return variant;
 };
 
+const parseCount = (value: string | undefined, label: string): string => {
+  if (value && /^[1-9]\d*$/.test(value)) return value;
+  throw new UsageError(
+    `Invalid ${label} "${value ?? ""}" (expected a positive integer)`,
+  );
+};
+
+/**
+ * Names a binary built without a fingerprint. It must never contain `-fp-`:
+ * every lookup asks for an exact `artifactName`, which always does, so no
+ * later run can reuse this binary.
+ */
+export const fallbackArtifactName = (
+  variant: Variant,
+  runId: string,
+  attempt: string,
+): string => `streamyfin-${variant.id}-unhashed-${runId}-${attempt}`;
+
 const computeHash = (
   hashFn: typeof hashFor,
   variant: Variant,
@@ -137,6 +157,46 @@ const parseRepackArgs = (
   };
 };
 
+const parseOutputsArgs = (
+  args: readonly string[],
+): Record<`${Os}-${Form}`, string> => {
+  const keyToTarget: Record<string, `${Os}-${Form}`> = {
+    ios: "ios-phone",
+    tv: "ios-tv",
+    android: "android-phone",
+    android_tv: "android-tv",
+  };
+  const parsed: Partial<Record<`${Os}-${Form}`, string>> = {};
+
+  for (const arg of args) {
+    const eq = arg.indexOf("=");
+    if (eq <= 0) {
+      throw new UsageError(
+        "Usage: outputs ios=<hash> tv=<hash> android=<hash> android_tv=<hash>",
+      );
+    }
+    const key = arg.slice(0, eq);
+    const value = arg.slice(eq + 1);
+    const target = keyToTarget[key];
+    if (!target || !value || parsed[target] !== undefined) {
+      throw new UsageError(
+        "Usage: outputs ios=<hash> tv=<hash> android=<hash> android_tv=<hash>",
+      );
+    }
+    parsed[target] = value;
+  }
+
+  for (const target of Object.values(keyToTarget)) {
+    if (!parsed[target]) {
+      throw new UsageError(
+        "Usage: outputs ios=<hash> tv=<hash> android=<hash> android_tv=<hash>",
+      );
+    }
+  }
+
+  return parsed as Record<`${Os}-${Form}`, string>;
+};
+
 /** Executes the build-cache CLI and returns the process exit code. */
 export const runCli = async (
   argv: readonly string[],
@@ -179,6 +239,26 @@ export const runCli = async (
         const variant = requireVariant(rest[0]);
         const hash = rest[1] ?? computeHash(hashFn, variant, env);
         stdout(`${artifactName(variant, hash)}\n`);
+        return 0;
+      }
+      case "fallback-name": {
+        if (rest.length !== 3) {
+          throw new UsageError(
+            "Usage: fallback-name <variantId> <runId> <attempt>",
+          );
+        }
+        const variant = requireVariant(rest[0]);
+        const runId = parseCount(rest[1], "runId");
+        const attempt = parseCount(rest[2], "attempt");
+        stdout(`${fallbackArtifactName(variant, runId, attempt)}\n`);
+        return 0;
+      }
+      case "outputs": {
+        const hashes = parseOutputsArgs(rest);
+        for (const variant of VARIANTS) {
+          const hash = hashes[`${variant.os}-${variant.form}`];
+          stdout(`${variant.id}_name=${artifactName(variant, hash)}\n`);
+        }
         return 0;
       }
       case "fetch": {
@@ -228,11 +308,11 @@ export const runCli = async (
         }
       }
       case "needs-build": {
-        if (rest.length !== 1) {
-          throw new UsageError("Usage: needs-build <variantId>");
+        if (rest.length < 1 || rest.length > 2) {
+          throw new UsageError("Usage: needs-build <variantId> [hash]");
         }
         const variant = requireVariant(rest[0]);
-        const hash = computeHash(hashFn, variant, env);
+        const hash = rest[1] ?? computeHash(hashFn, variant, env);
         const name = artifactName(variant, hash);
         const token = env.GITHUB_TOKEN?.trim() ?? "";
         const repository = env.GITHUB_REPOSITORY?.trim() ?? "";
@@ -292,7 +372,7 @@ export const runCli = async (
       }
       default: {
         throw new UsageError(
-          `Unknown command "${command ?? ""}" (expected hash, name, fetch, repack, needs-build, or prune)`,
+          `Unknown command "${command ?? ""}" (expected hash, name, fallback-name, outputs, fetch, repack, needs-build, or prune)`,
         );
       }
     }

@@ -66,6 +66,11 @@ module.exports = {
       reasons: ["Native build options set by the CI workflow"],
     },
     {
+      type: "file",
+      filePath: ".github/workflows/_native-variant.yml",
+      reasons: ["Native build options set by the CI workflow"],
+    },
+    {
       type: "dir",
       filePath: "plugins",
       reasons: ["Files config plugins copy in at prebuild"],

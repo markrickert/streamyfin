@@ -1,9 +1,10 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { type CliDeps, runCli } from "./cli";
+import { type CliDeps, fallbackArtifactName, runCli } from "./cli";
 import type { PruneResult } from "./fetch";
-import type { FetchLike } from "./github";
+import { type FetchLike, listArtifacts } from "./github";
+import { type Artifact, pickSource, type RunContext } from "./pick";
 import { repoRoot } from "./process";
 import type { RepackOptions } from "./repack";
 import { artifactName, VARIANTS, variantById } from "./variants";
@@ -61,6 +62,36 @@ describe("build-cache cli", () => {
     );
   });
 
+  it("prints <variant>_name=<artifactName> lines for every variant in outputs subcommand", async () => {
+    const hashes = {
+      "ios-phone": "h-ios",
+      "ios-tv": "h-tv",
+      "android-phone": "h-and",
+      "android-tv": "h-andtv",
+    } as const;
+    const { deps, stdout, stderr } = makeHarness();
+
+    const code = await runCli(
+      [
+        "outputs",
+        `ios=${hashes["ios-phone"]}`,
+        `tv=${hashes["ios-tv"]}`,
+        `android=${hashes["android-phone"]}`,
+        `android_tv=${hashes["android-tv"]}`,
+      ],
+      deps,
+    );
+
+    expect(code).toBe(0);
+    expect(stderr()).toBe("");
+    const lines = stdout().trim().split("\n");
+    expect(lines).toEqual(
+      VARIANTS.map(
+        (v) => `${v.id}_name=${artifactName(v, hashes[`${v.os}-${v.form}`])}`,
+      ),
+    );
+  });
+
   it("prints artifact name and exits 0 for name subcommand", async () => {
     const hashFor = jest.fn(() => "computed123");
     const variant = variantById("android-phone-debug-device-debugkey")!;
@@ -82,6 +113,110 @@ describe("build-cache cli", () => {
       { os: "android", form: "phone" },
       { env: { TEST_ENV: "1" } },
     );
+  });
+
+  it("prints an unhashed fallback name that no fingerprint pattern matches", async () => {
+    for (const variant of VARIANTS) {
+      const { deps, stdout, stderr } = makeHarness();
+      const code = await runCli(
+        ["fallback-name", variant.id, "123456", "2"],
+        deps,
+      );
+
+      expect(code).toBe(0);
+      expect(stderr()).toBe("");
+      const name = stdout().trim();
+      expect(name).toBe(fallbackArtifactName(variant, "123456", "2"));
+      expect(name).toBe(`streamyfin-${variant.id}-unhashed-123456-2`);
+      expect(name).toContain("-unhashed-");
+      expect(name).not.toContain("-fp-");
+      expect(name).not.toMatch(
+        new RegExp(`^streamyfin-${variant.id}-r\\d+-fp-`),
+      );
+      // Every artifactName carries -fp-, so no hash can spell this name.
+      expect(artifactName(variant, "unhashed-123456-2")).toContain("-fp-");
+    }
+  });
+
+  it("rejects fallback-name without a known variant, a run id and an attempt", async () => {
+    const id = "android-phone-release-device-debugkey";
+    const cases: string[][] = [
+      ["fallback-name"],
+      ["fallback-name", id],
+      ["fallback-name", id, "123"],
+      ["fallback-name", id, "123", "2", "extra"],
+      ["fallback-name", "nope", "123", "2"],
+      ["fallback-name", id, "abc", "2"],
+      ["fallback-name", id, "123", "0"],
+      ["fallback-name", id, "-1", "2"],
+      ["fallback-name", id, "1-fp-abc", "2"],
+    ];
+
+    for (const argv of cases) {
+      const { deps, stdout, stderr } = makeHarness();
+      expect(await runCli(argv, deps)).toBe(64);
+      expect(stdout()).toBe("");
+      expect(stderr().trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("never selects a fallback-named artifact through pickSource or the artifact-name lookups", async () => {
+    const repositoryId = 1000;
+    // A fresh fallback build on develop, the most trusted source there is.
+    const stored: Artifact[] = VARIANTS.map((variant, index) => ({
+      id: index + 1,
+      name: fallbackArtifactName(variant, "777", "1"),
+      expired: false,
+      created_at: "2026-11-26T00:00:00Z",
+      expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      workflow_run: {
+        id: 777,
+        head_branch: "develop",
+        head_repository_id: repositoryId,
+        head_sha: "sha-777",
+        repository_id: repositoryId,
+      },
+    }));
+    // GitHub's `name` filter matches the whole artifact name.
+    const github: FetchLike = async (url) => {
+      const name = new URL(url).searchParams.get("name");
+      const artifacts = stored.filter((artifact) => artifact.name === name);
+      return jsonResponse({ total_count: artifacts.length, artifacts });
+    };
+    const ctx: RunContext = { repositoryId };
+
+    // Asked for by its own name, the fixture would be picked.
+    expect(
+      pickSource(await listArtifacts("o/r", stored[0].name, "tok", github), ctx)
+        ?.id,
+    ).toBe(stored[0].id);
+
+    for (const variant of VARIANTS) {
+      for (const hash of ["abc123", "unhashed-777-1", "777-1"]) {
+        const listed = await listArtifacts(
+          "o/r",
+          artifactName(variant, hash),
+          "tok",
+          github,
+        );
+        expect(listed).toEqual([]);
+        expect(pickSource(listed, ctx, "ci")).toBeUndefined();
+        expect(pickSource(listed, ctx, "local")).toBeUndefined();
+      }
+    }
+
+    for (const variant of VARIANTS.filter((v) => v.mode === "ensure")) {
+      const { deps, stdout } = makeHarness({
+        fetch: github,
+        env: {
+          GITHUB_TOKEN: "tok",
+          GITHUB_REPOSITORY: "o/r",
+          REPOSITORY_ID: String(repositoryId),
+        },
+      });
+      expect(await runCli(["needs-build", variant.id, "abc123"], deps)).toBe(0);
+      expect(stdout().trim()).toBe("build");
+    }
   });
 
   it("handles fetch hit (exit 0) and miss (exit 2)", async () => {
@@ -208,6 +343,57 @@ describe("build-cache cli", () => {
     expect(missingEnvHarness.stderr().length).toBeGreaterThan(0);
   });
 
+  it("skips hashFor when needs-build receives an explicit hash and calls it when omitted", async () => {
+    const variant = variantById("ios-phone-debug-simulator-unsigned")!;
+    const baseEnv = {
+      GITHUB_TOKEN: "tok",
+      GITHUB_REPOSITORY: "streamyfin/streamyfin",
+      REPOSITORY_ID: "1000",
+    };
+
+    const explicitHashFor = jest.fn(() => "computed-fp");
+    const explicitFetch: FetchLike = async (url) => {
+      expect(url).toContain(
+        encodeURIComponent(artifactName(variant, "explicit-fp")),
+      );
+      return jsonResponse({ total_count: 0, artifacts: [] });
+    };
+    const explicitHarness = makeHarness({
+      hashFor: explicitHashFor,
+      fetch: explicitFetch,
+      env: baseEnv,
+    });
+    expect(
+      await runCli(
+        ["needs-build", variant.id, "explicit-fp"],
+        explicitHarness.deps,
+      ),
+    ).toBe(0);
+    expect(explicitHarness.stdout().trim()).toBe("build");
+    expect(explicitHashFor).not.toHaveBeenCalled();
+
+    const omittedHashFor = jest.fn(() => "computed-fp");
+    const omittedFetch: FetchLike = async (url) => {
+      expect(url).toContain(
+        encodeURIComponent(artifactName(variant, "computed-fp")),
+      );
+      return jsonResponse({ total_count: 0, artifacts: [] });
+    };
+    const omittedHarness = makeHarness({
+      hashFor: omittedHashFor,
+      fetch: omittedFetch,
+      env: baseEnv,
+    });
+    expect(await runCli(["needs-build", variant.id], omittedHarness.deps)).toBe(
+      0,
+    );
+    expect(omittedHarness.stdout().trim()).toBe("build");
+    expect(omittedHashFor).toHaveBeenCalledWith(
+      { os: "ios", form: "phone" },
+      { env: baseEnv },
+    );
+  });
+
   it("handles repack happy path, --sentry passthrough, tmpdir working dir outside output dir, and miss", async () => {
     const variant = variantById(
       "android-phone-release-device-debugkey-universal",
@@ -320,9 +506,14 @@ describe("build-cache cli", () => {
       ["hash", "windows", "phone"],
       ["hash", "ios", "watch"],
       ["name"],
+      ["outputs"],
+      ["outputs", "ios=a", "tv=b", "android=c"],
+      ["outputs", "ios=a", "tv=b", "android=c", "android_tv="],
+      ["outputs", "ios=a", "tv=b", "android=c", "android_tv=d", "ios=e"],
+      ["outputs", "ios=a", "tv=b", "android=c", "bogus=d"],
       ["fetch"],
       ["needs-build"],
-      ["needs-build", "ios-phone-debug-simulator-unsigned", "extra"],
+      ["needs-build", "ios-phone-debug-simulator-unsigned", "fp123", "extra"],
       ["repack"],
       ["repack", "android-phone-debug-device-debugkey", "src"],
       ["repack", "android-phone-debug-device-debugkey", "src", "out", "--bad"],

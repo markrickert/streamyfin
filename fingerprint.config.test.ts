@@ -28,28 +28,33 @@ describe("fingerprint.config.js", () => {
     );
   });
 
-  it("hashes the build workflow, which sets native build options", () => {
+  it("hashes the build workflows, which set native build options", () => {
     // The ABIs and the Xcode version live there, out of the project's sight.
     expect(hashed.has(".github/workflows/build-apps.yml")).toBe(true);
+    expect(hashed.has(".github/workflows/_native-variant.yml")).toBe(true);
   });
 
-  it.each(["android", "android_tv"])(
-    "excludes iOS-only sources from the %s CI fingerprint",
-    (output) => {
-      const workflow = readFileSync(
-        path.join(__dirname, ".github/workflows/build-apps.yml"),
-        "utf8",
-      );
-      const command = workflow
-        .split("\n")
-        .find((line) => line.trim().endsWith(`; ${output}=$HASH`));
+  it.each([
+    ["android", "phone"],
+    ["android_tv", "tv"],
+  ])("excludes iOS-only sources from the %s CI fingerprint", (output, form) => {
+    const workflow = readFileSync(
+      path.join(__dirname, ".github/workflows/build-apps.yml"),
+      "utf8",
+    );
+    expect(workflow).toContain(
+      `${output}=$(bun scripts/build-cache/cli.ts hash android ${form})`,
+    );
 
-      expect(command).toContain("--ignore-path 'scripts/ios/**/*'");
-      // targets/ holds iOS and tvOS extension sources only; hashing them would
-      // stop an Android binary from being reused for a Swift-only change.
-      expect(command).toContain("--ignore-path 'targets/**/*'");
-    },
-  );
+    const fingerprint = readFileSync(
+      path.join(__dirname, "scripts/build-cache/fingerprint.ts"),
+      "utf8",
+    );
+    expect(fingerprint).toContain('"scripts/ios/**/*"');
+    // targets/ holds iOS and tvOS extension sources only; hashing them would
+    // stop an Android binary from being reused for a Swift-only change.
+    expect(fingerprint).toContain('"targets/**/*"');
+  });
 
   it("hashes every file the Expo config points to", () => {
     // @expo/fingerprint hashes the adaptive icon's foreground and background

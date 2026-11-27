@@ -189,12 +189,18 @@ jobs:
             // "(Unsigned)" sibling (whose name contains the signed name).
             // Each target lists the repack job beside the build job: either may
             // hold the artifact while the other sits skipped.
+            // Reusable-workflow jobs arrive prefixed as "<caller> / <job name>".
             const jobMappings = {
-              'Android Phone': ['🤖 Build Android APK (Phone)', '🤖 Repack Android APK (Phone)'],
-              'Android TV': ['🤖 Build Android APK (TV)', '🤖 Repack Android APK (TV)'],
-              'iOS': ['🍎 Build iOS IPA (Phone)', '🍎 Repack iOS IPA (Phone)'],
+              'Android Phone': ['🤖 Build Android APK (Phone) · build', '🤖 Repack Android APK (Phone)'],
+              'Android TV': ['🤖 Build Android APK (TV) · build', '🤖 Repack Android APK (TV)'],
+              'iOS': ['🍎 Build iOS IPA (Phone) · build', '🍎 Repack iOS IPA (Phone)'],
               'iOS Unsigned': ['🍎 Build iOS IPA (Phone - Unsigned)', '🍎 Repack iOS IPA (Phone - Unsigned)'],
-              'tvOS Unsigned': ['🍎 Build tvOS IPA (Unsigned)', '🍎 Repack tvOS IPA (Unsigned)']
+              'tvOS Unsigned': ['🍎 Build tvOS IPA (Unsigned) · build', '🍎 Repack tvOS IPA (Unsigned)']
+            };
+
+            const stripCallerPrefix = (name) => {
+              const idx = name.indexOf(' / ');
+              return idx === -1 ? name : name.slice(idx + 3);
             };
 
             // Prefer an exact name match over a substring match so
@@ -202,10 +208,10 @@ jobs:
             // with two jobs prefers the live one, then the successful one, so
             // a skipped job never stands in for the repack that ran.
             const findJobForTarget = (jobs, jobNames) => {
-              const exact = jobs.filter(j => jobNames.some(name => j.name === name));
+              const exact = jobs.filter(j => jobNames.includes(stripCallerPrefix(j.name)));
               const pool = exact.length
                 ? exact
-                : jobs.filter(j => jobNames.some(name => j.name.includes(name)));
+                : jobs.filter(j => jobNames.some(name => stripCallerPrefix(j.name).includes(name)));
               return (
                 pool.find(j => j.status !== 'completed') ??
                 pool.find(j => j.conclusion === 'success') ??
@@ -224,13 +230,15 @@ jobs:
             // For the consolidated workflow, get individual job statuses
             if (latestAppsRun) {
               console.log(`Getting individual job statuses for run ${latestAppsRun.id} (status: ${latestAppsRun.status}, conclusion: ${latestAppsRun.conclusion || 'none'})`);
+              let anyJobSucceeded = false;
               
               try {
                 // Get all jobs for this workflow run
                 const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  run_id: latestAppsRun.id
+                  run_id: latestAppsRun.id,
+                  per_page: 100
                 });
                 
                 console.log(`Found ${jobs.jobs.length} jobs in workflow run`);
@@ -244,6 +252,7 @@ jobs:
                   job.status === 'queued' ||
                   (job.status === 'completed' && job.conclusion !== 'cancelled')
                 );
+                anyJobSucceeded = activeJobs.some(job => job.conclusion === 'success');
                 
                 console.log(`Found ${activeJobs.length} active (non-cancelled) jobs out of ${jobs.jobs.length} total jobs`);
                 
@@ -304,13 +313,13 @@ jobs:
               }
               
               // Collect artifacts if any job has completed successfully
-              if (latestAppsRun.status === 'completed' || 
-                  Object.values(buildStatuses).some(status => status.conclusion === 'success')) {
+              if (latestAppsRun.status === 'completed' || anyJobSucceeded) {
                 try {
                   const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    run_id: latestAppsRun.id
+                    run_id: latestAppsRun.id,
+                    per_page: 100
                   });
                   allArtifacts.push(...artifacts.artifacts);
                 } catch (error) {
@@ -401,7 +410,8 @@ jobs:
                 const { data: refJobs } = await github.rest.actions.listJobsForWorkflowRun({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  run_id: refRun.id
+                  run_id: refRun.id,
+                  per_page: 100
                 });
 
                 // Keyed by job name, not platform: a repack takes minutes where
@@ -409,8 +419,9 @@ jobs:
                 // same kind of job that is running.
                 const mappedNames = new Set(Object.values(jobMappings).flat());
                 for (const job of refJobs.jobs) {
-                  if (mappedNames.has(job.name) && job.conclusion === 'success' && job.started_at && job.completed_at) {
-                    referenceDurations[job.name] = new Date(job.completed_at) - new Date(job.started_at);
+                  const baseName = stripCallerPrefix(job.name);
+                  if (mappedNames.has(baseName) && job.conclusion === 'success' && job.started_at && job.completed_at) {
+                    referenceDurations[baseName] = new Date(job.completed_at) - new Date(job.started_at);
                   }
                 }
                 console.log(`Reference durations from develop run ${refRun.id}:`,
@@ -431,11 +442,11 @@ jobs:
 
             // Process each expected build target individually
             const buildTargets = [
-              { name: 'Android Phone', platform: '🤖', device: '📱 Phone', statusKey: 'Android Phone', artifactPattern: /android.*phone/i },
-              { name: 'Android TV', platform: '🤖', device: '📺 TV', statusKey: 'Android TV', artifactPattern: /android.*tv/i },
-              { name: 'iOS', platform: '🍎', device: '📱 Phone', statusKey: 'iOS', artifactPattern: /^(?!.*unsigned).*ios.*phone.*ipa/i },
-              { name: 'iOS Unsigned', platform: '🍎', device: '📱 Phone Unsigned', statusKey: 'iOS Unsigned', artifactPattern: /ios.*phone.*unsigned/i },
-              { name: 'tvOS Unsigned', platform: '🍎', device: '📺 TV Unsigned', statusKey: 'tvOS Unsigned', artifactPattern: /ios.*tv.*unsigned/i }
+              { name: 'Android Phone', platform: '🤖', device: '📱 Phone', statusKey: 'Android Phone', artifactPattern: /^streamyfin-android-phone-release-device-debugkey-r\d+-fp-/ },
+              { name: 'Android TV', platform: '🤖', device: '📺 TV', statusKey: 'Android TV', artifactPattern: /^streamyfin-android-tv-release-device-debugkey-r\d+-fp-/ },
+              { name: 'iOS', platform: '🍎', device: '📱 Phone', statusKey: 'iOS', artifactPattern: /^streamyfin-ios-phone-release-device-signed-r\d+-fp-/ },
+              { name: 'iOS Unsigned', platform: '🍎', device: '📱 Phone Unsigned', statusKey: 'iOS Unsigned', artifactPattern: /^streamyfin-ios-phone-release-device-unsigned-r\d+-fp-/ },
+              { name: 'tvOS Unsigned', platform: '🍎', device: '📺 TV Unsigned', statusKey: 'tvOS Unsigned', artifactPattern: /^streamyfin-ios-tv-release-device-unsigned-r\d+-fp-/ }
             ];
 
             for (const target of buildTargets) {
@@ -476,13 +487,13 @@ jobs:
                   downloadLink = '*Build cancelled*';
                 } else if (matchingStatus.status === 'in_progress') {
                   status = `🔄 [Building...](${matchingStatus.url})`;
-                  const ref = referenceDurations[matchingStatus.name];
+                  const ref = referenceDurations[stripCallerPrefix(matchingStatus.name)];
                   downloadLink = ref
                     ? `*Building… ~${fmtDuration(ref)} (avg on develop)*`
                     : '*Build in progress...*';
                 } else if (matchingStatus.status === 'queued') {
                   status = `⏳ [Queued](${matchingStatus.url})`;
-                  const ref = referenceDurations[matchingStatus.name];
+                  const ref = referenceDurations[stripCallerPrefix(matchingStatus.name)];
                   downloadLink = ref
                     ? `*Waiting to start… ~${fmtDuration(ref)} once running (avg on develop)*`
                     : '*Waiting to start...*';
@@ -505,6 +516,46 @@ jobs:
             }
 
             commentBody += `\n`;
+
+            // Ensure-mode variants (dev clients, release simulators, and
+            // universal Android APKs) are built once per fingerprint; report
+            // whichever were produced for this run's fingerprints.
+            const ensureVariants = [
+              { id: 'ios-phone-debug-simulator-unsigned', label: '🍎 iOS Simulator (Debug)', key: 'ios-phone' },
+              { id: 'ios-tv-debug-simulator-unsigned', label: '🍎 tvOS Simulator (Debug)', key: 'ios-tv' },
+              { id: 'android-phone-debug-device-debugkey', label: '🤖 Android Phone (Debug)', key: 'android-phone' },
+              { id: 'android-tv-debug-device-debugkey', label: '🤖 Android TV (Debug)', key: 'android-tv' },
+              { id: 'ios-phone-release-simulator-unsigned', label: '🍎 iOS Simulator (Release)', key: 'ios-phone' },
+              { id: 'ios-tv-release-simulator-unsigned', label: '🍎 tvOS Simulator (Release)', key: 'ios-tv' },
+              { id: 'android-phone-release-device-debugkey-universal', label: '🤖 Android Phone (Release Universal)', key: 'android-phone' },
+              { id: 'android-tv-release-device-debugkey-universal', label: '🤖 Android TV (Release Universal)', key: 'android-tv' }
+            ];
+            const runFingerprints = {};
+            for (const artifact of allArtifacts) {
+              const match = artifact.name.match(/^streamyfin-(ios|android)-(phone|tv)-.*-r\d+-fp-(.+)$/);
+              if (match) {
+                runFingerprints[`${match[1]}-${match[2]}`] = match[3];
+              }
+            }
+            commentBody += `<details>\n`;
+            commentBody += `<summary>Dev clients and repack bases</summary>\n\n`;
+            commentBody += `| Variant | Status |\n`;
+            commentBody += `|---|---|\n`;
+            for (const variant of ensureVariants) {
+              const fp = runFingerprints[variant.key];
+              const exactPattern = fp
+                ? new RegExp(`^streamyfin-${variant.id}-r\\d+-fp-${fp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
+                : null;
+              const artifact = exactPattern
+                ? allArtifacts.find(a => exactPattern.test(a.name))
+                : undefined;
+              const status = artifact
+                ? `✅ [\`${artifact.name}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${artifact.workflow_run.id}/artifacts/${artifact.id}) (${(artifact.size_in_bytes / (1024 * 1024)).toFixed(1)} MB)`
+                : '⏳ not built';
+              commentBody += `| ${variant.label} | ${status} |\n`;
+            }
+            commentBody += `\nRun locally: \`bun run app <ios|tvos|android|android-tv> [--release]\`\n`;
+            commentBody += `</details>\n\n`;
 
             // Static rundown of the build optimisations + what each artifact
             // installs on. Always shown (even mid-build) so testers know what
