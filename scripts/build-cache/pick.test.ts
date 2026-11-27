@@ -1,4 +1,10 @@
-import { type Artifact, needsBuild, pickSource, type RunContext } from "./pick";
+import {
+  type Artifact,
+  currentBranchFromEnv,
+  needsBuild,
+  pickSource,
+  type RunContext,
+} from "./pick";
 
 const REPO = 1000;
 const FORK = 2000;
@@ -121,5 +127,69 @@ describe("needsBuild", () => {
       expires_at: exactBoundary,
     });
     expect(needsBuild([fresh], ctx, now)).toBe(false);
+  });
+});
+
+describe("branch CI trust", () => {
+  it.each([
+    ["workflow_dispatch", "branch", "feat/cache"],
+    ["push", "branch", "feat/cache"],
+    ["workflow_dispatch", "tag", undefined],
+    ["push", "tag", undefined],
+    ["pull_request", "branch", undefined],
+    ["merge_group", "branch", undefined],
+    ["schedule", "branch", undefined],
+  ])(
+    "uses branch context for %s with ref type %s: %s",
+    (event, refType, expected) => {
+      expect(
+        currentBranchFromEnv({
+          GITHUB_EVENT_NAME: event,
+          GITHUB_REF_TYPE: refType,
+          GITHUB_REF_NAME: "feat/cache",
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it("reuses only the exact branch or develop from the same repository", () => {
+    const own = artifact("feat/cache", "2026-11-03T12:00:00Z");
+    const develop = artifact("develop", "2026-11-02T12:00:00Z");
+    const other = artifact("feat/cache-other", "2026-11-04T12:00:00Z");
+    const fork = artifact("feat/cache", "2026-11-05T12:00:00Z", {
+      headRepositoryId: FORK,
+    });
+    const otherRepo = artifact("feat/cache", "2026-11-06T12:00:00Z", {
+      repositoryId: FORK,
+    });
+    const branchCtx = { ...ctx, currentBranch: "feat/cache" };
+
+    expect(pickSource([own, develop, other, fork, otherRepo], branchCtx)).toBe(
+      own,
+    );
+    expect(pickSource([develop, other, fork, otherRepo], branchCtx)).toBe(
+      develop,
+    );
+    expect(pickSource([other, fork, otherRepo], branchCtx)).toBeUndefined();
+  });
+
+  it("does not relax commit membership for a reused PR branch", () => {
+    const otherCommit = artifact("feat/cache", "2026-11-03T12:00:00Z");
+    const prCtx: RunContext = {
+      ...ctx,
+      currentBranch: "feat/cache",
+      pullRequest: {
+        headRef: "feat/cache",
+        headRepositoryId: REPO,
+        commits: new Set(["different-sha"]),
+      },
+    };
+    expect(pickSource([otherCommit], prCtx)).toBeUndefined();
+  });
+
+  it("requires branch context even when artifact metadata omits the branch", () => {
+    const missingBranch = artifact("", "2026-11-03T12:00:00Z");
+    Reflect.deleteProperty(missingBranch.workflow_run, "head_branch");
+    expect(pickSource([missingBranch], ctx)).toBeUndefined();
   });
 });

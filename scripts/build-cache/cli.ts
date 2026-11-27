@@ -29,7 +29,7 @@ import {
   fetchPullRequestCommits,
   listArtifacts,
 } from "./github";
-import { needsBuild, type RunContext } from "./pick";
+import { currentBranchFromEnv, needsBuild, type RunContext } from "./pick";
 import { repoRoot } from "./process";
 import { repackVariant } from "./repack";
 import {
@@ -330,6 +330,7 @@ export const runCli = async (
         try {
           const ctx: RunContext = {
             repositoryId,
+            currentBranch: currentBranchFromEnv(env),
             pullRequest: env.PR_HEAD_REF
               ? {
                   headRef: env.PR_HEAD_REF,

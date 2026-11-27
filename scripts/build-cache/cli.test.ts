@@ -312,6 +312,21 @@ describe("build-cache cli", () => {
     expect(skipHarness.stdout().trim()).toBe("skip");
     expect(skipHarness.stderr()).toBe("");
 
+    const branchHarness = makeHarness({
+      fetch: skipFetch,
+      env: {
+        ...baseEnv,
+        GITHUB_EVENT_NAME: "workflow_dispatch",
+        GITHUB_REF_TYPE: "branch",
+        GITHUB_REF_NAME: "feat/test",
+      },
+    });
+    expect(
+      await runCli(["needs-build", variant.id, "fp123"], branchHarness.deps),
+    ).toBe(0);
+    expect(branchHarness.stdout().trim()).toBe("skip");
+    expect(branchHarness.stderr()).toBe("");
+
     const buildHarness = makeHarness({
       hashFor: () => "fp123",
       fetch: async () => jsonResponse({ total_count: 0, artifacts: [] }),

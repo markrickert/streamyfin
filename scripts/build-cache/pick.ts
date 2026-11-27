@@ -33,6 +33,8 @@ export interface Artifact {
 
 export interface RunContext {
   repositoryId: number;
+  /** Exact branch name for a branch push or manual dispatch, never a PR ref. */
+  currentBranch?: string;
   /**
    * Set on a `pull_request` run: the branch and repository it comes from, and
    * the commit SHAs `/pulls/{number}/commits` reports for it.
@@ -46,6 +48,15 @@ export interface RunContext {
 
 type PickPolicy = "ci" | "local";
 
+export const currentBranchFromEnv = (
+  env: Record<string, string | undefined>,
+) =>
+  env.GITHUB_REF_TYPE === "branch" &&
+  (env.GITHUB_EVENT_NAME === "push" ||
+    env.GITHUB_EVENT_NAME === "workflow_dispatch")
+    ? env.GITHUB_REF_NAME || undefined
+    : undefined;
+
 const isFromThisPullRequest = (artifact: Artifact, ctx: RunContext) =>
   ctx.pullRequest !== undefined &&
   ctx.pullRequest.headRepositoryId === ctx.repositoryId &&
@@ -54,17 +65,13 @@ const isFromThisPullRequest = (artifact: Artifact, ctx: RunContext) =>
     ctx.pullRequest.headRepositoryId &&
   ctx.pullRequest.commits.has(artifact.workflow_run.head_sha);
 
-const isFromTrustedBranch = (artifact: Artifact, ctx: RunContext) =>
-  artifact.workflow_run.head_branch === TRUSTED_BRANCH &&
-  artifact.workflow_run.head_repository_id === ctx.repositoryId;
-
 const isSameRepo = (artifact: Artifact, ctx: RunContext) =>
   artifact.workflow_run.repository_id === ctx.repositoryId &&
   artifact.workflow_run.head_repository_id === ctx.repositoryId;
 
 /**
  * Picks a usable artifact under the given policy.
- * - `ci`: the newest from this pull request, else the newest from `develop`.
+ * - `ci`: the newest from this pull request, else the newest from `develop` or the current branch.
  * - `local`: the newest non-expired artifact from any branch in this repo.
  * Fork artifacts are rejected under both policies.
  */
@@ -82,7 +89,13 @@ export const pickSource = (
   }
   return (
     usable.find((a) => isFromThisPullRequest(a, ctx)) ??
-    usable.find((a) => isFromTrustedBranch(a, ctx))
+    usable.find(
+      (a) =>
+        a.workflow_run.head_branch === TRUSTED_BRANCH ||
+        (ctx.pullRequest === undefined &&
+          ctx.currentBranch !== undefined &&
+          a.workflow_run.head_branch === ctx.currentBranch),
+    )
   );
 };
 

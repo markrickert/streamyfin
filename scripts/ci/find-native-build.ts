@@ -9,21 +9,20 @@
  *
  * A repacked binary keeps the native code of the build it came from, so only a
  * build this run would trust with its own native code may be a source: a run
- * on `develop` in this repository, or an earlier run of the same pull request
- * when that pull request comes from this repository. A binary from another
- * pull request must never be used, because anyone can open one from a fork and
- * name an artifact after any fingerprint. A fork pull request's own builds are
- * left out too: its runs follow its own copy of the workflow, so one commit
- * could upload any binary under the next commit's fingerprint and the next
- * revert that, leaving a binary no reviewed diff contains. A branch name does
- * not identify a pull request — a closed one's branch can be reused — so a run
- * counts as this pull request's only when its head commit is one of the pull
- * request's commits.
+ * on `develop`, on the current branch for branch pushes and manual dispatches,
+ * or on one of this same-repository pull request's commits. A pull request
+ * must not use another pull request's build: anyone can open a fork PR and
+ * name an artifact after any fingerprint. A fork PR cannot use its own
+ * earlier builds either: one commit could upload a binary under the next
+ * commit's fingerprint, leaving a binary no reviewed diff contains. A branch
+ * name does not identify a pull request, so a run counts as this pull
+ * request's only when its head commit is one of the pull request's commits.
  */
 import { appendFileSync } from "node:fs";
 import { fetchPullRequestCommits, listArtifacts } from "../build-cache/github";
 import {
   type Artifact,
+  currentBranchFromEnv,
   pickSource,
   type RunContext,
   TRUSTED_BRANCH,
@@ -38,6 +37,7 @@ export { type Artifact, pickSource, type RunContext, TRUSTED_BRANCH };
  * run id when no build is usable. Reads `GITHUB_TOKEN`, `GITHUB_REPOSITORY`,
  * `REPOSITORY_ID`, and on a pull request `PR_NUMBER`, `PR_HEAD_REF` and
  * `PR_HEAD_REPO_ID`.
+ * Branch runs also read `GITHUB_EVENT_NAME`, `GITHUB_REF_TYPE`, and `GITHUB_REF_NAME`.
  */
 const main = async () => {
   const env = process.env;
@@ -45,6 +45,7 @@ const main = async () => {
   const repository = env.GITHUB_REPOSITORY ?? "";
   const ctx: RunContext = {
     repositoryId: Number(env.REPOSITORY_ID),
+    currentBranch: currentBranchFromEnv(env),
     pullRequest: env.PR_HEAD_REF
       ? {
           headRef: env.PR_HEAD_REF,
