@@ -7,8 +7,16 @@ on:
         description: Expo platform for this runner (android or ios)
         required: true
         type: string
+      form:
+        description: Form factor this runner prebuilds (phone or tv)
+        required: true
+        type: string
+      job-name:
+        description: Display name for the build job
+        required: true
+        type: string
       plan:
-        description: Planned variant names and whether each form needs a prebuild
+        description: JSON plan of variants to build, keyed by id with resolved names
         required: true
         type: string
     outputs:
@@ -36,7 +44,7 @@ env:
 
 jobs:
   build:
-    name: ${{ inputs.platform == 'ios' && 'Build Apple variants' || 'Build Android variants' }}
+    name: ${{ inputs.job-name }}
     runs-on: ${{ inputs.platform == 'ios' && 'xcode-27' || 'ubuntu-26.04' }}
     permissions:
       contents: read
@@ -144,28 +152,64 @@ jobs:
           done <<< "$variants"
           echo "plan=$(jq -c . <<< "$resolved")" >> "$GITHUB_OUTPUT"
 
-      - name: Prebuild phone
-        id: prebuild-phone
-        if: ${{ fromJSON(inputs.plan).phone }}
+      # Clean prebuild replaces ios/, so cache only CocoaPods' shared downloads.
+      # https://github.com/CocoaPods/CocoaPods/blob/1.16.2/lib/cocoapods/downloader.rb#L29-L44
+      - name: Identify CocoaPods cache
+        id: cocoapods-key
+        if: inputs.platform == 'ios'
+        continue-on-error: true
+        env:
+          COVERAGE: ${{ inputs.form }}
+          INPUTS_HASH: ${{ hashFiles('bun.lock', 'package.json', 'app.json', 'app.config.ts', 'plugins/**', 'patches/**', 'modules/**/*.podspec', '.eas/build/ios-production.yml') }}
+        run: |
+          version=$(pod --version)
+          prefix="$RUNNER_OS-$RUNNER_ARCH-cocoapods-download-v1-$version-"
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+          echo "key=$prefix$INPUTS_HASH-$COVERAGE" >> "$GITHUB_OUTPUT"
+          echo "path=${CP_CACHE_DIR:-$HOME/Library/Caches/CocoaPods}/Pods" >> "$GITHUB_OUTPUT"
+
+      - name: Restore CocoaPods downloads
+        id: cocoapods-restore
+        if: steps.cocoapods-key.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.cocoapods-key.outputs.path }}
+          key: ${{ steps.cocoapods-key.outputs.key }}
+          restore-keys: ${{ steps.cocoapods-key.outputs.prefix }}
+
+      - name: Prebuild
+        id: prebuild
         continue-on-error: true
         env:
           PLATFORM: ${{ inputs.platform }}
-          EXPO_TV: "0"
+          EXPO_TV: ${{ inputs.form == 'tv' && '1' || '0' }}
         run: bunx expo prebuild --clean --platform "$PLATFORM"
 
-      - name: Cache Android phone Gradle project
-        id: gradle-phone
-        if: ${{ inputs.platform == 'android' && steps.prebuild-phone.outcome == 'success' }}
+      # Persist the downloads right after prebuild: a later compile failure or
+      # cancellation must not throw away the pods this prebuild fetched.
+      - name: Save CocoaPods downloads
+        id: cocoapods-save
+        if: ${{ !cancelled() && steps.cocoapods-restore.outcome == 'success' && steps.cocoapods-restore.outputs.cache-hit != 'true' && steps.prebuild.outcome == 'success' }}
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.cocoapods-key.outputs.path }}
+          key: ${{ steps.cocoapods-key.outputs.key }}
+
+      - name: Cache Android Gradle project
+        id: gradle-project
+        if: ${{ inputs.platform == 'android' && steps.prebuild.outcome == 'success' }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-android-${{ inputs.form }}-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-
+            ${{ runner.os }}-${{ runner.arch }}-android-${{ inputs.form }}-gradle-
 
       - name: 🍎 Build iOS IPA (Phone) · build
         id: ios-phone-release-device-signed
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-signed'] != null && steps.eas.outcome == 'success' }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-signed'] != null && steps.eas.outcome == 'success' }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -175,7 +219,7 @@ jobs:
 
       - name: 🍎 Build iOS IPA (Phone - Unsigned)
         id: ios-phone-release-device-unsigned
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-device-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -185,7 +229,7 @@ jobs:
 
       - name: 🤖 Build Android APK (Phone) · build
         id: android-phone-release-device-debugkey
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -195,7 +239,7 @@ jobs:
 
       - name: 🛠️ Build dev client (iOS simulator)
         id: ios-phone-debug-simulator-unsigned
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-debug-simulator-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-debug-simulator-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -205,7 +249,7 @@ jobs:
 
       - name: 🛠️ Build dev client (Android phone)
         id: android-phone-debug-device-debugkey
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-debug-device-debugkey'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-debug-device-debugkey'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -215,7 +259,7 @@ jobs:
 
       - name: 🛠️ Build release simulator (iOS)
         id: ios-phone-release-simulator-unsigned
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-simulator-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-simulator-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -225,7 +269,7 @@ jobs:
 
       - name: 🛠️ Build universal release APK (Android phone)
         id: android-phone-release-device-debugkey-universal
-        if: ${{ steps.prebuild-phone.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey-universal'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey-universal'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -233,44 +277,9 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-release-device-debugkey-universal'].name }}
           retention-days: 90
 
-      - name: Save Android phone Gradle project
-        if: ${{ inputs.platform == 'android' && steps.prebuild-phone.outcome == 'success' && steps.gradle-phone.outputs.cache-hit != 'true' && !cancelled() }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-phone-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-
-      # The phone artifacts have already uploaded. Reclaim only this job's
-      # generated build output; keep shared download/tool caches on the runner.
-      - name: Reclaim phone build space
-        if: ${{ fromJSON(inputs.plan).tv }}
-        run: |
-          for path in "$RUNNER_TEMP/native-phone" "$GITHUB_WORKSPACE/build/native-phone"; do
-            if [ -d "$path" ]; then find "$path" -depth -delete; fi
-          done
-
-      - name: Prebuild tv
-        id: prebuild-tv
-        if: ${{ fromJSON(inputs.plan).tv }}
-        continue-on-error: true
-        env:
-          PLATFORM: ${{ inputs.platform }}
-          EXPO_TV: "1"
-        run: bunx expo prebuild --clean --platform "$PLATFORM"
-
-      - name: Cache Android tv Gradle project
-        id: gradle-tv
-        if: ${{ inputs.platform == 'android' && steps.prebuild-tv.outcome == 'success' }}
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-
-
       - name: 🍎 Build tvOS IPA (Unsigned) · build
         id: ios-tv-release-device-unsigned
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-device-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-device-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -280,7 +289,7 @@ jobs:
 
       - name: 🤖 Build Android APK (TV) · build
         id: android-tv-release-device-debugkey
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -290,7 +299,7 @@ jobs:
 
       - name: 🛠️ Build dev client (tvOS simulator)
         id: ios-tv-debug-simulator-unsigned
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-debug-simulator-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-debug-simulator-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -300,7 +309,7 @@ jobs:
 
       - name: 🛠️ Build dev client (Android TV)
         id: android-tv-debug-device-debugkey
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-debug-device-debugkey'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-debug-device-debugkey'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -310,7 +319,7 @@ jobs:
 
       - name: 🛠️ Build release simulator (tvOS)
         id: ios-tv-release-simulator-unsigned
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-simulator-unsigned'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-simulator-unsigned'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -320,7 +329,7 @@ jobs:
 
       - name: 🛠️ Build universal release APK (Android TV)
         id: android-tv-release-device-debugkey-universal
-        if: ${{ steps.prebuild-tv.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey-universal'] != null }}
+        if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey-universal'] != null }}
         continue-on-error: true
         uses: ./.github/actions/build-native-variant
         with:
@@ -328,15 +337,18 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-release-device-debugkey-universal'].name }}
           retention-days: 90
 
-      - name: Save Android tv Gradle project
-        if: ${{ inputs.platform == 'android' && steps.prebuild-tv.outcome == 'success' && steps.gradle-tv.outputs.cache-hit != 'true' && !cancelled() }}
+      - name: Save Android Gradle project
+        if: ${{ inputs.platform == 'android' && steps.prebuild.outcome == 'success' && steps.gradle-project.outputs.cache-hit != 'true' && !cancelled() }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-tv-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-android-${{ inputs.form }}-gradle-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
 
       # Every selected variant gets a chance, but a failed upload/build or
       # failed form setup must still fail the group.
       - name: Check grouped build results
         if: ${{ !cancelled() && contains(steps.*.outcome, 'failure') }}
-        run: exit 1
+        env:
+          STEP_RESULTS: ${{ toJSON(steps) }}
+        run: |
+          jq -e 'all(to_entries[]; (.key | startswith("cocoapods-")) or .value.outcome != "failure")' <<< "$STEP_RESULTS" >/dev/null

@@ -57,12 +57,16 @@ build_ios_simulator() {
     extra_args+=(CODE_SIGNING_ALLOWED=NO)
   fi
 
+  # Compile only the host arm64 slice: the x86_64 half of a universal
+  # simulator build doubles compile time and no CI consumer is Intel.
   xcodebuild \
     -workspace "$workspace" \
     -scheme "$scheme" \
     -configuration "$xc_config" \
     -sdk "$sdk" \
     -derivedDataPath "$derived" \
+    ARCHS=arm64 \
+    ONLY_ACTIVE_ARCH=YES \
     "${extra_args[@]}" \
     build
 

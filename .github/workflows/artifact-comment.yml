@@ -211,7 +211,7 @@ jobs:
               // A grouped runner reports each artifact as a step, not a job.
               // Keep repack jobs and older standalone build jobs usable too.
               jobs = jobs.flatMap(job => {
-                if (!['Build Apple variants', 'Build Android variants'].includes(stripCallerPrefix(job.name))) return [job];
+                if (!['Build Apple variants', 'Build Android variants', 'Build Android phone', 'Build Android TV', 'Build iOS device', 'Build tvOS device'].includes(stripCallerPrefix(job.name))) return [job];
                 return (job.steps || []).filter(step => jobNames.includes(step.name)).map(step => ({
                   ...job,
                   ...step,

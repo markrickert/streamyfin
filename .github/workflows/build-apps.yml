@@ -288,8 +288,12 @@ jobs:
     permissions:
       contents: read
     outputs:
-      android: ${{ steps.plan.outputs.android }}
-      ios: ${{ steps.plan.outputs.ios }}
+      android_phone: ${{ steps.plan.outputs.android_phone }}
+      android_tv: ${{ steps.plan.outputs.android_tv }}
+      ios_phone_device: ${{ steps.plan.outputs.ios_phone_device }}
+      ios_tv_device: ${{ steps.plan.outputs.ios_tv_device }}
+      ios_phone_sim: ${{ steps.plan.outputs.ios_phone_sim }}
+      ios_tv_sim: ${{ steps.plan.outputs.ios_tv_sim }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -314,9 +318,9 @@ jobs:
           REPACK_ANDROID_TV_RELEASE_DEVICE_DEBUGKEY: ${{ needs.android-tv-release-device-debugkey.result }}
         run: bun scripts/build-cache/plan-ci.ts >> "$GITHUB_OUTPUT"
 
-  build-android:
+  build-android-phone:
     needs: plan-native-builds
-    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android != '' && needs.plan-native-builds.outputs.android != '{}' }}
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android_phone != '' && needs.plan-native-builds.outputs.android_phone != '{}' }}
     permissions:
       contents: read
       actions: write
@@ -324,11 +328,27 @@ jobs:
     secrets: inherit
     with:
       platform: android
-      plan: ${{ needs.plan-native-builds.outputs.android }}
+      form: phone
+      job-name: Build Android phone
+      plan: ${{ needs.plan-native-builds.outputs.android_phone }}
 
-  build-ios:
+  build-android-tv:
     needs: plan-native-builds
-    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios != '' && needs.plan-native-builds.outputs.ios != '{}' }}
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android_tv != '' && needs.plan-native-builds.outputs.android_tv != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: android
+      form: tv
+      job-name: Build Android TV
+      plan: ${{ needs.plan-native-builds.outputs.android_tv }}
+
+  build-ios-device:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_device != '' && needs.plan-native-builds.outputs.ios_phone_device != '{}' }}
     permissions:
       contents: read
       actions: write
@@ -336,14 +356,58 @@ jobs:
     secrets: inherit
     with:
       platform: ios
-      plan: ${{ needs.plan-native-builds.outputs.ios }}
+      form: phone
+      job-name: Build iOS device
+      plan: ${{ needs.plan-native-builds.outputs.ios_phone_device }}
+
+  build-tvos-device:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_device != '' && needs.plan-native-builds.outputs.ios_tv_device != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: tv
+      job-name: Build tvOS device
+      plan: ${{ needs.plan-native-builds.outputs.ios_tv_device }}
+
+  build-ios-sim:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_sim != '' && needs.plan-native-builds.outputs.ios_phone_sim != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: phone
+      job-name: Build iOS simulators
+      plan: ${{ needs.plan-native-builds.outputs.ios_phone_sim }}
+
+  build-tvos-sim:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_sim != '' && needs.plan-native-builds.outputs.ios_tv_sim != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: tv
+      job-name: Build tvOS simulators
+      plan: ${{ needs.plan-native-builds.outputs.ios_tv_sim }}
 
   # ── Required status-check gates ─────────────────────────────────────────────
   # Repository rulesets require these exact check names. Each gate passes only
   # when its caller succeeded (or recovered via the fallback build), or was
   # intentionally skipped.
   gate-ios-phone:
-    needs: [fingerprint, ios-phone-release-device-signed, build-ios]
+    needs: [fingerprint, ios-phone-release-device-signed, build-ios-device]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build iOS IPA (Phone)
@@ -351,7 +415,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-phone-release-device-signed.result }}
-      BUILD_RESULT: ${{ needs.build-ios.outputs.ios-phone-release-device-signed }}
+      BUILD_RESULT: ${{ needs.build-ios-device.outputs.ios-phone-release-device-signed }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
       IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}
@@ -379,7 +443,7 @@ jobs:
           exit 1
 
   gate-android-phone:
-    needs: [android-phone-release-device-debugkey, build-android]
+    needs: [android-phone-release-device-debugkey, build-android-phone]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (Phone)
@@ -387,7 +451,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.android-phone-release-device-debugkey.result }}
-      BUILD_RESULT: ${{ needs.build-android.outputs.android-phone-release-device-debugkey }}
+      BUILD_RESULT: ${{ needs.build-android-phone.outputs.android-phone-release-device-debugkey }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
@@ -402,7 +466,7 @@ jobs:
           exit 1
 
   gate-android-tv:
-    needs: [android-tv-release-device-debugkey, build-android]
+    needs: [android-tv-release-device-debugkey, build-android-tv]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (TV)
@@ -410,7 +474,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.android-tv-release-device-debugkey.result }}
-      BUILD_RESULT: ${{ needs.build-android.outputs.android-tv-release-device-debugkey }}
+      BUILD_RESULT: ${{ needs.build-android-tv.outputs.android-tv-release-device-debugkey }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
@@ -425,7 +489,7 @@ jobs:
           exit 1
 
   gate-ios-tv-unsigned:
-    needs: [ios-tv-release-device-unsigned, build-ios]
+    needs: [ios-tv-release-device-unsigned, build-tvos-device]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build tvOS IPA (Unsigned)
@@ -433,7 +497,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-tv-release-device-unsigned.result }}
-      BUILD_RESULT: ${{ needs.build-ios.outputs.ios-tv-release-device-unsigned }}
+      BUILD_RESULT: ${{ needs.build-tvos-device.outputs.ios-tv-release-device-unsigned }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result

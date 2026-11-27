@@ -1,8 +1,31 @@
-import { type Os, VARIANTS } from "./variants";
+import { VARIANTS, type Variant } from "./variants";
+
+export type BuildGroupId =
+  | "android_phone"
+  | "android_tv"
+  | "ios_phone_device"
+  | "ios_tv_device"
+  | "ios_phone_sim"
+  | "ios_tv_sim";
+
+export const BUILD_GROUP_IDS: readonly BuildGroupId[] = [
+  "android_phone",
+  "android_tv",
+  "ios_phone_device",
+  "ios_tv_device",
+  "ios_phone_sim",
+  "ios_tv_sim",
+];
+
+export const groupForVariant = (variant: Variant): BuildGroupId => {
+  if (variant.os === "android") {
+    return variant.form === "phone" ? "android_phone" : "android_tv";
+  }
+  const target = variant.target === "device" ? "device" : "sim";
+  return `ios_${variant.form}_${target}` as BuildGroupId;
+};
 
 type BuildGroup = Partial<{
-  phone: true;
-  tv: true;
   variants: Record<string, { name: string }>;
 }>;
 
@@ -18,8 +41,10 @@ export const planNativeBuilds = ({
   fingerprintOutputs,
   repackResults,
   canSign,
-}: PlanInputs): Record<Os, BuildGroup> => {
-  const plan: Record<Os, BuildGroup> = { ios: {}, android: {} };
+}: PlanInputs): Record<BuildGroupId, BuildGroup> => {
+  const plan = Object.fromEntries(
+    BUILD_GROUP_IDS.map((groupId) => [groupId, {}]),
+  ) as Record<BuildGroupId, BuildGroup>;
   if (fingerprintResult === "skipped") return plan;
   const hashed = fingerprintResult === "success";
   for (const variant of VARIANTS) {
@@ -31,8 +56,7 @@ export const planNativeBuilds = ({
         : hashed && fingerprintOutputs[`${key}_build`] === "true";
     if (!shouldBuild) continue;
 
-    const group = plan[variant.os];
-    group[variant.form] = true;
+    const group = plan[groupForVariant(variant)];
     group.variants ??= {};
     group.variants[variant.id] = {
       name: hashed ? (fingerprintOutputs[`${key}_name`] ?? "") : "",
@@ -53,7 +77,7 @@ if (require.main === module) {
     ),
     canSign: process.env.CAN_SIGN === "true",
   });
-  for (const [os, group] of Object.entries(plan)) {
-    console.log(`${os}=${JSON.stringify(group)}`);
+  for (const [groupId, group] of Object.entries(plan)) {
+    console.log(`${groupId}=${JSON.stringify(group)}`);
   }
 }

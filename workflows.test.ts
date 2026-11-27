@@ -588,8 +588,12 @@ describe("build-apps.yml", () => {
   test("groups full builds by OS and gives every variant a single build step", () => {
     expect(jobsOf(group).size).toBe(1);
     expect([...jobs.keys()].filter((id) => id.startsWith("build-"))).toEqual([
-      "build-android",
-      "build-ios",
+      "build-android-phone",
+      "build-android-tv",
+      "build-ios-device",
+      "build-tvos-device",
+      "build-ios-sim",
+      "build-tvos-sim",
     ]);
     for (const variant of VARIANTS) {
       expect(callerByVariant.get(variant.id)?.length ?? 0).toBe(
@@ -601,11 +605,18 @@ describe("build-apps.yml", () => {
     }
   });
 
-  test.each(["android", "ios"])(
+  test.each([
+    ["build-android-phone", "android_phone"],
+    ["build-android-tv", "android_tv"],
+    ["build-ios-device", "ios_phone_device"],
+    ["build-tvos-device", "ios_tv_device"],
+    ["build-ios-sim", "ios_phone_sim"],
+    ["build-tvos-sim", "ios_tv_sim"],
+  ])(
     "runs the %s group after skipped repack ancestors",
-    (os) => {
-      const condition = ifOf(jobs.get(`build-${os}`)!);
-      const output = `needs.plan-native-builds.outputs.${os}`;
+    (jobId, outputName) => {
+      const condition = ifOf(jobs.get(jobId)!);
+      const output = `needs.plan-native-builds.outputs.${outputName}`;
       expect(condition).toContain(
         "always() && !cancelled() && needs.plan-native-builds.result == 'success'",
       );
@@ -643,12 +654,15 @@ describe("build-apps.yml", () => {
       const callerId = callerByVariant.get(expectedCallerVariant)![0].id;
       const needsLine = gateBody.match(/^\s*needs:\s*(.+)$/m)?.[1] ?? "";
       expect(needsLine).toContain(callerId);
-      const buildOs = expectedCallerVariant.startsWith("ios-")
-        ? "ios"
-        : "android";
-      expect(needsLine).toContain(`build-${buildOs}`);
+      const buildGroup = {
+        "ios-phone-release-device-signed": "build-ios-device",
+        "android-phone-release-device-debugkey": "build-android-phone",
+        "android-tv-release-device-debugkey": "build-android-tv",
+        "ios-tv-release-device-unsigned": "build-tvos-device",
+      }[expectedCallerVariant]!;
+      expect(needsLine).toContain(buildGroup);
       expect(gateBody).toContain(
-        `needs.build-${buildOs}.outputs.${expectedCallerVariant}`,
+        `needs.${buildGroup}.outputs.${expectedCallerVariant}`,
       );
       expect(group).toContain(
         `${expectedCallerVariant}: \${{ steps.${expectedCallerVariant}.outcome }}`,
@@ -710,7 +724,7 @@ describe("build-apps.yml", () => {
       "needs.fingerprint.outputs.can_sign != 'false'",
     );
     expect(gate).toContain(
-      "needs: [fingerprint, ios-phone-release-device-signed, build-ios]",
+      "needs: [fingerprint, ios-phone-release-device-signed, build-ios-device]",
     );
     expect(gate).toContain(
       "CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}",
@@ -767,6 +781,43 @@ describe("build-apps.yml", () => {
     expect(result.status).toBe(0);
   });
 
+  test("saves CocoaPods downloads right after prebuild, without failing the group", () => {
+    const saveAt = group.indexOf("- name: Save CocoaPods downloads");
+    const prebuildAt = group.indexOf("- name: Prebuild");
+    expect(prebuildAt).toBeGreaterThan(0);
+    expect(saveAt).toBeGreaterThan(prebuildAt);
+    expect(saveAt).toBeLessThan(
+      group.indexOf("- name: Check grouped build results"),
+    );
+    const saveStep = group.slice(saveAt, group.indexOf("- name: ", saveAt + 1));
+    expect(saveStep).toContain("continue-on-error: true");
+    expect(saveStep).toContain("steps.prebuild.outcome == 'success'");
+    expect(saveStep).toContain(
+      "steps.cocoapods-restore.outputs.cache-hit != 'true'",
+    );
+  });
+
+  test.each([
+    [{ "cocoapods-restore": { outcome: "failure" } }, 0],
+    [
+      {
+        "cocoapods-save": { outcome: "failure" },
+        "ios-tv-release-device-unsigned": { outcome: "failure" },
+      },
+      1,
+    ],
+    [{ prebuild: { outcome: "failure" } }, 1],
+  ])(
+    "keeps cache failures optional without hiding build failures (%j)",
+    (steps, status) => {
+      const script = runOf(groupRaw, "Check grouped build results");
+      const result = spawnSync("bash", ["-eo", "pipefail", "-c", script], {
+        env: { ...process.env, STEP_RESULTS: JSON.stringify(steps) },
+      });
+      expect(result.status).toBe(status);
+    },
+  );
+
   describe("the build job's artifact name", () => {
     const step = "Resolve artifact names";
     const script = runOf(groupRaw, step);
@@ -774,8 +825,10 @@ describe("build-apps.yml", () => {
     test("is resolved before prebuild and used for the binary and its upload", () => {
       const resolveAt = group.indexOf(`- name: ${step}`);
       expect(resolveAt).toBeGreaterThan(0);
-      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild phone"));
-      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild tv"));
+      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild"));
+      expect(resolveAt).toBeLessThan(
+        group.indexOf("- name: Identify CocoaPods cache"),
+      );
       expect(group).toMatch(/^\s*PLAN: \$\{\{ inputs\.plan \}\}$/m);
       expect(group).toMatch(/^\s*RUN_ID: \$\{\{ github\.run_id \}\}$/m);
       expect(group).toMatch(
@@ -828,7 +881,6 @@ describe("build-apps.yml", () => {
             HASH_EXIT: String(hashExit),
             GITHUB_OUTPUT: output,
             PLAN: JSON.stringify({
-              phone: true,
               variants: {
                 "android-phone-release-device-debugkey": { name: given },
               },
@@ -922,6 +974,13 @@ describe("build-apps.yml", () => {
       const retention = body.match(/^\s*retention-days:\s*(\d+)\s*$/m)?.[1];
       expect(Number(retention)).toBe(variant.retentionDays);
     }
+  });
+
+  test("simulator builds compile only the arm64 slice", () => {
+    const start = buildScript.indexOf("build_ios_simulator()");
+    const fn = buildScript.slice(start, buildScript.indexOf("\n}\n", start));
+    expect(fn).toContain("ARCHS=arm64");
+    expect(fn).toContain("ONLY_ACTIVE_ARCH=YES");
   });
 
   test(".app variants build simulator bundles and upload a tar", () => {
@@ -1026,6 +1085,38 @@ describe("build-apps.yml", () => {
     expect(required.size).toBeGreaterThan(0);
 
     for (const [, callerBody] of callers) {
+      const callerPerms = permissionsOf(callerBody);
+      expect(callerPerms).not.toBeNull();
+      for (const [scope, level] of required) {
+        expect(
+          PERMISSION_LEVEL[callerPerms![scope]] ?? -1,
+        ).toBeGreaterThanOrEqual(PERMISSION_LEVEL[level]);
+      }
+    }
+  });
+
+  test("every caller job grants at least the permissions requested by _native-build-group.yml", () => {
+    const calleeJobs = jobsOf(group);
+    expect(calleeJobs.size).toBeGreaterThan(0);
+
+    const required = new Map<string, string>();
+    for (const [, body] of calleeJobs) {
+      const perms = permissionsOf(body);
+      expect(perms).not.toBeNull();
+      for (const [scope, level] of Object.entries(perms!)) {
+        const current = required.get(scope);
+        if (!current || PERMISSION_LEVEL[level] > PERMISSION_LEVEL[current]) {
+          required.set(scope, level);
+        }
+      }
+    }
+    expect(required.size).toBeGreaterThan(0);
+
+    const groupCallers = [...jobs.entries()].filter(([, body]) =>
+      /uses:\s*\.\/\.github\/workflows\/_native-build-group\.yml\b/.test(body),
+    );
+    expect(groupCallers.length).toBe(6);
+    for (const [, callerBody] of groupCallers) {
       const callerPerms = permissionsOf(callerBody);
       expect(callerPerms).not.toBeNull();
       for (const [scope, level] of required) {
