@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 /**
  * Pairs the screenshots of a "before" and an "after" run by file name, diffs each pair, and
- * writes one before | after | diff image per screen plus a summary.md ranked by drift.
+ * writes one before | after | diff image per screen plus a summary.md ranked by drift and a
+ * contact-sheet.png stacking every composite under a label strip, in summary order.
  *
  *   bun e2e/suites/screenshots/compare.ts --before <dir> --after <dir> --out <dir> [--noise <dir>] [--masks <file.json>] [--evidence <dir>]
  *
@@ -220,6 +221,168 @@ function composite(panels: PNG[]): PNG {
   return out;
 }
 
+/** A composite's label strip: a 5x7 bitmap font at FONT_SCALE plus padding, on a red or gray fill. */
+const FONT_SCALE = 2;
+export const STRIP_HEIGHT = 24;
+export const SHEET_GAP = 16;
+export const STRIP_CHANGED: [number, number, number] = [158, 32, 32];
+export const STRIP_UNCHANGED: [number, number, number] = [40, 40, 40];
+
+/** 5 columns x 7 rows per glyph, '#' filled; uppercase only, the label is uppercased on draw. */
+const FONT_5X7: Record<string, string[]> = {
+  " ": [".....", ".....", ".....", ".....", ".....", ".....", "....."],
+  "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
+  "1": ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."],
+  "2": [".###.", "#...#", "....#", "..##.", ".#...", "#....", "#####"],
+  "3": [".###.", "#...#", "....#", "..##.", "....#", "#...#", ".###."],
+  "4": ["...#.", "..##.", ".#.#.", "#..#.", "#####", "...#.", "...#."],
+  "5": ["#####", "#....", "####.", "....#", "....#", "#...#", ".###."],
+  "6": [".###.", "#...#", "#....", "####.", "#...#", "#...#", ".###."],
+  "7": ["#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."],
+  "8": [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
+  "9": [".###.", "#...#", "#...#", ".####", "....#", "#...#", ".###."],
+  A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+  B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+  C: [".###.", "#...#", "#....", "#....", "#....", "#...#", ".###."],
+  D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+  E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
+  F: ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
+  G: [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".###."],
+  H: ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+  I: [".###.", "..#..", "..#..", "..#..", "..#..", "..#..", ".###."],
+  J: ["..##.", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##.."],
+  K: ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
+  L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+  M: ["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
+  N: ["#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#", "#...#"],
+  O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+  P: ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
+  Q: [".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#"],
+  R: ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
+  S: [".###.", "#...#", "#....", ".###.", "....#", "#...#", ".###."],
+  T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
+  U: ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+  V: ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
+  W: ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", ".#.#."],
+  X: ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
+  Y: ["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
+  Z: ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
+  "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
+  ".": [".....", ".....", ".....", ".....", ".....", ".##..", ".##.."],
+  "%": ["##..#", "##.#.", "...#.", "..#..", ".#...", "#.##.", "#..##"],
+  "/": ["....#", "...#.", "...#.", "..#..", ".#...", ".#...", "#...."],
+  ":": [".....", ".##..", ".##..", ".....", ".##..", ".##..", "....."],
+  _: [".....", ".....", ".....", ".....", ".....", ".....", "#####"],
+};
+
+const WHITE: [number, number, number] = [255, 255, 255];
+
+function fillRect(
+  out: PNG,
+  x0: number,
+  y0: number,
+  width: number,
+  height: number,
+  color: [number, number, number],
+): void {
+  for (let y = y0; y < y0 + height && y < out.height; y++) {
+    for (let x = x0; x < x0 + width && x < out.width; x++) {
+      const i = (y * out.width + x) * 4;
+      out.data[i] = color[0];
+      out.data[i + 1] = color[1];
+      out.data[i + 2] = color[2];
+      out.data[i + 3] = 255;
+    }
+  }
+}
+
+/** Draws text in white at FONT_SCALE; a char with no glyph advances blank. */
+function drawText(out: PNG, text: string, x0: number, y0: number): void {
+  let left = x0;
+  for (const char of text.toUpperCase()) {
+    const glyph = FONT_5X7[char];
+    if (glyph) {
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (glyph[row][col] !== "#") continue;
+          fillRect(
+            out,
+            left + col * FONT_SCALE,
+            y0 + row * FONT_SCALE,
+            FONT_SCALE,
+            FONT_SCALE,
+            WHITE,
+          );
+        }
+      }
+    }
+    left += 6 * FONT_SCALE;
+  }
+}
+
+/** What one screen's strip reads: name, verdict, drift and floor, like summary.md. */
+export function sheetLabel(row: Row): string {
+  const verdict = row.flagged
+    ? "CHANGED"
+    : row.informational
+      ? "informational"
+      : "unchanged";
+  const drift =
+    row.percent === null ? "size differs" : `${row.percent.toFixed(2)}%`;
+  const floor = row.floor === null ? "n/a" : `${row.floor.toFixed(2)}%`;
+  return `${row.name}  ${verdict}  drift ${drift}  floor ${floor}`;
+}
+
+export interface SheetEntry {
+  label: string;
+  /** Flagged rows get a red strip, the rest dark gray. */
+  changed: boolean;
+  /** The before|after|diff composite already written per screen. */
+  image: PNG;
+}
+
+/**
+ * One column of labeled composites: strip, composite, gap, opaque black behind
+ * (a browser shows alpha as a checkerboard). Undefined with nothing to stack.
+ */
+export function contactSheet(entries: SheetEntry[]): PNG | undefined {
+  if (entries.length === 0) return undefined;
+  const width = Math.max(...entries.map((e) => e.image.width));
+  const height =
+    entries.length * STRIP_HEIGHT +
+    entries.reduce((sum, e) => sum + e.image.height, 0) +
+    SHEET_GAP * (entries.length - 1);
+  const sheet = new PNG({ width, height });
+  for (let i = 3; i < sheet.data.length; i += 4) sheet.data[i] = 255;
+  let top = 0;
+  for (const { label, changed, image } of entries) {
+    fillRect(
+      sheet,
+      0,
+      top,
+      width,
+      STRIP_HEIGHT,
+      changed ? STRIP_CHANGED : STRIP_UNCHANGED,
+    );
+    drawText(
+      sheet,
+      label,
+      FONT_SCALE * 2,
+      top + Math.floor((STRIP_HEIGHT - 7 * FONT_SCALE) / 2),
+    );
+    const imageTop = top + STRIP_HEIGHT;
+    PNG.bitblt(image, sheet, 0, 0, image.width, image.height, 0, imageTop);
+    // A composite's panel gaps are transparent; over the sheet they must stay black.
+    for (let y = imageTop; y < imageTop + image.height; y++) {
+      for (let x = 0; x < image.width; x++) {
+        sheet.data[(y * width + x) * 4 + 3] = 255;
+      }
+    }
+    top = imageTop + image.height + SHEET_GAP;
+  }
+  return sheet;
+}
+
 export type Row = {
   name: string;
   percent: number | null;
@@ -341,6 +504,27 @@ if (require.main === module) {
   if (onlyOne.length) lines.push("", `Unpaired: ${onlyOne.join(", ")}`);
   fs.writeFileSync(path.join(args.out, "summary.md"), `${lines.join("\n")}\n`);
   console.log(lines.join("\n"));
+
+  // The browser view of the comparison: every composite under a label strip,
+  // in the summary's order. A row with a size change wrote no composite, so it
+  // has no strip either.
+  const entries: SheetEntry[] = rows.flatMap((row) => {
+    const file = path.join(args.out, `${row.name}.png`);
+    if (!fs.existsSync(file)) return [];
+    return [
+      {
+        label: sheetLabel(row),
+        changed: row.flagged,
+        image: PNG.sync.read(fs.readFileSync(file)),
+      },
+    ];
+  });
+  const sheet = contactSheet(entries);
+  if (sheet)
+    fs.writeFileSync(
+      path.join(args.out, "contact-sheet.png"),
+      PNG.sync.write(sheet),
+    );
 
   if (args.evidence) {
     fs.mkdirSync(args.evidence, { recursive: true });

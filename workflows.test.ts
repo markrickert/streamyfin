@@ -882,6 +882,46 @@ describe("e2e-screenshots.yml", () => {
     },
   );
 
+  test.each(["apple", "android"] as const)(
+    "%s links an unzipped contact sheet and failure screenshot in the summary",
+    (jobName) => {
+      const steps = workflow.jobs[jobName].steps ?? [];
+      const unzipped = steps.filter(
+        (step) =>
+          step.uses?.startsWith("actions/upload-artifact") &&
+          step.with?.archive === false,
+      );
+      expect(unzipped).toHaveLength(2);
+      // An unzipped artifact takes the file's name, so the file name itself must
+      // carry the platform and the repeat attempt to stay unique across the run.
+      const sheet = unzipped.find(
+        (step) => !String(step.with?.path).includes("failure"),
+      );
+      const failure = unzipped.find((step) =>
+        String(step.with?.path).includes("failure"),
+      );
+      for (const upload of [sheet, failure]) {
+        expect(String(upload?.with?.path)).toContain("matrix.platform");
+        expect(String(upload?.with?.path)).toContain("matrix.attempt");
+        expect(upload?.with?.["if-no-files-found"]).toBe("ignore");
+        expect(upload?.with?.["retention-days"]).toBe(7);
+        expect(upload?.with?.overwrite).toBe(true);
+        expect(upload?.id).toBeDefined();
+      }
+      const summaryIndex = steps.findIndex(
+        (step) => step.name === "📝 Job summary",
+      );
+      expect(summaryIndex).toBeGreaterThan(-1);
+      const summary = steps[summaryIndex];
+      for (const upload of unzipped) {
+        expect(steps.indexOf(upload)).toBeLessThan(summaryIndex);
+        expect(summary?.run).toContain(
+          `steps.${upload.id}.outputs.artifact-url`,
+        );
+      }
+    },
+  );
+
   test("apple fixture job warms native tools and the fixed tvOS driver with capture-identical caches", () => {
     expectSameCache("apple-fixture", "apple", "💾 Cache native fixture tools");
     expectSameCache(

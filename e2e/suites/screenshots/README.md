@@ -65,7 +65,11 @@ another run's fingerprint.
 Jobs fail only on runner, build or capture errors, blank screenshots included. Changed
 screens go to `$GITHUB_STEP_SUMMARY` and upload as
 `e2e-screenshots-<platform>-report-<attempt>` next to
-`e2e-screenshots-<platform>-fixture-logs-<attempt>`.
+`e2e-screenshots-<platform>-fixture-logs-<attempt>`. The summary also links the
+contact sheet and, on a failed pass, the failing step's screenshot: both upload as
+single-file unzipped artifacts (`archive: false`, named `shots-<platform>-<attempt>.png`
+and `shots-failure-<platform>-<attempt>.png`), whose `artifact-url` opens the image in
+the browser for a signed-in user — GitHub strips `data:` images from summaries.
 
 ## Commands
 
@@ -134,7 +138,9 @@ warms `e2e/reports/shots/build-cache` for a later `run`.
    same per-pass budget; a final failure while the server stays down gets
    ` (Jellyfin fixture unreachable after the pass)` appended to the thrown error.
 4. Runs `compare.ts --before … --noise … --after …` with the platform masks. The report
-   and changed-screen evidence land in the session directory.
+   and changed-screen evidence land in the session directory, along with
+   `contact-sheet.png`: every composite stacked under a label strip in the summary's
+   order (red for changed screens, gray otherwise).
 
 `<hash>` is `<fingerprint>-<recipe>`: `DEV_CLIENT_RECIPE` (`r2`) for the debug clients,
 `BUILD_RECIPE` (`r3-release`) for the phone's Release base. Bump the matching constant in

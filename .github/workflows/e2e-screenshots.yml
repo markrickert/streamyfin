@@ -713,11 +713,63 @@ jobs:
             --device "$SIMULATOR_UDID" \
             --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
+      - name: 🖼️ Stage screenshots for linking
+        if: always()
+        id: shots-media
+        run: |
+          sheet="e2e/reports/shots/ci-${{ matrix.platform }}/report/contact-sheet.png"
+          if [ -f "$sheet" ]; then
+            cp "$sheet" "$RUNNER_TEMP/shots-${{ matrix.platform }}-${{ matrix.attempt }}.png"
+            echo "sheet=true" >> "$GITHUB_OUTPUT"
+          fi
+          failure="$(find "e2e/reports/shots/ci-${{ matrix.platform }}/report/failure" -name '*.png' 2>/dev/null | sort | head -n 1)"
+          if [ -n "$failure" ]; then
+            cp "$failure" "$RUNNER_TEMP/shots-failure-${{ matrix.platform }}-${{ matrix.attempt }}.png"
+            echo "failure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 📤 Upload contact sheet
+        # archive: false uploads the file unzipped so artifact-url opens the image in
+        # the browser. The file's own name becomes the artifact name, so it carries
+        # the platform and the repeat attempt itself.
+        if: always() && steps.shots-media.outputs.sheet == 'true'
+        id: sheet-upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/shots-${{ matrix.platform }}-${{ matrix.attempt }}.png
+          archive: false
+          if-no-files-found: ignore
+          retention-days: 7
+          overwrite: true
+
+      - name: 📤 Upload failing step screenshot
+        if: always() && steps.shots-media.outputs.failure == 'true'
+        id: failure-upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/shots-failure-${{ matrix.platform }}-${{ matrix.attempt }}.png
+          archive: false
+          if-no-files-found: ignore
+          retention-days: 7
+          overwrite: true
+
       - name: 📝 Job summary
         if: always()
         run: |
           if [ -f "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" ]; then
             cat "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          parts=""
+          sheet_url="${{ steps.sheet-upload.outputs.artifact-url }}"
+          failure_url="${{ steps.failure-upload.outputs.artifact-url }}"
+          if [ -n "$sheet_url" ]; then
+            parts="[before / after / diff contact sheet]($sheet_url)"
+          fi
+          if [ -n "$failure_url" ]; then
+            parts="${parts:+$parts · }[failing step]($failure_url)"
+          fi
+          if [ -n "$parts" ]; then
+            echo "**Screenshots:** $parts — they open in the browser for signed-in users." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: 📤 Upload screenshot report
@@ -1203,11 +1255,63 @@ jobs:
           disable-animations: true
           script: bun run e2e:shots --platform "${{ matrix.platform }}" --before "$BEFORE_REF" --after "$AFTER_REF" --device emulator-5554 --out "${{ github.workspace }}/e2e/reports/shots/ci-${{ matrix.platform }}"
 
+      - name: 🖼️ Stage screenshots for linking
+        if: always()
+        id: shots-media
+        run: |
+          sheet="e2e/reports/shots/ci-${{ matrix.platform }}/report/contact-sheet.png"
+          if [ -f "$sheet" ]; then
+            cp "$sheet" "$RUNNER_TEMP/shots-${{ matrix.platform }}-${{ matrix.attempt }}.png"
+            echo "sheet=true" >> "$GITHUB_OUTPUT"
+          fi
+          failure="$(find "e2e/reports/shots/ci-${{ matrix.platform }}/report/failure" -name '*.png' 2>/dev/null | sort | head -n 1)"
+          if [ -n "$failure" ]; then
+            cp "$failure" "$RUNNER_TEMP/shots-failure-${{ matrix.platform }}-${{ matrix.attempt }}.png"
+            echo "failure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 📤 Upload contact sheet
+        # archive: false uploads the file unzipped so artifact-url opens the image in
+        # the browser. The file's own name becomes the artifact name, so it carries
+        # the platform and the repeat attempt itself.
+        if: always() && steps.shots-media.outputs.sheet == 'true'
+        id: sheet-upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/shots-${{ matrix.platform }}-${{ matrix.attempt }}.png
+          archive: false
+          if-no-files-found: ignore
+          retention-days: 7
+          overwrite: true
+
+      - name: 📤 Upload failing step screenshot
+        if: always() && steps.shots-media.outputs.failure == 'true'
+        id: failure-upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/shots-failure-${{ matrix.platform }}-${{ matrix.attempt }}.png
+          archive: false
+          if-no-files-found: ignore
+          retention-days: 7
+          overwrite: true
+
       - name: 📝 Job summary
         if: always()
         run: |
           if [ -f "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" ]; then
             cat "e2e/reports/shots/ci-${{ matrix.platform }}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          parts=""
+          sheet_url="${{ steps.sheet-upload.outputs.artifact-url }}"
+          failure_url="${{ steps.failure-upload.outputs.artifact-url }}"
+          if [ -n "$sheet_url" ]; then
+            parts="[before / after / diff contact sheet]($sheet_url)"
+          fi
+          if [ -n "$failure_url" ]; then
+            parts="${parts:+$parts · }[failing step]($failure_url)"
+          fi
+          if [ -n "$parts" ]; then
+            echo "**Screenshots:** $parts — they open in the browser for signed-in users." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: 📤 Upload screenshot report
