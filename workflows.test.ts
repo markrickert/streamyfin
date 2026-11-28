@@ -591,10 +591,10 @@ describe("build-apps.yml", () => {
     expect([...jobs.keys()].filter((id) => id.startsWith("build-"))).toEqual([
       "build-android-phone",
       "build-android-tv",
-      "build-ios-device",
-      "build-tvos-device",
-      "build-ios-sim",
-      "build-tvos-sim",
+      "build-ios-phone-device",
+      "build-ios-tv-device",
+      "build-ios-phone-sim",
+      "build-ios-tv-sim",
     ]);
     for (const variant of VARIANTS) {
       expect(callerByVariant.get(variant.id)?.length ?? 0).toBe(
@@ -609,10 +609,10 @@ describe("build-apps.yml", () => {
   test.each([
     ["build-android-phone", "android_phone"],
     ["build-android-tv", "android_tv"],
-    ["build-ios-device", "ios_phone_device"],
-    ["build-tvos-device", "ios_tv_device"],
-    ["build-ios-sim", "ios_phone_sim"],
-    ["build-tvos-sim", "ios_tv_sim"],
+    ["build-ios-phone-device", "ios_phone_device"],
+    ["build-ios-tv-device", "ios_tv_device"],
+    ["build-ios-phone-sim", "ios_phone_sim"],
+    ["build-ios-tv-sim", "ios_tv_sim"],
   ])(
     "runs the %s group after skipped repack ancestors",
     (jobId, outputName) => {
@@ -656,10 +656,10 @@ describe("build-apps.yml", () => {
       const needsLine = gateBody.match(/^\s*needs:\s*(.+)$/m)?.[1] ?? "";
       expect(needsLine).toContain(callerId);
       const buildGroup = {
-        "ios-phone-release-device-signed": "build-ios-device",
+        "ios-phone-release-device-signed": "build-ios-phone-device",
         "android-phone-release-device-debugkey": "build-android-phone",
         "android-tv-release-device-debugkey": "build-android-tv",
-        "ios-tv-release-device-unsigned": "build-tvos-device",
+        "ios-tv-release-device-unsigned": "build-ios-tv-device",
       }[expectedCallerVariant]!;
       expect(needsLine).toContain(buildGroup);
       expect(gateBody).toContain(
@@ -725,7 +725,7 @@ describe("build-apps.yml", () => {
       "needs.fingerprint.outputs.can_sign != 'false'",
     );
     expect(gate).toContain(
-      "needs: [fingerprint, ios-phone-release-device-signed, build-ios-device]",
+      "needs: [fingerprint, ios-phone-release-device-signed, build-ios-phone-device]",
     );
     expect(gate).toContain(
       "CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}",
@@ -1061,6 +1061,15 @@ describe("build-apps.yml", () => {
         universal,
       ),
     ).toBe(false);
+  });
+
+  test("VARIANT_META labels are always one of the four canonical platforms", () => {
+    // The comment's Platform column must only ever show the canonical names
+    // matching the variant ids; anything else (tvOS, iPhone, Apple TV) is drift.
+    const canonical = ["iOS Phone", "iOS TV", "Android Phone", "Android TV"];
+    for (const variant of VARIANTS) {
+      expect(canonical).toContain(VARIANT_META[variant.id].label);
+    }
   });
 
   test("VARIANT_META step and repack names never drift from the workflows", () => {

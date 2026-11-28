@@ -36,100 +36,100 @@ export const VARIANT_META: Record<string, VariantMeta> = {
     icon: "🤖",
     target: "📱 Release APK",
     fileType: "APK",
-    repackJob: "🤖 Repack Android APK (Phone)",
-    buildStep: "🤖 Build Android APK (Phone) · build",
+    repackJob: "🤖 Repack Android Phone (Release APK)",
+    buildStep: "🤖 Build Android Phone (Release APK)",
   },
   "android-tv-release-device-debugkey": {
     label: "Android TV",
     icon: "🤖",
     target: "📺 Release APK",
     fileType: "APK",
-    repackJob: "🤖 Repack Android APK (TV)",
-    buildStep: "🤖 Build Android APK (TV) · build",
+    repackJob: "🤖 Repack Android TV (Release APK)",
+    buildStep: "🤖 Build Android TV (Release APK)",
   },
   "ios-phone-release-device-signed": {
     label: "iOS Phone",
     icon: "🍎",
     target: "📱 Signed IPA",
     fileType: "IPA",
-    repackJob: "🍎 Repack iOS IPA (Phone)",
-    buildStep: "🍎 Build iOS IPA (Phone) · build",
+    repackJob: "🍎 Repack iOS Phone (Signed IPA)",
+    buildStep: "🍎 Build iOS Phone (Signed IPA)",
   },
   "ios-phone-release-device-unsigned": {
-    label: "iOS Phone Unsigned",
+    label: "iOS Phone",
     icon: "🍎",
     target: "📱 Unsigned IPA",
     fileType: "IPA",
-    repackJob: "🍎 Repack iOS IPA (Phone - Unsigned)",
-    buildStep: "🍎 Build iOS IPA (Phone - Unsigned)",
+    repackJob: "🍎 Repack iOS Phone (Unsigned IPA)",
+    buildStep: "🍎 Build iOS Phone (Unsigned IPA)",
   },
   "ios-tv-release-device-unsigned": {
-    label: "tvOS Unsigned",
+    label: "iOS TV",
     icon: "🍎",
     target: "📺 Unsigned IPA",
     fileType: "IPA",
-    repackJob: "🍎 Repack tvOS IPA (Unsigned)",
-    buildStep: "🍎 Build tvOS IPA (Unsigned) · build",
-  },
-  "ios-phone-debug-simulator-unsigned": {
-    label: "iOS Simulator (Debug)",
-    icon: "🍎",
-    target: "🛠️ Dev Client .app",
-    fileType: "TAR",
-    buildStep: "🍎 Build iOS Simulator (Debug)",
+    repackJob: "🍎 Repack iOS TV (Unsigned IPA)",
+    buildStep: "🍎 Build iOS TV (Unsigned IPA)",
   },
   "ios-phone-release-simulator-unsigned": {
-    label: "iOS Simulator (Release)",
+    label: "iOS Phone",
     icon: "🍎",
-    target: "📦 Release .app",
+    target: "💻 Simulator Release .app",
     fileType: "TAR",
-    repackJob: "🍎 Repack iOS Simulator (Release)",
-    buildStep: "🍎 Build iOS Simulator (Release)",
-  },
-  "ios-tv-debug-simulator-unsigned": {
-    label: "tvOS Simulator (Debug)",
-    icon: "🍎",
-    target: "🛠️ Dev Client .app",
-    fileType: "TAR",
-    buildStep: "🍎 Build tvOS Simulator (Debug)",
+    repackJob: "🍎 Repack iOS Phone (Simulator Release)",
+    buildStep: "🍎 Build iOS Phone (Simulator Release)",
   },
   "ios-tv-release-simulator-unsigned": {
-    label: "tvOS Simulator (Release)",
+    label: "iOS TV",
     icon: "🍎",
-    target: "📦 Release .app",
+    target: "💻 Simulator Release .app",
     fileType: "TAR",
-    repackJob: "🍎 Repack tvOS Simulator (Release)",
-    buildStep: "🍎 Build tvOS Simulator (Release)",
-  },
-  "android-phone-debug-device-debugkey": {
-    label: "Android Phone (Debug)",
-    icon: "🤖",
-    target: "🛠️ Dev Client APK",
-    fileType: "APK",
-    buildStep: "🤖 Build Android APK (Phone Debug)",
+    repackJob: "🍎 Repack iOS TV (Simulator Release)",
+    buildStep: "🍎 Build iOS TV (Simulator Release)",
   },
   "android-phone-release-device-debugkey-universal": {
-    label: "Android Phone (Universal Release)",
+    label: "Android Phone",
     icon: "🤖",
-    target: "📦 Universal APK",
+    target: "🌐 Universal Release APK",
     fileType: "APK",
-    repackJob: "🤖 Repack Android APK (Phone Universal)",
-    buildStep: "🤖 Build Android APK (Phone Universal)",
-  },
-  "android-tv-debug-device-debugkey": {
-    label: "Android TV (Debug)",
-    icon: "🤖",
-    target: "🛠️ Dev Client APK",
-    fileType: "APK",
-    buildStep: "🤖 Build Android APK (TV Debug)",
+    repackJob: "🤖 Repack Android Phone (Universal Release APK)",
+    buildStep: "🤖 Build Android Phone (Universal Release APK)",
   },
   "android-tv-release-device-debugkey-universal": {
-    label: "Android TV (Universal Release)",
+    label: "Android TV",
     icon: "🤖",
-    target: "📦 Universal APK",
+    target: "🌐 Universal Release APK",
     fileType: "APK",
-    repackJob: "🤖 Repack Android APK (TV Universal)",
-    buildStep: "🤖 Build Android APK (TV Universal)",
+    repackJob: "🤖 Repack Android TV (Universal Release APK)",
+    buildStep: "🤖 Build Android TV (Universal Release APK)",
+  },
+  "ios-phone-debug-simulator-unsigned": {
+    label: "iOS Phone",
+    icon: "🍎",
+    target: "💻 Simulator Debug .app",
+    fileType: "TAR",
+    buildStep: "🍎 Build iOS Phone (Simulator Debug)",
+  },
+  "ios-tv-debug-simulator-unsigned": {
+    label: "iOS TV",
+    icon: "🍎",
+    target: "💻 Simulator Debug .app",
+    fileType: "TAR",
+    buildStep: "🍎 Build iOS TV (Simulator Debug)",
+  },
+  "android-phone-debug-device-debugkey": {
+    label: "Android Phone",
+    icon: "🤖",
+    target: "🛠️ Debug APK",
+    fileType: "APK",
+    buildStep: "🤖 Build Android Phone (Debug APK)",
+  },
+  "android-tv-debug-device-debugkey": {
+    label: "Android TV",
+    icon: "🤖",
+    target: "🛠️ Debug APK",
+    fileType: "APK",
+    buildStep: "🤖 Build Android TV (Debug APK)",
   },
 };
 
@@ -137,11 +137,15 @@ export const VARIANT_META: Record<string, VariantMeta> = {
 export const GROUPED_JOB_NAMES: readonly string[] = [
   "🤖 Build Android Phone",
   "🤖 Build Android TV",
+  "🍎 Build iOS Phone (Device)",
+  "🍎 Build iOS TV (Device)",
+  "🍎 Build iOS Phone (Simulator)",
+  "🍎 Build iOS TV (Simulator)",
+  // Earlier names, kept so ETA lookup from older develop runs still matches.
   "🍎 Build iOS Device",
   "🍎 Build tvOS Device",
   "🍎 Build iOS Simulators",
   "🍎 Build tvOS Simulators",
-  // Pre-emoji names, kept so ETA lookup from earlier develop runs still matches.
   "Build Apple variants",
   "Build Android variants",
   "Build Android phone",
@@ -533,7 +537,7 @@ export const renderComment = (model: RenderModel): string => {
   body += `\n`;
 
   body += `### 🛠️ Dev Clients (connect to local Metro)\n\n`;
-  body += `| Variant | Target | Status | Download |\n`;
+  body += `| Platform | Target | Status | Download |\n`;
   body += `|---------|--------|--------|----------|\n`;
   for (const state of ensure) {
     body += `| ${state.meta.icon} ${state.meta.label} | ${state.meta.target} | ${statusLabel(state)} | ${downloadCell(model, state)} |\n`;
@@ -548,20 +552,20 @@ export const renderComment = (model: RenderModel): string => {
   body += `| 🤖 Android Phone release APK (PR build) | \`arm64-v8a\` | Every 64-bit Android phone (all since ~2017). **Not** an x86_64 emulator or a 32-bit device. |\n`;
   body += `| 📺 Android TV release APK (PR build) | \`arm64-v8a\` + \`armeabi-v7a\` | Modern boxes **and** older / cheap 32-bit Android TV sticks. No x86_64. |\n`;
   body += `| 🤖 Android Universal Release & Dev Client APKs | \`arm64-v8a\` + \`armeabi-v7a\` + \`x86\` + \`x86_64\` (universal, 4 ABIs) | Any Android device or emulator, including x86_64 emulators. |\n`;
-  body += `| 🍎 iOS / tvOS IPA | \`arm64\` | iPhone / Apple TV (all current devices). Sideload with SideStore, AltStore, LiveContainer, or TrollStore. |\n`;
-  body += `| 🍎 iOS / tvOS simulator .app | \`arm64\` (simulator slice only) | Apple Silicon Mac simulators. Install with Expo Orbit or \`xcrun simctl\`. |\n\n`;
+  body += `| 🍎 iOS Phone / iOS TV IPA | \`arm64\` | All current iOS Phone / iOS TV devices. Sideload with SideStore, AltStore, LiveContainer, or TrollStore. |\n`;
+  body += `| 🍎 iOS Phone / iOS TV simulator .app | \`arm64\` (simulator slice only) | Apple Silicon Mac simulators. Install with Expo Orbit or \`xcrun simctl\`. |\n\n`;
   body += `**Why no x86_64 in the PR device APKs?** That slice only runs on Android emulators / Chromebooks, never a real phone or TV box — dropping it shrinks the APK and speeds up the build. The trimmed device APKs drop it, while the Universal Release and Dev Client APKs keep all four ABIs.\n\n`;
   body += `**Retention:** PR builds expire after 7 days. Dev clients are shared across PRs and kept up to 90 days; they rebuild automatically when the native fingerprint changes.\n\n`;
-  body += `**Runners:** Android on \`ubuntu-26.04\`; iOS / tvOS on Apple Silicon (\`xcode-27\`, macOS 27 with Xcode 27).\n\n`;
+  body += `**Runners:** Android Phone / Android TV on \`ubuntu-26.04\`; iOS Phone / iOS TV on Apple Silicon (\`xcode-27\`, macOS 27 with Xcode 27).\n\n`;
   body += `</details>\n\n`;
 
   const anyReady = model.states.some((s) => s.status === "ready");
   if (anyReady) {
     body += `### 🔧 Installation Instructions\n\n`;
     body += `- **Android APK**: Download the zip, unzip it, and install the APK on your device (enable "Install from unknown sources")\n`;
-    body += `- **iOS / tvOS IPA**: Sideload with [SideStore](https://sidestore.io/), [AltStore](https://altstore.io/), [Sideloadly](https://sideloadly.io/), LiveContainer, or Xcode\n`;
+    body += `- **iOS Phone / iOS TV IPA**: Sideload with [SideStore](https://sidestore.io/), [AltStore](https://altstore.io/), [Sideloadly](https://sideloadly.io/), LiveContainer, or Xcode\n`;
     body +=
-      "- **iOS / tvOS Simulator `.tar`**: Extract the `.app` and drag it onto a simulator or use Expo Orbit — or fetch locally with `bun scripts/build-cache/cli.ts fetch <variant-id>`\n\n";
+      "- **iOS Phone / iOS TV Simulator `.tar`**: Extract the `.app` and drag it onto a simulator or use Expo Orbit — or fetch locally with `bun scripts/build-cache/cli.ts fetch <variant-id>`\n\n";
   } else {
     body += `⏳ **Builds are starting up...** This comment will update automatically as each build completes.\n\n`;
   }

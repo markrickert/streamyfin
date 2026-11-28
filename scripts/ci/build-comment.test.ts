@@ -206,12 +206,12 @@ describe("flattenJobs", () => {
   it("passes non-grouped jobs through with the caller prefix stripped", () => {
     const flat = flattenJobs([
       {
-        name: "ios-phone / 🍎 Repack iOS IPA (Phone)",
+        name: "ios-phone / 🍎 Repack iOS Phone (Signed IPA)",
         status: "completed",
         conclusion: "success",
       },
     ]);
-    expect(flat[0].name).toBe("🍎 Repack iOS IPA (Phone)");
+    expect(flat[0].name).toBe("🍎 Repack iOS Phone (Signed IPA)");
   });
 
   it("keeps step-level status and timing on the flattened entry", () => {
@@ -223,7 +223,7 @@ describe("flattenJobs", () => {
         html_url: "https://example.com/job",
         steps: [
           {
-            name: "🤖 Build Android APK (Phone) · build",
+            name: "🤖 Build Android Phone (Release APK)",
             status: "in_progress",
             conclusion: null,
             started_at: "2026-01-15T11:00:00Z",
@@ -261,8 +261,8 @@ const stateFor = (states: VariantState[], id: string): VariantState => {
 };
 
 describe("resolveVariantStates", () => {
-  const ANDROID_PHONE_STEP = "🤖 Build Android APK (Phone) · build";
-  const ANDROID_PHONE_REPACK = "🤖 Repack Android APK (Phone)";
+  const ANDROID_PHONE_STEP = "🤖 Build Android Phone (Release APK)";
+  const ANDROID_PHONE_REPACK = "🤖 Repack Android Phone (Release APK)";
 
   it("reports a repack variant built by the repack job as repack", () => {
     const art = artifact(
@@ -379,7 +379,7 @@ describe("resolveVariantStates", () => {
           conclusion: "success",
         },
         {
-          name: "🍎 Repack iOS IPA (Phone)",
+          name: "🍎 Repack iOS Phone (Signed IPA)",
           status: "completed",
           conclusion: "skipped",
         },
@@ -400,7 +400,7 @@ describe("resolveVariantStates", () => {
           conclusion: "success",
         },
         {
-          name: "🍎 Repack iOS IPA (Phone)",
+          name: "🍎 Repack iOS Phone (Signed IPA)",
           status: "completed",
           conclusion: "skipped",
         },
@@ -412,11 +412,11 @@ describe("resolveVariantStates", () => {
   });
 
   it("uses the full-build ETA when the full-build step is in progress", () => {
-    const step = "🤖 Build Android APK (Phone) · build";
+    const step = "🤖 Build Android Phone (Release APK)";
     const states = resolveVariantStates({
       ...RESOLVE_BASE,
       referenceDurations: {
-        "🤖 Repack Android APK (Phone)": 120000,
+        "🤖 Repack Android Phone (Release APK)": 120000,
         [step]: 2100000,
       },
       jobs: [
@@ -436,12 +436,12 @@ describe("resolveVariantStates", () => {
     const states = resolveVariantStates({
       ...RESOLVE_BASE,
       referenceDurations: {
-        "🤖 Repack Android APK (Phone)": 120000,
-        "🤖 Build Android APK (Phone) · build": 2100000,
+        "🤖 Repack Android Phone (Release APK)": 120000,
+        "🤖 Build Android Phone (Release APK)": 2100000,
       },
       jobs: [
         {
-          name: "🤖 Repack Android APK (Phone)",
+          name: "🤖 Repack Android Phone (Release APK)",
           status: "in_progress",
           conclusion: null,
         },
@@ -472,14 +472,14 @@ describe("resolveVariantStates", () => {
           conclusion: "failure",
           steps: [
             {
-              name: "🤖 Build Android APK (TV) · build",
+              name: "🤖 Build Android TV (Release APK)",
               status: "completed",
               conclusion: "failure",
             },
           ],
         },
         {
-          name: "🍎 Build iOS Simulator (Debug)",
+          name: "🍎 Build iOS Phone (Simulator Debug)",
           status: "queued",
           conclusion: null,
         },
@@ -532,7 +532,7 @@ describe("referenceDurations", () => {
   it("collects durations of successful flattened jobs and steps", () => {
     const durations = referenceDurations([
       {
-        name: "🤖 Repack Android APK (Phone)",
+        name: "🤖 Repack Android Phone (Release APK)",
         status: "completed",
         conclusion: "success",
         started_at: "2026-01-10T10:00:00Z",
@@ -544,7 +544,7 @@ describe("referenceDurations", () => {
         conclusion: "success",
         steps: [
           {
-            name: "🤖 Build Android APK (Phone Debug)",
+            name: "🤖 Build Android Phone (Debug APK)",
             status: "completed",
             conclusion: "success",
             started_at: "2026-01-10T10:00:00Z",
@@ -553,8 +553,8 @@ describe("referenceDurations", () => {
         ],
       },
     ]);
-    expect(durations["🤖 Repack Android APK (Phone)"]).toBe(180000);
-    expect(durations["🤖 Build Android APK (Phone Debug)"]).toBe(1800000);
+    expect(durations["🤖 Repack Android Phone (Release APK)"]).toBe(180000);
+    expect(durations["🤖 Build Android Phone (Debug APK)"]).toBe(1800000);
   });
 });
 
@@ -649,29 +649,24 @@ describe("renderComment", () => {
     expect(body).toContain("*No signing credentials*");
   });
 
-  it("places the 4 promoted release variants in PR Builds and dev clients under Dev Clients", () => {
+  it("places the 9 repack variants in PR Builds and the 4 dev clients under Dev Clients", () => {
     const body = renderComment(baseModel(VARIANTS.map((v) => makeState(v.id))));
     const prSection = body.split("### 📦 PR Builds")[1].split("### 🛠️")[0];
     const devSection = body
       .split("### 🛠️ Dev Clients (connect to local Metro)")[1]
       .split("<details>")[0];
-    for (const label of [
-      "iOS Simulator (Release)",
-      "tvOS Simulator (Release)",
-      "Android Phone (Universal Release)",
-      "Android TV (Universal Release)",
-    ]) {
-      expect(prSection).toContain(label);
-      expect(devSection).not.toContain(label);
-    }
-    for (const label of [
-      "iOS Simulator (Debug)",
-      "tvOS Simulator (Debug)",
-      "Android Phone (Debug)",
-      "Android TV (Debug)",
-    ]) {
-      expect(devSection).toContain(label);
-      expect(prSection).not.toContain(label);
+    // Platform labels repeat across variants, so rows are matched by the
+    // label + target pair, which is unique per variant.
+    for (const variant of VARIANTS) {
+      const meta = VARIANT_META[variant.id];
+      const row = `| ${meta.icon} ${meta.label} | ${meta.target} |`;
+      if (variant.mode === "repack") {
+        expect(prSection).toContain(row);
+        expect(devSection).not.toContain(row);
+      } else {
+        expect(devSection).toContain(row);
+        expect(prSection).not.toContain(row);
+      }
     }
   });
 
@@ -696,8 +691,12 @@ describe("renderComment", () => {
       "android-phone-release-device-debugkey-universal",
       "android-tv-release-device-debugkey-universal",
     ]) {
-      const label = VARIANT_META[id].label;
-      const row = prSection.split("\n").find((line) => line.includes(label));
+      const meta = VARIANT_META[id];
+      const row = prSection
+        .split("\n")
+        .find(
+          (line) => line.includes(meta.label) && line.includes(meta.target),
+        );
       expect(row).toContain("⏳ Pending");
     }
   });
@@ -706,19 +705,19 @@ describe("renderComment", () => {
     for (const [id, repackJob] of [
       [
         "ios-phone-release-simulator-unsigned",
-        "🍎 Repack iOS Simulator (Release)",
+        "🍎 Repack iOS Phone (Simulator Release)",
       ],
       [
         "ios-tv-release-simulator-unsigned",
-        "🍎 Repack tvOS Simulator (Release)",
+        "🍎 Repack iOS TV (Simulator Release)",
       ],
       [
         "android-phone-release-device-debugkey-universal",
-        "🤖 Repack Android APK (Phone Universal)",
+        "🤖 Repack Android Phone (Universal Release APK)",
       ],
       [
         "android-tv-release-device-debugkey-universal",
-        "🤖 Repack Android APK (TV Universal)",
+        "🤖 Repack Android TV (Universal Release APK)",
       ],
     ] as const) {
       const art = artifact(artifactName(variantById(id)!, "abc"));
@@ -975,7 +974,7 @@ describe("runUpdate", () => {
           html_url: "https://x/job",
           steps: [
             {
-              name: "🤖 Build Android APK (Phone) · build",
+              name: "🤖 Build Android Phone (Release APK)",
               status: "in_progress",
               conclusion: null,
             },
@@ -1026,7 +1025,7 @@ describe("runUpdate", () => {
     wireRunUpdate(fake, {
       jobs: [
         {
-          name: "🤖 Repack Android APK (Phone)",
+          name: "🤖 Repack Android Phone (Release APK)",
           status: "completed",
           conclusion: "success",
           html_url: "https://x/job",
@@ -1111,7 +1110,7 @@ describe("artifactPattern regression (unhashed fallback artifacts)", () => {
       runArtifacts: [fallback],
       jobs: [
         {
-          name: "🤖 Repack Android APK (Phone)",
+          name: "🤖 Repack Android Phone (Release APK)",
           status: "completed",
           conclusion: "success",
         },

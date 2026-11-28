@@ -216,7 +216,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_signed_name }}
       source-run-id: ${{ needs.fingerprint.outputs.ios_phone_source }}
       retention-days: 7
-      repack-name: 🍎 Repack iOS IPA (Phone)
+      repack-name: 🍎 Repack iOS Phone (Signed IPA)
 
   ios-phone-release-device-unsigned:
     needs: fingerprint
@@ -231,11 +231,11 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_unsigned_name }}
       source-run-id: ${{ needs.fingerprint.outputs.ios_phone_unsigned_source }}
       retention-days: 7
-      repack-name: 🍎 Repack iOS IPA (Phone - Unsigned)
+      repack-name: 🍎 Repack iOS Phone (Unsigned IPA)
 
   ios-tv-release-device-unsigned:
-    # The only tvOS device build in CI: it needs no Apple credentials. Signed
-    # tvOS builds come from release.yml, which holds the tvOS signing files.
+    # The only iOS TV device build in CI: it needs no Apple credentials.
+    # Signed iOS TV builds come from release.yml, which holds the signing files.
     needs: fingerprint
     if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_unsigned_source != '' }}
     permissions:
@@ -248,7 +248,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_device_unsigned_name }}
       source-run-id: ${{ needs.fingerprint.outputs.ios_tv_unsigned_source }}
       retention-days: 7
-      repack-name: 🍎 Repack tvOS IPA (Unsigned)
+      repack-name: 🍎 Repack iOS TV (Unsigned IPA)
 
   android-phone-release-device-debugkey:
     needs: fingerprint
@@ -263,7 +263,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_name }}
       source-run-id: ${{ needs.fingerprint.outputs.android_phone_source }}
       retention-days: 7
-      repack-name: 🤖 Repack Android APK (Phone)
+      repack-name: 🤖 Repack Android Phone (Release APK)
 
   android-tv-release-device-debugkey:
     needs: fingerprint
@@ -278,7 +278,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_name }}
       source-run-id: ${{ needs.fingerprint.outputs.android_tv_source }}
       retention-days: 7
-      repack-name: 🤖 Repack Android APK (TV)
+      repack-name: 🤖 Repack Android TV (Release APK)
 
   ios-phone-release-simulator-unsigned:
     needs: fingerprint
@@ -293,7 +293,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_simulator_unsigned_name }}
       source-run-id: ${{ needs.fingerprint.outputs.ios_phone_release_sim_source }}
       retention-days: 7
-      repack-name: 🍎 Repack iOS Simulator (Release)
+      repack-name: 🍎 Repack iOS Phone (Simulator Release)
 
   ios-tv-release-simulator-unsigned:
     needs: fingerprint
@@ -308,7 +308,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_simulator_unsigned_name }}
       source-run-id: ${{ needs.fingerprint.outputs.ios_tv_release_sim_source }}
       retention-days: 7
-      repack-name: 🍎 Repack tvOS Simulator (Release)
+      repack-name: 🍎 Repack iOS TV (Simulator Release)
 
   android-phone-release-device-debugkey-universal:
     needs: fingerprint
@@ -323,7 +323,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_universal_name }}
       source-run-id: ${{ needs.fingerprint.outputs.android_phone_universal_source }}
       retention-days: 7
-      repack-name: 🤖 Repack Android APK (Phone Universal)
+      repack-name: 🤖 Repack Android Phone (Universal Release APK)
 
   android-tv-release-device-debugkey-universal:
     needs: fingerprint
@@ -338,7 +338,7 @@ jobs:
       artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_universal_name }}
       source-run-id: ${{ needs.fingerprint.outputs.android_tv_universal_source }}
       retention-days: 7
-      repack-name: 🤖 Repack Android APK (TV Universal)
+      repack-name: 🤖 Repack Android TV (Universal Release APK)
 
   plan-native-builds:
     needs: [fingerprint, ios-phone-release-device-signed, ios-phone-release-device-unsigned, ios-tv-release-device-unsigned, android-phone-release-device-debugkey, android-tv-release-device-debugkey, ios-phone-release-simulator-unsigned, ios-tv-release-simulator-unsigned, android-phone-release-device-debugkey-universal, android-tv-release-device-debugkey-universal]
@@ -410,7 +410,7 @@ jobs:
       job-name: 🤖 Build Android TV
       plan: ${{ needs.plan-native-builds.outputs.android_tv }}
 
-  build-ios-device:
+  build-ios-phone-device:
     needs: plan-native-builds
     if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_device != '' && needs.plan-native-builds.outputs.ios_phone_device != '{}' }}
     permissions:
@@ -421,10 +421,10 @@ jobs:
     with:
       platform: ios
       form: phone
-      job-name: 🍎 Build iOS Device
+      job-name: 🍎 Build iOS Phone (Device)
       plan: ${{ needs.plan-native-builds.outputs.ios_phone_device }}
 
-  build-tvos-device:
+  build-ios-tv-device:
     needs: plan-native-builds
     if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_device != '' && needs.plan-native-builds.outputs.ios_tv_device != '{}' }}
     permissions:
@@ -435,10 +435,10 @@ jobs:
     with:
       platform: ios
       form: tv
-      job-name: 🍎 Build tvOS Device
+      job-name: 🍎 Build iOS TV (Device)
       plan: ${{ needs.plan-native-builds.outputs.ios_tv_device }}
 
-  build-ios-sim:
+  build-ios-phone-sim:
     needs: plan-native-builds
     if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_sim != '' && needs.plan-native-builds.outputs.ios_phone_sim != '{}' }}
     permissions:
@@ -449,10 +449,10 @@ jobs:
     with:
       platform: ios
       form: phone
-      job-name: 🍎 Build iOS Simulators
+      job-name: 🍎 Build iOS Phone (Simulator)
       plan: ${{ needs.plan-native-builds.outputs.ios_phone_sim }}
 
-  build-tvos-sim:
+  build-ios-tv-sim:
     needs: plan-native-builds
     if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_sim != '' && needs.plan-native-builds.outputs.ios_tv_sim != '{}' }}
     permissions:
@@ -463,7 +463,7 @@ jobs:
     with:
       platform: ios
       form: tv
-      job-name: 🍎 Build tvOS Simulators
+      job-name: 🍎 Build iOS TV (Simulator)
       plan: ${{ needs.plan-native-builds.outputs.ios_tv_sim }}
 
   # ── Required status-check gates ─────────────────────────────────────────────
@@ -471,7 +471,7 @@ jobs:
   # when its caller succeeded (or recovered via the fallback build), or was
   # intentionally skipped.
   gate-ios-phone:
-    needs: [fingerprint, ios-phone-release-device-signed, build-ios-device]
+    needs: [fingerprint, ios-phone-release-device-signed, build-ios-phone-device]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build iOS IPA (Phone)
@@ -479,7 +479,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-phone-release-device-signed.result }}
-      BUILD_RESULT: ${{ needs.build-ios-device.outputs.ios-phone-release-device-signed }}
+      BUILD_RESULT: ${{ needs.build-ios-phone-device.outputs.ios-phone-release-device-signed }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
       IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}
@@ -553,7 +553,7 @@ jobs:
           exit 1
 
   gate-ios-tv-unsigned:
-    needs: [ios-tv-release-device-unsigned, build-tvos-device]
+    needs: [ios-tv-release-device-unsigned, build-ios-tv-device]
     if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🍎 Build tvOS IPA (Unsigned)
@@ -561,7 +561,7 @@ jobs:
       contents: read
     env:
       RESULT: ${{ needs.ios-tv-release-device-unsigned.result }}
-      BUILD_RESULT: ${{ needs.build-tvos-device.outputs.ios-tv-release-device-unsigned }}
+      BUILD_RESULT: ${{ needs.build-ios-tv-device.outputs.ios-tv-release-device-unsigned }}
       SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: ✅ Verify build result
