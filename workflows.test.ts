@@ -18,6 +18,7 @@ import {
   VARIANTS,
   variantById,
 } from "./scripts/build-cache/variants";
+import { VARIANT_META } from "./scripts/ci/build-comment";
 
 // The CI workflows name modules, paths and commands by hand, and nothing fails
 // when one of those lists falls behind the tree: the workflow stays green while
@@ -1006,12 +1007,15 @@ describe("build-apps.yml", () => {
     );
   });
 
-  test("repack artifact names stay distinct in artifact-comment.yml", () => {
-    const commentWorkflow = readWorkflow("artifact-comment.yml");
+  test("build-comment.ts covers every variant distinctly", () => {
+    for (const variant of VARIANTS) {
+      expect(VARIANT_META[variant.id]).toBeDefined();
+    }
+    expect(Object.keys(VARIANT_META).sort()).toEqual(
+      VARIANTS.map((v) => v.id).sort(),
+    );
     for (const variant of VARIANTS.filter((v) => v.mode === "repack")) {
       const name = artifactName(variant, "abc123");
-      const patternLiteral = `^streamyfin-${variant.id}-r\\d+-fp-`;
-      expect(commentWorkflow).toContain(patternLiteral);
       expect(new RegExp(`^streamyfin-${variant.id}-r\\d+-fp-`).test(name)).toBe(
         true,
       );
@@ -1025,6 +1029,24 @@ describe("build-apps.yml", () => {
         universal,
       ),
     ).toBe(false);
+  });
+
+  test("artifact-comment.yml runs build-comment.ts and guards forks", () => {
+    const commentWorkflow = readWorkflow("artifact-comment.yml");
+    expect(commentWorkflow).toContain("run: bun scripts/ci/build-comment.ts");
+
+    // Fork pull requests must be filtered in the job `if:` before any
+    // checkout happens, and the job stays read-only on contents.
+    expect(commentWorkflow).toContain(
+      "github.event.pull_request.head.repo.full_name == github.repository",
+    );
+    expect(commentWorkflow).toContain(
+      "github.event.workflow_run.head_repository.full_name == github.repository",
+    );
+    expect(commentWorkflow).toContain("contents: read");
+    expect(commentWorkflow).not.toContain("contents: write");
+    expect(commentWorkflow).toContain("persist-credentials: false");
+    expect(commentWorkflow).toContain('bun-version: "1.4.4"');
   });
 
   const PERMISSION_LEVEL: Record<string, number> = {
