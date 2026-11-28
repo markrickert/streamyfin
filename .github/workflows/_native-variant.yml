@@ -82,13 +82,14 @@ jobs:
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 📦 Repack the earlier binary
+      - name: 🧩 Repack the earlier binary
         uses: ./.github/actions/repack
         with:
           platform: ${{ startsWith(inputs.variant, 'android-') && 'android' || 'ios' }}
           source-run-id: ${{ inputs.source-run-id }}
           artifact-name: ${{ inputs.artifact-name }}
-          output: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/app-release.apk' || 'build/Streamyfin.ipa' }}
+          kind: ${{ startsWith(inputs.variant, 'android-') && 'apk' || (contains(inputs.variant, '-simulator-') && 'app' || 'ipa') }}
+          output: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/app-release.apk' || (contains(inputs.variant, '-simulator-') && format('build/{0}.tar', inputs.artifact-name) || 'build/Streamyfin.ipa') }}
           tv: ${{ contains(inputs.variant, '-tv-') && '1' || '0' }}
           expo-token: ${{ inputs.variant == 'ios-phone-release-device-signed' && secrets.EXPO_TOKEN || '' }}
           # The app and every extension it embeds; each needs its own profile.
@@ -100,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ inputs.artifact-name }}
-          path: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/*.apk' || 'build/*.ipa' }}
+          path: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/*.apk' || (contains(inputs.variant, '-simulator-') && 'build/*.tar' || 'build/*.ipa') }}
           retention-days: ${{ inputs.retention-days }}
           # A repack that uploads nothing must fail, or its skipped build would pass.
           if-no-files-found: error

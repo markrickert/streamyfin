@@ -134,17 +134,23 @@ describe("VARIANT_META", () => {
     expect(VARIANTS).toHaveLength(13);
   });
 
-  it("marks the 5 repack variants with repack jobs and the 8 ensure without", () => {
+  it("marks the 9 repack variants with repack jobs and the 4 dev clients without", () => {
     const repack = VARIANTS.filter((v) => v.mode === "repack");
     const ensure = VARIANTS.filter((v) => v.mode === "ensure");
-    expect(repack).toHaveLength(5);
-    expect(ensure).toHaveLength(8);
+    expect(repack).toHaveLength(9);
+    expect(ensure).toHaveLength(4);
     for (const variant of repack) {
       expect(VARIANT_META[variant.id].repackJob).toBeTruthy();
     }
     for (const variant of ensure) {
       expect(VARIANT_META[variant.id].repackJob).toBeUndefined();
     }
+    expect(ensure.map((v) => v.id).sort()).toEqual([
+      "android-phone-debug-device-debugkey",
+      "android-tv-debug-device-debugkey",
+      "ios-phone-debug-simulator-unsigned",
+      "ios-tv-debug-simulator-unsigned",
+    ]);
   });
 });
 
@@ -153,16 +159,14 @@ describe("VARIANT_META", () => {
 // ---------------------------------------------------------------------------
 
 describe("flattenJobs", () => {
-  it("flattens all 8 grouped build jobs into their steps", () => {
+  it("flattens the 6 grouped build jobs into their steps", () => {
     const groups = [
-      "Build Apple variants",
-      "Build Android variants",
-      "Build Android phone",
-      "Build Android TV",
-      "Build iOS device",
-      "Build tvOS device",
-      "Build iOS simulators",
-      "Build tvOS simulators",
+      "🤖 Build Android Phone",
+      "🤖 Build Android TV",
+      "🍎 Build iOS Device",
+      "🍎 Build tvOS Device",
+      "🍎 Build iOS Simulators",
+      "🍎 Build tvOS Simulators",
     ];
     const jobs = groups.map((name, i) => ({
       name: `caller / ${name}`,
@@ -175,6 +179,27 @@ describe("flattenJobs", () => {
     const flat = flattenJobs(jobs);
     expect(flat).toHaveLength(groups.length);
     expect(flat.map((f) => f.name)).toEqual(groups.map((_, i) => `step-${i}`));
+  });
+
+  it("still flattens the pre-emoji grouped job names from earlier runs", () => {
+    for (const name of [
+      "Build Android phone",
+      "Build Android TV",
+      "Build iOS device",
+      "Build tvOS device",
+      "Build iOS simulators",
+      "Build tvOS simulators",
+    ]) {
+      const flat = flattenJobs([
+        {
+          name,
+          status: "completed",
+          conclusion: "success",
+          steps: [{ name: "step", status: "completed", conclusion: "success" }],
+        },
+      ]);
+      expect(flat[0].name).toBe("step");
+    }
   });
 
   it("passes non-grouped jobs through with the caller prefix stripped", () => {
@@ -453,7 +478,7 @@ describe("resolveVariantStates", () => {
           ],
         },
         {
-          name: "🛠️ Build dev client (iOS simulator)",
+          name: "🍎 Build iOS Simulator (Debug)",
           status: "queued",
           conclusion: null,
         },
@@ -518,7 +543,7 @@ describe("referenceDurations", () => {
         conclusion: "success",
         steps: [
           {
-            name: "🛠️ Build dev client (Android phone)",
+            name: "🤖 Build Android APK (Phone Debug)",
             status: "completed",
             conclusion: "success",
             started_at: "2026-01-10T10:00:00Z",
@@ -528,7 +553,7 @@ describe("referenceDurations", () => {
       },
     ]);
     expect(durations["🤖 Repack Android APK (Phone)"]).toBe(180000);
-    expect(durations["🛠️ Build dev client (Android phone)"]).toBe(1800000);
+    expect(durations["🤖 Build Android APK (Phone Debug)"]).toBe(1800000);
   });
 });
 
@@ -569,8 +594,8 @@ describe("renderComment", () => {
     );
     const body = renderComment(baseModel(states));
     expect(body).toContain("## 🔧 Build Status for PR #42");
-    expect(body).toContain("### 📦 PR Device Builds");
-    expect(body).toContain("### 🛠️ Simulators, Dev Clients & Universal Builds");
+    expect(body).toContain("### 📦 PR Builds");
+    expect(body).toContain("### 🛠️ Dev Clients (connect to local Metro)");
     expect(body.match(/🔄 \[Building…\]/g)?.length).toBeGreaterThanOrEqual(10);
     expect(body).toContain("avg on develop");
     expect(body).toContain("Builds are starting up");
@@ -599,8 +624,8 @@ describe("renderComment", () => {
       });
     });
     const body = renderComment(baseModel(states));
-    expect(body.match(/✅ Repack/g)?.length).toBe(5);
-    expect(body.match(/✅ Cached/g)?.length).toBe(8);
+    expect(body.match(/✅ Repack/g)?.length).toBe(9);
+    expect(body.match(/✅ Cached/g)?.length).toBe(4);
     expect(body).toContain(
       "https://github.com/streamyfin/streamyfin/actions/runs/500/artifacts/",
     );
@@ -621,6 +646,102 @@ describe("renderComment", () => {
     const body = renderComment(baseModel(states));
     expect(body).toContain("⏭️ Skipped");
     expect(body).toContain("*No signing credentials*");
+  });
+
+  it("places the 4 promoted release variants in PR Builds and dev clients under Dev Clients", () => {
+    const body = renderComment(baseModel(VARIANTS.map((v) => makeState(v.id))));
+    const prSection = body.split("### 📦 PR Builds")[1].split("### 🛠️")[0];
+    const devSection = body
+      .split("### 🛠️ Dev Clients (connect to local Metro)")[1]
+      .split("<details>")[0];
+    for (const label of [
+      "iOS Simulator (Release)",
+      "tvOS Simulator (Release)",
+      "Android Phone (Universal Release)",
+      "Android TV (Universal Release)",
+    ]) {
+      expect(prSection).toContain(label);
+      expect(devSection).not.toContain(label);
+    }
+    for (const label of [
+      "iOS Simulator (Debug)",
+      "tvOS Simulator (Debug)",
+      "Android Phone (Debug)",
+      "Android TV (Debug)",
+    ]) {
+      expect(devSection).toContain(label);
+      expect(prSection).not.toContain(label);
+    }
+  });
+
+  it("never marks the promoted release variants as cached", () => {
+    const states = VARIANTS.map((v) => {
+      if (v.mode === "ensure") {
+        return makeState(v.id, {
+          status: "ready",
+          buildSource: "cached",
+          cachedArtifact: artifact(artifactName(v, "fp")),
+        });
+      }
+      return makeState(v.id);
+    });
+    const body = renderComment(baseModel(states));
+    const prSection = body.split("### 📦 PR Builds")[1].split("### 🛠️")[0];
+    expect(prSection).not.toContain("✅ Cached");
+    expect(body.match(/✅ Cached/g)?.length).toBe(4);
+    for (const id of [
+      "ios-phone-release-simulator-unsigned",
+      "ios-tv-release-simulator-unsigned",
+      "android-phone-release-device-debugkey-universal",
+      "android-tv-release-device-debugkey-universal",
+    ]) {
+      const label = VARIANT_META[id].label;
+      const row = prSection.split("\n").find((line) => line.includes(label));
+      expect(row).toContain("⏳ Pending");
+    }
+  });
+
+  it("marks a promoted release variant as repack once its repack job finishes", () => {
+    for (const [id, repackJob] of [
+      [
+        "ios-phone-release-simulator-unsigned",
+        "🍎 Repack iOS Simulator (Release)",
+      ],
+      [
+        "ios-tv-release-simulator-unsigned",
+        "🍎 Repack tvOS Simulator (Release)",
+      ],
+      [
+        "android-phone-release-device-debugkey-universal",
+        "🤖 Repack Android APK (Phone Universal)",
+      ],
+      [
+        "android-tv-release-device-debugkey-universal",
+        "🤖 Repack Android APK (TV Universal)",
+      ],
+    ] as const) {
+      const art = artifact(artifactName(variantById(id)!, "abc"));
+      const states = resolveVariantStates({
+        ...RESOLVE_BASE,
+        runArtifacts: [art],
+        jobs: [{ name: repackJob, status: "completed", conclusion: "success" }],
+      });
+      const state = stateFor(states, id);
+      expect(state.status).toBe("ready");
+      expect(state.buildSource).toBe("repack");
+    }
+  });
+
+  it("keeps the promoted release variants pending before their repack runs", () => {
+    const states = resolveVariantStates({ ...RESOLVE_BASE, jobs: [] });
+    for (const id of [
+      "ios-phone-release-simulator-unsigned",
+      "ios-tv-release-simulator-unsigned",
+      "android-phone-release-device-debugkey-universal",
+      "android-tv-release-device-debugkey-universal",
+    ]) {
+      expect(stateFor(states, id).status).toBe("pending");
+    }
   });
 
   it("documents accurate ABIs and retention in the details block", () => {

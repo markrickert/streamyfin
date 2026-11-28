@@ -673,7 +673,7 @@ describe("build-apps.yml", () => {
 
   test("the ensure step carries the merge_group and fork skip condition", () => {
     const ensureVariants = VARIANTS.filter((v) => v.mode === "ensure");
-    expect(ensureVariants.length).toBe(8);
+    expect(ensureVariants.length).toBe(4);
 
     const fingerprint = jobs.get("fingerprint")!;
     const ensureStep = fingerprint.slice(fingerprint.indexOf("id: ensure"));
@@ -711,7 +711,7 @@ describe("build-apps.yml", () => {
     )!;
     const gate = jobs.get("gate-ios-phone")!;
     const preflight = fingerprint.indexOf(
-      "- name: Check signed iOS credentials",
+      "- name: 🔑 Check signed iOS credentials",
     );
     expect(preflight).toBeGreaterThan(0);
     expect(preflight).toBeLessThan(
@@ -783,12 +783,12 @@ describe("build-apps.yml", () => {
   });
 
   test("saves CocoaPods downloads right after prebuild, without failing the group", () => {
-    const saveAt = group.indexOf("- name: Save CocoaPods downloads");
-    const prebuildAt = group.indexOf("- name: Prebuild");
+    const saveAt = group.indexOf("- name: 💾 Save CocoaPods downloads");
+    const prebuildAt = group.indexOf("- name: 🏗️ Prebuild");
     expect(prebuildAt).toBeGreaterThan(0);
     expect(saveAt).toBeGreaterThan(prebuildAt);
     expect(saveAt).toBeLessThan(
-      group.indexOf("- name: Check grouped build results"),
+      group.indexOf("- name: ✅ Check grouped build results"),
     );
     const saveStep = group.slice(saveAt, group.indexOf("- name: ", saveAt + 1));
     expect(saveStep).toContain("continue-on-error: true");
@@ -811,7 +811,7 @@ describe("build-apps.yml", () => {
   ])(
     "keeps cache failures optional without hiding build failures (%j)",
     (steps, status) => {
-      const script = runOf(groupRaw, "Check grouped build results");
+      const script = runOf(groupRaw, "✅ Check grouped build results");
       const result = spawnSync("bash", ["-eo", "pipefail", "-c", script], {
         env: { ...process.env, STEP_RESULTS: JSON.stringify(steps) },
       });
@@ -820,15 +820,15 @@ describe("build-apps.yml", () => {
   );
 
   describe("the build job's artifact name", () => {
-    const step = "Resolve artifact names";
+    const step = "🧬 Resolve artifact names";
     const script = runOf(groupRaw, step);
 
     test("is resolved before prebuild and used for the binary and its upload", () => {
       const resolveAt = group.indexOf(`- name: ${step}`);
       expect(resolveAt).toBeGreaterThan(0);
-      expect(resolveAt).toBeLessThan(group.indexOf("- name: Prebuild"));
+      expect(resolveAt).toBeLessThan(group.indexOf("- name: 🏗️ Prebuild"));
       expect(resolveAt).toBeLessThan(
-        group.indexOf("- name: Identify CocoaPods cache"),
+        group.indexOf("- name: 💾 Identify CocoaPods cache"),
       );
       expect(group).toMatch(/^\s*PLAN: \$\{\{ inputs\.plan \}\}$/m);
       expect(group).toMatch(/^\s*RUN_ID: \$\{\{ github\.run_id \}\}$/m);
@@ -1007,6 +1007,38 @@ describe("build-apps.yml", () => {
     );
   });
 
+  test("the repack action and native-variant workflow handle simulator .app tarballs", () => {
+    const repackAction = readFileSync(
+      join(root, ".github/actions/repack/action.yml"),
+      "utf8",
+    );
+    // The optional kind input defaults from the platform.
+    expect(repackAction).toMatch(
+      /^\s*kind:\s*\n\s*description: '"apk", "ipa", or "app"/m,
+    );
+    // An app kind extracts the tar, verifies a single .app, reads Info.plist,
+    // repacks the .app directory and re-tars the result into the output.
+    expect(repackAction).toContain('if [ "$KIND" = "app" ]; then');
+    expect(repackAction).toContain(
+      'tar -xf "$tar_file" -C "$RUNNER_TEMP/source-app"',
+    );
+    expect(repackAction).toContain("/*.app/Info.plist");
+    expect(repackAction).toContain(
+      'bunx repack-app -p ios --source-app "$source_app"',
+    );
+    expect(repackAction).toContain(
+      'COPYFILE_DISABLE=1 tar -cf "$OUTPUT" -C "$RUNNER_TEMP/repacked" "$app_name"',
+    );
+
+    // _native-variant.yml wires kind, the tar output path, and the tar upload
+    // glob for simulator variants.
+    expect(nativeVariant).toContain(
+      "kind: ${{ startsWith(inputs.variant, 'android-') && 'apk' || (contains(inputs.variant, '-simulator-') && 'app' || 'ipa') }}",
+    );
+    expect(nativeVariant).toContain("build/{0}.tar");
+    expect(nativeVariant).toContain("build/*.tar");
+  });
+
   test("build-comment.ts covers every variant distinctly", () => {
     for (const variant of VARIANTS) {
       expect(VARIANT_META[variant.id]).toBeDefined();
@@ -1029,6 +1061,26 @@ describe("build-apps.yml", () => {
         universal,
       ),
     ).toBe(false);
+  });
+
+  test("VARIANT_META step and repack names never drift from the workflows", () => {
+    // build-comment.ts matches jobs and steps by these exact strings; a rename
+    // in either workflow without updating VARIANT_META silently breaks the PR
+    // comment's status resolution.
+    for (const variant of VARIANTS) {
+      const meta = VARIANT_META[variant.id];
+      expect(group).toMatch(
+        new RegExp(`^\\s*- name: ${escapeRegExp(meta.buildStep)}\\s*$`, "m"),
+      );
+      if (meta.repackJob) {
+        expect(buildApps).toMatch(
+          new RegExp(
+            `^\\s*repack-name: ${escapeRegExp(meta.repackJob)}\\s*$`,
+            "m",
+          ),
+        );
+      }
+    }
   });
 
   test("artifact-comment.yml runs build-comment.ts and guards forks", () => {

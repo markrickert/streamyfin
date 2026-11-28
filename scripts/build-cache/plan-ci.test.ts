@@ -1,4 +1,4 @@
-import { BUILD_GROUP_IDS, planNativeBuilds } from "./plan-ci";
+import { BUILD_GROUP_IDS, groupForVariant, planNativeBuilds } from "./plan-ci";
 import { VARIANTS } from "./variants";
 
 const emptyPlan = Object.fromEntries(BUILD_GROUP_IDS.map((id) => [id, {}]));
@@ -68,18 +68,11 @@ test("a failed fingerprint builds only repack variants without trusting any supp
     },
     repackResults: {},
   });
-  expect(result.ios_phone_sim).toEqual({});
-  expect(result.ios_tv_sim).toEqual({});
-  for (const [groupId, os, form] of [
-    ["android_phone", "android", "phone"],
-    ["android_tv", "android", "tv"],
-    ["ios_phone_device", "ios", "phone"],
-    ["ios_tv_device", "ios", "tv"],
-  ] as const) {
+  for (const groupId of BUILD_GROUP_IDS) {
     expect(result[groupId]).toEqual({
       variants: Object.fromEntries(
         repacks
-          .filter((variant) => variant.os === os && variant.form === form)
+          .filter((variant) => groupForVariant(variant) === groupId)
           .map((variant) => [variant.id, { name: "" }]),
       ),
     });

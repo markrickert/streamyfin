@@ -1,4 +1,4 @@
-name: Native Build Group
+name: 🏗️ Native Build Group
 
 on:
   workflow_call:
@@ -128,7 +128,7 @@ jobs:
 
       # Hash before any prebuild generates native sources. A name from the
       # fingerprint job needs no retry.
-      - name: Resolve artifact names
+      - name: 🧬 Resolve artifact names
         id: artifacts
         env:
           PLAN: ${{ inputs.plan }}
@@ -154,7 +154,7 @@ jobs:
 
       # Clean prebuild replaces ios/, so cache only CocoaPods' shared downloads.
       # https://github.com/CocoaPods/CocoaPods/blob/1.16.2/lib/cocoapods/downloader.rb#L29-L44
-      - name: Identify CocoaPods cache
+      - name: 💾 Identify CocoaPods cache
         id: cocoapods-key
         if: inputs.platform == 'ios'
         continue-on-error: true
@@ -168,7 +168,7 @@ jobs:
           echo "key=$prefix$INPUTS_HASH-$COVERAGE" >> "$GITHUB_OUTPUT"
           echo "path=${CP_CACHE_DIR:-$HOME/Library/Caches/CocoaPods}/Pods" >> "$GITHUB_OUTPUT"
 
-      - name: Restore CocoaPods downloads
+      - name: 💾 Restore CocoaPods downloads
         id: cocoapods-restore
         if: steps.cocoapods-key.outcome == 'success'
         continue-on-error: true
@@ -178,7 +178,7 @@ jobs:
           key: ${{ steps.cocoapods-key.outputs.key }}
           restore-keys: ${{ steps.cocoapods-key.outputs.prefix }}
 
-      - name: Prebuild
+      - name: 🏗️ Prebuild
         id: prebuild
         continue-on-error: true
         env:
@@ -188,7 +188,7 @@ jobs:
 
       # Persist the downloads right after prebuild: a later compile failure or
       # cancellation must not throw away the pods this prebuild fetched.
-      - name: Save CocoaPods downloads
+      - name: 💾 Save CocoaPods downloads
         id: cocoapods-save
         if: ${{ !cancelled() && steps.cocoapods-restore.outcome == 'success' && steps.cocoapods-restore.outputs.cache-hit != 'true' && steps.prebuild.outcome == 'success' }}
         continue-on-error: true
@@ -197,7 +197,7 @@ jobs:
           path: ${{ steps.cocoapods-key.outputs.path }}
           key: ${{ steps.cocoapods-key.outputs.key }}
 
-      - name: Cache Android Gradle project
+      - name: 💾 Restore Android Gradle cache
         id: gradle-project
         if: ${{ inputs.platform == 'android' && steps.prebuild.outcome == 'success' }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -237,7 +237,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-release-device-debugkey'].name }}
           retention-days: 7
 
-      - name: 🛠️ Build dev client (iOS simulator)
+      - name: 🍎 Build iOS Simulator (Debug)
         id: ios-phone-debug-simulator-unsigned
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-debug-simulator-unsigned'] != null }}
         continue-on-error: true
@@ -247,7 +247,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-debug-simulator-unsigned'].name }}
           retention-days: 90
 
-      - name: 🛠️ Build dev client (Android phone)
+      - name: 🤖 Build Android APK (Phone Debug)
         id: android-phone-debug-device-debugkey
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-debug-device-debugkey'] != null }}
         continue-on-error: true
@@ -257,7 +257,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-debug-device-debugkey'].name }}
           retention-days: 90
 
-      - name: 🛠️ Build release simulator (iOS)
+      - name: 🍎 Build iOS Simulator (Release)
         id: ios-phone-release-simulator-unsigned
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-phone-release-simulator-unsigned'] != null }}
         continue-on-error: true
@@ -265,9 +265,9 @@ jobs:
         with:
           variant: ios-phone-release-simulator-unsigned
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-phone-release-simulator-unsigned'].name }}
-          retention-days: 90
+          retention-days: 7
 
-      - name: 🛠️ Build universal release APK (Android phone)
+      - name: 🤖 Build Android APK (Phone Universal)
         id: android-phone-release-device-debugkey-universal
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-phone-release-device-debugkey-universal'] != null }}
         continue-on-error: true
@@ -275,7 +275,7 @@ jobs:
         with:
           variant: android-phone-release-device-debugkey-universal
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-phone-release-device-debugkey-universal'].name }}
-          retention-days: 90
+          retention-days: 7
 
       - name: 🍎 Build tvOS IPA (Unsigned) · build
         id: ios-tv-release-device-unsigned
@@ -297,7 +297,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-release-device-debugkey'].name }}
           retention-days: 7
 
-      - name: 🛠️ Build dev client (tvOS simulator)
+      - name: 🍎 Build tvOS Simulator (Debug)
         id: ios-tv-debug-simulator-unsigned
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-debug-simulator-unsigned'] != null }}
         continue-on-error: true
@@ -307,7 +307,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-tv-debug-simulator-unsigned'].name }}
           retention-days: 90
 
-      - name: 🛠️ Build dev client (Android TV)
+      - name: 🤖 Build Android APK (TV Debug)
         id: android-tv-debug-device-debugkey
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-debug-device-debugkey'] != null }}
         continue-on-error: true
@@ -317,7 +317,7 @@ jobs:
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-debug-device-debugkey'].name }}
           retention-days: 90
 
-      - name: 🛠️ Build release simulator (tvOS)
+      - name: 🍎 Build tvOS Simulator (Release)
         id: ios-tv-release-simulator-unsigned
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['ios-tv-release-simulator-unsigned'] != null }}
         continue-on-error: true
@@ -325,9 +325,9 @@ jobs:
         with:
           variant: ios-tv-release-simulator-unsigned
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['ios-tv-release-simulator-unsigned'].name }}
-          retention-days: 90
+          retention-days: 7
 
-      - name: 🛠️ Build universal release APK (Android TV)
+      - name: 🤖 Build Android APK (TV Universal)
         id: android-tv-release-device-debugkey-universal
         if: ${{ steps.prebuild.outcome == 'success' && fromJSON(inputs.plan).variants['android-tv-release-device-debugkey-universal'] != null }}
         continue-on-error: true
@@ -335,9 +335,9 @@ jobs:
         with:
           variant: android-tv-release-device-debugkey-universal
           artifact-name: ${{ fromJSON(steps.artifacts.outputs.plan).variants['android-tv-release-device-debugkey-universal'].name }}
-          retention-days: 90
+          retention-days: 7
 
-      - name: Save Android Gradle project
+      - name: 💾 Save Android Gradle cache
         if: ${{ inputs.platform == 'android' && steps.prebuild.outcome == 'success' && steps.gradle-project.outputs.cache-hit != 'true' && !cancelled() }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -346,7 +346,7 @@ jobs:
 
       # Every selected variant gets a chance, but a failed upload/build or
       # failed form setup must still fail the group.
-      - name: Check grouped build results
+      - name: ✅ Check grouped build results
         if: ${{ !cancelled() && contains(steps.*.outcome, 'failure') }}
         env:
           STEP_RESULTS: ${{ toJSON(steps) }}

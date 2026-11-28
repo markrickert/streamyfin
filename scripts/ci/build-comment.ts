@@ -76,61 +76,72 @@ export const VARIANT_META: Record<string, VariantMeta> = {
     icon: "🍎",
     target: "🛠️ Dev Client .app",
     fileType: "TAR",
-    buildStep: "🛠️ Build dev client (iOS simulator)",
+    buildStep: "🍎 Build iOS Simulator (Debug)",
   },
   "ios-phone-release-simulator-unsigned": {
     label: "iOS Simulator (Release)",
     icon: "🍎",
     target: "📦 Release .app",
     fileType: "TAR",
-    buildStep: "🛠️ Build release simulator (iOS)",
+    repackJob: "🍎 Repack iOS Simulator (Release)",
+    buildStep: "🍎 Build iOS Simulator (Release)",
   },
   "ios-tv-debug-simulator-unsigned": {
     label: "tvOS Simulator (Debug)",
     icon: "🍎",
     target: "🛠️ Dev Client .app",
     fileType: "TAR",
-    buildStep: "🛠️ Build dev client (tvOS simulator)",
+    buildStep: "🍎 Build tvOS Simulator (Debug)",
   },
   "ios-tv-release-simulator-unsigned": {
     label: "tvOS Simulator (Release)",
     icon: "🍎",
     target: "📦 Release .app",
     fileType: "TAR",
-    buildStep: "🛠️ Build release simulator (tvOS)",
+    repackJob: "🍎 Repack tvOS Simulator (Release)",
+    buildStep: "🍎 Build tvOS Simulator (Release)",
   },
   "android-phone-debug-device-debugkey": {
     label: "Android Phone (Debug)",
     icon: "🤖",
     target: "🛠️ Dev Client APK",
     fileType: "APK",
-    buildStep: "🛠️ Build dev client (Android phone)",
+    buildStep: "🤖 Build Android APK (Phone Debug)",
   },
   "android-phone-release-device-debugkey-universal": {
     label: "Android Phone (Universal Release)",
     icon: "🤖",
     target: "📦 Universal APK",
     fileType: "APK",
-    buildStep: "🛠️ Build universal release APK (Android phone)",
+    repackJob: "🤖 Repack Android APK (Phone Universal)",
+    buildStep: "🤖 Build Android APK (Phone Universal)",
   },
   "android-tv-debug-device-debugkey": {
     label: "Android TV (Debug)",
     icon: "🤖",
     target: "🛠️ Dev Client APK",
     fileType: "APK",
-    buildStep: "🛠️ Build dev client (Android TV)",
+    buildStep: "🤖 Build Android APK (TV Debug)",
   },
   "android-tv-release-device-debugkey-universal": {
     label: "Android TV (Universal Release)",
     icon: "🤖",
     target: "📦 Universal APK",
     fileType: "APK",
-    buildStep: "🛠️ Build universal release APK (Android TV)",
+    repackJob: "🤖 Repack Android APK (TV Universal)",
+    buildStep: "🤖 Build Android APK (TV Universal)",
   },
 };
 
 /** Grouped build jobs whose per-variant results arrive as steps, not jobs. */
 export const GROUPED_JOB_NAMES: readonly string[] = [
+  "🤖 Build Android Phone",
+  "🤖 Build Android TV",
+  "🍎 Build iOS Device",
+  "🍎 Build tvOS Device",
+  "🍎 Build iOS Simulators",
+  "🍎 Build tvOS Simulators",
+  // Pre-emoji names, kept so ETA lookup from earlier develop runs still matches.
   "Build Apple variants",
   "Build Android variants",
   "Build Android phone",
@@ -357,7 +368,9 @@ export const resolveVariantStates = (args: ResolveArgs): VariantState[] => {
       const absentOrSkipped = (j: FlatJob | undefined) =>
         !j || (j.status === "completed" && j.conclusion === "skipped");
       const planJob = flatJobs.find(
-        (j) => j.name === "Plan full native builds",
+        (j) =>
+          j.name === "🗺️ Plan full native builds" ||
+          j.name === "Plan full native builds",
       );
       const gateJob = flatJobs.find(
         (j) => j.name === "🍎 Build iOS IPA (Phone)",
@@ -502,7 +515,7 @@ export const renderComment = (model: RenderModel): string => {
   let body = `## 🔧 Build Status for PR #${model.prNumber}\n\n`;
   body += `🔗 **Commit**: [\`${shortSha}\`](https://github.com/${model.repo}/commit/${model.headSha})\n\n`;
 
-  body += `### 📦 PR Device Builds\n\n`;
+  body += `### 📦 PR Builds\n\n`;
   body += `| Platform | Target | Status | Download |\n`;
   body += `|----------|--------|--------|----------|\n`;
   for (const state of repack) {
@@ -510,7 +523,7 @@ export const renderComment = (model: RenderModel): string => {
   }
   body += `\n`;
 
-  body += `### 🛠️ Simulators, Dev Clients & Universal Builds\n\n`;
+  body += `### 🛠️ Dev Clients (connect to local Metro)\n\n`;
   body += `| Variant | Target | Status | Download |\n`;
   body += `|---------|--------|--------|----------|\n`;
   for (const state of ensure) {
@@ -525,11 +538,11 @@ export const renderComment = (model: RenderModel): string => {
   body += `|---|---|---|\n`;
   body += `| 🤖 Android Phone release APK (PR build) | \`arm64-v8a\` | Every 64-bit Android phone (all since ~2017). **Not** an x86_64 emulator or a 32-bit device. |\n`;
   body += `| 📺 Android TV release APK (PR build) | \`arm64-v8a\` + \`armeabi-v7a\` | Modern boxes **and** older / cheap 32-bit Android TV sticks. No x86_64. |\n`;
-  body += `| 🤖 Android dev-client & universal APKs | \`arm64-v8a\` + \`armeabi-v7a\` + \`x86\` + \`x86_64\` (universal, 4 ABIs) | Any Android device or emulator, including x86_64 emulators. |\n`;
+  body += `| 🤖 Android Universal Release & Dev Client APKs | \`arm64-v8a\` + \`armeabi-v7a\` + \`x86\` + \`x86_64\` (universal, 4 ABIs) | Any Android device or emulator, including x86_64 emulators. |\n`;
   body += `| 🍎 iOS / tvOS IPA | \`arm64\` | iPhone / Apple TV (all current devices). Sideload with SideStore, AltStore, LiveContainer, or TrollStore. |\n`;
   body += `| 🍎 iOS / tvOS simulator .app | \`arm64\` (simulator slice only) | Apple Silicon Mac simulators. Install with Expo Orbit or \`xcrun simctl\`. |\n\n`;
-  body += `**Why no x86_64 in the PR device APKs?** That slice only runs on Android emulators / Chromebooks, never a real phone or TV box — dropping it shrinks the APK and speeds up the build. The dev-client and universal APKs keep all four ABIs.\n\n`;
-  body += `**Retention:** PR device builds expire after 7 days. Dev clients, simulators, and universal bases are shared across PRs and kept up to 90 days; they rebuild automatically when the native fingerprint changes.\n\n`;
+  body += `**Why no x86_64 in the PR device APKs?** That slice only runs on Android emulators / Chromebooks, never a real phone or TV box — dropping it shrinks the APK and speeds up the build. The trimmed device APKs drop it, while the Universal Release and Dev Client APKs keep all four ABIs.\n\n`;
+  body += `**Retention:** PR builds expire after 7 days. Dev clients are shared across PRs and kept up to 90 days; they rebuild automatically when the native fingerprint changes.\n\n`;
   body += `**Runners:** Android on \`ubuntu-26.04\`; iOS / tvOS on Apple Silicon (\`xcode-27\`, macOS 27 with Xcode 27).\n\n`;
   body += `</details>\n\n`;
 

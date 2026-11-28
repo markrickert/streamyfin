@@ -13,7 +13,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Build app
+    - name: 🏗️ Build app
       id: build
       shell: bash
       env:
@@ -21,7 +21,7 @@ runs:
         ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: bash "$GITHUB_ACTION_PATH/../../../scripts/build-cache/build-native-variant.sh"
 
-    - name: Upload artifact
+    - name: 📤 Upload artifact
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: ${{ inputs.artifact-name }}
@@ -30,5 +30,5 @@ runs:
         if-no-files-found: error
         overwrite: true
 
-    - name: Refresh PR build comment
+    - name: 🔄 Refresh PR build comment
       uses: ./.github/actions/refresh-pr-comment

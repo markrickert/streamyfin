@@ -45,7 +45,7 @@ describe("variants", () => {
     }
   });
 
-  it("assigns all four ABIs to Android ensure variants and trimmed ABIs to repack", () => {
+  it("trims PR device APK ABIs while universal repacks and dev clients keep all four", () => {
     expect(variantById("android-phone-release-device-debugkey")?.abis).toEqual([
       "arm64-v8a",
     ]);
@@ -53,9 +53,25 @@ describe("variants", () => {
       "arm64-v8a",
       "armeabi-v7a",
     ]);
+    for (const id of [
+      "android-phone-release-device-debugkey-universal",
+      "android-tv-release-device-debugkey-universal",
+      "android-phone-debug-device-debugkey",
+      "android-tv-debug-device-debugkey",
+    ]) {
+      expect(variantById(id)?.abis).toEqual([
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64",
+      ]);
+    }
+    expect(variantById("android-phone-release-device-debugkey")?.mode).toBe(
+      "repack",
+    );
     expect(
-      variantById("android-phone-release-device-debugkey-universal")?.abis,
-    ).toEqual(["arm64-v8a", "armeabi-v7a", "x86", "x86_64"]);
+      variantById("android-phone-release-device-debugkey-universal")?.mode,
+    ).toBe("repack");
   });
 
   it("returns undefined for an unknown variant id", () => {
