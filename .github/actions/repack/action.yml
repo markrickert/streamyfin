@@ -10,6 +10,10 @@ inputs:
   platform:
     description: '"ios" or "android".'
     required: true
+  kind:
+    description: '"apk", "ipa", or "app" (simulator .app tarball). Defaults from platform.'
+    required: false
+    default: ""
   source-run-id:
     description: The run that uploaded the app to repack.
     required: true
@@ -51,6 +55,7 @@ runs:
         GH_TOKEN: ${{ github.token }}
         SOURCE_RUN_ID: ${{ inputs.source-run-id }}
         ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        KIND: ${{ inputs.kind != '' && inputs.kind || (inputs.platform == 'android' && 'apk' || 'ipa') }}
         EXTENSION: ${{ inputs.platform == 'ios' && 'ipa' || 'apk' }}
       run: |
         # A flake or a just-expired artifact must not fail the job at once: the
@@ -60,19 +65,40 @@ runs:
           [ "$attempt" = 3 ] && exit 1
           sleep 10
         done
-        find "$RUNNER_TEMP/source" -name "*.$EXTENSION" -print -quit | xargs -I{} mv {} "$RUNNER_TEMP/source.$EXTENSION"
+        if [ "$KIND" = "app" ]; then
+          tar_file=$(find "$RUNNER_TEMP/source" -name "*.tar" -print -quit)
+          [ -n "$tar_file" ] || { echo "::error::No .tar in the source artifact"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/source-app"
+          tar -xf "$tar_file" -C "$RUNNER_TEMP/source-app"
+          app_count=$(find "$RUNNER_TEMP/source-app" -maxdepth 1 -name "*.app" | wc -l | tr -d ' ')
+          [ "$app_count" = "1" ] || { echo "::error::Expected one .app in the tarball, found $app_count"; exit 1; }
+        else
+          find "$RUNNER_TEMP/source" -name "*.$EXTENSION" -print -quit | xargs -I{} mv {} "$RUNNER_TEMP/source.$EXTENSION"
+        fi
 
-    - name: 🔍 Read the source app
+    - name: 🔎 Read the source app
       id: source
       if: inputs.platform == 'ios'
       shell: bash
       env:
         BUNDLE_IDENTIFIERS: ${{ inputs.expo-token != '' && inputs.bundle-identifiers || '' }}
+        KIND: ${{ inputs.kind != '' && inputs.kind || (inputs.platform == 'android' && 'apk' || 'ipa') }}
       # The build number goes on to the repack, which writes the config's or
       # "1" otherwise. A signed repack also checks that each embedded bundle
       # has a profile: zsign signs a bundle without one with the app's.
       run: |
-        python3 - "$RUNNER_TEMP/source.ipa" "$BUNDLE_IDENTIFIERS" >> "$GITHUB_OUTPUT" <<'PY'
+        if [ "$KIND" = "app" ]; then
+          python3 - "$RUNNER_TEMP/source-app" >> "$GITHUB_OUTPUT" <<'PY'
+        import glob, plistlib, sys
+        infos = glob.glob(sys.argv[1] + "/*.app/Info.plist")
+        if len(infos) != 1:
+            sys.exit(f"Expected one .app in the source tarball, found {len(infos)}")
+        with open(infos[0], "rb") as f:
+            info = plistlib.load(f)
+        print(f"build_number={info['CFBundleVersion']}")
+        PY
+        else
+          python3 - "$RUNNER_TEMP/source.ipa" "$BUNDLE_IDENTIFIERS" >> "$GITHUB_OUTPUT" <<'PY'
         import plistlib, re, sys, zipfile
         ipa, wanted = sys.argv[1], set(sys.argv[2].split())
         with zipfile.ZipFile(ipa) as z:
@@ -87,6 +113,7 @@ runs:
             sys.exit(f"The source IPA embeds {sorted(ids)}, profiles are fetched for {sorted(wanted)}")
         print(f"build_number={info['CFBundleVersion']}")
         PY
+        fi
 
     - name: 🛑 Refuse to sign without a token
       # The signed job passes its bundle identifiers: without the EAS token it
@@ -97,7 +124,7 @@ runs:
         echo "::error::A signed repack needs expo-token; the full build signs this IPA instead."
         exit 1
 
-    - name: 🔏 Fetch the signing files from EAS
+    - name: 🔑 Fetch the signing files from EAS
       if: inputs.platform == 'ios' && inputs.expo-token != ''
       shell: bash
       env:
@@ -107,7 +134,7 @@ runs:
         read -ra ids <<< "$BUNDLE_IDENTIFIERS"
         bun scripts/ci/fetch-ios-credentials.ts "$RUNNER_TEMP/signing" "${ids[@]}"
 
-    - name: 📦 Repack with this commit's JS
+    - name: 🧩 Repack with this commit's JS
       shell: bash
       env:
         # repack-app defaults NODE_ENV to development, which bundles the JS with
@@ -116,12 +143,21 @@ runs:
         NODE_ENV: production
         EXPO_TV: ${{ inputs.tv }}
         PLATFORM: ${{ inputs.platform }}
+        KIND: ${{ inputs.kind != '' && inputs.kind || (inputs.platform == 'android' && 'apk' || 'ipa') }}
         OUTPUT: ${{ inputs.output }}
         SIGNED: ${{ inputs.platform == 'ios' && inputs.expo-token != '' }}
         REPACK_IOS_BUILD_NUMBER: ${{ steps.source.outputs.build_number }}
         EAS_BUILD_PROFILE: ${{ inputs.build-profile }}
       run: |
         mkdir -p "$(dirname "$OUTPUT")"
+        if [ "$KIND" = "app" ]; then
+          source_app=$(find "$RUNNER_TEMP/source-app" -maxdepth 1 -name "*.app" -print -quit)
+          app_name=$(basename "$source_app")
+          mkdir -p "$RUNNER_TEMP/repacked"
+          bunx repack-app -p ios --source-app "$source_app" -w "$RUNNER_TEMP/repack" -o "$RUNNER_TEMP/repacked/$app_name" .
+          COPYFILE_DISABLE=1 tar -cf "$OUTPUT" -C "$RUNNER_TEMP/repacked" "$app_name"
+          exit 0
+        fi
         if [ "$SIGNED" = "true" ]; then
           # Through repack-app's API, which keeps the app's entitlements; zsign
           # signs in process, with no Xcode.

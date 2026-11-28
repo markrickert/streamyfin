@@ -37,11 +37,10 @@ env:
   EXPO_PUBLIC_GIT_RUN_NUMBER: ${{ github.run_number }}
 
 jobs:
-  # Hashes the native project with `@expo/fingerprint` and finds an earlier
-  # build with the same hash for each job. A job with a match repacks that IPA
-  # or APK with this commit's JS on Linux in a few minutes. For iOS that frees a
-  # macOS runner, the scarce resource the merge queue waits on; for Android it
-  # skips the Gradle build, which is then the longest job in the queue.
+  # Hashes the native project with `@expo/fingerprint`, finds earlier trusted
+  # builds for repack variants, and checks whether ensure variants need a build.
+  # A repack match swaps JS into that binary on Linux in minutes, freeing scarce
+  # macOS runners and skipping Gradle builds in the merge queue.
   fingerprint:
     if: (!contains(github.event.head_commit.message, '[skip ci]'))
     runs-on: ubuntu-26.04
@@ -50,17 +49,46 @@ jobs:
       contents: read
       actions: read # list and download earlier runs' artifacts
     outputs:
+      can_sign: ${{ steps.signing.outputs.can_sign }}
       ios_hash: ${{ steps.hash.outputs.ios }}
       tv_hash: ${{ steps.hash.outputs.tv }}
       android_hash: ${{ steps.hash.outputs.android }}
       android_tv_hash: ${{ steps.hash.outputs.android_tv }}
+      ios_phone_release_device_signed_name: ${{ steps.hash.outputs.ios-phone-release-device-signed_name }}
+      ios_phone_release_device_unsigned_name: ${{ steps.hash.outputs.ios-phone-release-device-unsigned_name }}
+      ios_tv_release_device_unsigned_name: ${{ steps.hash.outputs.ios-tv-release-device-unsigned_name }}
+      android_phone_release_device_debugkey_name: ${{ steps.hash.outputs.android-phone-release-device-debugkey_name }}
+      android_tv_release_device_debugkey_name: ${{ steps.hash.outputs.android-tv-release-device-debugkey_name }}
+      ios_phone_debug_simulator_unsigned_name: ${{ steps.hash.outputs.ios-phone-debug-simulator-unsigned_name }}
+      ios_tv_debug_simulator_unsigned_name: ${{ steps.hash.outputs.ios-tv-debug-simulator-unsigned_name }}
+      android_phone_debug_device_debugkey_name: ${{ steps.hash.outputs.android-phone-debug-device-debugkey_name }}
+      android_tv_debug_device_debugkey_name: ${{ steps.hash.outputs.android-tv-debug-device-debugkey_name }}
+      ios_phone_release_simulator_unsigned_name: ${{ steps.hash.outputs.ios-phone-release-simulator-unsigned_name }}
+      ios_tv_release_simulator_unsigned_name: ${{ steps.hash.outputs.ios-tv-release-simulator-unsigned_name }}
+      android_phone_release_device_debugkey_universal_name: ${{ steps.hash.outputs.android-phone-release-device-debugkey-universal_name }}
+      android_tv_release_device_debugkey_universal_name: ${{ steps.hash.outputs.android-tv-release-device-debugkey-universal_name }}
       ios_phone_source: ${{ steps.find.outputs.ios_phone }}
       ios_phone_unsigned_source: ${{ steps.find.outputs.ios_phone_unsigned }}
       ios_tv_unsigned_source: ${{ steps.find.outputs.ios_tv_unsigned }}
       android_phone_source: ${{ steps.find.outputs.android_phone }}
       android_tv_source: ${{ steps.find.outputs.android_tv }}
+      ios_phone_release_sim_source: ${{ steps.find.outputs.ios_phone_release_sim }}
+      ios_tv_release_sim_source: ${{ steps.find.outputs.ios_tv_release_sim }}
+      android_phone_universal_source: ${{ steps.find.outputs.android_phone_universal }}
+      android_tv_universal_source: ${{ steps.find.outputs.android_tv_universal }}
+      ios_phone_debug_simulator_unsigned_build: ${{ steps.ensure.outputs.ios-phone-debug-simulator-unsigned }}
+      ios_tv_debug_simulator_unsigned_build: ${{ steps.ensure.outputs.ios-tv-debug-simulator-unsigned }}
+      android_phone_debug_device_debugkey_build: ${{ steps.ensure.outputs.android-phone-debug-device-debugkey }}
+      android_tv_debug_device_debugkey_build: ${{ steps.ensure.outputs.android-tv-debug-device-debugkey }}
 
     steps:
+      # Job conditions cannot read secrets directly. Expose only token presence.
+      - name: 🔑 Check signed iOS credentials
+        id: signing
+        env:
+          CAN_SIGN: ${{ secrets.EXPO_TOKEN != '' }}
+        run: echo "can_sign=$CAN_SIGN" >> "$GITHUB_OUTPUT"
+
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -88,34 +116,28 @@ jobs:
       - name: 🧬 Hash the native project
         id: hash
         # fingerprint.config.js keeps the per-build metadata out of the hash.
+        # cli.ts hash checks that expoConfig is present and applies the shared
+        # Android ignore paths so CI and local hashes never drift.
         run: |
-          # The fingerprint drops a source it fails to read without a word, and
-          # a hash without the Expo config would match builds it should not.
-          # A failed hash fails the job, and every build then runs in full.
-          # The hash goes to HASH, so the error annotation reaches the log.
-          hash() {
-            local out
-            out=$(EXPO_TV="$1" bunx @expo/fingerprint fingerprint:generate --platform "$2" "${@:3}")
-            if ! jq -e 'any(.sources[]; .id == "expoConfig")' <<<"$out" >/dev/null; then
-              echo "::error::The $2 fingerprint has no Expo config, so no earlier build is reused."
-              return 1
-            fi
-            HASH=$(jq -r .hash <<<"$out")
-          }
-          hash 0 ios; ios=$HASH
-          hash 1 ios; tv=$HASH
-          hash 0 android --ignore-path 'scripts/ios/**/*' --ignore-path 'targets/**/*'; android=$HASH
-          hash 1 android --ignore-path 'scripts/ios/**/*' --ignore-path 'targets/**/*'; android_tv=$HASH
+          ios=$(bun scripts/build-cache/cli.ts hash ios phone)
+          tv=$(bun scripts/build-cache/cli.ts hash ios tv)
+          android=$(bun scripts/build-cache/cli.ts hash android phone)
+          android_tv=$(bun scripts/build-cache/cli.ts hash android tv)
           {
             echo "ios=$ios"
             echo "tv=$tv"
             echo "android=$android"
             echo "android_tv=$android_tv"
           } >> "$GITHUB_OUTPUT"
+          bun scripts/build-cache/cli.ts outputs \
+            ios="$ios" \
+            tv="$tv" \
+            android="$android" \
+            android_tv="$android_tv" >> "$GITHUB_OUTPUT"
 
       - name: 🔎 Find an earlier build to repack
         id: find
-        # Left out, every job builds in full: the weekly rebuild and on request.
+        # Left out, every repack job builds in full: the weekly rebuild and on request.
         if: github.event_name != 'schedule' && !inputs.full_build
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -127,797 +149,428 @@ jobs:
           TV: ${{ steps.hash.outputs.tv }}
           ANDROID: ${{ steps.hash.outputs.android }}
           ANDROID_TV: ${{ steps.hash.outputs.android_tv }}
-          # A signed IPA is re-signed with files fetched from EAS, so a run
-          # without the EAS token (a fork PR) must build it on macOS.
-          CAN_SIGN: ${{ secrets.EXPO_TOKEN != '' }}
+          CAN_SIGN: ${{ steps.signing.outputs.can_sign }}
         run: |
           names=(
-            "ios_phone_unsigned=streamyfin-ios-phone-unsigned-ipa-fp-$IOS"
-            "ios_tv_unsigned=streamyfin-ios-tv-unsigned-ipa-fp-$TV"
-            "android_phone=streamyfin-android-phone-apk-fp-$ANDROID"
-            "android_tv=streamyfin-android-tv-apk-fp-$ANDROID_TV"
+            "ios_phone_unsigned=$(bun scripts/build-cache/cli.ts name ios-phone-release-device-unsigned "$IOS")"
+            "ios_tv_unsigned=$(bun scripts/build-cache/cli.ts name ios-tv-release-device-unsigned "$TV")"
+            "android_phone=$(bun scripts/build-cache/cli.ts name android-phone-release-device-debugkey "$ANDROID")"
+            "android_tv=$(bun scripts/build-cache/cli.ts name android-tv-release-device-debugkey "$ANDROID_TV")"
+            "ios_phone_release_sim=$(bun scripts/build-cache/cli.ts name ios-phone-release-simulator-unsigned "$IOS")"
+            "ios_tv_release_sim=$(bun scripts/build-cache/cli.ts name ios-tv-release-simulator-unsigned "$TV")"
+            "android_phone_universal=$(bun scripts/build-cache/cli.ts name android-phone-release-device-debugkey-universal "$ANDROID")"
+            "android_tv_universal=$(bun scripts/build-cache/cli.ts name android-tv-release-device-debugkey-universal "$ANDROID_TV")"
           )
           if [ "$CAN_SIGN" = "true" ]; then
-            names+=("ios_phone=streamyfin-ios-phone-ipa-fp-$IOS")
+            names+=("ios_phone=$(bun scripts/build-cache/cli.ts name ios-phone-release-device-signed "$IOS")")
           fi
           # A failed lookup only means no earlier build is known: the outputs it
           # did not write stay empty, and those jobs build in full.
           bun scripts/ci/find-native-build.ts "${names[@]}" ||
             echo "::warning::The lookup for an earlier build failed; the jobs without a source build in full."
 
-  # Repacks an earlier APK on Linux when the fingerprint job found a source;
-  # the Gradle build below runs when it did not succeed.
-  repack-android-phone:
+      - name: 🔎 Check which dev clients need a build
+        id: ensure
+        # Ensure variants are skipped on merge_group and fork PRs. Unlike repack
+        # variants, schedule and full_build still check the cache and rebuild an
+        # ensure variant only when missing or near expiry.
+        if: github.event_name != 'merge_group' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_REPO_ID: ${{ github.event.pull_request.head.repo.id }}
+          IOS: ${{ steps.hash.outputs.ios }}
+          TV: ${{ steps.hash.outputs.tv }}
+          ANDROID: ${{ steps.hash.outputs.android }}
+          ANDROID_TV: ${{ steps.hash.outputs.android_tv }}
+        run: |
+          entries=(
+            "ios-phone-debug-simulator-unsigned:$IOS"
+            "ios-tv-debug-simulator-unsigned:$TV"
+            "android-phone-debug-device-debugkey:$ANDROID"
+            "android-tv-debug-device-debugkey:$ANDROID_TV"
+          )
+          for entry in "${entries[@]}"; do
+            variant="${entry%%:*}"
+            hash="${entry#*:}"
+            if verdict=$(bun scripts/build-cache/cli.ts needs-build "$variant" "$hash") && [ "$verdict" = "skip" ]; then
+              echo "$variant=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "$variant=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
+
+  # Repack only when the fingerprint job found a trusted source.
+  ios-phone-release-device-signed:
     needs: fingerprint
-    if: ${{ !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && needs.fingerprint.outputs.android_phone_source != '' }}
-    runs-on: ubuntu-26.04
-    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
-    timeout-minutes: 15
-    name: 🤖 Repack Android APK (Phone)
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_source != '' && needs.fingerprint.outputs.can_sign != 'false' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.android_hash }}
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: ios-phone-release-device-signed
+      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_signed_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_phone_source }}
+      retention-days: 7
+      repack-name: 🍎 Repack iOS Phone (Signed IPA)
 
+  ios-phone-release-device-unsigned:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_unsigned_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: ios-phone-release-device-unsigned
+      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_device_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_phone_unsigned_source }}
+      retention-days: 7
+      repack-name: 🍎 Repack iOS Phone (Unsigned IPA)
+
+  ios-tv-release-device-unsigned:
+    # The only iOS TV device build in CI: it needs no Apple credentials.
+    # Signed iOS TV builds come from release.yml, which holds the signing files.
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_unsigned_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: ios-tv-release-device-unsigned
+      artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_device_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_tv_unsigned_source }}
+      retention-days: 7
+      repack-name: 🍎 Repack iOS TV (Unsigned IPA)
+
+  android-phone-release-device-debugkey:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_phone_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: android-phone-release-device-debugkey
+      artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_phone_source }}
+      retention-days: 7
+      repack-name: 🤖 Repack Android Phone (Release APK)
+
+  android-tv-release-device-debugkey:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_tv_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: android-tv-release-device-debugkey
+      artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_tv_source }}
+      retention-days: 7
+      repack-name: 🤖 Repack Android TV (Release APK)
+
+  ios-phone-release-simulator-unsigned:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_phone_release_sim_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: ios-phone-release-simulator-unsigned
+      artifact-name: ${{ needs.fingerprint.outputs.ios_phone_release_simulator_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_phone_release_sim_source }}
+      retention-days: 7
+      repack-name: 🍎 Repack iOS Phone (Simulator Release)
+
+  ios-tv-release-simulator-unsigned:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.ios_tv_release_sim_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: ios-tv-release-simulator-unsigned
+      artifact-name: ${{ needs.fingerprint.outputs.ios_tv_release_simulator_unsigned_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.ios_tv_release_sim_source }}
+      retention-days: 7
+      repack-name: 🍎 Repack iOS TV (Simulator Release)
+
+  android-phone-release-device-debugkey-universal:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_phone_universal_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: android-phone-release-device-debugkey-universal
+      artifact-name: ${{ needs.fingerprint.outputs.android_phone_release_device_debugkey_universal_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_phone_universal_source }}
+      retention-days: 7
+      repack-name: 🤖 Repack Android Phone (Universal Release APK)
+
+  android-tv-release-device-debugkey-universal:
+    needs: fingerprint
+    if: ${{ always() && !cancelled() && needs.fingerprint.result == 'success' && needs.fingerprint.outputs.android_tv_universal_source != '' }}
+    permissions:
+      contents: read
+      actions: write # the called jobs dispatch artifact-comment.yml to refresh the PR comment
+    uses: ./.github/workflows/_native-variant.yml
+    secrets: inherit
+    with:
+      variant: android-tv-release-device-debugkey-universal
+      artifact-name: ${{ needs.fingerprint.outputs.android_tv_release_device_debugkey_universal_name }}
+      source-run-id: ${{ needs.fingerprint.outputs.android_tv_universal_source }}
+      retention-days: 7
+      repack-name: 🤖 Repack Android TV (Universal Release APK)
+
+  plan-native-builds:
+    needs: [fingerprint, ios-phone-release-device-signed, ios-phone-release-device-unsigned, ios-tv-release-device-unsigned, android-phone-release-device-debugkey, android-tv-release-device-debugkey, ios-phone-release-simulator-unsigned, ios-tv-release-simulator-unsigned, android-phone-release-device-debugkey-universal, android-tv-release-device-debugkey-universal]
+    if: ${{ always() && !cancelled() && needs.fingerprint.result != 'skipped' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-26.04
+    name: 🗺️ Plan full native builds
+    permissions:
+      contents: read
+    outputs:
+      android_phone: ${{ steps.plan.outputs.android_phone }}
+      android_tv: ${{ steps.plan.outputs.android_tv }}
+      ios_phone_device: ${{ steps.plan.outputs.ios_phone_device }}
+      ios_tv_device: ${{ steps.plan.outputs.ios_tv_device }}
+      ios_phone_sim: ${{ steps.plan.outputs.ios_phone_sim }}
+      ios_tv_sim: ${{ steps.plan.outputs.ios_tv_sim }}
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          show-progress: false
           persist-credentials: false
-
+          show-progress: false
       - name: 🍞 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          # renovate: datasource=npm depName=bun
           bun-version: "1.4.4"
-
-      - name: ☕ Set up JDK 17
-        # The repack needs Java for the apktool that repack-app runs.
-        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 📦 Repack the earlier APK
-        uses: ./.github/actions/repack
-        with:
-          platform: android
-          source-run-id: ${{ needs.fingerprint.outputs.android_phone_source }}
-          artifact-name: streamyfin-android-phone-apk-fp-${{ env.FINGERPRINT }}
-          output: android/app/build/outputs/apk/release/app-release.apk
-          tv: "0"
-
-      - name: 📤 Upload APK artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this APK and repack it.
-          name: streamyfin-android-phone-apk-fp-${{ env.FINGERPRINT }}
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-          retention-days: 7
-          # A repack that uploads nothing must fail, or its skipped build would pass.
-          if-no-files-found: error
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
+      - name: 🗺️ Select missing or failed variants
+        id: plan
+        env:
+          FINGERPRINT_RESULT: ${{ needs.fingerprint.result }}
+          FINGERPRINT_OUTPUTS: ${{ toJSON(needs.fingerprint.outputs) }}
+          CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign != 'false' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+          REPACK_IOS_PHONE_RELEASE_DEVICE_SIGNED: ${{ needs.ios-phone-release-device-signed.result }}
+          REPACK_IOS_PHONE_RELEASE_DEVICE_UNSIGNED: ${{ needs.ios-phone-release-device-unsigned.result }}
+          REPACK_IOS_TV_RELEASE_DEVICE_UNSIGNED: ${{ needs.ios-tv-release-device-unsigned.result }}
+          REPACK_ANDROID_PHONE_RELEASE_DEVICE_DEBUGKEY: ${{ needs.android-phone-release-device-debugkey.result }}
+          REPACK_ANDROID_TV_RELEASE_DEVICE_DEBUGKEY: ${{ needs.android-tv-release-device-debugkey.result }}
+          REPACK_IOS_PHONE_RELEASE_SIMULATOR_UNSIGNED: ${{ needs.ios-phone-release-simulator-unsigned.result }}
+          REPACK_IOS_TV_RELEASE_SIMULATOR_UNSIGNED: ${{ needs.ios-tv-release-simulator-unsigned.result }}
+          REPACK_ANDROID_PHONE_RELEASE_DEVICE_DEBUGKEY_UNIVERSAL: ${{ needs.android-phone-release-device-debugkey-universal.result }}
+          REPACK_ANDROID_TV_RELEASE_DEVICE_DEBUGKEY_UNIVERSAL: ${{ needs.android-tv-release-device-debugkey-universal.result }}
+        run: bun scripts/build-cache/plan-ci.ts >> "$GITHUB_OUTPUT"
 
   build-android-phone:
-    needs: [fingerprint, repack-android-phone]
-    # always() keeps a skipped repack job from skipping this required check,
-    # which would count as a pass. The full build runs when no earlier APK can
-    # be repacked or the repack job did not succeed.
-    if: ${{ always() && !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && (needs.fingerprint.outputs.android_phone_source == '' || needs.repack-android-phone.result != 'success') }}
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android_phone != '' && needs.plan-native-builds.outputs.android_phone != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: android
+      form: phone
+      job-name: 🤖 Build Android Phone
+      plan: ${{ needs.plan-native-builds.outputs.android_phone }}
+
+  build-android-tv:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.android_tv != '' && needs.plan-native-builds.outputs.android_tv != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: android
+      form: tv
+      job-name: 🤖 Build Android TV
+      plan: ${{ needs.plan-native-builds.outputs.android_tv }}
+
+  build-ios-phone-device:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_device != '' && needs.plan-native-builds.outputs.ios_phone_device != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: phone
+      job-name: 🍎 Build iOS Phone (Device)
+      plan: ${{ needs.plan-native-builds.outputs.ios_phone_device }}
+
+  build-ios-tv-device:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_device != '' && needs.plan-native-builds.outputs.ios_tv_device != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: tv
+      job-name: 🍎 Build iOS TV (Device)
+      plan: ${{ needs.plan-native-builds.outputs.ios_tv_device }}
+
+  build-ios-phone-sim:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_phone_sim != '' && needs.plan-native-builds.outputs.ios_phone_sim != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: phone
+      job-name: 🍎 Build iOS Phone (Simulator)
+      plan: ${{ needs.plan-native-builds.outputs.ios_phone_sim }}
+
+  build-ios-tv-sim:
+    needs: plan-native-builds
+    if: ${{ always() && !cancelled() && needs.plan-native-builds.result == 'success' && needs.plan-native-builds.outputs.ios_tv_sim != '' && needs.plan-native-builds.outputs.ios_tv_sim != '{}' }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/_native-build-group.yml
+    secrets: inherit
+    with:
+      platform: ios
+      form: tv
+      job-name: 🍎 Build iOS TV (Simulator)
+      plan: ${{ needs.plan-native-builds.outputs.ios_tv_sim }}
+
+  # ── Required status-check gates ─────────────────────────────────────────────
+  # Repository rulesets require these exact check names. Each gate passes only
+  # when its caller succeeded (or recovered via the fallback build), or was
+  # intentionally skipped.
+  gate-ios-phone:
+    needs: [fingerprint, ios-phone-release-device-signed, build-ios-phone-device]
+    if: always() && !cancelled()
+    runs-on: ubuntu-26.04
+    name: 🍎 Build iOS IPA (Phone)
+    permissions:
+      contents: read
+    env:
+      RESULT: ${{ needs.ios-phone-release-device-signed.result }}
+      BUILD_RESULT: ${{ needs.build-ios-phone-device.outputs.ios-phone-release-device-signed }}
+      SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
+      IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      CAN_SIGN: ${{ needs.fingerprint.outputs.can_sign }}
+      IS_FORK_REPO: ${{ github.event.repository.fork }}
+    steps:
+      # A fork without credentials cannot sign. Missing credentials on the
+      # canonical repository must still fail the required check.
+      - name: ✅ Verify build result
+        run: |
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
+            exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && { [ "$IS_FORK_PR" = "true" ] || [ "$SKIP_CI" = "true" ]; }; then
+            exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && [ "$CAN_SIGN" = "false" ]; then
+            if [ "$IS_FORK_REPO" = "true" ]; then
+              echo "Skipping signed iOS build: EXPO_TOKEN is not configured on this fork."
+              exit 0
+            fi
+            echo "::error::EXPO_TOKEN is not configured for the required signed iOS build."
+            exit 1
+          fi
+          echo "::error::Build did not succeed (caller=$RESULT, build=$BUILD_RESULT)"
+          exit 1
+
+  gate-android-phone:
+    needs: [android-phone-release-device-debugkey, build-android-phone]
+    if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (Phone)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
     env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.android_hash }}
-
+      RESULT: ${{ needs.android-phone-release-device-debugkey.result }}
+      BUILD_RESULT: ${{ needs.build-android-phone.outputs.android-phone-release-device-debugkey }}
+      SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
-      # Checkout stays out of the parallel group: the runner rewrites the
-      # shared event.json as each step starts, and checkout crashes with
-      # "Unexpected end of JSON input" when it reads the file mid-write.
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - parallel:
-          - name: 🗑️ Free Disk Space
-            uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
-            with:
-              tool-cache: false
-              mandb: true
-              android: false
-              dotnet: true
-              haskell: true
-              large-packages: false
-              docker-images: true
-              swap-storage: false
-
-          - name: 🍞 Setup Bun
-            uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-            with:
-              # renovate: datasource=npm depName=bun
-              bun-version: "1.4.4"
-
-          - name: ☕ Set up JDK 17
-            # ubuntu-26.04 defaults to JDK 25, which breaks the RN/AGP native build
-            # (Kotlin falls back to JVM_23, the foojay toolchain + CMake configure
-            # fail). Pin Temurin 17 for a deterministic Android build.
-            uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
-            with:
-              distribution: temurin
-              java-version: "17"
-
-      - parallel:
-          - name: 💾 Cache Bun dependencies
-            uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-            with:
-              path: ~/.bun/install/cache
-              key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-              restore-keys: |
-                ${{ runner.os }}-${{ runner.arch }}-bun-
-
-          - name: 💾 Cache Gradle global
-            uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-            with:
-              path: |
-                ~/.gradle/caches/modules-2
-                ~/.gradle/wrapper
-              key: ${{ runner.os }}-${{ runner.arch }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-              restore-keys: |
-                ${{ runner.os }}-${{ runner.arch }}-gradle-
-
-      - name: 📦 Install dependencies
+      - name: ✅ Verify build result
         run: |
-          bun install --frozen-lockfile
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
+            exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then
+            exit 0
+          fi
+          echo "::error::Build did not succeed (caller=$RESULT, build=$BUILD_RESULT)"
+          exit 1
 
-      - name: 🛠️ Generate project files
-        run: bun run prebuild
-
-      - name: 💾 Cache project Gradle (.gradle)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-gradle-develop-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-${{ runner.arch }}-android-gradle-develop
-
-      - name: 🚀 Build APK
-        env:
-          EXPO_TV: 0
-          # CI artifact ships arm64 only (phones; emulators/Chromebooks not a
-          # sideload target). Overrides app.json buildArchs for this build only,
-          # so local `bun run android` (x86_64 emulator) is unaffected.
-          ORG_GRADLE_PROJECT_reactNativeArchitectures: arm64-v8a
-        run: bun run build:android:local
-
-      - name: 📅 Set date tag
-        run: echo "DATE_TAG=$(date +%d-%m-%Y_%H-%M-%S)" >> $GITHUB_ENV
-
-      - name: 📤 Upload APK artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this APK and repack it.
-          name: ${{ env.FINGERPRINT != '' && format('streamyfin-android-phone-apk-fp-{0}', env.FINGERPRINT) || format('streamyfin-android-phone-apk-{0}', env.DATE_TAG) }}
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-          retention-days: 7
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  repack-android-tv:
-    needs: fingerprint
-    if: ${{ !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && needs.fingerprint.outputs.android_tv_source != '' }}
-    runs-on: ubuntu-26.04
-    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
-    timeout-minutes: 15
-    name: 🤖 Repack Android APK (TV)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.android_tv_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          show-progress: false
-          persist-credentials: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: ☕ Set up JDK 17
-        # The repack needs Java for the apktool that repack-app runs.
-        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 📦 Repack the earlier APK
-        uses: ./.github/actions/repack
-        with:
-          platform: android
-          source-run-id: ${{ needs.fingerprint.outputs.android_tv_source }}
-          artifact-name: streamyfin-android-tv-apk-fp-${{ env.FINGERPRINT }}
-          output: android/app/build/outputs/apk/release/app-release.apk
-          tv: "1"
-
-      - name: 📤 Upload APK artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this APK and repack it.
-          name: streamyfin-android-tv-apk-fp-${{ env.FINGERPRINT }}
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-          retention-days: 7
-          # A repack that uploads nothing must fail, or its skipped build would pass.
-          if-no-files-found: error
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  build-android-tv:
-    needs: [fingerprint, repack-android-tv]
-    # always() keeps a skipped repack job from skipping this required check,
-    # which would count as a pass. The full build runs when no earlier APK can
-    # be repacked or the repack job did not succeed.
-    if: ${{ always() && !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && (needs.fingerprint.outputs.android_tv_source == '' || needs.repack-android-tv.result != 'success') }}
+  gate-android-tv:
+    needs: [android-tv-release-device-debugkey, build-android-tv]
+    if: always() && !cancelled()
     runs-on: ubuntu-26.04
     name: 🤖 Build Android APK (TV)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
     env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.android_tv_hash }}
-
+      RESULT: ${{ needs.android-tv-release-device-debugkey.result }}
+      BUILD_RESULT: ${{ needs.build-android-tv.outputs.android-tv-release-device-debugkey }}
+      SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - parallel:
-          - name: 🗑️ Free Disk Space
-            uses: BRAINSia/free-disk-space@7048ffbf50819342ac964ef3998a51c2564a8a75 # v2.1.3
-            with:
-              tool-cache: false
-              mandb: true
-              android: false
-              dotnet: true
-              haskell: true
-              large-packages: false
-              docker-images: true
-              swap-storage: false
-
-          - name: 🍞 Setup Bun
-            uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-            with:
-              # renovate: datasource=npm depName=bun
-              bun-version: "1.4.4"
-
-          - name: ☕ Set up JDK 17
-            # ubuntu-26.04 defaults to JDK 25, which breaks the RN/AGP native build
-            # (Kotlin falls back to JVM_23, the foojay toolchain + CMake configure
-            # fail). Pin Temurin 17 for a deterministic Android build.
-            uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
-            with:
-              distribution: temurin
-              java-version: "17"
-
-      - parallel:
-          - name: 💾 Cache Bun dependencies
-            uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-            with:
-              path: ~/.bun/install/cache
-              key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-              restore-keys: |
-                ${{ runner.os }}-${{ runner.arch }}-bun-
-
-          - name: 💾 Cache Gradle global
-            uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-            with:
-              path: |
-                ~/.gradle/caches/modules-2
-                ~/.gradle/wrapper
-              key: ${{ runner.os }}-${{ runner.arch }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-              restore-keys: |
-                ${{ runner.os }}-${{ runner.arch }}-gradle-
-
-      - name: 📦 Install dependencies
+      - name: ✅ Verify build result
         run: |
-          bun install --frozen-lockfile
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
+            exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then
+            exit 0
+          fi
+          echo "::error::Build did not succeed (caller=$RESULT, build=$BUILD_RESULT)"
+          exit 1
 
-      - name: 🛠️ Generate project files
-        run: bun run prebuild:tv
-
-      - name: 💾 Cache project Gradle (.gradle)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: android/.gradle
-          key: ${{ runner.os }}-${{ runner.arch }}-android-gradle-develop-${{ hashFiles('android/**/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-${{ runner.arch }}-android-gradle-develop
-
-      - name: 🚀 Build APK
-        env:
-          EXPO_TV: 1
-          # TV artifact keeps armeabi-v7a too: many older/cheap Android TV boxes
-          # and sticks are still 32-bit ARM. Drops only x86_64. CI build only.
-          ORG_GRADLE_PROJECT_reactNativeArchitectures: arm64-v8a,armeabi-v7a
-        run: bun run build:android:local
-
-      - name: 📅 Set date tag
-        run: echo "DATE_TAG=$(date +%d-%m-%Y_%H-%M-%S)" >> $GITHUB_ENV
-
-      - name: 📤 Upload APK artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this APK and repack it.
-          name: ${{ env.FINGERPRINT != '' && format('streamyfin-android-tv-apk-fp-{0}', env.FINGERPRINT) || format('streamyfin-android-tv-apk-{0}', env.DATE_TAG) }}
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-          retention-days: 7
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  # Repacks the earlier signed IPA on Linux, freeing the scarce macOS runner.
-  # Runs only when the fingerprint job found a source; anything else goes to
-  # the macOS build below, which also catches a failed repack.
-  repack-ios-phone:
-    needs: fingerprint
-    if: ${{ !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && needs.fingerprint.outputs.ios_phone_source != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'streamyfin/streamyfin') }}
+  gate-ios-tv-unsigned:
+    needs: [ios-tv-release-device-unsigned, build-ios-tv-device]
+    if: always() && !cancelled()
     runs-on: ubuntu-26.04
-    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
-    timeout-minutes: 15
-    name: 🍎 Repack iOS IPA (Phone)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          show-progress: false
-          persist-credentials: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 📦 Repack the earlier IPA
-        uses: ./.github/actions/repack
-        with:
-          platform: ios
-          source-run-id: ${{ needs.fingerprint.outputs.ios_phone_source }}
-          artifact-name: streamyfin-ios-phone-ipa-fp-${{ env.FINGERPRINT }}
-          output: build/Streamyfin.ipa
-          tv: "0"
-          expo-token: ${{ secrets.EXPO_TOKEN }}
-          # The app and every extension it embeds; each needs its own profile.
-          bundle-identifiers: com.fredrikburmester.streamyfin com.fredrikburmester.streamyfin.downloadactivity
-          # The macOS job below builds with eas build --profile ci.
-          build-profile: ci
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: streamyfin-ios-phone-ipa-fp-${{ env.FINGERPRINT }}
-          path: build/*.ipa
-          retention-days: 7
-          # A repack that uploads nothing must fail, or its skipped build would pass.
-          if-no-files-found: error
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  build-ios-phone:
-    needs: [fingerprint, repack-ios-phone]
-    # always() keeps a skipped repack job from skipping this required check,
-    # which would count as a pass. The full build runs when no earlier IPA can
-    # be repacked or the repack job did not succeed.
-    if: ${{ always() && !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'streamyfin/streamyfin') && (needs.fingerprint.outputs.ios_phone_source == '' || needs.repack-ios-phone.result != 'success') }}
-    runs-on: xcode-27
-    name: 🍎 Build iOS IPA (Phone)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - parallel:
-          - name: 🍞 Setup Bun
-            uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-            with:
-              # renovate: datasource=npm depName=bun
-              bun-version: "1.4.4"
-
-          - name: 🏗️ Setup EAS
-            uses: expo/expo-github-action@5273c2136bd09c2a341fe3340d3e767ce5a13015 # main
-            with:
-              eas-version: latest
-              token: ${{ secrets.EXPO_TOKEN }}
-              eas-cache: true
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 🛠️ Generate project files
-        run: bun run prebuild
-
-      - name: 🚀 Build iOS app
-        env:
-          EXPO_TV: 0
-        # `ci` profile (extends production, autoIncrement off): keeps CI builds out of
-        # the production version tier and stops them inflating the store build counter.
-        run: eas build -p ios --local --non-interactive --profile ci
-
-      - name: 📅 Set date tag
-        run: echo "DATE_TAG=$(date +%d-%m-%Y_%H-%M-%S)" >> $GITHUB_ENV
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: ${{ env.FINGERPRINT != '' && format('streamyfin-ios-phone-ipa-fp-{0}', env.FINGERPRINT) || format('streamyfin-ios-phone-ipa-{0}', env.DATE_TAG) }}
-          path: |
-            build-*.ipa
-            build/*.ipa
-          retention-days: 7
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  repack-ios-phone-unsigned:
-    needs: fingerprint
-    if: ${{ !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && needs.fingerprint.outputs.ios_phone_unsigned_source != '' }}
-    runs-on: ubuntu-26.04
-    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
-    timeout-minutes: 15
-    name: 🍎 Repack iOS IPA (Phone - Unsigned)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          show-progress: false
-          persist-credentials: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 📦 Repack the earlier IPA
-        uses: ./.github/actions/repack
-        with:
-          platform: ios
-          source-run-id: ${{ needs.fingerprint.outputs.ios_phone_unsigned_source }}
-          artifact-name: streamyfin-ios-phone-unsigned-ipa-fp-${{ env.FINGERPRINT }}
-          output: build/Streamyfin.ipa
-          tv: "0"
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: streamyfin-ios-phone-unsigned-ipa-fp-${{ env.FINGERPRINT }}
-          path: build/*.ipa
-          retention-days: 7
-          # A repack that uploads nothing must fail, or its skipped build would pass.
-          if-no-files-found: error
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  build-ios-phone-unsigned:
-    needs: [fingerprint, repack-ios-phone-unsigned]
-    # always() keeps a skipped repack job from skipping this required check,
-    # which would count as a pass. The full build runs when no earlier IPA can
-    # be repacked or the repack job did not succeed.
-    if: ${{ always() && !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && (needs.fingerprint.outputs.ios_phone_unsigned_source == '' || needs.repack-ios-phone-unsigned.result != 'success') }}
-    runs-on: xcode-27
-    name: 🍎 Build iOS IPA (Phone - Unsigned)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.ios_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 🛠️ Generate project files
-        run: bun run prebuild
-
-      - name: 🚀 Build iOS app
-        env:
-          EXPO_TV: 0
-        run: bun run ios:unsigned-build
-
-      - name: 📅 Set date tag
-        run: echo "DATE_TAG=$(date +%d-%m-%Y_%H-%M-%S)" >> $GITHUB_ENV
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: ${{ env.FINGERPRINT != '' && format('streamyfin-ios-phone-unsigned-ipa-fp-{0}', env.FINGERPRINT) || format('streamyfin-ios-phone-unsigned-ipa-{0}', env.DATE_TAG) }}
-          path: build/*.ipa
-          retention-days: 7
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  repack-ios-tv-unsigned:
-    needs: fingerprint
-    if: ${{ !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && needs.fingerprint.outputs.ios_tv_unsigned_source != '' }}
-    runs-on: ubuntu-26.04
-    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
-    timeout-minutes: 15
-    name: 🍎 Repack tvOS IPA (Unsigned)
-    permissions:
-      contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
-    env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.tv_hash }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          show-progress: false
-          persist-credentials: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
-        run: |
-          bun install --frozen-lockfile
-
-      - name: 📦 Repack the earlier IPA
-        uses: ./.github/actions/repack
-        with:
-          platform: ios
-          source-run-id: ${{ needs.fingerprint.outputs.ios_tv_unsigned_source }}
-          artifact-name: streamyfin-ios-tv-unsigned-ipa-fp-${{ env.FINGERPRINT }}
-          output: build/Streamyfin.ipa
-          tv: "1"
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: streamyfin-ios-tv-unsigned-ipa-fp-${{ env.FINGERPRINT }}
-          path: build/*.ipa
-          retention-days: 7
-          # A repack that uploads nothing must fail, or its skipped build would pass.
-          if-no-files-found: error
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
-
-  build-ios-tv-unsigned:
-    # The only tvOS build in CI: it needs no Apple credentials. Signed tvOS
-    # builds come from release.yml, which holds the tvOS signing files.
-    # always() keeps a skipped repack job from skipping this required check,
-    # which would count as a pass. The full build runs when no earlier IPA can
-    # be repacked or the repack job did not succeed.
-    needs: [fingerprint, repack-ios-tv-unsigned]
-    if: ${{ always() && !cancelled() && !contains(github.event.head_commit.message, '[skip ci]') && (needs.fingerprint.outputs.ios_tv_unsigned_source == '' || needs.repack-ios-tv-unsigned.result != 'success') }}
-    runs-on: xcode-27
     name: 🍎 Build tvOS IPA (Unsigned)
     permissions:
       contents: read
-      actions: write # dispatch artifact-comment.yml to refresh the PR comment
     env:
-      FINGERPRINT: ${{ needs.fingerprint.outputs.tv_hash }}
-
+      RESULT: ${{ needs.ios-tv-release-device-unsigned.result }}
+      BUILD_RESULT: ${{ needs.build-ios-tv-device.outputs.ios-tv-release-device-unsigned }}
+      SKIP_CI: ${{ contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          show-progress: false
-
-      - name: 🍞 Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          # renovate: datasource=npm depName=bun
-          bun-version: "1.4.4"
-
-      - name: 💾 Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-bun-
-
-      - name: 📦 Install dependencies
+      - name: ✅ Verify build result
         run: |
-          bun install --frozen-lockfile
-
-      - name: 🛠️ Generate project files
-        run: bun run prebuild:tv
-
-      - name: 🚀 Build iOS app
-        env:
-          EXPO_TV: 1
-        run: bun run ios:unsigned-build:tv
-
-      - name: 📅 Set date tag
-        run: echo "DATE_TAG=$(date +%d-%m-%Y_%H-%M-%S)" >> $GITHUB_ENV
-
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          # Named after the fingerprint, so a later run with the same native
-          # code can find this IPA and repack it.
-          name: ${{ env.FINGERPRINT != '' && format('streamyfin-ios-tv-unsigned-ipa-fp-{0}', env.FINGERPRINT) || format('streamyfin-ios-tv-unsigned-ipa-{0}', env.DATE_TAG) }}
-          path: build/*.ipa
-          retention-days: 7
-          # The name is the same on a re-run of this run, which keeps its artifacts.
-          overwrite: true
-
-      - name: 🔄 Refresh PR build comment
-        uses: ./.github/actions/refresh-pr-comment
+          if [ "$RESULT" = "success" ] || [ "$BUILD_RESULT" = "success" ]; then
+            exit 0
+          fi
+          if [ "$RESULT" = "skipped" ] && [ "$SKIP_CI" = "true" ]; then
+            exit 0
+          fi
+          echo "::error::Build did not succeed (caller=$RESULT, build=$BUILD_RESULT)"
+          exit 1

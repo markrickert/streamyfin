@@ -1,0 +1,112 @@
+name: 🧩 Native Repack
+
+# Repack one trusted native binary on Linux before planning full builds.
+on:
+  workflow_call:
+    inputs:
+      variant:
+        description: Variant id from scripts/build-cache/variants.ts
+        required: true
+        type: string
+      artifact-name:
+        description: Artifact name from scripts/build-cache/cli.ts
+        required: false
+        default: ""
+        type: string
+      source-run-id:
+        description: Earlier run id to repack from
+        required: false
+        default: ""
+        type: string
+      retention-days:
+        description: Artifact retention in days from variants.ts
+        required: true
+        type: number
+      repack-name:
+        description: Display name for the repack job
+        required: false
+        default: ""
+        type: string
+
+# Exposed to `expo prebuild` (app.config.ts → extra.build) so Settings can show the
+# branch + commit + Actions run a CI build was made from. EAS cloud builds use
+# EAS_BUILD_* instead. The run number maps a sideloaded build back to its Actions
+# run (artifacts + logs) without needing Expo access.
+env:
+  EXPO_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+  EXPO_PUBLIC_GIT_COMMIT: ${{ github.sha }}
+  EXPO_PUBLIC_GIT_RUN_NUMBER: ${{ github.run_number }}
+
+jobs:
+  repack:
+    if: ${{ !cancelled() && inputs.source-run-id != '' }}
+    runs-on: ubuntu-26.04
+    # A repack takes 2 to 3 minutes; a hung one fails here and the build runs.
+    timeout-minutes: 15
+    name: ${{ inputs.repack-name || format('Repack {0}', inputs.variant) }}
+    permissions:
+      contents: read
+      actions: write # dispatch artifact-comment.yml to refresh the PR comment
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          show-progress: false
+          # PR code runs below and has no use for a git credential in .git/config.
+          persist-credentials: false
+
+      - name: 🍞 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          # renovate: datasource=npm depName=bun
+          bun-version: "1.4.4"
+
+      - name: ☕ Set up JDK 17
+        if: startsWith(inputs.variant, 'android-')
+        # The repack needs Java for the apktool that repack-app runs.
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 💾 Cache Bun dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-
+
+      - name: 📦 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🧩 Repack the earlier binary
+        uses: ./.github/actions/repack
+        with:
+          platform: ${{ startsWith(inputs.variant, 'android-') && 'android' || 'ios' }}
+          source-run-id: ${{ inputs.source-run-id }}
+          artifact-name: ${{ inputs.artifact-name }}
+          kind: ${{ startsWith(inputs.variant, 'android-') && 'apk' || (contains(inputs.variant, '-simulator-') && 'app' || 'ipa') }}
+          output: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/app-release.apk' || (contains(inputs.variant, '-simulator-') && format('build/{0}.tar', inputs.artifact-name) || 'build/Streamyfin.ipa') }}
+          tv: ${{ contains(inputs.variant, '-tv-') && '1' || '0' }}
+          expo-token: ${{ inputs.variant == 'ios-phone-release-device-signed' && secrets.EXPO_TOKEN || '' }}
+          # The app and every extension it embeds; each needs its own profile.
+          bundle-identifiers: ${{ inputs.variant == 'ios-phone-release-device-signed' && 'com.fredrikburmester.streamyfin com.fredrikburmester.streamyfin.downloadactivity' || '' }}
+          # The Apple build group runs eas build --profile ci.
+          build-profile: ${{ inputs.variant == 'ios-phone-release-device-signed' && 'ci' || '' }}
+
+      - name: 📤 Upload artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ startsWith(inputs.variant, 'android-') && 'android/app/build/outputs/apk/release/*.apk' || (contains(inputs.variant, '-simulator-') && 'build/*.tar' || 'build/*.ipa') }}
+          retention-days: ${{ inputs.retention-days }}
+          # A repack that uploads nothing must fail, or its skipped build would pass.
+          if-no-files-found: error
+          # The name is the same on a re-run of this run, which keeps its artifacts.
+          overwrite: true
+
+      - name: 🔄 Refresh PR build comment
+        uses: ./.github/actions/refresh-pr-comment
