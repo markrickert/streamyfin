@@ -178,13 +178,16 @@ export const repackVariant = async (
       };
     }
 
-    const resolvedWorkDir = resolve(opts.projectRoot, opts.workingDirectory);
+    // Resolve every path once against the project root so the repack does not
+    // depend on the caller's cwd. Absolute paths pass through unchanged.
+    const resolvedSourcePath = resolve(opts.projectRoot, opts.sourcePath);
     const resolvedOutputPath = resolve(opts.projectRoot, opts.outputPath);
+    const resolvedWorkDir = resolve(opts.projectRoot, opts.workingDirectory);
     const rel = relative(resolvedWorkDir, resolvedOutputPath);
     if (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)) {
       return {
         path: null,
-        reason: `Cannot repack ${variant.id}: outputPath (${opts.outputPath}) must not resolve inside workingDirectory (${opts.workingDirectory})`,
+        reason: `Cannot repack ${variant.id}: outputPath (${resolvedOutputPath}) must not resolve inside workingDirectory (${resolvedWorkDir})`,
       };
     }
 
@@ -213,10 +216,10 @@ export const repackVariant = async (
       command = "bun";
       args = [
         "scripts/ci/repack-android.ts",
-        opts.sourcePath,
+        resolvedSourcePath,
         buildTools.dir,
-        opts.outputPath,
-        opts.workingDirectory,
+        resolvedOutputPath,
+        resolvedWorkDir,
       ];
     } else {
       step = "repack-app";
@@ -226,18 +229,18 @@ export const repackVariant = async (
         "-p",
         "ios",
         "--source-app",
-        opts.sourcePath,
+        resolvedSourcePath,
         "-w",
-        opts.workingDirectory,
+        resolvedWorkDir,
         "-o",
-        opts.outputPath,
+        resolvedOutputPath,
         ".",
       ];
     }
 
-    mkdirSync(opts.workingDirectory, { recursive: true });
-    mkdirSync(dirname(opts.outputPath), { recursive: true });
-    const logPath = `${opts.outputPath}.repack.log`;
+    mkdirSync(resolvedWorkDir, { recursive: true });
+    mkdirSync(dirname(resolvedOutputPath), { recursive: true });
+    const logPath = `${resolvedOutputPath}.repack.log`;
 
     let result: ReturnType<RunProcess>;
     try {
@@ -267,21 +270,25 @@ export const repackVariant = async (
       };
     }
 
-    if (!existsSync(opts.outputPath)) {
+    if (!existsSync(resolvedOutputPath)) {
       return {
         path: null,
-        reason: `${step} finished without creating ${opts.outputPath}; see ${logPath}`,
+        reason: `${step} finished without creating ${resolvedOutputPath}; see ${logPath}`,
       };
     }
 
     if (opts.sentry !== true) {
-      const sentinelError = verifySentinel(opts, childEnv, run);
+      const sentinelError = verifySentinel(
+        { ...opts, outputPath: resolvedOutputPath },
+        childEnv,
+        run,
+      );
       if (sentinelError) {
         return { path: null, reason: `${sentinelError}; see ${logPath}` };
       }
     }
 
-    return { path: opts.outputPath };
+    return { path: resolvedOutputPath };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { path: null, reason: `repack failed: ${message}` };

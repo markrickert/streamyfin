@@ -5,6 +5,7 @@ import {
   type Deps,
   extractRunFingerprints,
   fillFingerprints,
+  findLatestAppsRun,
   flattenJobs,
   type RenderModel,
   referenceDurations,
@@ -1013,7 +1014,15 @@ describe("runUpdate", () => {
       variantById("ios-phone-debug-simulator-unsigned")!,
       FP,
     );
-    const cached = artifact(cachedName);
+    const cached = artifact(cachedName, {
+      workflow_run: {
+        id: 777,
+        head_branch: "develop",
+        head_repository_id: REPO_ID,
+        head_sha: "dev-sha",
+        repository_id: REPO_ID,
+      },
+    });
     wireRunUpdate(fake, {
       jobs: [
         {
@@ -1037,10 +1046,364 @@ describe("runUpdate", () => {
       `[📥 Download APK](https://github.com/streamyfin/streamyfin/actions/runs/500/artifacts/${repackArtifact.id})`,
     );
     expect(body).toContain(
-      `[📥 Download TAR](https://github.com/streamyfin/streamyfin/actions/runs/500/artifacts/${cached.id})`,
+      `[📥 Download TAR](https://github.com/streamyfin/streamyfin/actions/runs/777/artifacts/${cached.id})`,
     );
     expect(body).toContain("20.0 MB");
     expect(body).toContain("2m 0s");
     expect(body).toContain("### 🔧 Installation Instructions");
+  });
+
+  it("hashes the checkout only when CHECKED_OUT_SHA matches the target head", async () => {
+    for (const [checkedOut, expectedCalls] of [
+      [HEAD_SHA, 4],
+      ["deadbeefdeadbeef", 0],
+    ] as const) {
+      const fake = makeFakeFetch();
+      wireRunUpdate(fake);
+      const hashForFn = jest.fn(() => FP);
+      const deps = baseDeps(fake, {
+        hashForFn,
+        env: { CHECKED_OUT_SHA: checkedOut },
+      });
+      await runUpdate(deps, updateArgs);
+      expect(hashForFn).toHaveBeenCalledTimes(expectedCalls);
+    }
+  });
+
+  it("hashes the checkout when CHECKED_OUT_SHA is unset", async () => {
+    const fake = makeFakeFetch();
+    wireRunUpdate(fake);
+    const hashForFn = jest.fn(() => FP);
+    await runUpdate(baseDeps(fake, { hashForFn, env: {} }), updateArgs);
+    expect(hashForFn).toHaveBeenCalledTimes(4);
+  });
+
+  it("still posts the comment when listing the PR commits fails", async () => {
+    const fake = makeFakeFetch();
+    wireRunUpdate(fake);
+    // No route for /pulls/42/commits: the fake answers 404, the lookup throws,
+    // and the comment must still post with whatever the run produced.
+    fake.state.routes = fake.state.routes.filter(
+      (r) => !r.match("GET", "https://api.github.com/repos/x/pulls/42/commits"),
+    );
+    const deps = baseDeps(fake, { hashForFn: () => FP });
+    const body = await runUpdate(deps, updateArgs);
+    expect(body).toContain("## 🔧 Build Status for PR #42");
+    expect(body).toContain(COMMENT_MARKER);
+    const post = fake.state.calls.find(
+      (c) => c.method === "POST" && c.url.includes("/issues/42/comments"),
+    );
+    expect(post).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CodeRabbit regression tests
+// ---------------------------------------------------------------------------
+
+describe("artifactPattern regression (unhashed fallback artifacts)", () => {
+  it("matches an unhashed fallback artifact as the variant's own", () => {
+    const fallback = artifact(
+      "streamyfin-android-phone-release-device-debugkey-unhashed-123-2",
+    );
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      runArtifacts: [fallback],
+      jobs: [
+        {
+          name: "🤖 Repack Android APK (Phone)",
+          status: "completed",
+          conclusion: "success",
+        },
+      ],
+    });
+    const state = stateFor(states, "android-phone-release-device-debugkey");
+    expect(state.status).toBe("ready");
+    expect(state.artifact?.name).toBe(fallback.name);
+  });
+
+  it("extracts no fingerprint from unhashed artifact names", () => {
+    expect(
+      extractRunFingerprints([
+        {
+          name: "streamyfin-android-phone-release-device-debugkey-unhashed-123-2",
+        },
+      ]),
+    ).toEqual({});
+  });
+});
+
+describe("expired current-run artifacts", () => {
+  it("never beats a valid cached artifact and never renders a dead link", () => {
+    const expiredCurrent = artifact(
+      "streamyfin-ios-phone-debug-simulator-unsigned-r1-fp-x",
+      { expired: true },
+    );
+    const cached = artifact(
+      "streamyfin-ios-phone-debug-simulator-unsigned-r1-fp-x",
+    );
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      runArtifacts: [expiredCurrent],
+      cachedArtifacts: new Map([
+        ["ios-phone-debug-simulator-unsigned", cached],
+      ]),
+      jobs: [],
+    });
+    const state = stateFor(states, "ios-phone-debug-simulator-unsigned");
+    expect(state.artifact).toBeUndefined();
+    expect(state.buildSource).toBe("cached");
+    expect(state.cachedArtifact).toBe(cached);
+  });
+});
+
+describe("failed signing gate", () => {
+  it("reports the signed iOS build as failed, not skipped, when its gate fails", () => {
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      jobs: [
+        {
+          name: "🗺️ Plan full native builds",
+          status: "completed",
+          conclusion: "success",
+        },
+        {
+          name: "🍎 Build iOS IPA (Phone)",
+          status: "completed",
+          conclusion: "failure",
+          html_url: "https://x/gate",
+        },
+      ],
+    });
+    const state = stateFor(states, "ios-phone-release-device-signed");
+    expect(state.status).toBe("failed");
+    expect(state.job?.name).toBe("🍎 Build iOS IPA (Phone)");
+    expect(state.jobUrl).toBe("https://x/gate");
+  });
+});
+
+describe("findLatestAppsRun scoping", () => {
+  const deps = (fake: ReturnType<typeof makeFakeFetch>) => baseDeps(fake);
+  const runFixture = (overrides: Record<string, unknown>) => ({
+    id: 1,
+    name: "🏗️ Build Apps",
+    status: "completed",
+    conclusion: "success",
+    html_url: "https://x/run",
+    head_sha: "sha",
+    created_at: "2026-01-15T10:00:00Z",
+    ...overrides,
+  });
+  const args = {
+    prNumber: 42,
+    headSha: "sha",
+    repositoryId: REPO_ID,
+    prHeadRef: "feat/x",
+    prHeadRepositoryId: REPO_ID,
+  };
+
+  it("fetches the trigger run directly when triggerRunId is set", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/actions/runs/900", runFixture({ id: 900 }));
+    const run = await findLatestAppsRun(deps(fake), {
+      ...args,
+      triggerRunId: 900,
+    });
+    expect(run?.id).toBe(900);
+    expect(fake.state.calls.some((c) => c.url.includes("head_sha="))).toBe(
+      false,
+    );
+  });
+
+  it("prefers this PR's runs over a develop push at the same commit", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/actions/runs?", {
+      workflow_runs: [
+        runFixture({
+          id: 1,
+          status: "in_progress",
+          conclusion: null,
+          event: "push",
+          head_branch: "develop",
+          head_repository: { id: REPO_ID },
+          created_at: "2026-01-15T11:00:00Z",
+        }),
+        runFixture({
+          id: 2,
+          status: "queued",
+          conclusion: null,
+          event: "pull_request",
+          head_branch: "feat/x",
+          head_repository: { id: REPO_ID },
+          created_at: "2026-01-15T10:00:00Z",
+        }),
+      ],
+    });
+    const run = await findLatestAppsRun(deps(fake), args);
+    expect(run?.id).toBe(2);
+  });
+
+  it("links nothing when only an unrelated push run exists for the commit", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/actions/runs?", {
+      workflow_runs: [
+        runFixture({
+          id: 3,
+          event: "push",
+          head_branch: "develop",
+          head_repository: { id: REPO_ID },
+        }),
+      ],
+    });
+    const run = await findLatestAppsRun(deps(fake), args);
+    expect(run).toBeUndefined();
+  });
+});
+
+describe("resolvePrContext metadata scoping", () => {
+  it("workflow_run fetches the selected PR instead of substituting another", async () => {
+    const fake = makeFakeFetch();
+    // The commit's pulls list names a different PR; metadata must come from
+    // the selected one via /pulls/<number>, never from the wrong PR.
+    fake.on("GET", "/commits/runsha/pulls", [
+      {
+        number: 55,
+        head: { sha: "runsha", ref: "feat/wrong", repo: { id: REPO_ID } },
+      },
+    ]);
+    fake.on("GET", "/pulls/8", {
+      number: 8,
+      head: { sha: "runsha", ref: "feat/right", repo: { id: 999 } },
+    });
+    const ctx = await resolvePrContext(baseDeps(fake), {
+      workflow_run: {
+        id: 700,
+        name: "🏗️ Build Apps",
+        head_sha: "runsha",
+        pull_requests: [{ number: 8 }],
+      },
+    });
+    expect(ctx?.prNumber).toBe(8);
+    expect(ctx?.prHeadRef).toBe("feat/right");
+    expect(ctx?.prHeadRepositoryId).toBe(999);
+    expect(ctx?.triggerRunId).toBe(700);
+  });
+
+  it("workflow_run leaves head metadata empty when the PR fetch fails", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/commits/runsha/pulls", [
+      {
+        number: 55,
+        head: { sha: "runsha", ref: "feat/wrong", repo: { id: REPO_ID } },
+      },
+    ]);
+    const ctx = await resolvePrContext(baseDeps(fake), {
+      workflow_run: {
+        head_sha: "runsha",
+        pull_requests: [{ number: 8 }],
+      },
+    });
+    expect(ctx?.prNumber).toBe(8);
+    expect(ctx?.prHeadRef).toBeUndefined();
+    expect(ctx?.triggerRunId).toBeUndefined();
+  });
+
+  it("workflow_dispatch matches the dispatched branch among PRs sharing a commit", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/commits/shared-sha/pulls", [
+      {
+        number: 7,
+        state: "open",
+        head: { sha: "shared-sha", ref: "feat/seven", repo: { id: REPO_ID } },
+      },
+      {
+        number: 8,
+        state: "open",
+        head: { sha: "shared-sha", ref: "feat/eight", repo: { id: REPO_ID } },
+      },
+    ]);
+    const deps = baseDeps(fake, {
+      env: {
+        GITHUB_REPOSITORY_ID: String(REPO_ID),
+        GITHUB_SHA: "shared-sha",
+        GITHUB_REF_NAME: "feat/eight",
+      },
+    });
+    const ctx = await resolvePrContext(deps, {});
+    expect(ctx?.prNumber).toBe(8);
+  });
+
+  it("workflow_dispatch ignores closed pull requests", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/commits/shared-sha/pulls", [
+      {
+        number: 7,
+        state: "closed",
+        head: { sha: "shared-sha", ref: "feat/seven", repo: { id: REPO_ID } },
+      },
+    ]);
+    fake.on("GET", "/pulls?state=open", [
+      {
+        number: 99,
+        head: { sha: "other", ref: "feat/other", repo: { id: REPO_ID } },
+      },
+    ]);
+    const deps = baseDeps(fake, {
+      env: {
+        GITHUB_REPOSITORY_ID: String(REPO_ID),
+        GITHUB_SHA: "shared-sha",
+        GITHUB_REF_NAME: "feat/seven",
+      },
+    });
+    const ctx = await resolvePrContext(deps, {});
+    expect(ctx?.prNumber).toBe(99);
+  });
+
+  it("workflow_dispatch falls back when several open PRs share the branch match", async () => {
+    const fake = makeFakeFetch();
+    // Same branch name in the upstream repo and a fork: two matches, no pick.
+    fake.on("GET", "/commits/shared-sha/pulls", [
+      {
+        number: 7,
+        state: "open",
+        head: { sha: "shared-sha", ref: "feat/x", repo: { id: REPO_ID } },
+      },
+      {
+        number: 8,
+        state: "open",
+        head: { sha: "shared-sha", ref: "feat/x", repo: { id: REPO_ID } },
+      },
+    ]);
+    fake.on("GET", "/pulls?state=open", [
+      {
+        number: 99,
+        head: { sha: "other", ref: "feat/other", repo: { id: REPO_ID } },
+      },
+    ]);
+    const deps = baseDeps(fake, {
+      env: {
+        GITHUB_REPOSITORY_ID: String(REPO_ID),
+        GITHUB_SHA: "shared-sha",
+        GITHUB_REF_NAME: "feat/x",
+      },
+    });
+    const ctx = await resolvePrContext(deps, {});
+    expect(ctx?.prNumber).toBe(99);
+  });
+
+  it("workflow_dispatch uses a single open associated PR when no ref is set", async () => {
+    const fake = makeFakeFetch();
+    fake.on("GET", "/commits/sha-of-pr-7/pulls", [
+      {
+        number: 7,
+        state: "open",
+        head: { sha: "sha-of-pr-7", ref: "feat/seven", repo: { id: REPO_ID } },
+      },
+    ]);
+    const deps = baseDeps(fake, {
+      env: { GITHUB_REPOSITORY_ID: String(REPO_ID), GITHUB_SHA: "sha-of-pr-7" },
+    });
+    const ctx = await resolvePrContext(deps, {});
+    expect(ctx?.prNumber).toBe(7);
   });
 });

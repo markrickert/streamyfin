@@ -249,7 +249,7 @@ export const extractRunFingerprints = (
 };
 
 const artifactPattern = (variant: Variant): RegExp =>
-  new RegExp(`^streamyfin-${variant.id}-r\\d+-fp-`);
+  new RegExp(`^streamyfin-${variant.id}-(?:r\\d+-fp-|unhashed-\\d+-\\d+$)`);
 
 export type BuildSource = "repack" | "full" | "cached" | null;
 
@@ -314,8 +314,8 @@ export const resolveVariantStates = (args: ResolveArgs): VariantState[] => {
       ? [meta.repackJob, meta.buildStep]
       : [meta.buildStep];
     const job = findJob(flatJobs, names);
-    const artifact = args.runArtifacts.find((a) =>
-      artifactPattern(variant).test(a.name),
+    const artifact = args.runArtifacts.find(
+      (a) => !a.expired && artifactPattern(variant).test(a.name),
     );
     const cached = args.cachedArtifacts.get(variant.id);
     const etaMs =
@@ -377,8 +377,17 @@ export const resolveVariantStates = (args: ResolveArgs): VariantState[] => {
       );
       const planningFinished =
         planJob?.status === "completed" || gateJob?.status === "completed";
+      if (gateJob?.conclusion === "failure") {
+        return {
+          ...base,
+          status: "failed",
+          job: gateJob,
+          jobUrl: gateJob.html_url ?? base.jobUrl,
+        };
+      }
       if (
         !anyActive &&
+        gateJob?.conclusion !== "failure" &&
         planningFinished &&
         absentOrSkipped(repackJob) &&
         absentOrSkipped(buildJob)
@@ -619,6 +628,9 @@ export interface WorkflowRun {
   html_url: string;
   head_sha: string;
   created_at: string;
+  event?: string;
+  head_branch?: string;
+  head_repository?: { id: number };
 }
 
 export interface UpdateArgs {
@@ -627,28 +639,54 @@ export interface UpdateArgs {
   repositoryId: number;
   prHeadRef?: string;
   prHeadRepositoryId?: number;
+  triggerRunId?: number;
 }
 
 export const findLatestAppsRun = async (
   deps: Deps,
-  headSha: string,
+  args: UpdateArgs,
 ): Promise<WorkflowRun | undefined> => {
+  if (args.triggerRunId) {
+    return githubJson<WorkflowRun>(
+      `https://api.github.com/repos/${deps.repo}/actions/runs/${args.triggerRunId}`,
+      deps.token,
+      ghFetch(deps),
+    );
+  }
   const data = await githubJson<{ workflow_runs: WorkflowRun[] }>(
-    `https://api.github.com/repos/${deps.repo}/actions/runs?head_sha=${headSha}&per_page=30`,
+    `https://api.github.com/repos/${deps.repo}/actions/runs?head_sha=${args.headSha}&per_page=30`,
     deps.token,
     ghFetch(deps),
   );
   const runs = data.workflow_runs
     .filter((run) => run.name.includes("Build Apps"))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  // Scope to this PR's own runs when its head is known, so a develop push or
+  // a sibling PR at the same commit never supplies this comment's links. No
+  // fallback: better a "builds are starting up" comment than another
+  // branch's artifacts.
+  const scoped =
+    args.prHeadRef || args.prHeadRepositoryId
+      ? runs.filter(
+          (run) =>
+            (!run.event || run.event === "pull_request") &&
+            (!args.prHeadRef ||
+              !run.head_branch ||
+              run.head_branch === args.prHeadRef) &&
+            (!args.prHeadRepositoryId ||
+              !run.head_repository?.id ||
+              run.head_repository.id === args.prHeadRepositoryId),
+        )
+      : runs;
+  const pool = scoped;
   // A cancelled retry must never hide a live or successful build.
   return (
-    runs.find((run) => run.status === "in_progress") ??
-    runs.find((run) => run.status === "queued") ??
-    runs.find(
+    pool.find((run) => run.status === "in_progress") ??
+    pool.find((run) => run.status === "queued") ??
+    pool.find(
       (run) => run.status === "completed" && run.conclusion !== "cancelled",
     ) ??
-    runs[0]
+    pool[0]
   );
 };
 
@@ -732,31 +770,43 @@ export const runUpdate = async (
   deps: Deps,
   args: UpdateArgs,
 ): Promise<string> => {
-  const run = await findLatestAppsRun(deps, args.headSha);
+  const run = await findLatestAppsRun(deps, args);
   const jobs = run ? await jobsForRun(deps, run.id) : [];
   const runArtifacts = run ? await artifactsForRun(deps, run.id) : [];
   const etaDurations = await fetchReferenceDurations(deps);
-  const fingerprints = fillFingerprints(
-    deps,
-    extractRunFingerprints(runArtifacts),
-  );
+  // The checkout matches the target PR only when the workflow resolved it;
+  // hashing a mismatched checkout would name cache entries this PR cannot use.
+  const extracted = extractRunFingerprints(runArtifacts);
+  const checkedOutSha = deps.env?.CHECKED_OUT_SHA?.trim();
+  const fingerprints =
+    !checkedOutSha || checkedOutSha === args.headSha
+      ? fillFingerprints(deps, extracted)
+      : extracted;
 
   // Resolve trusted cached artifacts for ensure variants missing in this run.
+  let pullRequest: RunContext["pullRequest"];
+  if (args.prHeadRef && args.prHeadRepositoryId) {
+    try {
+      pullRequest = {
+        headRef: args.prHeadRef,
+        headRepositoryId: args.prHeadRepositoryId,
+        commits: await fetchPullRequestCommits(
+          deps.repo,
+          args.prNumber,
+          deps.token,
+          ghFetch(deps),
+        ),
+      };
+    } catch (error) {
+      log(
+        deps,
+        `⚠️ Could not list PR commits; same-PR cache candidates are skipped: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
   const ctx: RunContext = {
     repositoryId: args.repositoryId,
-    pullRequest:
-      args.prHeadRef && args.prHeadRepositoryId
-        ? {
-            headRef: args.prHeadRef,
-            headRepositoryId: args.prHeadRepositoryId,
-            commits: await fetchPullRequestCommits(
-              deps.repo,
-              args.prNumber,
-              deps.token,
-              ghFetch(deps),
-            ),
-          }
-        : undefined,
+    pullRequest,
   };
   const cachedArtifacts = new Map<string, Artifact | undefined>();
   for (const variant of VARIANTS.filter((v) => v.mode === "ensure")) {
@@ -812,6 +862,8 @@ interface EventPayload {
     head: { sha: string; ref: string; repo?: { id: number } };
   };
   workflow_run?: {
+    id?: number;
+    name?: string;
     head_sha: string;
     head_repository?: { id: number };
     pull_requests?: { number: number; head?: { sha: string; ref: string } }[];
@@ -820,6 +872,7 @@ interface EventPayload {
 
 interface PullEntry {
   number: number;
+  state?: string;
   head: { sha: string; ref: string; repo?: { id: number } };
 }
 
@@ -846,13 +899,29 @@ export const resolvePrContext = async (
     );
     const pr = event.workflow_run.pull_requests?.[0] ?? pulls[0];
     if (!pr) return null;
-    const full = pulls.find((p) => p.number === pr.number) ?? pulls[0];
+    // Head metadata comes from the selected pull request only: substituting
+    // another PR's branch would trust the wrong fork's cache artifacts.
+    let full = pulls.find((p) => p.number === pr.number);
+    if (!full) {
+      try {
+        full = await githubJson<PullEntry>(
+          `https://api.github.com/repos/${deps.repo}/pulls/${pr.number}`,
+          deps.token,
+          ghFetch(deps),
+        );
+      } catch {
+        full = undefined;
+      }
+    }
     return {
       prNumber: pr.number,
       headSha,
       repositoryId,
       prHeadRef: full?.head.ref,
       prHeadRepositoryId: full?.head.repo?.id,
+      triggerRunId: event.workflow_run.name?.includes("Build Apps")
+        ? event.workflow_run.id
+        : undefined,
     };
   }
   // Manual dispatch: the refresh-pr-comment nudge dispatches this workflow
@@ -867,7 +936,25 @@ export const resolvePrContext = async (
         deps.token,
         ghFetch(deps),
       );
-      const hit = associated[0];
+      const openAssociated = associated.filter(
+        (p) => !p.state || p.state === "open",
+      );
+      const dispatchRef = deps.env?.GITHUB_REF_NAME?.trim();
+      let hit: PullEntry | undefined;
+      if (dispatchRef) {
+        const matches = openAssociated.filter(
+          (p) =>
+            p.head.ref === dispatchRef &&
+            (!Number.isFinite(repositoryId) ||
+              !p.head.repo?.id ||
+              p.head.repo.id === repositoryId),
+        );
+        // Several pull requests can share a head commit across branches;
+        // picking one at random would overwrite the other's comment.
+        if (matches.length === 1) hit = matches[0];
+      } else if (openAssociated.length === 1) {
+        hit = openAssociated[0];
+      }
       if (hit) {
         return {
           prNumber: hit.number,

@@ -17,6 +17,7 @@ import {
   type Stats,
   statSync,
   utimesSync,
+  writeFileSync,
 } from "node:fs";
 import { homedir as osHomedir, platform as osPlatform } from "node:os";
 import {
@@ -43,6 +44,7 @@ import { artifactName, type BinaryKind, type Variant } from "./variants";
 export type { FetchLike } from "./github";
 
 const DEFAULT_REPO = "streamyfin/streamyfin";
+const CACHE_ENTRY_MARKER = ".streamyfin-cache-entry";
 const DEFAULT_MAX_CACHE_GB = 10;
 const MS_PER_HOUR = 60 * 60 * 1000;
 const CACHE_TTL_MS = 7 * MS_PER_DAY;
@@ -500,7 +502,12 @@ export const fetchVariant = async (
     const now = deps.now ?? Date.now;
     const cacheDir = resolveCacheDir(deps);
     const name = artifactName(variant, hash);
-    const entryDir = join(cacheDir, name);
+    // Namespace by repository so the same variant and fingerprint fetched
+    // from a fork never collides with the upstream binary.
+    const repo = env.STREAMYFIN_BUILD_CACHE_REPO?.trim() || DEFAULT_REPO;
+    const repoSlug = repo.toLowerCase().replace(/[^a-z0-9._-]+/g, "_");
+    const entryName = `${repoSlug}--${name}`;
+    const entryDir = join(cacheDir, entryName);
 
     step = "read cache entry";
     try {
@@ -526,7 +533,6 @@ export const fetchVariant = async (
       };
     }
 
-    const repo = env.STREAMYFIN_BUILD_CACHE_REPO?.trim() || DEFAULT_REPO;
     let repositoryId = deps.repositoryId;
     if (repositoryId === undefined) {
       const repoData = await githubJson<{ id: number }>(
@@ -607,11 +613,23 @@ export const fetchVariant = async (
           reason: `Expected 1 .${variant.kind} in ${name}, found ${matches.length}`,
         };
       }
+      if (variant.kind === "app") {
+        // A symlink escaping the .app bundle would break once the temp
+        // siblings it points at are cleaned up.
+        step = "validate app bundle";
+        const unsafeAppEntry = validateExtractedTree(matches[0]);
+        if (unsafeAppEntry) {
+          return { path: null, reason: unsafeAppEntry };
+        }
+      }
+
       const stagingDir = join(tempDir, "staged");
       mkdirSync(stagingDir, { recursive: true });
       const binaryName = basename(matches[0]);
       renameSync(matches[0], join(stagingDir, binaryName));
       touchEntry(stagingDir, now());
+
+      writeFileSync(join(stagingDir, CACHE_ENTRY_MARKER), "");
 
       step = "install cache entry";
       return installCacheEntry(
@@ -716,6 +734,13 @@ export const prune = (deps: FetchDeps = {}): PruneResult => {
         }
         continue;
       }
+      // A shared cache dir may hold directories this cache never wrote;
+      // only entries carrying the marker (or a build-cache name from before
+      // the marker existed) are ours to prune.
+      const owned =
+        existsSync(join(entryPath, CACHE_ENTRY_MARKER)) ||
+        /^(?:[a-z0-9._-]+--)?streamyfin-/.test(entryName);
+      if (!owned) continue;
       size = directorySize(entryPath);
     } catch (error) {
       const code = errorCode(error);

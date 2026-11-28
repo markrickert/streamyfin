@@ -1128,9 +1128,10 @@ describe("build-apps.yml", () => {
     const blocks: string[] = [];
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const blockStart = line.match(/^(\s*)run:\s*[|>][-+]?\s*$/);
+      const blockStart = line.match(/^(\s*)((?:-\s+)?)run:\s*[|>][-+]?\s*$/);
       if (blockStart) {
-        const indent = blockStart[1].length;
+        // A `- run:` sequence entry indents its block two past the dash.
+        const indent = blockStart[1].length + (blockStart[2] ? 2 : 0);
         const body: string[] = [];
         for (let j = i + 1; j < lines.length; j++) {
           const next = lines[j];
@@ -1141,11 +1142,34 @@ describe("build-apps.yml", () => {
         blocks.push(body.join("\n"));
         continue;
       }
-      const inline = line.match(/^\s*run:\s*(.+)$/);
+      const inline = line.match(/^\s*(?:-\s+)?run:\s*(.+)$/);
       if (inline) blocks.push(inline[1]);
     }
     return blocks;
   };
+
+  test("runBlocksOf captures named and unnamed run steps, inline and block", () => {
+    const yaml = [
+      "    steps:",
+      "      - name: Named block",
+      "        run: |",
+      "          echo one",
+      "          echo two",
+      "      - name: Named inline",
+      "        run: echo three",
+      "      - run: |",
+      "          echo four",
+      "          echo five",
+      "      - run: echo six",
+      "    other: true",
+    ].join("\n");
+    expect(runBlocksOf(yaml)).toEqual([
+      "echo one\necho two",
+      "echo three",
+      "echo four\necho five",
+      "echo six",
+    ]);
+  });
 
   test("every caller job grants at least the permissions requested by _native-variant.yml", () => {
     const calleeJobs = jobsOf(nativeVariant);

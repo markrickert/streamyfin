@@ -21,7 +21,7 @@
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fetchVariant, prune } from "./fetch";
 import { hashFor } from "./fingerprint";
 import {
@@ -177,7 +177,11 @@ const parseOutputsArgs = (
     }
     const key = arg.slice(0, eq);
     const value = arg.slice(eq + 1);
-    const target = keyToTarget[key];
+    // Object literals inherit Object.prototype: without the own-key check
+    // "constructor" or "toString" would pass for a target key.
+    const target = Object.hasOwn(keyToTarget, key)
+      ? keyToTarget[key]
+      : undefined;
     if (!target || !value || parsed[target] !== undefined) {
       throw new UsageError(
         "Usage: outputs ios=<hash> tv=<hash> android=<hash> android_tv=<hash>",
@@ -285,8 +289,10 @@ export const runCli = async (
           const result = await repackFn(
             {
               variant,
-              sourcePath,
-              outputPath,
+              // CLI-relative paths belong to the caller's cwd, not the repo
+              // root repackVariant resolves its own paths against.
+              sourcePath: resolve(sourcePath),
+              outputPath: resolve(outputPath),
               projectRoot: repoRoot(),
               workingDirectory,
               sentry,

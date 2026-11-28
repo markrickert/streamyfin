@@ -257,7 +257,7 @@ describe("repackVariant", () => {
     });
 
     const tvOutputPath = join(tempDir, "StreamyfinTV.app");
-    await repackVariant(
+    const tvResult = await repackVariant(
       {
         variant: iosTvReleaseSimVariant,
         sourcePath: join(tempDir, "source-tv.app"),
@@ -267,6 +267,7 @@ describe("repackVariant", () => {
       },
       { env: {}, run },
     );
+    expect(tvResult).toEqual({ path: tvOutputPath });
     expect(calls[1].options.env.EXPO_TV).toBe("1");
   });
 
@@ -715,6 +716,72 @@ describe("repackVariant", () => {
     expect(iosMiss.reason).toMatch(/sentinel/i);
   });
 
+  it("resolves relative paths against projectRoot instead of the caller cwd", async () => {
+    // projectRoot differs from process.cwd(): a relative source, output and
+    // working directory must all resolve inside the project, not the test
+    // runner's cwd.
+    const projectRoot = join(tempDir, "project");
+    mkdirSync(projectRoot, { recursive: true });
+    mkdirSync(join(projectRoot, "dist"), { recursive: true });
+    setupAndroidHome(tempDir, ["36.0.0"]);
+
+    const calls: { command: string; args: string[] }[] = [];
+    const run: RunProcess = (command, args) => {
+      calls.push({ command, args: [...args] });
+      if (command === "bun") {
+        writeFileSync(args[3], "apk");
+        return { status: 0, stdout: "", stderr: "" };
+      }
+      return { status: 0, stdout: SENTINEL_SENTRY_DSN, stderr: "" };
+    };
+
+    const result = await repackVariant(
+      {
+        variant: androidPhoneReleaseVariant,
+        sourcePath: "dist/source.apk",
+        outputPath: "dist/out.apk",
+        projectRoot,
+        workingDirectory: "dist/work",
+      },
+      { env: { ANDROID_HOME: join(tempDir, "android-sdk") }, run },
+    );
+
+    expect(result).toEqual({ path: join(projectRoot, "dist", "out.apk") });
+    // The child process receives the resolved absolute paths.
+    const repackArgs = calls.find((c) => c.command === "bun")!.args;
+    expect(repackArgs[1]).toBe(join(projectRoot, "dist", "source.apk"));
+    expect(repackArgs[3]).toBe(join(projectRoot, "dist", "out.apk"));
+    expect(repackArgs[4]).toBe(join(projectRoot, "dist", "work"));
+    // Nothing leaked into the caller's cwd.
+    expect(result.path).not.toContain(process.cwd());
+  });
+
+  it("keeps absolute paths unchanged when projectRoot differs", async () => {
+    const projectRoot = join(tempDir, "project");
+    mkdirSync(projectRoot, { recursive: true });
+    const absoluteOutput = join(tempDir, "elsewhere", "out.app");
+
+    const run: RunProcess = (_command, args) => {
+      const outApp = args[args.indexOf("-o") + 1];
+      mkdirSync(outApp, { recursive: true });
+      writeFileSync(join(outApp, "main.jsbundle"), SENTINEL_SENTRY_DSN);
+      return { status: 0, stdout: "", stderr: "" };
+    };
+
+    const result = await repackVariant(
+      {
+        variant: iosPhoneReleaseSimVariant,
+        sourcePath: join(tempDir, "source.app"),
+        outputPath: absoluteOutput,
+        projectRoot,
+        workingDirectory: join(tempDir, "work-ios"),
+      },
+      { env: {}, run },
+    );
+
+    expect(result).toEqual({ path: absoluteOutput });
+  });
+
   it("does not mutate process.env", async () => {
     const androidHome = setupAndroidHome(tempDir, ["36.0.0"]);
     const originalEnv = { ...process.env };
@@ -730,20 +797,29 @@ describe("repackVariant", () => {
       return { status: 0, stdout: SENTINEL_SENTRY_DSN, stderr: "" };
     };
 
-    await repackVariant(
-      {
-        variant: androidTvReleaseVariant,
-        sourcePath: join(tempDir, "source.apk"),
-        outputPath: join(tempDir, "out.apk"),
-        projectRoot: tempDir,
-        workingDirectory: join(tempDir, "work"),
-      },
-      {
-        env: { ...process.env, ANDROID_HOME: androidHome },
-        run,
-      },
-    );
+    let result: Awaited<ReturnType<typeof repackVariant>>;
+    const originalAndroidHome = process.env.ANDROID_HOME;
+    process.env.ANDROID_HOME = androidHome;
+    try {
+      result = await repackVariant(
+        {
+          variant: androidTvReleaseVariant,
+          sourcePath: join(tempDir, "source.apk"),
+          outputPath: join(tempDir, "out.apk"),
+          projectRoot: tempDir,
+          workingDirectory: join(tempDir, "work"),
+        },
+        { run },
+      );
+    } finally {
+      if (originalAndroidHome === undefined) {
+        delete process.env.ANDROID_HOME;
+      } else {
+        process.env.ANDROID_HOME = originalAndroidHome;
+      }
+    }
 
+    expect(result!).toEqual({ path: join(tempDir, "out.apk") });
     expect(process.env.EXPO_PUBLIC_SENTRY_DSN).toBe(originalSentry);
     expect(process.env.NODE_ENV).toBe(originalNodeEnv);
     expect(process.env.EXPO_TV).toBe(originalExpoTv);

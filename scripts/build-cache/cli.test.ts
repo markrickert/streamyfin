@@ -526,6 +526,16 @@ describe("build-cache cli", () => {
       ["outputs", "ios=a", "tv=b", "android=c", "android_tv="],
       ["outputs", "ios=a", "tv=b", "android=c", "android_tv=d", "ios=e"],
       ["outputs", "ios=a", "tv=b", "android=c", "bogus=d"],
+      // Inherited Object.prototype keys must not count as output keys.
+      [
+        "outputs",
+        "ios=a",
+        "tv=b",
+        "android=c",
+        "android_tv=d",
+        "constructor=e",
+      ],
+      ["outputs", "ios=a", "tv=b", "android=c", "android_tv=d", "toString=e"],
       ["fetch"],
       ["needs-build"],
       ["needs-build", "ios-phone-debug-simulator-unsigned", "fp123", "extra"],

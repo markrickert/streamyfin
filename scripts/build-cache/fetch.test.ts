@@ -148,6 +148,10 @@ describe("resolveCacheDir", () => {
   });
 });
 
+// Cache entries are namespaced by repository slug (fetch.ts): the default
+// streamyfin/streamyfin slug prefixes every entry the tests install.
+const en = (name: string) => `streamyfin_streamyfin--${name}`;
+
 describe("fetchVariant", () => {
   let cacheDir: string;
 
@@ -184,7 +188,7 @@ describe("fetchVariant", () => {
       if (url.includes("/actions/artifacts?")) {
         sawTokenHeader = headers.get("authorization");
       }
-      return mockArtifactsFetch()(url, init);
+      return mockArtifactsFetch()(url);
     };
     const apkRun = makeApkRun();
     const run: RunProcess = (cmd, args, options) => {
@@ -202,7 +206,7 @@ describe("fetchVariant", () => {
       run,
     });
 
-    expect(result.path).toBe(join(cacheDir, name, "app.apk"));
+    expect(result.path).toBe(join(cacheDir, en(name), "app.apk"));
     expect(sawTokenHeader).toBe("Bearer gh-cli-token");
   });
 
@@ -242,7 +246,12 @@ describe("fetchVariant", () => {
       run: makeApkRun(),
     });
 
-    expect(result.path).toBe(join(cacheDir, name, "app.apk"));
+    expect(result.path).toBe(
+      join(cacheDir, `custom-org_custom-repo--${name}`, "app.apk"),
+    );
+    // The same variant and fingerprint from streamyfin/streamyfin lands in a
+    // different entry, so fork and upstream binaries never collide.
+    expect(result.path).not.toBe(join(cacheDir, en(name), "app.apk"));
     expect(requestedUrls[0]).toBe(
       "https://api.github.com/repos/custom-org/custom-repo",
     );
@@ -286,7 +295,7 @@ describe("fetchVariant", () => {
       run: makeApkRun(),
     });
 
-    expect(result).toEqual({ path: join(cacheDir, name, "app.apk") });
+    expect(result).toEqual({ path: join(cacheDir, en(name), "app.apk") });
     expect(pageUrls).toHaveLength(2);
     expect(pageUrls[0]).toContain("page=1");
     expect(pageUrls[1]).toContain("page=2");
@@ -377,7 +386,7 @@ describe("fetchVariant", () => {
       run: makeApkRun(),
     });
 
-    expect(result.path).toBe(join(cacheDir, name, "app.apk"));
+    expect(result.path).toBe(join(cacheDir, en(name), "app.apk"));
     expect(calls).toHaveLength(3);
     expect(calls[1]).toEqual({
       url: "https://api.github.com/repos/o/r/actions/artifacts/42/zip",
@@ -410,7 +419,7 @@ describe("fetchVariant", () => {
       run: makeApkRun(),
     });
 
-    expect(result.path).toBe(join(cacheDir, name, "app.apk"));
+    expect(result.path).toBe(join(cacheDir, en(name), "app.apk"));
     expect(downloadRedirectMode).toBe("manual");
   });
 
@@ -485,7 +494,7 @@ describe("fetchVariant", () => {
       run,
     });
 
-    expect(result.path).toBe(join(cacheDir, name, "app.apk"));
+    expect(result.path).toBe(join(cacheDir, en(name), "app.apk"));
     expect(arrayBufferCalled).toBe(false);
     expect(streamedBytes).toEqual(Buffer.from([10, 20, 30, 40, 50]));
   });
@@ -536,7 +545,7 @@ describe("fetchVariant", () => {
 
   it("still returns a cache hit when updating atime fails", async () => {
     const name = artifactName(apkVariant, "hash-hit-ro");
-    const entryDir = join(cacheDir, name);
+    const entryDir = join(cacheDir, en(name));
     mkdirSync(entryDir, { recursive: true });
     const binaryPath = join(entryDir, "app.apk");
     writeFileSync(binaryPath, "apk");
@@ -558,7 +567,7 @@ describe("fetchVariant", () => {
 
   it("updates the entry atime on a cache hit", async () => {
     const name = artifactName(apkVariant, "hash-atime");
-    const entryDir = join(cacheDir, name);
+    const entryDir = join(cacheDir, en(name));
     mkdirSync(entryDir, { recursive: true });
     const binaryPath = join(entryDir, "app.apk");
     writeFileSync(binaryPath, "apk");
@@ -585,7 +594,7 @@ describe("fetchVariant", () => {
 
   it("keeps the winning concurrent fetch entry when rename hits ENOTEMPTY/EEXIST", async () => {
     const name = artifactName(appVariant, "hash-race");
-    const entryDir = join(cacheDir, name);
+    const entryDir = join(cacheDir, en(name));
 
     const baseRun = makeAppRun("ours-marker");
     const racingRun: RunProcess = (cmd, args, options) => {
@@ -622,7 +631,7 @@ describe("fetchVariant", () => {
 
     // Case 1: existing directory with 0 binaries
     const emptyName = artifactName(apkVariant, "hash-invalid-0");
-    const emptyEntry = join(cacheDir, emptyName);
+    const emptyEntry = join(cacheDir, en(emptyName));
     mkdirSync(emptyEntry, { recursive: true });
     writeFileSync(join(emptyEntry, "stale.txt"), "stale");
 
@@ -634,12 +643,15 @@ describe("fetchVariant", () => {
       run: makeApkRun("fresh.apk"),
     });
     expect(res0.path).toBe(join(emptyEntry, "fresh.apk"));
-    expect(readdirSync(emptyEntry)).toEqual(["fresh.apk"]);
+    expect(readdirSync(emptyEntry).sort()).toEqual([
+      ".streamyfin-cache-entry",
+      "fresh.apk",
+    ]);
     expect(hasTempEntries(cacheDir)).toBe(false);
 
     // Case 2: existing directory with 2 binaries
     const twoName = artifactName(apkVariant, "hash-invalid-2");
-    const twoEntry = join(cacheDir, twoName);
+    const twoEntry = join(cacheDir, en(twoName));
     mkdirSync(twoEntry, { recursive: true });
     writeFileSync(join(twoEntry, "a.apk"), "a");
     writeFileSync(join(twoEntry, "b.apk"), "b");
@@ -652,7 +664,10 @@ describe("fetchVariant", () => {
       run: makeApkRun("fresh.apk"),
     });
     expect(res2.path).toBe(join(twoEntry, "fresh.apk"));
-    expect(readdirSync(twoEntry)).toEqual(["fresh.apk"]);
+    expect(readdirSync(twoEntry).sort()).toEqual([
+      ".streamyfin-cache-entry",
+      "fresh.apk",
+    ]);
     expect(hasTempEntries(cacheDir)).toBe(false);
   });
 
@@ -812,7 +827,52 @@ describe("fetchVariant", () => {
       repositoryId: 1000,
       run: runValidInternalSymlink,
     });
-    expect(valid.path).toBe(join(cacheDir, validName, "Streamyfin.app"));
+    expect(valid.path).toBe(join(cacheDir, en(validName), "Streamyfin.app"));
+  });
+
+  it("rejects a symlink inside .app that points at a sibling outside the bundle", async () => {
+    // The sibling exists inside the extraction root, so the untarred tree
+    // passes validation — but once staged alone, the .app's symlink dangles.
+    const run: RunProcess = (cmd, args) => {
+      if (cmd === "unzip" && args[0] === "-Z1") {
+        return { status: 0, stdout: "Streamyfin.app.tar\n", stderr: "" };
+      }
+      if (cmd === "unzip" && args[0] === "-q") {
+        writeFileSync(join(args[3], "Streamyfin.app.tar"), "tar");
+        return { status: 0, stdout: "", stderr: "" };
+      }
+      if (cmd === "tar" && args[0] === "-tf") {
+        return {
+          status: 0,
+          stdout: "Streamyfin.app/Info.plist\nshared/lib.dylib\n",
+          stderr: "",
+        };
+      }
+      if (cmd === "tar" && args[0] === "-xf") {
+        const dest = args[3];
+        mkdirSync(join(dest, "Streamyfin.app"), { recursive: true });
+        writeFileSync(join(dest, "Streamyfin.app", "Info.plist"), "plist");
+        mkdirSync(join(dest, "shared"), { recursive: true });
+        writeFileSync(join(dest, "shared", "lib.dylib"), "lib");
+        symlinkSync(
+          "../shared/lib.dylib",
+          join(dest, "Streamyfin.app", "lib.dylib"),
+        );
+        return { status: 0, stdout: "", stderr: "" };
+      }
+      throw new Error(`Unexpected command: ${cmd}`);
+    };
+
+    const result = await fetchVariant(appVariant, "hash-app-escape-symlink", {
+      cacheDir,
+      env: { GITHUB_TOKEN: "tok" },
+      fetch: mockArtifactsFetch(),
+      repositoryId: 1000,
+      run,
+    });
+    expect(result.path).toBeNull();
+    expect(result.reason).toContain("symlink");
+    expect(hasTempEntries(cacheDir)).toBe(false);
   });
 
   it("rejects extracted hard-link entries and cleans up temp dir", async () => {
@@ -964,7 +1024,7 @@ describe("fetchVariant", () => {
       now: () => 1_700_000_000_000,
       run: makeAppRun(),
     });
-    expect(first.path).toBe(join(cacheDir, name, "Streamyfin.app"));
+    expect(first.path).toBe(join(cacheDir, en(name), "Streamyfin.app"));
     expect(fetchCalls).toBe(2);
 
     const second = await fetchVariant(appVariant, "hash2", {
@@ -1042,6 +1102,7 @@ describe("prune", () => {
     const createEntry = (name: string, bytes: number, ageMs: number) => {
       const dir = join(cacheDir, name);
       mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, ".streamyfin-cache-entry"), "");
       writeFileSync(join(dir, "app.apk"), Buffer.alloc(bytes, 1));
       const ts = (nowMs - ageMs) / 1000;
       utimesSync(dir, ts, ts);
@@ -1071,6 +1132,7 @@ describe("prune", () => {
     const createEntry = (name: string, ageMs: number) => {
       const dir = join(cacheDir, name);
       mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, ".streamyfin-cache-entry"), "");
       writeFileSync(join(dir, "app.apk"), Buffer.alloc(100, 1));
       const ts = (nowMs - ageMs) / 1000;
       utimesSync(dir, ts, ts);
@@ -1095,9 +1157,15 @@ describe("prune", () => {
     const nowMs = 1_700_000_000_000;
     const hourMs = 60 * 60 * 1000;
 
-    const createDir = (name: string, bytes: number, ageMs: number) => {
+    const createDir = (
+      name: string,
+      bytes: number,
+      ageMs: number,
+      owned = false,
+    ) => {
       const dir = join(cacheDir, name);
       mkdirSync(dir, { recursive: true });
+      if (owned) writeFileSync(join(dir, ".streamyfin-cache-entry"), "");
       writeFileSync(join(dir, "file.bin"), Buffer.alloc(bytes, 1));
       const ts = (nowMs - ageMs) / 1000;
       utimesSync(dir, ts, ts);
@@ -1107,7 +1175,7 @@ describe("prune", () => {
     createDir(".trash-leaked", 500, hourMs + 60_000);
     createDir(".tmp-active", 500, hourMs - 60_000);
     createDir(".trash-recent", 500, hourMs - 60_000);
-    createDir("live-entry", 400, 10_000);
+    createDir("live-entry", 400, 10_000, true);
 
     const result = prune({
       cacheDir,
@@ -1122,6 +1190,41 @@ describe("prune", () => {
     expect(result.remainingBytes).toBe(400);
   });
 
+  it("never deletes directories the build cache did not write", () => {
+    const nowMs = 1_700_000_000_000;
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    // A shared STREAMYFIN_BUILD_CACHE_DIR can hold anything; none of these
+    // are build-cache entries: no marker file, no streamyfin- name.
+    for (const foreign of ["backups", "other-tool", "expired-entry"]) {
+      const dir = join(cacheDir, foreign);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "data.bin"), Buffer.alloc(100, 1));
+      const ts = (nowMs - 30 * dayMs) / 1000;
+      utimesSync(dir, ts, ts);
+    }
+    // A legacy entry from before the marker existed is still ours: it matches
+    // the build-cache entry name shape.
+    const legacy = join(
+      cacheDir,
+      "streamyfin-android-phone-debug-device-debugkey-r1-fp-old",
+    );
+    mkdirSync(legacy, { recursive: true });
+    writeFileSync(join(legacy, "app.apk"), Buffer.alloc(100, 1));
+    const ts = (nowMs - 30 * dayMs) / 1000;
+    utimesSync(legacy, ts, ts);
+
+    const result = prune({ cacheDir, env: {}, now: () => nowMs });
+
+    expect(result.removed).toEqual([
+      "streamyfin-android-phone-debug-device-debugkey-r1-fp-old",
+    ]);
+    for (const foreign of ["backups", "other-tool", "expired-entry"]) {
+      expect(existsSync(join(cacheDir, foreign))).toBe(true);
+    }
+    expect(result.freedBytes).toBe(100);
+  });
+
   it("enforces the default 10 GB cap when STREAMYFIN_BUILD_CACHE_MAX_GB is unset", () => {
     const nowMs = 1_700_000_000_000;
     const sixGb = 6 * 1024 * 1024 * 1024;
@@ -1129,6 +1232,7 @@ describe("prune", () => {
     const createSparseEntry = (name: string, ageMs: number) => {
       const dir = join(cacheDir, name);
       mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, ".streamyfin-cache-entry"), "");
       const filePath = join(dir, "app.apk");
       writeFileSync(filePath, "");
       truncateSync(filePath, sixGb);
@@ -1159,6 +1263,7 @@ describe("prune", () => {
       const createEntry = (name: string, bytes: number, ageMs: number) => {
         const dir = join(cacheDir, name);
         mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, ".streamyfin-cache-entry"), "");
         writeFileSync(join(dir, "app.apk"), Buffer.alloc(bytes, 1));
         const ts = (nowMs - ageMs) / 1000;
         utimesSync(dir, ts, ts);
