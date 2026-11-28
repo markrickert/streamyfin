@@ -16,6 +16,7 @@ import {
   pickSource,
   type RunContext,
 } from "../build-cache/pick";
+import { type BuildGroupId, groupForVariant } from "../build-cache/plan-ci";
 import { artifactName, VARIANTS, type Variant } from "../build-cache/variants";
 
 export const COMMENT_MARKER = "<!-- streamyfin-artifact-comment -->";
@@ -182,12 +183,40 @@ export interface FlatJob {
   html_url?: string;
   started_at?: string | null;
   completed_at?: string | null;
+  /** Conclusion/url of the grouped job a flattened step belongs to. */
+  parentConclusion?: string | null;
+  parentUrl?: string;
 }
 
 /** Strips the `<caller> / ` prefix reusable-workflow jobs arrive with. */
 export const stripCallerPrefix = (name: string): string => {
   const idx = name.indexOf(" / ");
   return idx === -1 ? name : name.slice(idx + 3);
+};
+
+/**
+ * Grouped job names (canonical and legacy) mapped to their build group, so a
+ * group that dies in setup can fail its unfulfilled variants. The legacy
+ * multi-os names (`Build Apple variants` / `Build Android variants`) span
+ * several groups and deliberately have no entry here.
+ */
+const GROUP_JOB_TO_GROUP: Record<string, BuildGroupId> = {
+  "🤖 Build Android Phone": "android_phone",
+  "Build Android phone": "android_phone",
+  "🤖 Build Android TV": "android_tv",
+  "Build Android TV": "android_tv",
+  "🍎 Build iOS Phone (Device)": "ios_phone_device",
+  "🍎 Build iOS Device": "ios_phone_device",
+  "Build iOS device": "ios_phone_device",
+  "🍎 Build iOS TV (Device)": "ios_tv_device",
+  "🍎 Build tvOS Device": "ios_tv_device",
+  "Build tvOS device": "ios_tv_device",
+  "🍎 Build iOS Phone (Simulator)": "ios_phone_sim",
+  "🍎 Build iOS Simulators": "ios_phone_sim",
+  "Build iOS simulators": "ios_phone_sim",
+  "🍎 Build iOS TV (Simulator)": "ios_tv_sim",
+  "🍎 Build tvOS Simulators": "ios_tv_sim",
+  "Build tvOS simulators": "ios_tv_sim",
 };
 
 /**
@@ -206,6 +235,8 @@ export const flattenJobs = (jobs: RunJob[]): FlatJob[] =>
       html_url: job.html_url,
       started_at: step.started_at,
       completed_at: step.completed_at,
+      parentConclusion: job.conclusion,
+      parentUrl: job.html_url,
     }));
   });
 
@@ -400,7 +431,37 @@ export const resolveVariantStates = (args: ResolveArgs): VariantState[] => {
       }
     }
 
-    if (!job) return base;
+    // A grouped job that dies in setup or prebuild never runs the variant's
+    // build step: the step is skipped or absent, which alone would read as
+    // pending forever. The parent group's conclusion is the real answer.
+    const groupFallback = (): VariantState => {
+      let parentConclusion: string | null | undefined;
+      let parentUrl: string | undefined;
+      if (job?.parentConclusion != null) {
+        parentConclusion = job.parentConclusion;
+        parentUrl = job.parentUrl;
+      } else {
+        const groupId = groupForVariant(variant);
+        const parent = args.jobs.find(
+          (j) => GROUP_JOB_TO_GROUP[stripCallerPrefix(j.name)] === groupId,
+        );
+        parentConclusion = parent?.conclusion;
+        parentUrl = parent?.html_url ?? undefined;
+      }
+      if (parentConclusion === "failure") {
+        return { ...base, status: "failed", jobUrl: parentUrl ?? base.jobUrl };
+      }
+      if (parentConclusion === "cancelled") {
+        return {
+          ...base,
+          status: "cancelled",
+          jobUrl: parentUrl ?? base.jobUrl,
+        };
+      }
+      return base;
+    };
+
+    if (!job) return groupFallback();
     if (job.conclusion === "failure") return { ...base, status: "failed" };
     if (job.conclusion === "cancelled") return { ...base, status: "cancelled" };
     if (job.status === "in_progress") return { ...base, status: "building" };
@@ -408,7 +469,7 @@ export const resolveVariantStates = (args: ResolveArgs): VariantState[] => {
     if (job.status === "completed" && job.conclusion === "success") {
       return { ...base, status: "processing" };
     }
-    return base;
+    return groupFallback();
   });
 };
 

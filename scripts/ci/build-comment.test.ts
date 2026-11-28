@@ -492,6 +492,151 @@ describe("resolveVariantStates", () => {
       "queued",
     );
   });
+
+  it("fails unfulfilled variants when their grouped job dies in setup", () => {
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      jobs: [
+        {
+          name: "🤖 Build Android Phone",
+          status: "completed",
+          conclusion: "failure",
+          html_url: "https://example.com/job/1",
+          steps: [
+            {
+              name: "📦 Install dependencies",
+              status: "completed",
+              conclusion: "failure",
+            },
+            {
+              name: "🤖 Build Android Phone (Release APK)",
+              status: "completed",
+              conclusion: "skipped",
+            },
+          ],
+        },
+      ],
+    });
+    const state = stateFor(states, "android-phone-release-device-debugkey");
+    expect(state.status).toBe("failed");
+    expect(state.jobUrl).toBe("https://example.com/job/1");
+  });
+
+  it("fails unfulfilled variants when the grouped job dies before recording steps", () => {
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      jobs: [
+        {
+          name: "🤖 Build Android Phone",
+          status: "completed",
+          conclusion: "failure",
+          html_url: "https://example.com/job/2",
+          steps: [],
+        },
+      ],
+    });
+    const state = stateFor(states, "android-phone-release-device-debugkey");
+    expect(state.status).toBe("failed");
+    expect(state.jobUrl).toBe("https://example.com/job/2");
+  });
+
+  it("keeps fulfilled variants ready when their grouped job fails", () => {
+    const repacked = artifact(
+      "streamyfin-android-phone-release-device-debugkey-r1-fp-abc",
+    );
+    const cachedDebug = artifact(
+      "streamyfin-android-phone-debug-device-debugkey-r1-fp-x",
+    );
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      runArtifacts: [repacked],
+      cachedArtifacts: new Map([
+        ["android-phone-debug-device-debugkey", cachedDebug],
+      ]),
+      jobs: [
+        {
+          name: "🤖 Repack Android Phone (Release APK)",
+          status: "completed",
+          conclusion: "success",
+        },
+        {
+          name: "🤖 Build Android Phone",
+          status: "completed",
+          conclusion: "failure",
+          html_url: "https://example.com/job/3",
+          steps: [
+            {
+              name: "📦 Install dependencies",
+              status: "completed",
+              conclusion: "failure",
+            },
+            {
+              name: "🤖 Build Android Phone (Universal Release APK)",
+              status: "completed",
+              conclusion: "skipped",
+            },
+          ],
+        },
+      ],
+    });
+    const repackState = stateFor(
+      states,
+      "android-phone-release-device-debugkey",
+    );
+    expect(repackState.status).toBe("ready");
+    expect(repackState.buildSource).toBe("repack");
+    const debugState = stateFor(states, "android-phone-debug-device-debugkey");
+    expect(debugState.status).toBe("ready");
+    expect(debugState.buildSource).toBe("cached");
+    const universal = stateFor(
+      states,
+      "android-phone-release-device-debugkey-universal",
+    );
+    expect(universal.status).toBe("failed");
+    expect(universal.jobUrl).toBe("https://example.com/job/3");
+  });
+
+  it("keeps signed iOS skipped on a fork when the unsigned build fails", () => {
+    const states = resolveVariantStates({
+      ...RESOLVE_BASE,
+      jobs: [
+        {
+          name: "🗺️ Plan full native builds",
+          status: "completed",
+          conclusion: "success",
+        },
+        {
+          name: "🍎 Build iOS IPA (Phone)",
+          status: "completed",
+          conclusion: "success",
+        },
+        {
+          name: "🍎 Build iOS Phone (Device)",
+          status: "completed",
+          conclusion: "failure",
+          html_url: "https://example.com/job/4",
+          steps: [
+            {
+              name: "🍎 Build iOS Phone (Unsigned IPA)",
+              status: "completed",
+              conclusion: "failure",
+            },
+            {
+              name: "🍎 Build iOS Phone (Signed IPA)",
+              status: "completed",
+              conclusion: "skipped",
+            },
+          ],
+        },
+      ],
+    });
+    expect(stateFor(states, "ios-phone-release-device-signed").status).toBe(
+      "skipped",
+    );
+    expect(stateFor(states, "ios-phone-release-device-unsigned").status).toBe(
+      "failed",
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

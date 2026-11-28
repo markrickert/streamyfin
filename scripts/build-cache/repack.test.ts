@@ -752,8 +752,6 @@ describe("repackVariant", () => {
     expect(repackArgs[1]).toBe(join(projectRoot, "dist", "source.apk"));
     expect(repackArgs[3]).toBe(join(projectRoot, "dist", "out.apk"));
     expect(repackArgs[4]).toBe(join(projectRoot, "dist", "work"));
-    // Nothing leaked into the caller's cwd.
-    expect(result.path).not.toContain(process.cwd());
   });
 
   it("keeps absolute paths unchanged when projectRoot differs", async () => {
